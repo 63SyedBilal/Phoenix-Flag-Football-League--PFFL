@@ -1,9 +1,7 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { ChevronLeft, Upload, X } from "lucide-react"
+import React, { useState } from "react"
+import { ChevronLeft, Upload, Search, ChevronDown, ChevronUp } from "lucide-react"
 
 const PRIMARY_COLOR = "#0F173E"
 
@@ -150,72 +148,113 @@ export default function CreateLeagueForm({
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1)
+    } else {
+      onClose?.()
     }
   }
 
+  const steps = [
+    { number: 1, name: "Create League" },
+    { number: 2, name: "Referees" },
+    { number: 3, name: "Stat Keeper" },
+    { number: 4, name: "Invite Teams" },
+  ]
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="border-b border-blue-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={handleBack} className="p-2 hover:bg-gray-100 rounded-lg">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          {onClose && (
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {step === 1 && "Create League"}
-          {step === 2 && "Invite Referees"}
-          {step === 3 && "Invite Stat Keepers"}
-          {step === 4 && "Invite Teams"}
-        </h1>
-        <p className="text-gray-600">
-          {step === 1 && "Enter league information below to create a new tournament."}
-          {step === 2 && "Choose referees for this league. You can invite new referees or select from existing ones."}
-          {step === 3 &&
-            "Choose Stat Keepers for this league. You can invite new Stat Keepers or select from existing ones."}
-          {step === 4 && "Invite teams to join this league. You can search existing teams."}
-        </p>
-
-        {/* Progress Steps */}
-        <div className="flex items-center justify-between mt-8">
-          {[1, 2, 3, 4].map((s) => (
-            <div key={s} className="flex items-center flex-1">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
-                  step === s
-                    ? "bg-blue-600 text-white"
-                    : step > s
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-200 text-gray-600"
-                }`}
-                style={step === s ? { backgroundColor: PRIMARY_COLOR } : {}}
-              >
-                {step > s ? "✓" : s}
-              </div>
-              {s < 4 && (
-                <div className={`flex-1 h-1 mx-2 transition-colors ${step > s ? "bg-green-600" : "bg-gray-200"}`} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-between text-xs font-medium text-gray-600 mt-4">
-          <span>Create League</span>
-          <span>Referees</span>
-          <span>Stat Keeper</span>
-          <span>Invite Teams</span>
+      <div className="flex flex-col gap-4">
+        <button
+          onClick={handleBack}
+          className="flex items-center justify-center hover:opacity-80 transition-opacity self-start"
+          style={{
+            width: "50px",
+            height: "50px",
+            padding: "10px",
+            borderRadius: "50px",
+            backgroundColor: "#F2F2F2",
+          }}
+        >
+          <img
+            src="/assets/image/Back arrow.svg"
+            alt="back"
+            className="w-5 h-5"
+          />
+        </button>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Create League</h1>
+          <p className="text-muted-foreground mt-1">
+            {step === 1 && "Enter league information below to create a new tournament."}
+            {step === 2 && "Choose referees for this league. You can invite new referees or select from existing ones."}
+            {step === 3 && "Choose Stat Keepers for this league. You can invite new Stat Keepers or select from existing ones."}
+            {step === 4 && "Invite teams to join this league. You can search existing teams."}
+          </p>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Progress Nodes */}
+      <div className="flex items-center justify-between relative w-full">
+        {steps.map((s, index) => (
+          <React.Fragment key={s.number}>
+            <div className="flex flex-col items-center relative z-10 flex-shrink-0" style={{ width: "90px", minWidth: "90px", height: "79px", gap: "12px" }}>
+              <div
+                className="rounded-full flex items-center justify-center font-semibold text-sm transition-colors relative z-10 bg-white flex-shrink-0"
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  minWidth: "50px",
+                  padding: "13px",
+                  backgroundColor: step >= s.number ? PRIMARY_COLOR : "#FFFFFF",
+                  border: `1px solid ${PRIMARY_COLOR}`,
+                  color: step >= s.number ? "#FFFFFF" : "#000000",
+                }}
+              >
+                {step > s.number ? "✓" : s.number}
+              </div>
+              <span
+                className="text-center block"
+                style={{
+                  width: "90px",
+                  minWidth: "90px",
+                  height: "17px",
+                  fontFamily: "Lato, sans-serif",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "100%",
+                  color: "#000000",
+                }}
+              >
+                {s.name}
+              </span>
+            </div>
+            {index < steps.length - 1 && (
+              <div
+                className="flex-1 relative z-0"
+                style={{
+                  height: "50px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  className="h-0 border-t-2"
+                  style={{
+                    borderColor: "rgba(15, 23, 62, 0.2)",
+                    borderWidth: "1.8px",
+                    width: "100%",
+                    marginLeft: "20px",
+                    marginRight: "20px",
+                  }}
+                />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Form Content */}
       <form
-        className="p-8 max-w-3xl mx-auto"
+        className="flex flex-col gap-[18px]"
         onSubmit={(e) => {
           e.preventDefault()
           handleNext()
@@ -223,52 +262,88 @@ export default function CreateLeagueForm({
       >
         {/* Step 1: Create League */}
         {step === 1 && (
-          <div className="space-y-6">
-            {/* Format Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Select Format</label>
-              <div className="grid grid-cols-2 gap-4">
-                {["5v5", "7v7"].map((format) => (
-                  <button
-                    key={format}
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        format: format as "5v5" | "7v7",
-                      })
-                    }
-                    className={`p-4 rounded-lg font-medium transition-colors ${
-                      formData.format === format ? "text-white" : "bg-gray-100 text-gray-900 hover:bg-gray-200"
-                    }`}
-                    style={formData.format === format ? { backgroundColor: PRIMARY_COLOR } : {}}
-                  >
-                    {format}
-                  </button>
-                ))}
-              </div>
+          <div className="flex flex-col gap-[18px]">
+            {/* Select Format */}
+            <div className="flex gap-1">
+              {["5v5", "7v7"].map((format) => (
+                <button
+                  key={format}
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      format: format as "5v5" | "7v7",
+                    })
+                  }
+                  className="flex-1 h-12 px-3 py-[10px] rounded-md font-medium transition-colors"
+                  style={{
+                    backgroundColor: formData.format === format ? PRIMARY_COLOR : "#FFFFFF",
+                    color: formData.format === format ? "#FFFFFF" : "#000000",
+                    border: formData.format === format ? "none" : "1px solid #D1D5DB",
+                    boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                  }}
+                >
+                  {format}
+                </button>
+              ))}
             </div>
 
             {/* League Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">League Name</label>
+            <div className="flex flex-col gap-3">
+              <label
+                className="font-medium"
+                style={{
+                  fontFamily: "Lato, sans-serif",
+                  fontWeight: 500,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#111827",
+                }}
+              >
+                League Name
+              </label>
               <input
                 type="text"
                 placeholder="Enter League Name"
                 value={formData.leagueName}
                 onChange={(e) => setFormData({ ...formData, leagueName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                style={{ borderRadius: "6px" }}
+                className="w-full h-12 px-3 py-[10px] rounded-md border"
+                style={{
+                  border: "1px solid #D1D5DB",
+                  boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                  backgroundColor: "#FFFFFF",
+                }}
               />
             </div>
 
-            {/* Logo Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Upload Logo</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            {/* Upload Logo */}
+            <div className="flex flex-col gap-3">
+              <label
+                className="font-medium"
+                style={{
+                  fontFamily: "Lato, sans-serif",
+                  fontWeight: 500,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#111827",
+                }}
+              >
+                Upload Logo
+              </label>
+              <div
+                className="w-full min-h-[161px] px-3 py-[10px] rounded-md border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                style={{
+                  border: "1px solid #D1D5DB",
+                  borderStyle: "dashed",
+                  boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                  backgroundColor: "#FFFFFF",
+                }}
+              >
                 {formData.logo ? (
                   <div className="flex items-center justify-center gap-4">
                     <div className="text-4xl">{formData.logo.name.split(".")[0]}</div>
                     <button
+                      type="button"
                       onClick={() => setFormData({ ...formData, logo: null })}
                       className="text-red-600 hover:text-red-700"
                     >
@@ -293,68 +368,157 @@ export default function CreateLeagueForm({
 
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <div className="flex flex-col gap-3">
+                <label
+                  className="font-medium"
+                  style={{
+                    fontFamily: "Lato, sans-serif",
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    color: "#111827",
+                  }}
+                >
+                  Start Date
+                </label>
                 <input
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  style={{ borderRadius: "6px" }}
+                  className="w-full h-12 px-3 py-[10px] rounded-md border"
+                  style={{
+                    border: "1px solid #D1D5DB",
+                    boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                    backgroundColor: "#FFFFFF",
+                  }}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <div className="flex flex-col gap-3">
+                <label
+                  className="font-medium"
+                  style={{
+                    fontFamily: "Lato, sans-serif",
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    color: "#111827",
+                  }}
+                >
+                  End Date
+                </label>
                 <input
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  style={{ borderRadius: "6px" }}
+                  className="w-full h-12 px-3 py-[10px] rounded-md border"
+                  style={{
+                    border: "1px solid #D1D5DB",
+                    boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                    backgroundColor: "#FFFFFF",
+                  }}
                 />
               </div>
             </div>
 
-            {/* Other Fields */}
+            {/* Three Fields Row */}
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Players Required</label>
-                <select
-                  value={formData.minPlayers}
-                  onChange={(e) => setFormData({ ...formData, minPlayers: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  style={{ borderRadius: "6px" }}
+              <div className="flex flex-col gap-3">
+                <label
+                  className="font-medium"
+                  style={{
+                    fontFamily: "Lato, sans-serif",
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    color: "#111827",
+                  }}
                 >
-                  <option value="">Select</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                  <option value="8">8</option>
-                </select>
+                  Minimum Players Required
+                </label>
+                <div className="relative">
+                  <select
+                    value={formData.minPlayers}
+                    onChange={(e) => setFormData({ ...formData, minPlayers: e.target.value })}
+                    className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border appearance-none"
+                    style={{
+                      border: "1px solid #D1D5DB",
+                      boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                      backgroundColor: "#FFFFFF",
+                    }}
+                  >
+                    <option value="">Select</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                  </select>
+                  <img
+                    src="/assets/image/arrow-down.svg"
+                    alt=""
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Entry Fee Type</label>
-                <select
-                  value={formData.entryFeeType}
-                  onChange={(e) => setFormData({ ...formData, entryFeeType: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  style={{ borderRadius: "6px" }}
+              <div className="flex flex-col gap-3">
+                <label
+                  className="font-medium"
+                  style={{
+                    fontFamily: "Lato, sans-serif",
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    color: "#111827",
+                  }}
                 >
-                  <option value="">Select</option>
-                  <option value="per-player">Per Player</option>
-                  <option value="per-team">Per Team</option>
-                  <option value="flat">Flat Rate</option>
-                </select>
+                  Entry Fee Type
+                </label>
+                <div className="relative">
+                  <select
+                    value={formData.entryFeeType}
+                    onChange={(e) => setFormData({ ...formData, entryFeeType: e.target.value })}
+                    className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border appearance-none"
+                    style={{
+                      border: "1px solid #D1D5DB",
+                      boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                      backgroundColor: "#FFFFFF",
+                    }}
+                  >
+                    <option value="">Select</option>
+                    <option value="per-player">Per Player</option>
+                    <option value="per-team">Per Team</option>
+                    <option value="flat">Flat Rate</option>
+                  </select>
+                  <img
+                    src="/assets/image/arrow-down.svg"
+                    alt=""
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Per Player League Fee</label>
+              <div className="flex flex-col gap-3">
+                <label
+                  className="font-medium"
+                  style={{
+                    fontFamily: "Lato, sans-serif",
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    color: "#111827",
+                  }}
+                >
+                  Per Player League Fee
+                </label>
                 <input
                   type="number"
                   placeholder="$250"
                   value={formData.perPlayerFee}
                   onChange={(e) => setFormData({ ...formData, perPlayerFee: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  style={{ borderRadius: "6px" }}
+                  className="w-full h-12 px-3 py-[10px] rounded-md border"
+                  style={{
+                    border: "1px solid #D1D5DB",
+                    boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                    backgroundColor: "#FFFFFF",
+                  }}
                 />
               </div>
             </div>
@@ -364,34 +528,50 @@ export default function CreateLeagueForm({
         {/* Step 2: Referees */}
         {step === 2 && (
           <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Search by Referee name"
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-              style={{ borderRadius: "6px" }}
-            />
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by Referee name"
+                className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border"
+                style={{
+                  border: "1px solid #D1D5DB",
+                  boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                  backgroundColor: "#FFFFFF",
+                }}
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {mockReferees.map((referee) => (
-                <div
-                  key={referee.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
+              {mockReferees.map((referee) => {
+                const isSelected = selectedReferees.has(referee.id)
+                return (
+                  <div
+                    key={referee.id}
+                    className="flex items-center justify-between p-3 rounded-md border cursor-pointer hover:bg-gray-50 transition-colors w-full"
+                    style={{
+                      height: "64px",
+                      gap: "10px",
+                      border: "1px solid rgba(0, 0, 0, 0.12)",
+                      backgroundColor: "#FFFFFF",
+                    }}
+                    onClick={() => toggleReferee(referee.id)}
+                  >
+                    <div className="flex items-center gap-[10px]">
+                      <img
+                        src={referee.avatar || "/placeholder.svg"}
+                        alt={referee.name}
+                        className="w-10 h-10 rounded-full flex-shrink-0"
+                      />
+                      <span className="font-medium text-gray-900">{referee.name}</span>
+                    </div>
                     <img
-                      src={referee.avatar || "/placeholder.svg"}
-                      alt={referee.name}
-                      className="w-10 h-10 rounded-full"
+                      src={isSelected ? "/assets/image/ic_baseline-email.svg" : "/assets/image/ic_outline-email.svg"}
+                      alt="email"
+                      className="w-5 h-5 cursor-pointer flex-shrink-0"
                     />
-                    <span className="font-medium text-gray-900">{referee.name}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={selectedReferees.has(referee.id)}
-                    onChange={() => toggleReferee(referee.id)}
-                    className="w-5 h-5 cursor-pointer"
-                  />
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
@@ -399,34 +579,50 @@ export default function CreateLeagueForm({
         {/* Step 3: Stat Keepers */}
         {step === 3 && (
           <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Search by Stat Keeper name"
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-              style={{ borderRadius: "6px" }}
-            />
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by Stat Keeper name"
+                className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border"
+                style={{
+                  border: "1px solid #D1D5DB",
+                  boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                  backgroundColor: "#FFFFFF",
+                }}
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {mockStatKeepers.map((keeper) => (
-                <div
-                  key={keeper.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
+              {mockStatKeepers.map((keeper) => {
+                const isSelected = selectedStatKeepers.has(keeper.id)
+                return (
+                  <div
+                    key={keeper.id}
+                    className="flex items-center justify-between p-3 rounded-md border cursor-pointer hover:bg-gray-50 transition-colors w-full"
+                    style={{
+                      height: "64px",
+                      gap: "10px",
+                      border: "1px solid rgba(0, 0, 0, 0.12)",
+                      backgroundColor: "#FFFFFF",
+                    }}
+                    onClick={() => toggleStatKeeper(keeper.id)}
+                  >
+                    <div className="flex items-center gap-[10px]">
+                      <img
+                        src={keeper.avatar || "/placeholder.svg"}
+                        alt={keeper.name}
+                        className="w-10 h-10 rounded-full flex-shrink-0"
+                      />
+                      <span className="font-medium text-gray-900">{keeper.name}</span>
+                    </div>
                     <img
-                      src={keeper.avatar || "/placeholder.svg"}
-                      alt={keeper.name}
-                      className="w-10 h-10 rounded-full"
+                      src={isSelected ? "/assets/image/ic_baseline-email.svg" : "/assets/image/ic_outline-email.svg"}
+                      alt="email"
+                      className="w-5 h-5 cursor-pointer flex-shrink-0"
                     />
-                    <span className="font-medium text-gray-900">{keeper.name}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={selectedStatKeepers.has(keeper.id)}
-                    onChange={() => toggleStatKeeper(keeper.id)}
-                    className="w-5 h-5 cursor-pointer"
-                  />
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
@@ -434,74 +630,110 @@ export default function CreateLeagueForm({
         {/* Step 4: Teams */}
         {step === 4 && (
           <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Search by Team name"
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-              style={{ borderRadius: "6px" }}
-            />
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {mockTeams.map((team) => (
-                <div key={team.id} className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by Team name"
+                className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border"
+                style={{
+                  border: "1px solid #D1D5DB",
+                  boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                  backgroundColor: "#FFFFFF",
+                }}
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {mockTeams.map((team) => {
+                const isExpanded = selectedTeams.has(team.id)
+                return (
                   <div
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
-                    onClick={() => toggleTeam(team.id)}
+                    key={team.id}
+                    className="rounded-md border w-full p-3"
+                    style={{
+                      border: "1px solid rgba(0, 0, 0, 0.12)",
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: "6px",
+                      padding: "12px",
+                      gap: "12px",
+                    }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">{team.logo}</div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{team.name}</p>
-                        <p className="text-sm text-gray-600">
-                          View Team Overview ({team.playerCount}/{team.playerCount})
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={selectedTeams.has(team.id)}
-                      onChange={() => toggleTeam(team.id)}
-                      className="w-5 h-5 cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Team Roster */}
-                  {selectedTeams.has(team.id) && (
-                    <div className="border-t border-gray-200 bg-gray-50 p-4">
-                      <div className="space-y-2">
-                        {team.players.map((player, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-sm">
-                            <div className="grid grid-cols-3 gap-8 flex-1">
-                              <span className="text-gray-700">#{player.jerseyNumber}</span>
-                              <span className="text-gray-900 font-medium">{player.name}</span>
-                              <span className="text-gray-600">{player.position}</span>
-                            </div>
-                            <button
-                              className="px-3 py-1 rounded text-white text-xs font-medium transition-colors"
-                              style={{ backgroundColor: PRIMARY_COLOR }}
-                            >
-                              View Position
-                            </button>
+                    <div
+                      className="cursor-pointer hover:bg-gray-50 transition-colors -m-3 p-3"
+                      onClick={() => toggleTeam(team.id)}
+                    >
+                      <div className="flex items-start gap-[10px]">
+                        <div className="text-2xl flex-shrink-0">{team.logo}</div>
+                        <div className="flex flex-col gap-1 flex-1 w-full">
+                          <div className="flex items-center justify-between w-full">
+                            <p className="font-semibold text-gray-900">{team.name}</p>
+                            <img
+                              src="/assets/image/ic_outline-email.svg"
+                              alt="email"
+                              className="w-5 h-5 flex-shrink-0"
+                            />
                           </div>
-                        ))}
+                          <div className="flex items-center justify-between w-full">
+                            <p className="text-sm text-gray-600">
+                              View Team Overview ({team.playerCount}/{team.playerCount})
+                            </p>
+                            {isExpanded ? (
+                              <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Team Roster */}
+                    {isExpanded && (
+                      <div
+                        className="border rounded-md p-3 mt-3 w-full"
+                        style={{
+                          gap: "12px",
+                          border: "1px solid rgba(0, 0, 0, 0.12)",
+                          borderRadius: "6px",
+                          backgroundColor: "#FFFFFF",
+                          padding: "12px",
+                        }}
+                      >
+                        <div className="space-y-2">
+                          {team.players.map((player, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-sm">
+                              <div className="grid grid-cols-3 gap-8 flex-1">
+                                <span className="text-gray-700">#{player.jerseyNumber}</span>
+                                <span className="text-gray-900 font-medium">{player.name}</span>
+                                <span className="text-gray-600">{player.position}</span>
+                              </div>
+                              <button
+                                type="button"
+                                className="px-3 py-1 rounded text-white text-xs font-medium transition-colors"
+                                style={{ backgroundColor: PRIMARY_COLOR }}
+                              >
+                                View Position
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
 
-        {/* Next button now inside form */}
-        <div className="mt-8">
-          <button
-            type="submit"
-            className="w-full py-3 rounded-lg text-white font-semibold transition-colors"
-            style={{ backgroundColor: PRIMARY_COLOR }}
-          >
-            {step === 4 ? "Create League" : "Next"}
-          </button>
-        </div>
+        {/* Next Button */}
+        <button
+          type="submit"
+          className="w-full h-[58px] rounded-full text-white font-semibold transition-colors"
+          style={{ backgroundColor: PRIMARY_COLOR }}
+        >
+          {step === 4 ? "Create League" : "Next"}
+        </button>
       </form>
     </div>
   )

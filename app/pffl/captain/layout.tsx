@@ -4,17 +4,17 @@ import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, Plus } from "lucide-react"
+import { Bell } from "lucide-react"
 
 const navigation = [
-  { name: "Home", href: "/superadmin/home", icon: "/assets/image/home.svg" },
-  { name: "Leagues", href: "/superadmin/leagues", icon: "/assets/image/leagues.svg" },
-  { name: "Games", href: "/superadmin/games", icon: "/assets/image/games.svg" },
-  { name: "Users", href: "/superadmin/users", icon: "/assets/image/users.svg" },
-  { name: "Settings", href: "/superadmin/settings", icon: "/assets/image/setting.svg" },
+  { name: "Home", href: "/pffl/captain/home", icon: "/assets/image/home.svg" },
+  { name: "Leagues", href: "/pffl/captain/leagues", icon: "/assets/image/leagues.svg" },
+  { name: "Games", href: "/pffl/captain/games", icon: "/assets/image/games.svg" },
+  { name: "Team", href: "/pffl/captain/team", icon: "/assets/image/users.svg" },
+  { name: "Settings", href: "/pffl/captain/settings", icon: "/assets/image/setting.svg" },
 ]
 
-export default function SuperAdminLayout({
+export default function CaptainLayout({
   children,
 }: {
   children: React.ReactNode
@@ -42,23 +42,13 @@ export default function SuperAdminLayout({
                 </span>
               </div>
 
-              {/* Create League Button */}
-              <Link
-                href="/superadmin/home"
-                className="w-[262px] h-[56px] px-6 py-4 flex items-center gap-3 rounded-xl border border-dashed bg-white hover:bg-gray-50 transition-colors"
-                style={{ borderColor: "rgba(0, 0, 0, 0.12)", borderWidth: "1px" }}
-              >
-                <Plus className="w-5 h-5 text-[#111827]" />
-                <span className="text-[#111827] font-medium">Create League</span>
-              </Link>
-
               {/* Navigation */}
               <nav className="w-[262px] flex flex-col gap-2 mt-2">
                 {navigation.map((item) => {
-                  const isActive = item.href === "/superadmin/home" 
-                    ? pathname === item.href 
-                    : pathname === item.href || pathname.startsWith(item.href + "/")
-                  
+                  const isActive = item.href === "/pffl/captain/home"
+                    ? pathname === item.href
+                    : pathname === item.href || pathname?.startsWith(item.href + "/")
+
                   return (
                     <Link
                       key={item.name}
@@ -73,8 +63,8 @@ export default function SuperAdminLayout({
                           height={24}
                           className="w-6 h-6"
                           style={{
-                            filter: isActive 
-                              ? "brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(202deg) brightness(98%) contrast(96%)" 
+                            filter: isActive
+                              ? "brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(202deg) brightness(98%) contrast(96%)"
                               : "brightness(0) saturate(100%)",
                             opacity: isActive ? 1 : 0.7,
                           }}
@@ -95,11 +85,13 @@ export default function SuperAdminLayout({
 
             {/* User Profile */}
             <div className="pt-4 border-t border-border">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-full" />
+              <div className="flex items-center gap-3 px-[14px] py-2">
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-sm font-medium text-gray-600">C</span>
+                </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">Romail Ahmed</p>
-                  <p className="text-xs text-muted-foreground">romail@pffl.com</p>
+                  <p className="text-sm font-medium text-foreground">Captain</p>
+                  <p className="text-xs text-muted-foreground">captain@pffl.com</p>
                 </div>
               </div>
             </div>
@@ -108,7 +100,7 @@ export default function SuperAdminLayout({
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto bg-gray-50">
-          {pathname !== "/superadmin/home" && pathname !== "/superadmin/leagues" && pathname !== "/superadmin/users" && pathname !== "/superadmin/settings" && !pathname.startsWith("/superadmin/settings/payment-history") && !pathname.startsWith("/superadmin/settings/receipt") && !pathname.startsWith("/superadmin/pffl") && (
+          {pathname !== "/pffl/captain/home" && pathname !== "/pffl/captain/leagues" && pathname !== "/pffl/captain/team" && pathname !== "/pffl/captain/settings" && !pathname?.startsWith("/pffl/captain/settings/") && !pathname?.startsWith("/pffl/captain/signup") && !pathname?.startsWith("/pffl/captain/complete-profile") && !pathname?.startsWith("/pffl/captain/complete-captain-profile") && (
             <div className="flex items-center justify-between p-6 border-b border-border bg-background sticky top-0 z-10">
               <div />
               <button className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -116,9 +108,10 @@ export default function SuperAdminLayout({
               </button>
             </div>
           )}
-          <div className={pathname === "/superadmin/home" || pathname === "/superadmin/leagues" || pathname === "/superadmin/users" || pathname === "/superadmin/settings" || pathname.startsWith("/superadmin/settings/payment-history") || pathname.startsWith("/superadmin/settings/receipt") || pathname.startsWith("/superadmin/pffl") ? "p-6" : "p-6"}>{children}</div>
+          <div className={pathname === "/pffl/captain/home" || pathname === "/pffl/captain/leagues" || pathname === "/pffl/captain/team" || pathname === "/pffl/captain/settings" || pathname?.startsWith("/pffl/captain/settings/") || pathname?.startsWith("/pffl/captain/signup") || pathname?.startsWith("/pffl/captain/complete-profile") || pathname?.startsWith("/pffl/captain/complete-captain-profile") ? "p-6" : "p-6"}>{children}</div>
         </main>
       </div>
     </>
   )
 }
+
