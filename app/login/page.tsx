@@ -9,16 +9,23 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [selectedRole, setSelectedRole] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate login - redirect to captain signup for now
+    
+    // Simulate login - route to signup with selected role
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/pffl/captain/signup")
+      // Route to signup page with role as query parameter
+      if (selectedRole) {
+        router.push(`/pffl/signup?role=${selectedRole}`)
+      } else {
+        router.push("/pffl/signup")
+      }
     }, 1000)
   }
 
@@ -54,6 +61,52 @@ export default function LoginPage() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                {/* Role Selection Dropdown */}
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="role"
+                    className="font-medium"
+                    style={{
+                      fontFamily: "Lato, sans-serif",
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      lineHeight: "20px",
+                      color: "#111827",
+                    }}
+                  >
+                    Select Role
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="role"
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                      required
+                      className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border appearance-none cursor-pointer"
+                      style={{
+                        border: "1px solid #D1D5DB",
+                        boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+                        backgroundColor: "#FFFFFF",
+                        fontFamily: "Lato, sans-serif",
+                      }}
+                    >
+                      <option value="">Select your role</option>
+                      <option value="player">Player</option>
+                      <option value="captain">Captain</option>
+                      <option value="referee">Referee</option>
+                      <option value="stat-keeper">Stat Keeper</option>
+                      <option value="superadmin">Super Admin</option>
+                    </select>
+                    <Image
+                      src="/assets/image/arrow-down.svg"
+                      alt="dropdown"
+                      width={16}
+                      height={16}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    />
+                  </div>
+                </div>
+
                 {/* Email Field */}
                 <div className="flex flex-col gap-2">
                   <label

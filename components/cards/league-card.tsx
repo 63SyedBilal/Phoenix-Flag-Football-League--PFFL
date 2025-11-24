@@ -13,6 +13,7 @@ export interface LeagueCardProps {
   endDate: string
   leagueFee: string
   status: "active" | "pending"
+  baseRoute?: string
 }
 
 export default function LeagueCard({
@@ -24,13 +25,14 @@ export default function LeagueCard({
   endDate,
   leagueFee,
   status,
+  baseRoute = "/superadmin/leagues",
 }: LeagueCardProps) {
   const router = useRouter()
 
   return (
     <div
       className="bg-white border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors w-full flex flex-col min-h-[240px] p-6 gap-6 border-[rgba(0,0,0,0.12)] rounded-[12px]"
-      onClick={() => router.push(`/superadmin/leagues/${id}`)}
+      onClick={() => router.push(`${baseRoute}/${id}`)}
     >
       {/* First Section */}
       <div className="flex flex-col w-full h-[126px] gap-6">

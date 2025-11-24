@@ -17,7 +17,6 @@ node_modules/
 # Misc
 .DS_Store
 *.pem
-Thumbs.db
 
 # Debug
 npm-debug.log*
@@ -46,31 +45,46 @@ next-env.d.ts
 *.swp
 *.swo
 *~
-.project
-.classpath
-.settings/
 
 # OS
+Thumbs.db
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-
-# Package manager lock files (uncomment if you want to ignore them)
-# package-lock.json
-# pnpm-lock.yaml
-# yarn.lock
 
 # Logs
 logs
 *.log
 
-# Temporary files
-*.tmp
-*.temp
-.cache/
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
 

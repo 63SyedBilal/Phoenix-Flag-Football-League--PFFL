@@ -1,6 +1,6 @@
 // Re-export all layout components
-export { Sidebar } from "./sidebar"
-export type { SidebarProps, SidebarNavItem } from "./sidebar"
+export { default as PageHeader } from "./page-header"
+export type { PageHeaderProps } from "./page-header"
 
-export { Header } from "./header"
-export type { HeaderProps } from "./header"
+export { default as SettingsList } from "./settings-list"
+export type { SettingsListProps, SettingsOption } from "./settings-list"
