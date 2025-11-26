@@ -7,9 +7,10 @@ import Image from "next/image"
 export interface TeamFormData {
   teamLogo: File | null
   teamName: string
-  teamColor: string
+  enterCode: string
   location: string
   skillLevel: string
+  format: string
   agreeToTerms: boolean
 }
 
@@ -23,7 +24,7 @@ export interface TeamFormProps {
   successMessage?: string
 }
 
-const skillLevels = ["Recreational", "Intermediate", "Competitive"]
+const skillLevels = ["beginner", "intermediate", "advanced", "professional"]
 
 export default function TeamForm({
   onSuccess,
@@ -37,14 +38,16 @@ export default function TeamForm({
   const [formData, setFormData] = useState<TeamFormData>({
     teamLogo: null,
     teamName: "",
-    teamColor: "",
+    enterCode: "",
     location: "",
-    skillLevel: "",
+    skillLevel: "beginner",
+    format: "5v5",
     agreeToTerms: false,
   })
   const [isSkillLevelDropdownOpen, setIsSkillLevelDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [error, setError] = useState("")
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -54,15 +57,83 @@ export default function TeamForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     setIsLoading(true)
-    // Simulate profile completion
-    setTimeout(() => {
+
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        setError("Session expired. Please login again.")
+        setIsLoading(false)
+        return
+      }
+
+      let imageUrl = ""
+
+      // Upload image to Cloudinary if provided
+      if (formData.teamLogo) {
+        try {
+          const formDataToUpload = new FormData()
+          formDataToUpload.append("file", formData.teamLogo)
+
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: formDataToUpload,
+          })
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json()
+            throw new Error(errorData.error || "Failed to upload image")
+          }
+
+          const uploadData = await uploadResponse.json()
+          imageUrl = uploadData.data.url
+        } catch (uploadError) {
+          console.error("Image upload error:", uploadError)
+          setError("Failed to upload image. Please try again.")
+          setIsLoading(false)
+          return
+        }
+      }
+
+      // Prepare team data
+      const teamData: any = {
+        teamName: formData.teamName.trim(),
+        enterCode: formData.enterCode.trim(),
+        location: formData.location.trim(),
+        skillLevel: formData.skillLevel,
+        format: formData.format,
+        image: imageUrl,
+      }
+
+      // Create team
+      const response = await fetch("/api/team", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(teamData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to create team")
+        setIsLoading(false)
+        return
+      }
+
       setIsLoading(false)
       setShowSuccessPopup(true)
       if (onSuccess) {
         onSuccess(formData)
       }
-    }, 1000)
+    } catch (error) {
+      console.error("Team creation error:", error)
+      setError("An error occurred. Please try again.")
+      setIsLoading(false)
+    }
   }
 
   const handleContinue = () => {
@@ -204,7 +275,7 @@ export default function TeamForm({
         {/* Enter Color */}
         <div className="flex flex-col gap-2">
           <label
-            htmlFor="teamColor"
+            htmlFor="enterCode"
             className="font-medium"
             style={{
               fontFamily: "Lato, sans-serif",
@@ -217,11 +288,11 @@ export default function TeamForm({
             Enter Color
           </label>
           <input
-            id="teamColor"
+            id="enterCode"
             type="text"
-            placeholder="Enter Color"
-            value={formData.teamColor}
-            onChange={(e) => setFormData({ ...formData, teamColor: e.target.value })}
+            placeholder="e.g Blue, Red, Green"
+            value={formData.enterCode}
+            onChange={(e) => setFormData({ ...formData, enterCode: e.target.value })}
             required
             className="w-full h-12 px-3 py-[10px] rounded-md border"
             style={{
@@ -292,7 +363,7 @@ export default function TeamForm({
               }}
             >
               <span style={{ color: formData.skillLevel ? "#111827" : "#9CA3AF" }}>
-                {formData.skillLevel || "e.g recreational"}
+                {formData.skillLevel ? formData.skillLevel.charAt(0).toUpperCase() + formData.skillLevel.slice(1) : "Select skill level"}
               </span>
               <Image
                 src="/assets/image/arrow-down.svg"
@@ -332,13 +403,14 @@ export default function TeamForm({
                       color: formData.skillLevel === level ? "#FFFFFF" : "#000000",
                     }}
                   >
-                    {level}
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
                   </button>
                 ))}
               </div>
             )}
           </div>
         </div>
+
 
         {/* Terms & Privacy */}
         <div className="flex items-center gap-2">
@@ -365,17 +437,26 @@ export default function TeamForm({
           </label>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="p-3 rounded-md bg-red-50 border border-red-200">
+            <p className="text-sm text-red-600" style={{ fontFamily: "Lato, sans-serif" }}>
+              {error}
+            </p>
+          </div>
+        )}
+
         {/* Complete Button */}
         <button
           type="submit"
-          disabled={loading || !formData.agreeToTerms}
+          disabled={loading || !formData.agreeToTerms || !formData.teamName || !formData.enterCode || !formData.location}
           className="w-full h-[58px] rounded-full text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             backgroundColor: "#0F173E",
             fontFamily: "Lato, sans-serif",
           }}
         >
-          {loading ? "Completing..." : "Complete"}
+          {loading ? "Creating Team..." : "Create Team"}
         </button>
       </form>
 

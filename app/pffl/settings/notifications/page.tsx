@@ -1,70 +1,183 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import Image from "next/image"
 import NotificationCardPayment from "@/components/cards/notification-card-payment"
+import InvitationCard from "@/components/cards/invitation-card"
 
-const mockNotifications = [
-  {
-    id: "1",
-    title: "Payment Required",
-    dueDate: "09 Dec 2025",
-    message: "Your League Fee has not been paid. Please complete your payment to stay eligible for the upcoming league.",
-    leagueDetails: {
-      name: "Phoenix Winter 2025",
-      logo: "/placeholder-logo.png",
-      format: "5v5",
-      startDate: "10 December 2025",
-      endDate: "25 February 2026",
-      leagueFee: "$250",
-      status: "active" as const,
-    },
-  },
-  {
-    id: "2",
-    title: "Payment Required",
-    dueDate: "10 Dec 2025",
-    message: "Your League Fee has not been paid. Please complete your payment to stay eligible for the upcoming league.",
-    leagueDetails: {
-      name: "Champions Cup 2025",
-      logo: "/placeholder-logo.png",
-      format: "7v7",
-      startDate: "15 December 2025",
-      endDate: "28 February 2026",
-      leagueFee: "$300",
-      status: "active" as const,
-    },
-  },
-  {
-    id: "3",
-    title: "Payment Required",
-    dueDate: "11 Dec 2025",
-    message: "Your League Fee has not been paid. Please complete your payment to stay eligible for the upcoming league.",
-    leagueDetails: {
-      name: "Summer League 2026",
-      logo: "/placeholder-logo.png",
-      format: "5v5",
-      startDate: "01 January 2026",
-      endDate: "31 March 2026",
-      leagueFee: "$200",
-      status: "pending" as const,
-    },
-  },
-]
+interface Notification {
+  _id: string
+  sender: {
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
+  receiver: {
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
+  team: {
+    _id: string
+    teamName: string
+    image?: string
+  }
+  type: string
+  status: "pending" | "accepted" | "rejected"
+  createdAt: string
+  updatedAt: string
+}
 
-const filterOptions = ["All Notifications", "Payment Required", "League Updates", "Team Updates"]
+const filterOptions = ["All Notifications", "Team Invitations", "Payment Required"]
 
 export default function PfflNotificationsPage() {
   const router = useRouter()
   const [activeFilter, setActiveFilter] = useState("All Notifications")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedItem, setSelectedItem] = useState("Select Item")
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("Please login to view notifications")
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch("/api/notification/all", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+          throw new Error(errorData.error || "Failed to fetch notifications")
+        }
+
+        const data = await response.json()
+        setNotifications(data.data || [])
+        setIsLoading(false)
+      } catch (err: any) {
+        console.error("Error fetching notifications:", err)
+        setError(err.message || "An error occurred while fetching notifications")
+        setIsLoading(false)
+      }
+    }
+
+    fetchNotifications()
+  }, [])
 
   const handlePayNow = (id: string) => {
     router.push(`/pffl/settings/payment/${id}`)
   }
+
+  const handleAcceptInvite = async (notifId: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        alert("Please login")
+        return
+      }
+
+      setProcessingId(notifId)
+
+      console.log("Accepting invite with ID:", notifId)
+
+      const response = await fetch(`/api/notification/accept/${notifId}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+      console.log("Accept invite response:", data)
+
+      if (response.ok) {
+        // Remove accepted notification from list
+        setNotifications((prev) => prev.filter((n) => n._id !== notifId))
+        alert("Invite accepted! You have been added to the team.")
+        // Optionally refresh the page or navigate
+        router.push("/pffl/team")
+      } else {
+        console.error("Failed to accept invite:", data)
+        alert(data.error || "Failed to accept invite")
+      }
+    } catch (err) {
+      console.error("Error accepting invite:", err)
+      alert("An error occurred while accepting invite")
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const handleDeclineInvite = async (notifId: string) => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        alert("Please login")
+        return
+      }
+
+      setProcessingId(notifId)
+
+      const response = await fetch(`/api/notification/reject/${notifId}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Remove rejected notification from list
+        setNotifications((prev) => prev.filter((n) => n._id !== notifId))
+        alert("Invite declined")
+      } else {
+        alert(data.error || "Failed to decline invite")
+      }
+    } catch (err) {
+      console.error("Error declining invite:", err)
+      alert("An error occurred while declining invite")
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  // Filter notifications based on active filter
+  const filteredNotifications = notifications.filter((notification) => {
+    if (activeFilter === "Team Invitations") {
+      return notification.type === "TEAM_INVITE" && notification.status === "pending"
+    }
+    if (activeFilter === "Payment Required") {
+      return false // Payment notifications would be handled separately
+    }
+    return true // All Notifications
+  })
+
+  // Filter by search query
+  const searchFilteredNotifications = filteredNotifications.filter((notification) => {
+    if (!searchQuery) return true
+    const searchLower = searchQuery.toLowerCase()
+    return (
+      notification.sender.firstName.toLowerCase().includes(searchLower) ||
+      notification.sender.lastName.toLowerCase().includes(searchLower) ||
+      notification.team.teamName.toLowerCase().includes(searchLower)
+    )
+  })
 
   return (
     <div className="flex flex-col gap-3">
@@ -149,22 +262,43 @@ export default function PfflNotificationsPage() {
       </div>
 
       {/* Notification Cards */}
-      <div className="space-y-3">
-        {mockNotifications.map((notification) => (
-          <NotificationCardPayment
-            key={notification.id}
-            id={notification.id}
-            title={notification.title}
-            dueDate={notification.dueDate}
-            message={notification.message}
-            leagueDetails={notification.leagueDetails}
-            onPayNow={() => handlePayNow(notification.id)}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>Loading notifications...</p>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center py-8">
+          <p style={{ fontFamily: "Lato, sans-serif", color: "#EF4444" }}>{error}</p>
+        </div>
+      ) : searchFilteredNotifications.length === 0 ? (
+        <div className="flex items-center justify-center py-8">
+          <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>No notifications found</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {searchFilteredNotifications.map((notification) => {
+            // Show invitation cards for team invites
+            if (notification.type === "TEAM_INVITE" && notification.status === "pending") {
+              const notificationId = notification._id?.toString() || notification._id
+              return (
+                <InvitationCard
+                  key={notificationId}
+                  id={notificationId}
+                  senderName={`${notification.sender.firstName} ${notification.sender.lastName}`}
+                  teamName={notification.team.teamName}
+                  teamImage={notification.team.image}
+                  date={notification.createdAt}
+                  onAccept={handleAcceptInvite}
+                  onDecline={handleDeclineInvite}
+                  isProcessing={processingId === notificationId}
+                />
+              )
+            }
+            // Add other notification types here (payment, etc.)
+            return null
+          })}
+        </div>
+      )}
     </div>
   )
 }
-
-
-

@@ -1,69 +1,213 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Bell, UserPlus, MoreVertical } from "lucide-react"
 import Image from "next/image"
 import TeamUsersCard from "@/components/cards/team-users-card"
 import PageHeader from "@/components/layout/page-header"
 
-const mockTeamMembers = [
-  {
-    id: "1",
-    name: "#10 James Richardson",
-    email: "james.r@pffl.com",
-    position: "Rusher +5 more",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
-    role: "Captain" as const,
-    paymentStatus: "Paid" as const,
-    showClockIcon: false,
-  },
-  {
-    id: "2",
-    name: "#10 George Martin",
-    email: "georgemartin.j@pffl.com",
-    position: "Rusher +5 more",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=George",
-    role: "Player" as const,
-    paymentStatus: "Paid" as const,
-    showClockIcon: true,
-  },
-  {
-    id: "3",
-    name: "#10 George Martin",
-    email: "georgemartin.j@pffl.com",
-    position: "Rusher +5 more",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=George2",
-    role: "Player" as const,
-    paymentStatus: "Paid" as const,
-    showClockIcon: true,
-  },
-  {
-    id: "4",
-    name: "#27 George Lee",
-    email: "georgelee.j@pffl.com",
-    position: "Rusher +5 more",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=GeorgeLee",
-    role: "Player" as const,
-    paymentStatus: "Unpaid" as const,
-    showClockIcon: true,
-  },
-  {
-    id: "5",
-    name: "#10 George Martin",
-    email: "georgemartin.j@pffl.com",
-    position: "Rusher +5 more",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=George3",
-    role: "Player" as const,
-    paymentStatus: "Paid" as const,
-    showClockIcon: true,
-  },
-]
+interface TeamMember {
+  id: string
+  name: string
+  email: string
+  position: string
+  avatar: string
+  role: "Captain" | "Player"
+  paymentStatus: "Paid" | "Unpaid"
+  showClockIcon: boolean
+}
+
+interface TeamData {
+  _id: string
+  teamName: string
+  enterCode: string
+  location: string
+  skillLevel: string
+  format: string
+  image: string
+  captain: {
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    role: string
+  }
+  players: Array<{
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    role: string
+  }>
+}
 
 export default function PfflTeamPage() {
-  const [showInviteModal, setShowInviteModal] = useState(false)
+  const router = useRouter()
   const [selectedFormat, setSelectedFormat] = useState("5v5")
-  const currentRoster = 5
-  const maxRoster = 8
+  const [teamData, setTeamData] = useState<TeamData | null>(null)
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [userRole, setUserRole] = useState<string>("")
+
+  // Fetch team data
+  useEffect(() => {
+    const fetchTeamData = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("Please login to view your team")
+          setIsLoading(false)
+          return
+        }
+
+        const userData = JSON.parse(localStorage.getItem("user") || "{}")
+        const userId = userData.id
+        const role = userData.role
+        setUserRole(role || "")
+
+        if (!userId) {
+          setError("User ID not found")
+          setIsLoading(false)
+          return
+        }
+
+        // Fetch team - if captain, get by captainId; if player, get by playerId
+        let apiUrl = ""
+        if (role === "captain") {
+          apiUrl = `/api/team?captainId=${userId}`
+        } else if (role === "player" || role === "free-agent") {
+          apiUrl = `/api/team?playerId=${userId}`
+        } else {
+          setError("You don't have access to team information")
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch(apiUrl, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError("Team not found. Please create a team first.")
+          } else {
+            const errorData = await response.json()
+            setError(errorData.error || "Failed to fetch team data")
+          }
+          setIsLoading(false)
+          return
+        }
+
+        const data = await response.json()
+        const team = data.data
+
+        if (!team) {
+          setError("Team not found")
+          setIsLoading(false)
+          return
+        }
+
+        setTeamData(team)
+        setSelectedFormat(team.format || "5v5")
+
+        // Fetch profiles for captain and players to get position and payment status
+        const allUserIds = [team.captain._id, ...team.players.map((p: any) => p._id)]
+        const profilesMap = new Map()
+
+        // Fetch profiles for all users
+        for (const userId of allUserIds) {
+          try {
+            const profileResponse = await fetch(`/api/profile/${userId}`, {
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+            })
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json()
+              if (profileData.data) {
+                profilesMap.set(userId, profileData.data)
+              }
+            }
+          } catch (err) {
+            console.error(`Error fetching profile for ${userId}:`, err)
+          }
+        }
+
+        // Build team members array
+        const members: TeamMember[] = []
+
+        // Add captain
+        const captainProfile = profilesMap.get(team.captain._id)
+        members.push({
+          id: team.captain._id,
+          name: `#${captainProfile?.jerseyNumber || ""} ${team.captain.firstName} ${team.captain.lastName}`,
+          email: team.captain.email,
+          position: captainProfile?.position || "N/A",
+          avatar: captainProfile?.image || "/placeholder-user.jpg",
+    role: "Captain" as const,
+          paymentStatus: (captainProfile?.paymentStatus === "paid" ? "Paid" : "Unpaid") as const,
+    showClockIcon: false,
+        })
+
+        // Add players
+        team.players.forEach((player: any) => {
+          const playerProfile = profilesMap.get(player._id)
+          members.push({
+            id: player._id,
+            name: `#${playerProfile?.jerseyNumber || ""} ${player.firstName} ${player.lastName}`,
+            email: player.email,
+            position: playerProfile?.position || "N/A",
+            avatar: playerProfile?.image || "/placeholder-user.jpg",
+    role: "Player" as const,
+            paymentStatus: (playerProfile?.paymentStatus === "paid" ? "Paid" : "Unpaid") as const,
+    showClockIcon: true,
+          })
+        })
+
+        setTeamMembers(members)
+        setIsLoading(false)
+      } catch (err) {
+        console.error("Error fetching team data:", err)
+        setError("An error occurred while fetching team data")
+        setIsLoading(false)
+      }
+    }
+
+    fetchTeamData()
+  }, [])
+
+  const currentRoster = teamMembers.length
+  const maxRoster = selectedFormat === "5v5" ? 5 : 7
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>Loading team data...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p style={{ fontFamily: "Lato, sans-serif", color: "#EF4444" }}>{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!teamData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>No team data available</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -78,20 +222,22 @@ export default function PfflTeamPage() {
             <Bell className="w-5 h-5 text-foreground" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="flex items-center justify-center gap-2 text-white font-medium rounded-xl"
-            style={{
-              width: "111px",
-              height: "50px",
-              gap: "8px",
-              borderRadius: "14px",
-              backgroundColor: "#3B82F6",
-            }}
-          >
-            <UserPlus className="w-5 h-5" />
-            <span>Invite</span>
-          </button>
+          {userRole === "captain" && (
+            <button
+              onClick={() => router.push(`/pffl/team/invite?format=${selectedFormat}`)}
+              className="flex items-center justify-center gap-2 text-white font-medium rounded-xl"
+              style={{
+                width: "111px",
+                height: "50px",
+                gap: "8px",
+                borderRadius: "14px",
+                backgroundColor: "#3B82F6",
+              }}
+            >
+              <UserPlus className="w-5 h-5" />
+              <span>Invite</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -102,7 +248,7 @@ export default function PfflTeamPage() {
             {/* Team Logo */}
             <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-dashed border-gray-300">
               <Image
-                src="/placeholder-logo.png"
+                src={teamData.image || "/placeholder-logo.png"}
                 alt="Team Logo"
                 width={48}
                 height={48}
@@ -110,7 +256,7 @@ export default function PfflTeamPage() {
               />
             </div>
             {/* Team Name */}
-            <h2 className="text-2xl font-bold text-foreground">STA</h2>
+            <h2 className="text-2xl font-bold text-foreground">{teamData.teamName}</h2>
           </div>
           <div className="flex items-center gap-3">
             {/* Roster Count */}
@@ -153,7 +299,8 @@ export default function PfflTeamPage() {
 
       {/* Team Member Cards */}
       <div className="space-y-3">
-        {mockTeamMembers.map((member) => (
+        {teamMembers.length > 0 ? (
+          teamMembers.map((member) => (
           <TeamUsersCard
             key={member.id}
             id={member.id}
@@ -165,72 +312,19 @@ export default function PfflTeamPage() {
             paymentStatus={member.paymentStatus}
             showClockIcon={member.showClockIcon}
           />
-        ))}
-      </div>
-
-      {/* Invite User Modal */}
-      {showInviteModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
-          onClick={() => setShowInviteModal(false)}
-        >
-          <div
-            className="bg-white rounded-[24px] relative"
-            style={{
-              width: "603px",
-              padding: "20px 14px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="flex flex-col"
-              style={{
-                width: "575px",
-                gap: "20px",
-              }}
-            >
-              {/* Title */}
-              <h2 className="text-2xl font-bold text-foreground text-center" style={{ fontFamily: "Lato, sans-serif" }}>
-                Invite Player
-              </h2>
-
-              {/* Email Input */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-foreground" style={{ fontFamily: "Lato, sans-serif" }}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  placeholder="Enter email address"
-                  className="w-full h-12 px-4 rounded-lg border border-[#E5E7EB] bg-white"
-                  style={{ fontFamily: "Lato, sans-serif" }}
-                />
-              </div>
-
-              {/* Invite Button */}
-              <div className="flex items-center justify-center mt-auto pt-4">
-                <button
-                  onClick={() => {
-                    // Handle invite logic here
-                    setShowInviteModal(false)
-                  }}
-                  className="w-full h-12 rounded-full text-sm font-medium text-white transition-colors"
-                  style={{
-                    backgroundColor: "#0F173E",
-                    fontFamily: "Lato, sans-serif",
-                  }}
-                >
-                  Invite
-                </button>
-              </div>
-            </div>
-          </div>
+          ))
+        ) : (
+          <div className="text-center py-8">
+            <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>No team members yet</p>
         </div>
       )}
+      </div>
+
     </div>
   )
 }
+
+
 
 
 

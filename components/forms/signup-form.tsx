@@ -20,6 +20,9 @@ export interface SignupFormProps {
   onBack?: () => void
   isLoading?: boolean
   showBackButton?: boolean
+  prefillEmail?: string
+  prefillRole?: string
+  isCompleteProfile?: boolean
 }
 
 export default function SignupForm({
@@ -28,16 +31,20 @@ export default function SignupForm({
   onBack,
   isLoading: externalLoading,
   showBackButton = true,
+  prefillEmail = "",
+  prefillRole = "",
+  isCompleteProfile = false,
 }: SignupFormProps) {
   const [formData, setFormData] = useState<SignupFormData>({
     firstName: "",
     lastName: "",
-    email: "",
+    email: prefillEmail,
     phoneNumber: "",
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
   })
+  const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -45,18 +52,95 @@ export default function SignupForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (formData.password !== formData.confirmPassword) {
-      return
-    }
-    setIsLoading(true)
-    // Simulate account creation
-    setTimeout(() => {
-      setIsLoading(false)
-      setShowSuccessPopup(true)
-      if (onSuccess) {
-        onSuccess(formData)
+    setError("")
+    
+    if (isCompleteProfile) {
+      // Complete existing profile
+      if (!formData.firstName || !formData.lastName) {
+        setError("First name and last name are required")
+        return
       }
-    }, 1000)
+      
+      // If password is provided, validate it
+      if (formData.password) {
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords do not match")
+          return
+        }
+        if (formData.password.length < 8) {
+          setError("Password must be at least 8 characters long")
+          return
+        }
+      }
+      
+      setIsLoading(true)
+      
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("Session expired. Please login again.")
+          setIsLoading(false)
+          return
+        }
+
+        const body: any = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phoneNumber,
+        }
+
+        // Include password only if provided
+        if (formData.password && formData.password.trim() !== "") {
+          body.password = formData.password
+        }
+
+        const response = await fetch("/api/complete-profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          setError(data.error || "Failed to complete profile")
+          setIsLoading(false)
+          return
+        }
+
+        // Update user in localStorage
+        const userData = JSON.parse(localStorage.getItem("user") || "{}")
+        userData.firstName = data.data.firstName
+        userData.lastName = data.data.lastName
+        userData.phone = data.data.phone
+        localStorage.setItem("user", JSON.stringify(userData))
+
+        setIsLoading(false)
+        setShowSuccessPopup(true)
+      } catch (error) {
+        console.error("Complete profile error:", error)
+        setError("An error occurred. Please try again.")
+        setIsLoading(false)
+      }
+    } else {
+      // Regular signup flow
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match")
+        return
+      }
+      setIsLoading(true)
+      // Simulate account creation
+      setTimeout(() => {
+        setIsLoading(false)
+        setShowSuccessPopup(true)
+        if (onSuccess) {
+          onSuccess(formData)
+        }
+      }, 1000)
+    }
   }
 
   const handleContinue = () => {
@@ -103,7 +187,7 @@ export default function SignupForm({
             color: "#111827",
           }}
         >
-          Join PFFL Today
+          {isCompleteProfile ? "Complete Your Profile" : "Join PFFL Today"}
         </h1>
         <p
           className="text-base"
@@ -112,9 +196,20 @@ export default function SignupForm({
             color: "#6B7280",
           }}
         >
-          {getAccountTypeText()}
+          {isCompleteProfile 
+            ? "Please fill in your details to complete your account setup"
+            : getAccountTypeText()}
         </p>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-3 rounded-md bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600" style={{ fontFamily: "Lato, sans-serif" }}>
+            {error}
+          </p>
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -205,12 +300,15 @@ export default function SignupForm({
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
+            disabled={isCompleteProfile}
+            readOnly={isCompleteProfile}
             className="w-full h-12 px-3 py-[10px] rounded-md border"
             style={{
               border: "1px solid #D1D5DB",
               boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
-              backgroundColor: "#FFFFFF",
+              backgroundColor: isCompleteProfile ? "#F3F4F6" : "#FFFFFF",
               fontFamily: "Lato, sans-serif",
+              cursor: isCompleteProfile ? "not-allowed" : "text",
             }}
           />
         </div>
@@ -238,7 +336,7 @@ export default function SignupForm({
               placeholder="e.g +44 123 456 7890"
               value={formData.phoneNumber}
               onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-              required
+              required={!isCompleteProfile}
               className="w-full h-12 px-3 pl-10 py-[10px] rounded-md border"
               style={{
                 border: "1px solid #D1D5DB",
@@ -250,7 +348,7 @@ export default function SignupForm({
           </div>
         </div>
 
-        {/* Create Password */}
+        {/* Password Fields - Optional when completing profile */}
         <div className="flex flex-col gap-2">
           <label
             htmlFor="password"
@@ -263,16 +361,16 @@ export default function SignupForm({
               color: "#111827",
             }}
           >
-            Create Password
+            {isCompleteProfile ? "Change Password (Optional)" : "Create Password"}
           </label>
           <div className="relative">
             <input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Create your password"
+              placeholder={isCompleteProfile ? "Enter new password (optional)" : "Create your password"}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
+              required={!isCompleteProfile}
               className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border"
               style={{
                 border: "1px solid #D1D5DB",
@@ -289,15 +387,17 @@ export default function SignupForm({
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
-          <p
-            className="text-xs"
-            style={{
-              fontFamily: "Lato, sans-serif",
-              color: "#6B7280",
-            }}
-          >
-            Password strength: <span className="text-gray-400">●●●●●●</span>
-          </p>
+          {!isCompleteProfile && (
+            <p
+              className="text-xs"
+              style={{
+                fontFamily: "Lato, sans-serif",
+                color: "#6B7280",
+              }}
+            >
+              Password strength: <span className="text-gray-400">●●●●●●</span>
+            </p>
+          )}
         </div>
 
         {/* Confirm Password */}
@@ -313,16 +413,16 @@ export default function SignupForm({
               color: "#111827",
             }}
           >
-            Confirm Password
+            {isCompleteProfile ? "Confirm New Password" : "Confirm Password"}
           </label>
           <div className="relative">
             <input
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
-              placeholder="Re-enter your password"
+              placeholder={isCompleteProfile ? "Re-enter new password (optional)" : "Re-enter your password"}
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              required
+              required={!isCompleteProfile}
               className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border"
               style={{
                 border: "1px solid #D1D5DB",
@@ -344,35 +444,37 @@ export default function SignupForm({
           )}
         </div>
 
-        {/* Terms & Privacy */}
-        <div className="flex items-center gap-2">
-          <input
-            id="terms"
-            type="checkbox"
-            checked={formData.agreeToTerms}
-            onChange={(e) => setFormData({ ...formData, agreeToTerms: e.target.checked })}
-            className="rounded border-border"
-            required
-          />
-          <label
-            htmlFor="terms"
-            className="text-xs"
-            style={{
-              fontFamily: "Lato, sans-serif",
-              color: "#6B7280",
-            }}
-          >
-            I agree to{" "}
-            <a href="#" className="text-[#0F173E] hover:underline">
-              Terms & Privacy
-            </a>
-          </label>
-        </div>
+        {/* Terms & Privacy - Only show for new signups */}
+        {!isCompleteProfile && (
+          <div className="flex items-center gap-2">
+            <input
+              id="terms"
+              type="checkbox"
+              checked={formData.agreeToTerms}
+              onChange={(e) => setFormData({ ...formData, agreeToTerms: e.target.checked })}
+              className="rounded border-border"
+              required
+            />
+            <label
+              htmlFor="terms"
+              className="text-xs"
+              style={{
+                fontFamily: "Lato, sans-serif",
+                color: "#6B7280",
+              }}
+            >
+              I agree to{" "}
+              <a href="#" className="text-[#0F173E] hover:underline">
+                Terms & Privacy
+              </a>
+            </label>
+          </div>
+        )}
 
         {/* Create Account Button */}
         <button
           type="submit"
-          disabled={loading || !formData.agreeToTerms}
+          disabled={loading || (!isCompleteProfile && !formData.agreeToTerms)}
           className="w-full h-[58px] rounded-full text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             backgroundColor: "#0F173E",
@@ -382,19 +484,21 @@ export default function SignupForm({
           {loading ? "Creating Account..." : "Create Account"}
         </button>
 
-        {/* Already have account */}
-        <p
-          className="text-center text-sm flex items-center justify-center gap-1"
-          style={{
-            fontFamily: "Lato, sans-serif",
-            color: "#6B7280",
-          }}
-        >
-          Already have an account?{" "}
-          <a href="/login" className="text-[#0F173E] hover:underline flex items-center gap-1">
-            login <ArrowRight className="w-4 h-4" />
-          </a>
-        </p>
+        {/* Already have account - Hide if completing profile */}
+        {!isCompleteProfile && (
+          <p
+            className="text-center text-sm flex items-center justify-center gap-1"
+            style={{
+              fontFamily: "Lato, sans-serif",
+              color: "#6B7280",
+            }}
+          >
+            Already have an account?{" "}
+            <a href="/login" className="text-[#0F173E] hover:underline flex items-center gap-1">
+              login <ArrowRight className="w-4 h-4" />
+            </a>
+          </p>
+        )}
       </form>
 
       {/* Success Popup */}
@@ -423,13 +527,15 @@ export default function SignupForm({
                 className="text-2xl font-bold text-foreground text-center"
                 style={{ fontFamily: "Lato, sans-serif" }}
               >
-                Account Created Successfully
+                {isCompleteProfile ? "Account Created Complete" : "Account Created Successfully"}
               </h2>
               <p
                 className="text-base text-foreground text-center"
                 style={{ fontFamily: "Lato, sans-serif" }}
               >
-                Your account has been created. Please continue to complete your profile.
+                {isCompleteProfile 
+                  ? "Your profile has been completed successfully. You can now access all features."
+                  : "Your account has been created. Please continue to complete your profile."}
               </p>
               <button
                 onClick={handleContinue}
@@ -445,6 +551,7 @@ export default function SignupForm({
     </div>
   )
 }
+
 
 
 

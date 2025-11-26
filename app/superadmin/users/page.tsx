@@ -67,8 +67,70 @@ export default function UsersPage() {
   const [email, setEmail] = useState("")
   const [selectedRole, setSelectedRole] = useState("Captain")
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
   const roles = ["Captain", "Referee", "Stat Keeper", "Player", "Free Agent"]
+
+  // Map UI role names to backend schema values
+  const roleMap: { [key: string]: string } = {
+    "Captain": "captain",
+    "Player": "player",
+    "Referee": "referee",
+    "Stat Keeper": "stat-keeper",
+    "Free Agent": "free-agent",
+  }
+
+  const handleInvite = async () => {
+    if (!email || !selectedRole) {
+      setError("Please fill in all fields")
+      return
+    }
+
+    setIsLoading(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      // Map the UI role to backend role format
+      const backendRole = roleMap[selectedRole] || selectedRole.toLowerCase().replace(/\s+/g, "-")
+      
+      const response = await fetch("/api/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          role: backendRole, // Send the mapped role to backend
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to invite user")
+        setIsLoading(false)
+        return
+      }
+
+      setSuccess("User invited successfully! Password sent to email.")
+      setTimeout(() => {
+        setShowInviteModal(false)
+        setEmail("")
+        setSelectedRole("Captain")
+        setError("")
+        setSuccess("")
+        // Refresh the page or update user list
+        window.location.reload()
+      }, 2000)
+    } catch (error) {
+      console.error("Invite error:", error)
+      setError("An error occurred. Please try again.")
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -259,23 +321,36 @@ export default function UsersPage() {
                 </div>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="p-3 rounded-md bg-red-50 border border-red-200">
+                  <p className="text-sm text-red-600" style={{ fontFamily: "Lato, sans-serif" }}>
+                    {error}
+                  </p>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {success && (
+                <div className="p-3 rounded-md bg-green-50 border border-green-200">
+                  <p className="text-sm text-green-600" style={{ fontFamily: "Lato, sans-serif" }}>
+                    {success}
+                  </p>
+                </div>
+              )}
+
               {/* Invite Button */}
               <div className="flex items-center justify-center mt-auto pt-4">
                 <button
-                  onClick={() => {
-                    // Handle invite logic here
-                    console.log("Invite user:", email, selectedRole)
-                    setShowInviteModal(false)
-                    setEmail("")
-                    setSelectedRole("Captain")
-                  }}
-                  className="w-full h-12 rounded-full text-sm font-medium text-white transition-colors"
+                  onClick={handleInvite}
+                  disabled={isLoading}
+                  className="w-full h-12 rounded-full text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: "#0F173E",
                     fontFamily: "Lato, sans-serif",
                   }}
                 >
-                  Invite
+                  {isLoading ? "Sending..." : "Invite"}
                 </button>
               </div>
             </div>

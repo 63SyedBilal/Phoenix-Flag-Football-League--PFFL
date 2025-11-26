@@ -1,11 +1,9 @@
 import mongoose from "mongoose"
 
-const MONGODB_URI = process.env.MONGODB_URI || ""
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://zubairhashmi423_db_user:zubairkhann123@cluster0.ikrhunq.mongodb.net/pffl?retryWrites=true&w=majority"
 
 if (!MONGODB_URI) {
-  throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env.local"
-  )
+  throw new Error("Please define MONGODB_URI in .env.local")
 }
 
 interface MongooseCache {
@@ -13,9 +11,7 @@ interface MongooseCache {
   promise: Promise<typeof mongoose> | null
 }
 
-// Use global variable to cache the connection in development
 declare global {
-  // eslint-disable-next-line no-var
   var mongoose: MongooseCache | undefined
 }
 
@@ -25,62 +21,43 @@ if (!global.mongoose) {
   global.mongoose = cached
 }
 
-/**
- * Connect to MongoDB database
- * Uses connection pooling and caching to prevent multiple connections in development
- * @returns Mongoose connection instance
- */
-export async function connectDB(): Promise<typeof mongoose> {
+export async function connectDB() {
+  // Check if already connected to the correct database
   if (cached.conn) {
-    return cached.conn
-  }
-
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
+    const currentDb = cached.conn.connection.db?.databaseName
+    if (currentDb === "pffl") {
+      return cached.conn
     }
-
-    cached.promise = mongoose
-      .connect(MONGODB_URI, opts)
-      .then((mongoose) => {
-        console.log("✅ MongoDB connected successfully")
-        return mongoose
-      })
-      .catch((error) => {
-        console.error("❌ MongoDB connection error:", error)
-        throw error
-      })
-  }
-
-  try {
-    cached.conn = await cached.promise
-  } catch (e) {
-    cached.promise = null
-    throw e
-  }
-
-  return cached.conn
-}
-
-/**
- * Disconnect from MongoDB database
- */
-export async function disconnectDB(): Promise<void> {
-  if (cached.conn) {
+    // If connected to wrong database, disconnect first
     await mongoose.disconnect()
     cached.conn = null
     cached.promise = null
-    console.log("✅ MongoDB disconnected")
   }
+
+  if (!cached.promise) {
+    // Ensure database name is in the URI
+    let uri = MONGODB_URI
+    if (!uri.includes("/pffl") && !uri.includes("?") && !uri.endsWith("/")) {
+      uri = uri.replace(/\/$/, "") + "/pffl?retryWrites=true&w=majority"
+    } else if (!uri.includes("/pffl") && uri.includes("?")) {
+      uri = uri.replace(/\?/, "/pffl?")
+    } else if (!uri.includes("/pffl") && uri.endsWith("/")) {
+      uri = uri + "pffl?retryWrites=true&w=majority"
+    }
+
+    cached.promise = mongoose.connect(uri, {
+      dbName: "pffl", // Explicitly set database name
+    }).then((mongoose) => {
+      const dbName = mongoose.connection.db?.databaseName || "unknown"
+      console.log(`✅ MongoDB connected to database: ${dbName}`)
+      return mongoose
+    })
+  }
+
+  cached.conn = await cached.promise
+  return cached.conn
 }
 
-/**
- * Check if database is connected
- * @returns True if connected, false otherwise
- */
-export function isConnected(): boolean {
-  return mongoose.connection.readyState === 1
-}
 
 
 

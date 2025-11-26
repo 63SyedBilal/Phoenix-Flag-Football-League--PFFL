@@ -5,11 +5,12 @@ import { Upload } from "lucide-react"
 import Image from "next/image"
 
 export interface CaptainProfileFormData {
-  teamLogo: File | null
-  teamName: string
-  teamColor: string
-  location: string
-  skillLevel: string
+  image: File | null
+  yearOfExperience: number
+  position: string
+  jerseyNumber: number | null
+  emergencyNumber: string
+  emergencyPhoneNumber: string
   agreeToTerms: boolean
 }
 
@@ -21,9 +22,9 @@ export interface ProfileFormProps {
   title?: string
   subtitle?: string
   successMessage?: string
+  role?: string
 }
 
-const skillLevels = ["Recreational", "Intermediate", "Competitive"]
 
 export default function ProfileForm({
   onSuccess,
@@ -33,36 +34,117 @@ export default function ProfileForm({
   title = "Complete Your Profile",
   subtitle = "This helps teams find you",
   successMessage = "Your captain profile has been completed successfully.",
+  role = "captain",
 }: ProfileFormProps) {
+  const isPlayer = role === "player"
+  const isCaptain = role === "captain"
   const [formData, setFormData] = useState<CaptainProfileFormData>({
-    teamLogo: null,
-    teamName: "",
-    teamColor: "",
-    location: "",
-    skillLevel: "",
+    image: null,
+    yearOfExperience: 0,
+    position: "",
+    jerseyNumber: null,
+    emergencyNumber: "",
+    emergencyPhoneNumber: "",
     agreeToTerms: false,
   })
-  const [isSkillLevelDropdownOpen, setIsSkillLevelDropdownOpen] = useState(false)
+  const [error, setError] = useState("")
+  
+  // Update success message based on role
+  const finalSuccessMessage = isPlayer 
+    ? "Your player profile has been completed successfully."
+    : successMessage
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [isPositionDropdownOpen, setIsPositionDropdownOpen] = useState(false)
+  
+  const positions = ["Center", "Blocker", "Receiver", "Slot", "QB", "Star QB", "Rusher", "LB", "Corner", "Safety"]
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, teamLogo: e.target.files[0] })
+      setFormData({ ...formData, image: e.target.files[0] })
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     setIsLoading(true)
-    // Simulate profile completion
-    setTimeout(() => {
+
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        setError("Session expired. Please login again.")
+        setIsLoading(false)
+        return
+      }
+
+      let imageUrl = ""
+
+      // Upload image to Cloudinary if provided
+      if (formData.image) {
+        try {
+          const formDataToUpload = new FormData()
+          formDataToUpload.append("file", formData.image)
+
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            body: formDataToUpload,
+          })
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json()
+            throw new Error(errorData.error || "Failed to upload image")
+          }
+
+          const uploadData = await uploadResponse.json()
+          imageUrl = uploadData.data.url
+        } catch (uploadError) {
+          console.error("Image upload error:", uploadError)
+          setError("Failed to upload image. Please try again.")
+          setIsLoading(false)
+          return
+        }
+      }
+
+      // Prepare profile data
+      const profileData: any = {
+        yearOfExperience: formData.yearOfExperience || 0,
+        position: formData.position || "",
+        jerseyNumber: formData.jerseyNumber || null,
+        emergencyNumber: formData.emergencyNumber,
+        emergencyPhoneNumber: formData.emergencyPhoneNumber,
+        image: imageUrl,
+        paymentStatus: "unpaid",
+      }
+
+      // Create or update profile
+      const response = await fetch("/api/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(profileData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to create profile")
+        setIsLoading(false)
+        return
+      }
+
       setIsLoading(false)
       setShowSuccessPopup(true)
       if (onSuccess) {
         onSuccess(formData)
       }
-    }, 1000)
+    } catch (error) {
+      console.error("Profile creation error:", error)
+      setError("An error occurred. Please try again.")
+      setIsLoading(false)
+    }
   }
 
   const handleContinue = () => {
@@ -111,7 +193,7 @@ export default function ProfileForm({
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* Team Logo Upload */}
+        {/* Team Logo Upload - Show for both players and captains */}
         <div className="flex flex-col items-center gap-4">
           <div
             className="w-32 h-32 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden"
@@ -120,10 +202,10 @@ export default function ProfileForm({
               backgroundColor: "#F9FAFB",
             }}
           >
-            {formData.teamLogo ? (
+            {formData.image ? (
               <img
-                src={URL.createObjectURL(formData.teamLogo)}
-                alt="Team Logo"
+                src={URL.createObjectURL(formData.image)}
+                alt="Profile Picture"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -137,7 +219,7 @@ export default function ProfileForm({
               color: "#111827",
             }}
           >
-            Team Logo (Optional)
+            Profile Picture (Optional)
           </p>
           <p
             className="text-xs text-center max-w-md"
@@ -146,7 +228,7 @@ export default function ProfileForm({
               color: "#6B7280",
             }}
           >
-            Please upload your team's logo in this section to ensure that we can represent your brand accurately.
+            Please upload your profile picture to help teams recognize you.
           </p>
           <label className="cursor-pointer">
             <input
@@ -169,10 +251,10 @@ export default function ProfileForm({
           </label>
         </div>
 
-        {/* Team Name */}
+        {/* Year of Experience */}
         <div className="flex flex-col gap-2">
           <label
-            htmlFor="teamName"
+            htmlFor="yearOfExperience"
             className="font-medium"
             style={{
               fontFamily: "Lato, sans-serif",
@@ -182,14 +264,15 @@ export default function ProfileForm({
               color: "#111827",
             }}
           >
-            Team Name
+            Years of Experience
           </label>
           <input
-            id="teamName"
-            type="text"
-            placeholder="e.g Star Eleven"
-            value={formData.teamName}
-            onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
+            id="yearOfExperience"
+            type="number"
+            min="0"
+            placeholder="e.g 5"
+            value={formData.yearOfExperience || ""}
+            onChange={(e) => setFormData({ ...formData, yearOfExperience: parseInt(e.target.value) || 0 })}
             required
             className="w-full h-12 px-3 py-[10px] rounded-md border"
             style={{
@@ -201,71 +284,7 @@ export default function ProfileForm({
           />
         </div>
 
-        {/* Enter Color */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="teamColor"
-            className="font-medium"
-            style={{
-              fontFamily: "Lato, sans-serif",
-              fontWeight: 500,
-              fontSize: "14px",
-              lineHeight: "20px",
-              color: "#111827",
-            }}
-          >
-            Enter Color
-          </label>
-          <input
-            id="teamColor"
-            type="text"
-            placeholder="Enter Color"
-            value={formData.teamColor}
-            onChange={(e) => setFormData({ ...formData, teamColor: e.target.value })}
-            required
-            className="w-full h-12 px-3 py-[10px] rounded-md border"
-            style={{
-              border: "1px solid #D1D5DB",
-              boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
-              backgroundColor: "#FFFFFF",
-              fontFamily: "Lato, sans-serif",
-            }}
-          />
-        </div>
-
-        {/* Location */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="location"
-            className="font-medium"
-            style={{
-              fontFamily: "Lato, sans-serif",
-              fontWeight: 500,
-              fontSize: "14px",
-              lineHeight: "20px",
-              color: "#111827",
-            }}
-          >
-            Location
-          </label>
-          <input
-            id="location"
-            type="text"
-            placeholder="e.g Street 11, Newyork"
-            value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            required
-            className="w-full h-12 px-3 py-[10px] rounded-md border"
-            style={{
-              border: "1px solid #D1D5DB",
-              boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
-              backgroundColor: "#FFFFFF",
-              fontFamily: "Lato, sans-serif",
-            }}
-          />
-        </div>
-
-        {/* Skill Level Dropdown */}
+        {/* Position Dropdown */}
         <div className="flex flex-col gap-2">
           <label
             className="font-medium"
@@ -277,12 +296,12 @@ export default function ProfileForm({
               color: "#111827",
             }}
           >
-            Skill Level
+            Position
           </label>
           <div className="relative">
             <button
               type="button"
-              onClick={() => setIsSkillLevelDropdownOpen(!isSkillLevelDropdownOpen)}
+              onClick={() => setIsPositionDropdownOpen(!isPositionDropdownOpen)}
               className="w-full h-12 px-3 py-[10px] rounded-md border flex items-center justify-between text-left"
               style={{
                 border: "1px solid #D1D5DB",
@@ -291,54 +310,152 @@ export default function ProfileForm({
                 fontFamily: "Lato, sans-serif",
               }}
             >
-              <span style={{ color: formData.skillLevel ? "#111827" : "#9CA3AF" }}>
-                {formData.skillLevel || "e.g recreational"}
+              <span style={{ color: formData.position ? "#111827" : "#9CA3AF" }}>
+                {formData.position || "Select position"}
               </span>
               <Image
                 src="/assets/image/arrow-down.svg"
                 alt="dropdown"
                 width={16}
                 height={16}
-                className={`transition-transform ${isSkillLevelDropdownOpen ? "rotate-180" : ""}`}
+                className={`transition-transform ${isPositionDropdownOpen ? "rotate-180" : ""}`}
               />
             </button>
-            {isSkillLevelDropdownOpen && (
+            {isPositionDropdownOpen && (
               <div
                 className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 overflow-hidden"
                 style={{ maxHeight: "200px", overflowY: "auto" }}
               >
-                {skillLevels.map((level) => (
+                {positions.map((position) => (
                   <button
-                    key={level}
+                    key={position}
                     type="button"
                     onClick={() => {
-                      setFormData({ ...formData, skillLevel: level })
-                      setIsSkillLevelDropdownOpen(false)
+                      setFormData({ ...formData, position: position })
+                      setIsPositionDropdownOpen(false)
                     }}
                     className="w-full px-4 py-3 text-left text-sm transition-colors"
                     onMouseEnter={(e) => {
-                      if (formData.skillLevel !== level) {
+                      if (formData.position !== position) {
                         e.currentTarget.style.backgroundColor = "#F3F4F6"
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (formData.skillLevel !== level) {
+                      if (formData.position !== position) {
                         e.currentTarget.style.backgroundColor = "transparent"
                       }
                     }}
                     style={{
                       fontFamily: "Lato, sans-serif",
-                      backgroundColor: formData.skillLevel === level ? "#0F173E" : "transparent",
-                      color: formData.skillLevel === level ? "#FFFFFF" : "#000000",
+                      backgroundColor: formData.position === position ? "#0F173E" : "transparent",
+                      color: formData.position === position ? "#FFFFFF" : "#000000",
                     }}
                   >
-                    {level}
+                    {position}
                   </button>
                 ))}
               </div>
             )}
           </div>
         </div>
+
+        {/* Jersey Number */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="jerseyNumber"
+            className="font-medium"
+            style={{
+              fontFamily: "Lato, sans-serif",
+              fontWeight: 500,
+              fontSize: "14px",
+              lineHeight: "20px",
+              color: "#111827",
+            }}
+          >
+            Jersey Number
+          </label>
+          <input
+            id="jerseyNumber"
+            type="number"
+            min="0"
+            max="99"
+            placeholder="e.g 7"
+            value={formData.jerseyNumber || ""}
+            onChange={(e) => setFormData({ ...formData, jerseyNumber: e.target.value ? parseInt(e.target.value) : null })}
+            className="w-full h-12 px-3 py-[10px] rounded-md border"
+            style={{
+              border: "1px solid #D1D5DB",
+              boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+              backgroundColor: "#FFFFFF",
+              fontFamily: "Lato, sans-serif",
+            }}
+          />
+        </div>
+
+        {/* Emergency Number */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="emergencyNumber"
+            className="font-medium"
+            style={{
+              fontFamily: "Lato, sans-serif",
+              fontWeight: 500,
+              fontSize: "14px",
+              lineHeight: "20px",
+              color: "#111827",
+            }}
+          >
+            Emergency Contact Name
+          </label>
+          <input
+            id="emergencyNumber"
+            type="text"
+            placeholder="e.g John Doe"
+            value={formData.emergencyNumber}
+            onChange={(e) => setFormData({ ...formData, emergencyNumber: e.target.value })}
+            required
+            className="w-full h-12 px-3 py-[10px] rounded-md border"
+            style={{
+              border: "1px solid #D1D5DB",
+              boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+              backgroundColor: "#FFFFFF",
+              fontFamily: "Lato, sans-serif",
+            }}
+          />
+        </div>
+
+        {/* Emergency Phone Number */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="emergencyPhoneNumber"
+            className="font-medium"
+            style={{
+              fontFamily: "Lato, sans-serif",
+              fontWeight: 500,
+              fontSize: "14px",
+              lineHeight: "20px",
+              color: "#111827",
+            }}
+          >
+            Emergency Phone Number
+          </label>
+          <input
+            id="emergencyPhoneNumber"
+            type="tel"
+            placeholder="e.g +1 234 567 8900"
+            value={formData.emergencyPhoneNumber}
+            onChange={(e) => setFormData({ ...formData, emergencyPhoneNumber: e.target.value })}
+            required
+            className="w-full h-12 px-3 py-[10px] rounded-md border"
+            style={{
+              border: "1px solid #D1D5DB",
+              boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
+              backgroundColor: "#FFFFFF",
+              fontFamily: "Lato, sans-serif",
+            }}
+          />
+        </div>
+
 
         {/* Terms & Privacy */}
         <div className="flex items-center gap-2">
@@ -365,10 +482,19 @@ export default function ProfileForm({
           </label>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="p-3 rounded-md bg-red-50 border border-red-200">
+            <p className="text-sm text-red-600" style={{ fontFamily: "Lato, sans-serif" }}>
+              {error}
+            </p>
+          </div>
+        )}
+
         {/* Complete Button */}
         <button
           type="submit"
-          disabled={loading || !formData.agreeToTerms}
+          disabled={loading || !formData.agreeToTerms || !formData.emergencyNumber || !formData.emergencyPhoneNumber}
           className="w-full h-[58px] rounded-full text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             backgroundColor: "#0F173E",
@@ -411,7 +537,7 @@ export default function ProfileForm({
                 className="text-base text-foreground text-center"
                 style={{ fontFamily: "Lato, sans-serif" }}
               >
-                {successMessage}
+                {finalSuccessMessage}
               </p>
               <button
                 onClick={handleContinue}
