@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Search, Mail } from "lucide-react"
 import Image from "next/image"
@@ -23,7 +23,7 @@ interface UserWithProfile extends User {
   invitedFormats?: Set<"5v5" | "7v7">
 }
 
-export default function InvitePlayersPage() {
+function InvitePlayersPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<"players" | "free-agents">("players")
@@ -425,6 +425,20 @@ export default function InvitePlayersPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function InvitePlayersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-8">
+          <p style={{ color: "#6B7280" }}>Loading players...</p>
+        </div>
+      }
+    >
+      <InvitePlayersPageContent />
+    </Suspense>
   )
 }
 
