@@ -8,3 +8,4 @@ export async function DELETE(
   return removePlayer(req, { params });
 }
 
+

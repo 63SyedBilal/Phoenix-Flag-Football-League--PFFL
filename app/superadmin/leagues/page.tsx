@@ -1,50 +1,98 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Bell } from "lucide-react"
 import LeagueCard from "@/components/cards/league-card"
-
 import type { LeagueCardProps } from "@/components/cards/league-card"
 
-const mockLeagues: Omit<LeagueCardProps, "id">[] = [
-  {
-    name: "Phoenix Winter 2025",
-    logo: "/placeholder-logo.png",
-    format: "5v5",
-    startDate: "10 December 2025",
-    endDate: "25 February 2026",
-    leagueFee: "$250",
-    status: "active",
-  },
-  {
-    name: "Champions Cup 2025",
-    logo: "/placeholder-logo.png",
-    format: "7v7",
-    startDate: "10 December 2025",
-    endDate: "25 February 2026",
-    leagueFee: "$250",
-    status: "active",
-  },
-  {
-    name: "Phoenix Winter 2025",
-    logo: "/placeholder-logo.png",
-    format: "5v5",
-    startDate: "10 December 2025",
-    endDate: "25 February 2026",
-    leagueFee: "$250",
-    status: "active",
-  },
-  {
-    name: "Phoenix Winter 2025",
-    logo: "/placeholder-logo.png",
-    format: "5v5",
-    startDate: "10 December 2025",
-    endDate: "25 February 2026",
-    leagueFee: "$250",
-    status: "pending",
-  },
-]
+interface League {
+  _id: string
+  leagueName: string
+  logo: string
+  format: "5v5" | "7v7"
+  startDate: string
+  endDate: string
+  perPlayerLeagueFee: number
+  status: "active" | "pending"
+}
 
 export default function LeaguesPage() {
+  const [leagues, setLeagues] = useState<LeagueCardProps[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchLeagues = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("Please login to view leagues")
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch("/api/league", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to fetch leagues")
+        }
+
+        const data = await response.json()
+        const leaguesData: League[] = data.data || []
+
+        // Format leagues for LeagueCard component
+        const formattedLeagues: LeagueCardProps[] = leaguesData.map((league) => {
+          // Format dates
+          const startDate = new Date(league.startDate).toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+          const endDate = new Date(league.endDate).toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+
+          // Format league fee
+          const leagueFee = `$${league.perPlayerLeagueFee || 0}`
+
+          // Use logo or placeholder
+          const logo = league.logo || "/placeholder-logo.png"
+
+          return {
+            id: league._id,
+            name: league.leagueName,
+            logo,
+            format: league.format,
+            startDate,
+            endDate,
+            leagueFee,
+            status: league.status || "pending",
+            baseRoute: "/superadmin/leagues",
+          }
+        })
+
+        setLeagues(formattedLeagues)
+      } catch (err: any) {
+        console.error("Error fetching leagues:", err)
+        setError(err.message || "Failed to load leagues")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchLeagues()
+  }, [])
+
   return (
     <div className="flex flex-col gap-3">
       {/* Header Section with Bell Icon */}
@@ -58,22 +106,39 @@ export default function LeaguesPage() {
         </button>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="text-center py-8 text-gray-500">Loading leagues...</div>
+      )}
+
+      {/* Error State */}
+      {error && !isLoading && (
+        <div className="text-center py-8 text-red-500">{error}</div>
+      )}
+
       {/* League Cards */}
-      <div className="space-y-3">
-        {mockLeagues.map((league, index) => (
-          <LeagueCard
-            key={index}
-            id={String(index + 1)}
-            name={league.name}
-            logo={league.logo}
-            format={league.format}
-            startDate={league.startDate}
-            endDate={league.endDate}
-            leagueFee={league.leagueFee}
-            status={league.status}
-          />
-        ))}
-      </div>
+      {!isLoading && !error && (
+        <div className="space-y-3">
+          {leagues.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No leagues found</div>
+          ) : (
+            leagues.map((league) => (
+              <LeagueCard
+                key={league.id}
+                id={league.id}
+                name={league.name}
+                logo={league.logo}
+                format={league.format}
+                startDate={league.startDate}
+                endDate={league.endDate}
+                leagueFee={league.leagueFee}
+                status={league.status}
+                baseRoute="/superadmin/leagues"
+              />
+            ))
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -5,6 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
+    const folder = formData.get("folder") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -14,9 +15,12 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Determine folder based on parameter or default to profiles
+    const uploadFolder = folder || "pffl/profiles";
+
     // Upload to Cloudinary
     const result = await uploadToCloudinary(buffer, {
-      folder: "pffl/profiles",
+      folder: uploadFolder,
       resource_type: "image",
     });
 
@@ -38,4 +42,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
 

@@ -22,3 +22,4 @@ export async function DELETE(
   return deleteProfile(req, { params });
 }
 
+

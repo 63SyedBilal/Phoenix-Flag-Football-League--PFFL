@@ -17,12 +17,16 @@ const NotificationSchema = new mongoose.Schema(
     team: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Team",
-      required: true
+    },
+
+    league: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "League",
     },
 
     type: {
       type: String,
-      enum: ["TEAM_INVITE"],
+      enum: ["TEAM_INVITE", "LEAGUE_REFEREE_INVITE", "LEAGUE_STATKEEPER_INVITE", "LEAGUE_TEAM_INVITE"],
       default: "TEAM_INVITE"
     },
 
@@ -35,18 +39,13 @@ const NotificationSchema = new mongoose.Schema(
     format: {
       type: String,
       enum: ["5v5", "7v7"],
-      required: true
     }
   },
   { timestamps: true }
 );
 
 // Prevent model overwrite error in Next.js development
-if (mongoose.models.Notification) {
-  delete mongoose.models.Notification;
-}
-
-const Notification = mongoose.model("Notification", NotificationSchema);
+const Notification = mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);
 
 export default Notification;
 

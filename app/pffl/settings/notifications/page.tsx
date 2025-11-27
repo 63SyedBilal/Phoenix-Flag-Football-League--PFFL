@@ -6,6 +6,7 @@ import { Search } from "lucide-react"
 import Image from "next/image"
 import NotificationCardPayment from "@/components/cards/notification-card-payment"
 import InvitationCard from "@/components/cards/invitation-card"
+import LeagueInvitationCard from "@/components/cards/league-invitation-card"
 
 interface Notification {
   _id: string
@@ -21,10 +22,15 @@ interface Notification {
     lastName: string
     email: string
   }
-  team: {
+  team?: {
     _id: string
     teamName: string
     image?: string
+  }
+  league?: {
+    _id: string
+    leagueName: string
+    logo?: string
   }
   type: string
   status: "pending" | "accepted" | "rejected"
@@ -32,7 +38,7 @@ interface Notification {
   updatedAt: string
 }
 
-const filterOptions = ["All Notifications", "Team Invitations", "Payment Required"]
+const filterOptions = ["All Notifications", "Team Invitations", "League Invitations", "Payment Required"]
 
 export default function PfflNotificationsPage() {
   const router = useRouter()
@@ -108,9 +114,27 @@ export default function PfflNotificationsPage() {
       if (response.ok) {
         // Remove accepted notification from list
         setNotifications((prev) => prev.filter((n) => n._id !== notifId))
-        alert("Invite accepted! You have been added to the team.")
-        // Optionally refresh the page or navigate
-        router.push("/pffl/team")
+        
+        // Get the notification type to show appropriate message
+        const acceptedNotification = notifications.find((n) => n._id === notifId)
+        if (acceptedNotification) {
+          if (acceptedNotification.type === "TEAM_INVITE") {
+            alert("Invite accepted! You have been added to the team.")
+            router.push("/pffl/team")
+          } else if (
+            acceptedNotification.type === "LEAGUE_REFEREE_INVITE" ||
+            acceptedNotification.type === "LEAGUE_STATKEEPER_INVITE" ||
+            acceptedNotification.type === "LEAGUE_TEAM_INVITE"
+          ) {
+            alert(data.message || "Invite accepted successfully!")
+            // Refresh to show updated state
+            router.refresh()
+          } else {
+            alert("Invite accepted successfully!")
+          }
+        } else {
+          alert("Invite accepted successfully!")
+        }
       } else {
         console.error("Failed to accept invite:", data)
         alert(data.error || "Failed to accept invite")
@@ -162,6 +186,14 @@ export default function PfflNotificationsPage() {
     if (activeFilter === "Team Invitations") {
       return notification.type === "TEAM_INVITE" && notification.status === "pending"
     }
+    if (activeFilter === "League Invitations") {
+      return (
+        (notification.type === "LEAGUE_REFEREE_INVITE" ||
+          notification.type === "LEAGUE_STATKEEPER_INVITE" ||
+          notification.type === "LEAGUE_TEAM_INVITE") &&
+        notification.status === "pending"
+      )
+    }
     if (activeFilter === "Payment Required") {
       return false // Payment notifications would be handled separately
     }
@@ -173,9 +205,10 @@ export default function PfflNotificationsPage() {
     if (!searchQuery) return true
     const searchLower = searchQuery.toLowerCase()
     return (
-      notification.sender.firstName.toLowerCase().includes(searchLower) ||
-      notification.sender.lastName.toLowerCase().includes(searchLower) ||
-      notification.team.teamName.toLowerCase().includes(searchLower)
+      (notification.sender && notification.sender.firstName && notification.sender.firstName.toLowerCase().includes(searchLower)) ||
+      (notification.sender && notification.sender.lastName && notification.sender.lastName.toLowerCase().includes(searchLower)) ||
+      (notification.team && notification.team.teamName && notification.team.teamName.toLowerCase().includes(searchLower)) ||
+      (notification.league && notification.league.leagueName && notification.league.leagueName.toLowerCase().includes(searchLower))
     )
   })
 
@@ -277,14 +310,25 @@ export default function PfflNotificationsPage() {
       ) : (
         <div className="space-y-3">
           {searchFilteredNotifications.map((notification) => {
+            const notificationId = notification._id?.toString() || notification._id
+            
+            // Skip if sender is not populated
+            if (!notification.sender) {
+              console.warn("Notification missing sender:", notificationId)
+              return null
+            }
+            
+            const senderName = notification.sender
+              ? `${notification.sender.firstName || ""} ${notification.sender.lastName || ""}`.trim() || "Unknown User"
+              : "Unknown User"
+            
             // Show invitation cards for team invites
-            if (notification.type === "TEAM_INVITE" && notification.status === "pending") {
-              const notificationId = notification._id?.toString() || notification._id
+            if (notification.type === "TEAM_INVITE" && notification.status === "pending" && notification.team) {
               return (
                 <InvitationCard
                   key={notificationId}
                   id={notificationId}
-                  senderName={`${notification.sender.firstName} ${notification.sender.lastName}`}
+                  senderName={senderName}
                   teamName={notification.team.teamName}
                   teamImage={notification.team.image}
                   date={notification.createdAt}
@@ -294,6 +338,32 @@ export default function PfflNotificationsPage() {
                 />
               )
             }
+            
+            // Show league invitation cards
+            if (
+              (notification.type === "LEAGUE_REFEREE_INVITE" ||
+                notification.type === "LEAGUE_STATKEEPER_INVITE" ||
+                notification.type === "LEAGUE_TEAM_INVITE") &&
+              notification.status === "pending" &&
+              notification.league
+            ) {
+              return (
+                <LeagueInvitationCard
+                  key={notificationId}
+                  id={notificationId}
+                  senderName={senderName}
+                  leagueName={notification.league.leagueName}
+                  leagueLogo={notification.league.logo}
+                  invitationType={notification.type as "LEAGUE_REFEREE_INVITE" | "LEAGUE_STATKEEPER_INVITE" | "LEAGUE_TEAM_INVITE"}
+                  teamName={notification.team?.teamName}
+                  date={notification.createdAt}
+                  onAccept={handleAcceptInvite}
+                  onDecline={handleDeclineInvite}
+                  isProcessing={processingId === notificationId}
+                />
+              )
+            }
+            
             // Add other notification types here (payment, etc.)
             return null
           })}

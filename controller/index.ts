@@ -6,4 +6,6 @@ export * from "./complete-profile";
 export * from "./profile";
 export * from "./team";
 export * from "./notification";
+export * from "./league";
+export * from "./payment";
 

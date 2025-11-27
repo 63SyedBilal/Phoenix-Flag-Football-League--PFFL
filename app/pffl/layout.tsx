@@ -1,14 +1,15 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-const navigation = [
+const allNavigation = [
   { name: "Home", href: "/pffl/home", icon: "/assets/image/home.svg" },
   { name: "Leagues", href: "/pffl/leagues", icon: "/assets/image/leagues.svg" },
-  { name: "Team", href: "/pffl/team", icon: "/assets/image/users.svg" },
+  { name: "Team", href: "/pffl/team", icon: "/assets/image/users.svg", hideForRoles: ["stat-keeper", "referee"] },
   { name: "Settings", href: "/pffl/settings", icon: "/assets/image/setting.svg" },
 ]
 
@@ -18,6 +19,50 @@ export default function PfflLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [navigation, setNavigation] = useState(allNavigation)
+  const [userName, setUserName] = useState<string>("User")
+  const [userEmail, setUserEmail] = useState<string>("user@pffl.com")
+  const [userInitials, setUserInitials] = useState<string>("U")
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+    
+    // Get user data from localStorage
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser)
+        setUserRole(userData.role)
+        
+        // Set user name and email
+        const firstName = userData.firstName || ""
+        const lastName = userData.lastName || ""
+        const fullName = `${firstName} ${lastName}`.trim() || userData.email || "User"
+        setUserName(fullName)
+        setUserEmail(userData.email || "user@pffl.com")
+        
+        // Set user initials
+        const initials = firstName && lastName 
+          ? `${firstName[0]}${lastName[0]}`.toUpperCase()
+          : (userData.email?.[0] || "U").toUpperCase()
+        setUserInitials(initials)
+        
+        // Filter navigation based on user role
+        const filteredNav = allNavigation.filter(item => {
+          if (item.hideForRoles && userData.role) {
+            return !item.hideForRoles.includes(userData.role)
+          }
+          return true
+        })
+        setNavigation(filteredNav)
+      } catch (error) {
+        console.error("Error parsing user data:", error)
+        setNavigation(allNavigation)
+      }
+    }
+  }, [])
 
   return (
     <>
@@ -43,9 +88,12 @@ export default function PfflLayout({
               {/* Navigation */}
               <nav className="w-[262px] flex flex-col gap-2 mt-2">
                 {navigation.map((item) => {
-                  const isActive = item.href === "/pffl/home"
-                    ? pathname === item.href
-                    : pathname === item.href || pathname?.startsWith(item.href + "/")
+                  // Only calculate isActive on client to avoid hydration mismatch
+                  const isActive = isClient && (
+                    item.href === "/pffl/home"
+                      ? pathname === item.href
+                      : pathname === item.href || pathname?.startsWith(item.href + "/")
+                  )
 
                   return (
                     <Link
@@ -84,12 +132,12 @@ export default function PfflLayout({
             {/* User Profile */}
             <div className="pt-4 border-t border-border">
               <div className="flex items-center gap-3 px-[14px] py-2">
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">U</span>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <span className="text-sm font-medium text-white">{userInitials}</span>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">User</p>
-                  <p className="text-xs text-muted-foreground">user@pffl.com</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{userName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                 </div>
               </div>
             </div>

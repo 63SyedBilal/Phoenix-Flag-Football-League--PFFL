@@ -4,4 +4,5 @@ export { default as Payment } from "./payment";
 export { default as Profile } from "./profile";
 export { default as Team } from "./team";
 export { default as Notification } from "./notification";
+export { default as League } from "./league";
 

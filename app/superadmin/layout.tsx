@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -20,6 +21,27 @@ export default function SuperAdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [userEmail, setUserEmail] = useState<string>("admin@pffl.com")
+  const [userInitials, setUserInitials] = useState<string>("SA")
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser)
+        setUserEmail(userData.email || "admin@pffl.com")
+        
+        // Set user initials (SA for SuperAdmin or use email initials)
+        const initials = userData.email 
+          ? userData.email.substring(0, 2).toUpperCase()
+          : "SA"
+        setUserInitials(initials)
+      } catch (error) {
+        console.error("Error parsing user data:", error)
+      }
+    }
+  }, [])
 
   return (
     <>
@@ -95,11 +117,13 @@ export default function SuperAdminLayout({
 
             {/* User Profile */}
             <div className="pt-4 border-t border-border">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-full" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">Romail Ahmed</p>
-                  <p className="text-xs text-muted-foreground">romail@pffl.com</p>
+              <div className="flex items-center gap-3 px-[14px] py-2">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
+                  <span className="text-sm font-medium text-white">{userInitials}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">Super Admin</p>
+                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                 </div>
               </div>
             </div>
