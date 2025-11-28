@@ -1,64 +1,31 @@
 "use client"
 
-import { useState } from "react"
-import { Bell, Search, UserPlus } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, UserPlus } from "lucide-react"
 import Image from "next/image"
 import UsersCard from "@/components/cards/userscard"
-
-const mockUsers = [
-  {
-    id: "1",
-    name: "Marcus Johnson",
-    email: "marcus.j@pffl.com",
-    league: "Phoenix Falcons",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus",
-    roles: ["Captain", "Active"],
-    roleColors: ["#FEF3C7", "#D1FAE5"],
-    roleBorders: ["#FDE68A", "#A7F3D0"],
-  },
-  {
-    id: "2",
-    name: "Sarah Mitchell",
-    email: "sarah.m@pffl.com",
-    league: "Storm Riders",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-    roles: ["Player", "Invited"],
-    roleColors: ["#DBEAFE", "#DBEAFE"],
-    roleBorders: ["#93C5FD", "#93C5FD"],
-  },
-  {
-    id: "3",
-    name: "James Richardson",
-    email: "james.r@pffl.com",
-    league: null,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
-    roles: ["Referee", "Active"],
-    roleColors: ["#E9D5FF", "#D1FAE5"],
-    roleBorders: ["#C084FC", "#A7F3D0"],
-  },
-  {
-    id: "4",
-    name: "Emily Chen",
-    email: "emily.c@pffl.com",
-    league: null,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-    roles: ["Stat Keeper", "Active"],
-    roleColors: ["#D1FAE5", "#D1FAE5"],
-    roleBorders: ["#A7F3D0", "#A7F3D0"],
-  },
-  {
-    id: "5",
-    name: "James Richardson",
-    email: "james.r@pffl.com",
-    league: null,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James2",
-    roles: ["Referee", "Pending"],
-    roleColors: ["#E9D5FF", "#FED7AA"],
-    roleBorders: ["#C084FC", "#FDBA74"],
-  },
-]
+import BellNotificationButton from "@/components/layout/bell-notification-button"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 
 const filterOptions = ["All Users", "Players", "Captains", "Referees", "Stat Keeper"]
+
+interface User {
+  _id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: string
+  profile?: {
+    image?: string
+    paymentStatus?: string
+  }
+  team?: {
+    teamName?: string
+    league?: {
+      leagueName?: string
+    }
+  }
+}
 
 export default function UsersPage() {
   const [activeFilter, setActiveFilter] = useState("All Users")
@@ -70,6 +37,8 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
 
   const roles = ["Captain", "Referee", "Stat Keeper", "Player", "Free Agent"]
 
@@ -81,6 +50,123 @@ export default function UsersPage() {
     "Stat Keeper": "stat-keeper",
     "Free Agent": "free-agent",
   }
+
+  // Map backend roles to UI role names
+  const backendToUIRole: { [key: string]: string } = {
+    "captain": "Captain",
+    "player": "Player",
+    "referee": "Referee",
+    "stat-keeper": "Stat Keeper",
+    "free-agent": "Free Agent",
+  }
+
+  // Map UI filter to backend role
+  const filterToRole: { [key: string]: string | null } = {
+    "All Users": null,
+    "Players": "player",
+    "Captains": "captain",
+    "Referees": "referee",
+    "Stat Keeper": "stat-keeper",
+  }
+
+  // Role colors and borders mapping
+  const roleStyleMap: { [key: string]: { color: string; border: string } } = {
+    "Captain": { color: "#FEF3C7", border: "#FDE68A" },
+    "Player": { color: "#DBEAFE", border: "#93C5FD" },
+    "Referee": { color: "#E9D5FF", border: "#C084FC" },
+    "Stat Keeper": { color: "#D1FAE5", border: "#A7F3D0" },
+    "Free Agent": { color: "#FED7AA", border: "#FDBA74" },
+  }
+
+  // Filter users based on search query and active filter
+  const filteredUsers = users.filter((user) => {
+    // Filter by role
+    const roleFilter = filterToRole[activeFilter]
+    if (roleFilter && user.role !== roleFilter) {
+      return false
+    }
+
+    // Filter by search query (name or email)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase()
+      const email = user.email.toLowerCase()
+      if (!fullName.includes(query) && !email.includes(query)) {
+        return false
+      }
+    }
+
+    return true
+  })
+
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoadingUsers(true)
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("Please login")
+          setIsLoadingUsers(false)
+          return
+        }
+
+        // Fetch all users
+        const response = await fetch("/api/user", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || "Failed to fetch users")
+        }
+
+        const data = await response.json()
+        const usersData = data.data || []
+
+        // Fetch profiles for all users to get images
+        const profilesResponse = await fetch("/api/profile", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        const profilesData = profilesResponse.ok ? await profilesResponse.json() : { data: [] }
+        const profiles = profilesData.data || []
+
+        // Create a map of userId to profile
+        const profileMap = new Map()
+        profiles.forEach((profile: any) => {
+          if (profile.userId) {
+            profileMap.set(profile.userId.toString(), profile)
+          }
+        })
+
+        // Combine users with their profiles
+        const usersWithProfiles = usersData.map((user: any) => {
+          const profile = profileMap.get(user._id.toString())
+          return {
+            ...user,
+            profile: profile ? { 
+              image: profile.image,
+              paymentStatus: profile.paymentStatus 
+            } : undefined,
+          }
+        })
+
+        setUsers(usersWithProfiles)
+      } catch (err: any) {
+        console.error("Error fetching users:", err)
+        setError(err.message || "Failed to fetch users")
+      } finally {
+        setIsLoadingUsers(false)
+      }
+    }
+
+    fetchUsers()
+  }, [])
 
   const handleInvite = async () => {
     if (!email || !selectedRole) {
@@ -122,7 +208,7 @@ export default function UsersPage() {
         setSelectedRole("Captain")
         setError("")
         setSuccess("")
-        // Refresh the page or update user list
+        // Refresh user list
         window.location.reload()
       }, 2000)
     } catch (error) {
@@ -141,21 +227,19 @@ export default function UsersPage() {
           <p className="text-muted-foreground mt-1">Manage all users.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="w-[60px] h-[60px] p-3 rounded-xl border border-[#0000001F] bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
-            <Bell className="w-5 h-5 text-foreground" />
-          </button>
+          <BellNotificationButton notificationRoute="/superadmin/settings/notifications" useSuperadminPayments={true} />
           <button
             onClick={() => setShowInviteModal(true)}
             className="flex items-center justify-center gap-2 text-white font-medium rounded-xl"
             style={{
-              width: "111px",
-              height: "50px",
-              gap: "8px",
+              width: "100px",
+              height: "44px",
+              gap: "7px",
               borderRadius: "14px",
               backgroundColor: "#3B82F6",
             }}
           >
-            <UserPlus className="w-5 h-5" />
+            <UserPlus className="w-4 h-4" />
             <span>Invite</span>
           </button>
         </div>
@@ -206,21 +290,59 @@ export default function UsersPage() {
       </div>
 
       {/* User Cards */}
-      <div className="space-y-3">
-        {mockUsers.map((user) => (
-          <UsersCard
-            key={user.id}
-            id={user.id}
-            name={user.name}
-            email={user.email}
-            league={user.league}
-            avatar={user.avatar}
-            roles={user.roles}
-            roleColors={user.roleColors}
-            roleBorders={user.roleBorders}
-          />
-        ))}
-      </div>
+      {isLoadingUsers ? (
+        <div className="flex items-center justify-center py-8">
+          <p style={{ color: "#6B7280" }}>Loading users...</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredUsers.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <p style={{ color: "#6B7280" }}>No users found</p>
+            </div>
+          ) : (
+            filteredUsers.map((user) => {
+              const fullName = `${user.firstName} ${user.lastName}`
+              const uiRole = backendToUIRole[user.role] || user.role
+              const roleStyle = roleStyleMap[uiRole] || { color: "#F3F4F6", border: "#D1D5DB" }
+              
+              // Generate avatar URL from name if no profile image
+              const avatar = user.profile?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`
+              
+              // Build dynamic roles array - only include the main role
+              const roles = [uiRole]
+              const roleColors = [roleStyle.color]
+              const roleBorders = [roleStyle.border]
+              
+              // Optionally add status badges based on user data
+              // You can add more logic here based on profile status, payment status, etc.
+              if (user.profile?.paymentStatus === "paid") {
+                roles.push("Paid")
+                roleColors.push("#D1FAE5")
+                roleBorders.push("#A7F3D0")
+              } else if (user.profile?.paymentStatus === "pending") {
+                roles.push("Pending")
+                roleColors.push("#FED7AA")
+                roleBorders.push("#FDBA74")
+              }
+              
+              return (
+                <UsersCard
+                  key={user._id}
+                  id={user._id}
+                  name={fullName}
+                  email={user.email}
+                  league={user.team?.league?.leagueName || user.team?.teamName || null}
+                  avatar={avatar}
+                  roles={roles}
+                  roleColors={roleColors}
+                  roleBorders={roleBorders}
+                />
+              )
+            })
+          )}
+        </div>
+      )}
 
       {/* Invite User Modal */}
       {showInviteModal && (

@@ -87,19 +87,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-6xl bg-white rounded-2xl overflow-hidden shadow-lg">
-        <div className="flex h-[600px]">
+    <div className="h-[100vh] w-[100vw] flex items-center justify-center  p-1 px-0">
+      
+       
           {/* Left Section - Login Form (70%) */}
-          <div className="flex-[0.7] flex flex-col justify-center p-12 bg-white">
-            <div className="flex flex-col gap-6">
+          <div className="flex-[0.6] flex flex-col  items-center p-12 bg-white">
+            <div className="flex flex-col gap-6 w-[70%] rounded-[24px]">
               {/* Title */}
-              <div className="text-center">
+              <div >
                 <h1
-                  className="text-3xl font-bold mb-2"
+                  className="text-4xl font-bold mb-1"
                   style={{
                     fontFamily: "Lato, sans-serif",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     color: "#0F173E",
                   }}
                 >
@@ -231,25 +231,20 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Right Section - Logo with Gradient Background (30%) */}
+          {/* Right Section - Thumbnail Image (40%) */}
           <div
-            className="flex-[0.3] flex items-center justify-center relative"
-            style={{
-              background: "linear-gradient(180deg, #1E3A8A 0%, #3B82F6 50%, #1E3A8A 100%)",
-            }}
+            className="flex-[0.4] flex items-center justify-center relative h-[100%] overflow-hidden rounded-3xl"
           >
-            <div className="flex flex-col items-center gap-4">
-              <Image
-                src="/assets/image/logo.svg"
-                alt="PFFL Logo"
-                width={200}
-                height={200}
-                className="w-48 h-48"
-              />
-            </div>
+            <Image
+              src="/assets/image/Thumbnail.jpg"
+              alt="PFFL"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
-        </div>
-      </div>
+      
+     
     </div>
   )
 }

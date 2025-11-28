@@ -1,17 +1,88 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, Plus, Calendar, BarChart3, TrendingUp } from "lucide-react"
+import { Plus, Calendar, BarChart3, TrendingUp } from "lucide-react"
+import BellNotificationButton from "@/components/layout/bell-notification-button"
 import CreateLeagueForm from "@/components/forms/create-league-form"
+
+interface DashboardStats {
+  leagues: {
+    total: number
+    active: number
+    thisMonth: number
+  }
+  games: {
+    active: number
+    today: number
+  }
+  users: {
+    total: number
+    thisWeek: number
+    byRole: {
+      [key: string]: number
+    }
+  }
+  payments: {
+    totalAmount: number
+    count: number
+  }
+}
 
 export default function SuperAdminHome() {
   const router = useRouter()
   const [showCreateLeague, setShowCreateLeague] = useState(false)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCreateLeague = () => {
     setShowCreateLeague(true)
   }
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          console.error("No token found")
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch("/api/superadmin/stats", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          console.error("Failed to fetch stats:", response.status, errorData)
+          setError(errorData.error || `Failed to fetch stats (${response.status})`)
+          setIsLoading(false)
+          return
+        }
+
+        const data = await response.json()
+        console.log("Stats data received:", data)
+        if (data.success && data.data) {
+          setStats(data.data)
+          setError(null)
+        } else {
+          console.error("Stats API returned success: false", data)
+          setError(data.error || "Failed to load stats")
+        }
+      } catch (err: any) {
+        console.error("Error fetching stats:", err)
+        setError(err.message || "An error occurred while fetching stats")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
 
   if (showCreateLeague) {
     return <CreateLeagueForm onClose={() => setShowCreateLeague(false)} />
@@ -26,9 +97,7 @@ export default function SuperAdminHome() {
             <h1 className="text-3xl font-bold text-foreground">Welcome Tyler,</h1>
             <p className="text-muted-foreground mt-1">Phoenix Flag Football League</p>
           </div>
-          <button className="w-[60px] h-[60px] p-3 rounded-xl border border-[#0000001F] bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
-            <Bell className="w-5 h-5 text-foreground" />
-          </button>
+          <BellNotificationButton notificationRoute="/superadmin/settings/notifications" useSuperadminPayments={true} />
         </div>
 
         {/* Overview Section */}
@@ -36,6 +105,11 @@ export default function SuperAdminHome() {
           <h2 className="text-[21px] font-bold text-[#111827] " >
             Overview
           </h2>
+          {error && (
+            <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
         </div>
 
         {/* Overview Cards */}
@@ -51,8 +125,12 @@ export default function SuperAdminHome() {
           >
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Total Leagues</p>
-              <p className="text-3xl font-bold text-foreground">12</p>
-              <p className="text-xs text-muted-foreground mt-1">+2 this month</p>
+              <p className="text-3xl font-bold text-foreground">
+                {isLoading ? "..." : stats?.leagues.total || 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                +{stats?.leagues.thisMonth || 0} this month
+              </p>
             </div>
             <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
               <span className="text-orange-600 text-xl">🏆</span>
@@ -70,8 +148,12 @@ export default function SuperAdminHome() {
           >
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Active Games</p>
-              <p className="text-3xl font-bold text-foreground">48</p>
-              <p className="text-xs text-muted-foreground mt-1">8 today</p>
+              <p className="text-3xl font-bold text-foreground">
+                {isLoading ? "..." : stats?.games.active || 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats?.games.today || 0} today
+              </p>
             </div>
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <Calendar className="w-5 h-5 text-blue-600" />
@@ -89,8 +171,12 @@ export default function SuperAdminHome() {
           >
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Registered Users</p>
-              <p className="text-3xl font-bold text-foreground">2,847</p>
-              <p className="text-xs text-muted-foreground mt-1">+156 this week</p>
+              <p className="text-3xl font-bold text-foreground">
+                {isLoading ? "..." : stats?.users.total.toLocaleString() || 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                +{stats?.users.thisWeek || 0} this week
+              </p>
             </div>
             <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
               <span className="text-red-600 text-xl">👥</span>
@@ -107,8 +193,12 @@ export default function SuperAdminHome() {
           >
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Pending payments</p>
-              <p className="text-3xl font-bold text-foreground">$12,540</p>
-              <p className="text-xs text-muted-foreground mt-1">23 pending</p>
+              <p className="text-3xl font-bold text-foreground">
+                {isLoading ? "..." : `$${stats?.payments.totalAmount.toLocaleString() || 0}`}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats?.payments.count || 0} pending
+              </p>
             </div>
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
               <span className="text-green-600 text-xl">💰</span>
@@ -139,10 +229,13 @@ export default function SuperAdminHome() {
 
           <button
             onClick={() => router.push("/superadmin/games/schedule")}
-            className="bg-white border rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-gray-50 transition-colors min-h-[120px]"
+            className="bg-white border rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-gray-50 transition-colors min-h-[120px] cursor-not-allowed"
+            disabled
             style={{ 
               borderColor: "rgba(0, 0, 0, 0.12)",
-              borderWidth: "1px"
+              borderWidth: "1px",
+              filter: "blur(1px)",
+              opacity: 0.5
             }}
           >
             <Calendar className="w-8 h-8 text-foreground" />

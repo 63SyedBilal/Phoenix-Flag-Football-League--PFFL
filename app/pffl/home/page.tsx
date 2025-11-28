@@ -6,20 +6,29 @@ import PaymentReminderCard from "@/components/cards/payment-reminder-card"
 import PageHeader from "@/components/layout/page-header"
 import InvitationCard from "@/components/cards/invitation-card"
 import LeagueInvitationCard from "@/components/cards/league-invitation-card"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 
-interface PaymentReminder {
+interface Payment {
   _id: string
-  id: string
-  amount: string
-  leagueDetails: {
-    name: string
+  amount: number
+  status: "paid" | "unpaid"
+  leagueId: {
+    _id: string
+    leagueName: string
     logo: string
     format: string
     startDate: string
     endDate: string
-    leagueFee: string
     status: "active" | "pending"
   }
+  userId: {
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+  }
+  createdAt: string
+  updatedAt: string
 }
 
 interface Notification {
@@ -60,7 +69,7 @@ export default function PfflHomePage() {
   const [invitations, setInvitations] = useState<Notification[]>([])
   const [isLoadingInvitations, setIsLoadingInvitations] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
-  const [paymentReminders, setPaymentReminders] = useState<PaymentReminder[]>([])
+  const [unpaidPayments, setUnpaidPayments] = useState<Payment[]>([])
   const [isLoadingPayments, setIsLoadingPayments] = useState(true)
 
   useEffect(() => {
@@ -149,26 +158,17 @@ export default function PfflHomePage() {
     fetchInvitations()
   }, [])
 
-  // Fetch payment reminders for players and captains
+  // Fetch unpaid payments
   useEffect(() => {
-    const fetchPaymentReminders = async () => {
+    const fetchUnpaidPayments = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("user") || "{}")
-        const userRole = userData.role
-        
-        // Only fetch for players and captains
-        if (userRole !== "player" && userRole !== "captain") {
-          setIsLoadingPayments(false)
-          return
-        }
-
         const token = localStorage.getItem("token")
         if (!token) {
           setIsLoadingPayments(false)
           return
         }
 
-        const response = await fetch("/api/payment/reminders", {
+        const response = await fetch("/api/payments/unpaid", {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
@@ -180,15 +180,17 @@ export default function PfflHomePage() {
         }
 
         const data = await response.json()
-        setPaymentReminders(data.data || [])
-        setIsLoadingPayments(false)
+        if (data.success) {
+          setUnpaidPayments(data.data || [])
+        }
       } catch (err) {
-        console.error("Error fetching payment reminders:", err)
+        console.error("Error fetching unpaid payments:", err)
+      } finally {
         setIsLoadingPayments(false)
       }
     }
 
-    fetchPaymentReminders()
+    fetchUnpaidPayments()
   }, [])
 
   const handleAcceptInvite = async (notifId: string) => {
@@ -284,7 +286,9 @@ export default function PfflHomePage() {
       </div>
 
       {/* Team and League Invitations */}
-      {invitations.length > 0 && (
+      {isLoadingInvitations ? (
+        <LoadingSpinner text="Loading invitations..." />
+      ) : invitations.length > 0 && (
         <div className="space-y-3 mb-4">
           <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: "Lato, sans-serif" }}>
             {userRole === "stat-keeper" ? "League Stat Keeper Invitations" :
@@ -349,25 +353,28 @@ export default function PfflHomePage() {
         </div>
       )}
 
-      {/* Payment Reminders */}
-      {paymentReminders.length > 0 && (
+      {/* Payment Reminder Cards */}
+      {isLoadingPayments ? (
+        <LoadingSpinner text="Loading payments..." />
+      ) : unpaidPayments.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: "Lato, sans-serif" }}>
-            Payment Reminders
-          </h2>
-          {isLoadingPayments ? (
-            <div className="text-center py-4 text-gray-500">Loading payment reminders...</div>
-          ) : (
-            paymentReminders.map((reminder) => (
-              <PaymentReminderCard
-                key={reminder._id}
-                id={reminder._id}
-                amount={reminder.amount}
-                leagueDetails={reminder.leagueDetails}
-                onPayNow={() => router.push(`/pffl/settings/payment/${reminder._id}`)}
-              />
-            ))
-          )}
+          {unpaidPayments.map((payment) => (
+            <PaymentReminderCard
+              key={payment._id}
+              id={payment._id}
+              amount={`$${payment.amount}`}
+              leagueDetails={{
+                name: payment.leagueId.leagueName,
+                logo: payment.leagueId.logo || "/placeholder-logo.png",
+                format: payment.leagueId.format,
+                startDate: new Date(payment.leagueId.startDate).toLocaleDateString(),
+                endDate: new Date(payment.leagueId.endDate).toLocaleDateString(),
+                leagueFee: `$${payment.amount}`,
+                status: payment.leagueId.status,
+              }}
+              onPayNow={() => router.push(`/pffl/settings/payment/${payment._id}?leagueId=${payment.leagueId._id}`)}
+            />
+          ))}
         </div>
       )}
     </div>

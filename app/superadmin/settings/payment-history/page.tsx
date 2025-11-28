@@ -1,102 +1,208 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import Image from "next/image"
 import PageHeader from "@/components/layout/page-header"
 import PaymentHistoryCard from "@/components/cards/payment-history-card"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 
-const mockPayments = [
-  {
-    id: "1",
-    recordId: "Record #01",
-    date: "09 Dec 2025",
-    playerName: "Alex Morgan",
-    teamName: "Red Cobras",
-    leagueName: "Phoenix Winter 2025",
-    amount: "$250",
-    method: "Stripe",
-    status: "Paid" as const,
-    leagueDetails: {
-      name: "Phoenix Winter 2025",
-      logo: "/placeholder-logo.png",
-      format: "5v5",
-      startDate: "10 December 2025",
-      endDate: "25 February 2026",
-      leagueFee: "$250",
-      status: "active" as const,
-    },
-  },
-  {
-    id: "2",
-    recordId: "Record #02",
-    date: "08 Dec 2025",
-    playerName: "John Doe",
-    teamName: "Blue Eagles",
-    leagueName: "Phoenix Winter 2025",
-    amount: "$250",
-    method: "Stripe",
-    status: "Paid" as const,
-    leagueDetails: {
-      name: "Phoenix Winter 2025",
-      logo: "/placeholder-logo.png",
-      format: "5v5",
-      startDate: "10 December 2025",
-      endDate: "25 February 2026",
-      leagueFee: "$250",
-      status: "active" as const,
-    },
-  },
-  {
-    id: "3",
-    recordId: "Record #03",
-    date: "07 Dec 2025",
-    playerName: "Jane Smith",
-    teamName: "Green Tigers",
-    leagueName: "Champions Cup 2025",
-    amount: "$250",
-    method: "PayPal",
-    status: "Pending" as const,
-    leagueDetails: {
-      name: "Champions Cup 2025",
-      logo: "/placeholder-logo.png",
-      format: "7v7",
-      startDate: "10 December 2025",
-      endDate: "25 February 2026",
-      leagueFee: "$250",
-      status: "active" as const,
-    },
-  },
-  {
-    id: "4",
-    recordId: "Record #04",
-    date: "06 Dec 2025",
-    playerName: "Mike Johnson",
-    teamName: "Yellow Lions",
-    leagueName: "Phoenix Winter 2025",
-    amount: "$250",
-    method: "Stripe",
-    status: "Refunded" as const,
-    leagueDetails: {
-      name: "Phoenix Winter 2025",
-      logo: "/placeholder-logo.png",
-      format: "5v5",
-      startDate: "10 December 2025",
-      endDate: "25 February 2026",
-      leagueFee: "$250",
-      status: "active" as const,
-    },
-  },
-]
+const filterOptions = ["All Payments", "Completed Payments", "Pending Payments"]
 
-const filterOptions = ["Completed Payments", "Pending Payments", "Refunds Payments"]
+interface PaymentData {
+  _id: string
+  amount: number
+  status: "paid" | "unpaid"
+  transactionId?: string
+  paymentMethod?: "stripe" | "paypal"
+  teamName?: string
+  playerName?: string
+  captainName?: string
+  freeAgentName?: string
+  createdAt: string
+  updatedAt: string
+  userId: {
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    role: string
+  }
+  leagueId: {
+    _id: string
+    leagueName: string
+    logo?: string
+    format: string
+    startDate: string
+    endDate: string
+    status: string
+  }
+}
 
 export default function PaymentHistoryPage() {
   const router = useRouter()
-  const [activeFilter, setActiveFilter] = useState("Completed Payments")
+  const [activeFilter, setActiveFilter] = useState("All Payments")
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedItem, setSelectedItem] = useState("Select Item")
+  const [payments, setPayments] = useState<PaymentData[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("Please login to view payment history")
+          setIsLoading(false)
+          return
+        }
+
+        // Determine status filter
+        let statusParam = "all"
+        if (activeFilter === "Completed Payments") {
+          statusParam = "paid"
+        } else if (activeFilter === "Pending Payments") {
+          statusParam = "unpaid"
+        }
+
+        const response = await fetch(`/api/superadmin/payments/all?status=${statusParam}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to fetch payments")
+        }
+
+        const data = await response.json()
+        if (data.success && data.data) {
+          setPayments(data.data)
+        } else {
+          setPayments([])
+        }
+      } catch (err: any) {
+        console.error("Error fetching payments:", err)
+        setError(err.message || "Failed to load payment history")
+        setPayments([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPayments()
+  }, [activeFilter])
+
+  // Format date helper
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const day = date.getDate()
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const year = date.getFullYear()
+    return `${day} ${month} ${year}`
+  }
+
+  // Format date for league details
+  const formatLeagueDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+  }
+
+  // Map payment data to card format
+  const mapPaymentToCard = (payment: PaymentData, index: number) => {
+    const userName = payment.playerName || 
+                    payment.captainName || 
+                    payment.freeAgentName || 
+                    `${payment.userId.firstName} ${payment.userId.lastName}`.trim() ||
+                    payment.userId.email
+
+    const status = payment.status === "paid" ? "Paid" as const : "Pending" as const
+    const paymentMethod = payment.paymentMethod 
+      ? payment.paymentMethod.charAt(0).toUpperCase() + payment.paymentMethod.slice(1)
+      : "N/A"
+
+    return {
+      id: payment._id,
+      recordId: `Record #${String(index + 1).padStart(2, "0")}`,
+      date: formatDate(payment.createdAt),
+      playerName: userName,
+      teamName: payment.teamName || "N/A",
+      leagueName: payment.leagueId.leagueName,
+      amount: `$${payment.amount.toFixed(2)}`,
+      method: paymentMethod,
+      status,
+      leagueDetails: {
+        name: payment.leagueId.leagueName,
+        logo: payment.leagueId.logo || "/placeholder-logo.png",
+        format: payment.leagueId.format || "N/A",
+        startDate: formatLeagueDate(payment.leagueId.startDate),
+        endDate: formatLeagueDate(payment.leagueId.endDate),
+        leagueFee: `$${payment.amount.toFixed(2)}`,
+        status: payment.leagueId.status === "active" ? "active" as const : "pending" as const,
+      },
+    }
+  }
+
+  // Filter payments by search query
+  const filteredPayments = payments.filter((payment) => {
+    if (!searchQuery.trim()) return true
+
+    const query = searchQuery.toLowerCase()
+    const leagueName = payment.leagueId.leagueName.toLowerCase()
+    const userName = (
+      payment.playerName || 
+      payment.captainName || 
+      payment.freeAgentName || 
+      `${payment.userId.firstName} ${payment.userId.lastName}`.trim() ||
+      payment.userId.email
+    ).toLowerCase()
+    const teamName = (payment.teamName || "").toLowerCase()
+    const email = payment.userId.email.toLowerCase()
+
+    return (
+      leagueName.includes(query) ||
+      userName.includes(query) ||
+      teamName.includes(query) ||
+      email.includes(query)
+    )
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3">
+        <PageHeader
+          title="Payment History"
+          subtitle="Track all your league payment and receipts"
+          showBell={false}
+        />
+        <LoadingSpinner fullScreen text="Loading payment history..." />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-3">
+        <PageHeader
+          title="Payment History"
+          subtitle="Track all your league payment and receipts"
+          showBell={false}
+        />
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <p>{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -106,12 +212,12 @@ export default function PaymentHistoryPage() {
         showBell={false}
       />
 
-      {/* Search Bar and Dropdown in Same Row */}
+      {/* Search Bar */}
       <div className="flex items-center gap-3">
         <div className="relative flex-[4]">
           <input
             type="text"
-            placeholder="Search users by name or email..."
+            placeholder="Search by league name, player name, team, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-[46.33px] px-4 rounded-xl border pr-10"
@@ -123,26 +229,6 @@ export default function PaymentHistoryPage() {
             }}
           />
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-        </div>
-        <div className="relative flex-[1]">
-          <select
-            value={selectedItem}
-            onChange={(e) => setSelectedItem(e.target.value)}
-            className="w-full h-[46.33px] px-4 pr-10 rounded-xl border-[0.67px] border-[#E5E7EB] bg-white appearance-none cursor-pointer"
-            style={{ fontFamily: "Lato, sans-serif" }}
-          >
-            <option>Select Item</option>
-            <option>Option 1</option>
-            <option>Option 2</option>
-            <option>Option 3</option>
-          </select>
-          <Image
-            src="/assets/image/arrow-down.svg"
-            alt="dropdown"
-            width={16}
-            height={16}
-            className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-          />
         </div>
       </div>
 
@@ -173,26 +259,43 @@ export default function PaymentHistoryPage() {
       </div>
 
       {/* Payment History Cards */}
-      <div className="space-y-3">
-        {mockPayments.map((payment) => (
-          <PaymentHistoryCard
-            key={payment.id}
-            id={payment.id}
-            recordId={payment.recordId}
-            date={payment.date}
-            playerName={payment.playerName}
-            teamName={payment.teamName}
-            leagueName={payment.leagueName}
-            amount={payment.amount}
-            method={payment.method}
-            status={payment.status}
-            leagueDetails={payment.leagueDetails}
-          />
-        ))}
-      </div>
+      {filteredPayments.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <p className="text-muted-foreground text-lg">
+            {searchQuery ? "No payments found matching your search" : "No payments found"}
+          </p>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="mt-4 text-blue-600 hover:underline"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredPayments.map((payment, index) => {
+            const cardData = mapPaymentToCard(payment, index)
+            return (
+              <PaymentHistoryCard
+                key={payment._id}
+                id={cardData.id}
+                recordId={cardData.recordId}
+                date={cardData.date}
+                playerName={cardData.playerName}
+                teamName={cardData.teamName}
+                leagueName={cardData.leagueName}
+                amount={cardData.amount}
+                method={cardData.method}
+                status={cardData.status}
+                leagueDetails={cardData.leagueDetails}
+                onViewReceipt={() => router.push(`/superadmin/settings/receipt/${payment._id}`)}
+              />
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
-
-
-

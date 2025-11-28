@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import LeagueCard from "@/components/cards/league-card"
 import PageHeader from "@/components/layout/page-header"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 import type { LeagueCardProps } from "@/components/cards/league-card"
 
 interface League {
@@ -17,6 +19,7 @@ interface League {
 }
 
 export default function PfflLeaguesPage() {
+  const router = useRouter()
   const [leagues, setLeagues] = useState<LeagueCardProps[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -29,8 +32,7 @@ export default function PfflLeaguesPage() {
 
         const token = localStorage.getItem("token")
         if (!token) {
-          setError("Please login to view leagues")
-          setIsLoading(false)
+          router.push("/not-found")
           return
         }
 
@@ -102,7 +104,7 @@ export default function PfflLeaguesPage() {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="text-center py-8 text-gray-500">Loading leagues...</div>
+        <LoadingSpinner fullScreen text="Loading leagues..." />
       )}
 
       {/* Error State */}

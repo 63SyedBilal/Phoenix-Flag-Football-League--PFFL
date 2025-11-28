@@ -69,25 +69,31 @@ export default function UsersCard({
               </p>
             )}
 
-            {/* Role Badges - moved below league name, excluding Active and Invited */}
+            {/* Role Badges - dynamic badges */}
             <div className="flex items-center gap-2 flex-wrap mt-1">
-              {roles
-                .filter((role) => role !== "Active" && role !== "Invited")
-                .map((role, index) => {
-                  const originalIndex = roles.indexOf(role)
-                  return (
-                    <span
-                      key={index}
-                      className="px-2 py-1 rounded-lg text-xs font-medium w-[61.98px] h-[27.33px] border-[0.67px] text-black"
-                      style={{
-                        backgroundColor: roleColors[originalIndex],
-                        borderColor: roleBorders[originalIndex],
-                      }}
-                    >
-                      {role}
-                    </span>
-                  )
-                })}
+              {roles.map((role, index) => {
+                // Skip status badges like "Active" or "Invited" if they don't have proper styling
+                if (index >= roleColors.length || index >= roleBorders.length) {
+                  return null
+                }
+                
+                return (
+                  <span
+                    key={index}
+                    className="px-2 py-1 rounded-lg text-xs font-medium border-[0.67px] text-black inline-flex items-center justify-center"
+                    style={{
+                      minWidth: "fit-content",
+                      height: "27.33px",
+                      paddingLeft: "8px",
+                      paddingRight: "8px",
+                      backgroundColor: roleColors[index] || "#F3F4F6",
+                      borderColor: roleBorders[index] || "#D1D5DB",
+                    }}
+                  >
+                    {role}
+                  </span>
+                )
+              })}
             </div>
           </div>
         </div>

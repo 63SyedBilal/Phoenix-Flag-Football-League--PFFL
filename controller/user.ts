@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { User } from "@/modules";
 import { generateAccessToken, verifyAccessToken } from "@/lib/jwt";
-import { createPaymentsForUser } from "./payment";
 
 // Helper to get token from request
 function getToken(req: NextRequest): string | null {
@@ -70,12 +69,6 @@ export async function createUser(req: NextRequest) {
     if (password) userData.password = password;
 
     const user = await User.create(userData);
-
-    // Create payment records for active leagues if user is player or captain
-    if (user.role === "player" || user.role === "captain") {
-      const userName = `${user.firstName} ${user.lastName}`.trim() || user.email;
-      await createPaymentsForUser(user._id.toString(), user.role, userName);
-    }
 
     const token = generateAccessToken({
       userId: user._id.toString(),

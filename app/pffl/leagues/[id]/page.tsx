@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import PageHeader from "@/components/layout/page-header"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 import { ArrowLeft } from "lucide-react"
 
 interface League {
@@ -93,7 +94,7 @@ export default function LeagueDetailPage() {
     return (
       <div className="flex flex-col gap-3">
         <PageHeader title="Loading..." subtitle="Fetching league details..." />
-        <div className="text-center py-8 text-gray-500">Loading league details...</div>
+        <LoadingSpinner fullScreen text="Loading league details..." />
       </div>
     )
   }

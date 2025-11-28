@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -10,7 +11,6 @@ import { Bell, Plus } from "lucide-react"
 const navigation = [
   { name: "Home", href: "/superadmin/home", icon: "/assets/image/home.svg" },
   { name: "Leagues", href: "/superadmin/leagues", icon: "/assets/image/leagues.svg" },
-  { name: "Games", href: "/superadmin/games", icon: "/assets/image/games.svg" },
   { name: "Users", href: "/superadmin/users", icon: "/assets/image/users.svg" },
   { name: "Settings", href: "/superadmin/settings", icon: "/assets/image/setting.svg" },
 ]
@@ -21,15 +21,37 @@ export default function SuperAdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [userEmail, setUserEmail] = useState<string>("admin@pffl.com")
   const [userInitials, setUserInitials] = useState<string>("SA")
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
+  // Check authentication on mount and when pathname changes
   useEffect(() => {
-    // Get user data from localStorage
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
+    const checkAuth = () => {
+      // Check authentication and superadmin role
+      const token = localStorage.getItem("token")
+      const storedUser = localStorage.getItem("user")
+      
+      if (!token || !storedUser) {
+        // Not authenticated - redirect to 404
+        setIsAuthenticated(false)
+        router.push("/not-found")
+        return
+      }
+
       try {
         const userData = JSON.parse(storedUser)
+        
+        // Check if user is superadmin
+        if (userData.role !== "superadmin") {
+          // Not a superadmin - redirect to 404
+          setIsAuthenticated(false)
+          router.push("/not-found")
+          return
+        }
+
+        setIsAuthenticated(true)
         setUserEmail(userData.email || "admin@pffl.com")
         
         // Set user initials (SA for SuperAdmin or use email initials)
@@ -39,15 +61,77 @@ export default function SuperAdminLayout({
         setUserInitials(initials)
       } catch (error) {
         console.error("Error parsing user data:", error)
+        setIsAuthenticated(false)
+        router.push("/not-found")
       }
     }
-  }, [])
+
+    checkAuth()
+
+    // Listen for storage changes (logout from other tabs/windows)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "token" || e.key === "user") {
+        checkAuth()
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [router, pathname]) // Re-check on pathname changes
+
+  // Double-check authentication before rendering (safety check)
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    const storedUser = localStorage.getItem("user")
+    
+    if (!token || !storedUser) {
+      if (isAuthenticated !== false) {
+        setIsAuthenticated(false)
+        router.push("/not-found")
+      }
+      return
+    }
+
+    try {
+      const userData = JSON.parse(storedUser)
+      if (userData.role !== "superadmin") {
+        if (isAuthenticated !== false) {
+          setIsAuthenticated(false)
+          router.push("/not-found")
+        }
+      }
+    } catch (error) {
+      if (isAuthenticated !== false) {
+        setIsAuthenticated(false)
+        router.push("/not-found")
+      }
+    }
+  })
+
+  // Don't render content if not authenticated
+  if (isAuthenticated === false) {
+    return null
+  }
+
+  // Show loading state while checking authentication
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
       <div className="flex h-screen bg-background">
         {/* Sidebar */}
-        <aside className="w-[290px] border-r border-border bg-background">
+        <aside className="w-[290px] bg-background">
           <div className="flex flex-col h-full justify-between pt-6 pb-6 px-[14px]">
             {/* Logo Section */}
             <div className="flex flex-col gap-3">
@@ -116,7 +200,7 @@ export default function SuperAdminLayout({
             </div>
 
             {/* User Profile */}
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4">
               <div className="flex items-center gap-3 px-[14px] py-2">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
                   <span className="text-sm font-medium text-white">{userInitials}</span>
@@ -132,7 +216,7 @@ export default function SuperAdminLayout({
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto bg-gray-50">
-          {pathname !== "/superadmin/home" && pathname !== "/superadmin/leagues" && pathname !== "/superadmin/users" && pathname !== "/superadmin/settings" && !pathname.startsWith("/superadmin/settings/payment-history") && !pathname.startsWith("/superadmin/settings/receipt") && !pathname.startsWith("/superadmin/pffl") && (
+          {pathname !== "/superadmin/home" && pathname !== "/superadmin/leagues" && pathname !== "/superadmin/users" && pathname !== "/superadmin/settings" && !pathname.startsWith("/superadmin/settings/payment-history") && !pathname.startsWith("/superadmin/settings/receipt") && !pathname.startsWith("/superadmin/settings/notifications") && !pathname.startsWith("/superadmin/pffl") && (
             <div className="flex items-center justify-between p-6 border-b border-border bg-background sticky top-0 z-10">
               <div />
               <button className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -140,7 +224,7 @@ export default function SuperAdminLayout({
               </button>
             </div>
           )}
-          <div className={pathname === "/superadmin/home" || pathname === "/superadmin/leagues" || pathname === "/superadmin/users" || pathname === "/superadmin/settings" || pathname.startsWith("/superadmin/settings/payment-history") || pathname.startsWith("/superadmin/settings/receipt") || pathname.startsWith("/superadmin/pffl") ? "p-6" : "p-6"}>{children}</div>
+          <div className={pathname === "/superadmin/home" || pathname === "/superadmin/leagues" || pathname === "/superadmin/users" || pathname === "/superadmin/settings" || pathname.startsWith("/superadmin/settings/payment-history") || pathname.startsWith("/superadmin/settings/receipt") || pathname.startsWith("/superadmin/settings/notifications") || pathname.startsWith("/superadmin/pffl") ? "p-6" : "p-6"}>{children}</div>
         </main>
       </div>
     </>

@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell } from "lucide-react"
+import BellNotificationButton from "@/components/layout/bell-notification-button"
 import LeagueCard from "@/components/cards/league-card"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 import type { LeagueCardProps } from "@/components/cards/league-card"
 
 interface League {
@@ -101,14 +102,12 @@ export default function LeaguesPage() {
           <h1 className="text-3xl font-bold text-foreground">Leagues.</h1>
           <p className="text-muted-foreground mt-1">All the leagues are listed below.</p>
         </div>
-        <button className="w-[60px] h-[60px] p-3 rounded-xl border border-[#0000001F] bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
-          <Bell className="w-5 h-5 text-foreground" />
-        </button>
+        <BellNotificationButton notificationRoute="/superadmin/settings/notifications" useSuperadminPayments={true} />
       </div>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="text-center py-8 text-gray-500">Loading leagues...</div>
+        <LoadingSpinner fullScreen text="Loading leagues..." />
       )}
 
       {/* Error State */}

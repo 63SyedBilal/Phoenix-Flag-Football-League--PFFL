@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { Payment, League, User } from "@/modules";
+import Payment from "@/modules/payment";
+import League from "@/modules/league";
+import User from "@/modules/user";
+import Team from "@/modules/team";
 import { verifyAccessToken } from "@/lib/jwt";
 import mongoose from "mongoose";
 
@@ -19,7 +22,7 @@ function getToken(req: NextRequest): string | null {
 }
 
 // Helper to verify user from token
-async function verifyUser(req: NextRequest) {
+async function verifyUserToken(req: NextRequest) {
   const token = getToken(req);
   if (!token) throw new Error("No token provided");
   
@@ -28,224 +31,256 @@ async function verifyUser(req: NextRequest) {
 }
 
 /**
- * Create payment records for a user for all active leagues
- * This is called automatically when a player or captain is created
- * @param userId - The user ID
- * @param userRole - The user's role (player or captain)
- * @param userName - The user's full name
+ * Create payment record for a user and league
+ * This is called automatically when a user accepts a league invitation
+ * @param userId - User ID
+ * @param leagueId - League ID
+ * @param teamId - Optional team ID (for team-based payments)
+ * @returns Created payment document
  */
-export async function createPaymentsForUser(
-  userId: string,
-  userRole: string,
-  userName: string
-) {
+export async function createPayment(
+  userId: string | mongoose.Types.ObjectId,
+  leagueId: string | mongoose.Types.ObjectId,
+  teamId?: string | mongoose.Types.ObjectId
+): Promise<any> {
+  console.log("\n💳 ========== createPayment FUNCTION CALLED ==========");
+  console.log("💳 Input parameters:");
+  console.log("   - userId:", userId, `(type: ${typeof userId})`);
+  console.log("   - leagueId:", leagueId, `(type: ${typeof leagueId})`);
+  console.log("   - teamId:", teamId || "N/A", `(type: ${typeof teamId})`);
+  
   try {
+    console.log("💳 Connecting to database...");
     await connectDB();
-
-    // Only create payments for players and captains
-    if (userRole !== "player" && userRole !== "captain") {
-      return { success: true, message: "Payments only created for players and captains" };
-    }
+    console.log("✅ Database connected");
 
     const userObjectId = toObjectId(userId);
+    const leagueObjectId = toObjectId(leagueId);
+    
+    console.log("💳 Converted IDs:");
+    console.log("   - userObjectId:", userObjectId.toString());
+    console.log("   - leagueObjectId:", leagueObjectId.toString());
 
-    // Get all leagues (both active and pending)
-    // Users should be able to pay for leagues even if they haven't started yet
-    const allLeagues = await League.find({});
-
-    if (allLeagues.length === 0) {
-      return { success: true, message: "No leagues found" };
-    }
-
-    // Create payment records for each league (active and pending)
-    const paymentPromises = allLeagues.map(async (league: any) => {
-      // Check if payment already exists
-      const existingPayment = await Payment.findOne({
-        userId: userObjectId,
-        leagueId: league._id,
-      });
-
-      if (existingPayment) {
-        return null; // Skip if payment already exists
-      }
-
-      // Create new payment record
-      const paymentData: any = {
-        userId: userObjectId,
-        leagueId: league._id,
-        amount: league.perPlayerLeagueFee || 0,
-        status: "unpaid",
-      };
-
-      // Add role-specific name field
-      if (userRole === "player") {
-        paymentData.playerName = userName;
-      } else if (userRole === "captain") {
-        paymentData.captainName = userName;
-      }
-
-      return Payment.create(paymentData);
+    // Check if payment already exists
+    console.log("💳 Checking for existing payment...");
+    const existingPayment = await Payment.findOne({
+      userId: userObjectId,
+      leagueId: leagueObjectId,
     });
 
-    const payments = await Promise.all(paymentPromises);
-    const createdPayments = payments.filter((p) => p !== null);
+    if (existingPayment) {
+      console.log(`⚠️ Payment already exists for user ${userObjectId.toString()} and league ${leagueObjectId.toString()}`);
+      console.log(`   - Existing Payment ID: ${existingPayment._id}`);
+      console.log(`   - Amount: $${existingPayment.amount}`);
+      console.log(`   - Status: ${existingPayment.status}`);
+      return existingPayment;
+    }
+    console.log("✅ No existing payment found - proceeding to create new payment");
 
-    return {
-      success: true,
-      message: `Created ${createdPayments.length} payment records`,
-      count: createdPayments.length,
+    // Get league to fetch entry fee
+    console.log("💳 Fetching league from database...");
+    const league = await League.findById(leagueObjectId);
+    if (!league) {
+      console.error("❌ League not found with ID:", leagueObjectId.toString());
+      throw new Error("League not found");
+    }
+    console.log("✅ League found:");
+    console.log("   - League Name:", (league as any).leagueName);
+    console.log("   - League ID:", league._id.toString());
+    console.log("   - Per Player Fee:", (league as any).perPlayerLeagueFee);
+
+    // Get user to fetch name and role
+    console.log("💳 Fetching user from database...");
+    const user = await User.findById(userObjectId);
+    if (!user) {
+      console.error("❌ User not found with ID:", userObjectId.toString());
+      throw new Error("User not found");
+    }
+    console.log("✅ User found:");
+    console.log("   - User Email:", user.email);
+    console.log("   - User Name:", `${user.firstName} ${user.lastName}`);
+    console.log("   - User Role:", user.role);
+    console.log("   - User ID:", user._id.toString());
+
+    // Get team info if teamId is provided
+    let teamName = "";
+    if (teamId) {
+      console.log("💳 Fetching team from database...");
+      const teamObjectId = toObjectId(teamId);
+      console.log("   - Team ID:", teamObjectId.toString());
+      const team = await Team.findById(teamObjectId);
+      if (team) {
+        teamName = team.teamName;
+        console.log("✅ Team found:");
+        console.log("   - Team Name:", teamName);
+        console.log("   - Team ID:", team._id.toString());
+      } else {
+        console.warn("⚠️ Team not found with ID:", teamObjectId.toString());
+      }
+    } else {
+      console.log("💳 No teamId provided");
+    }
+
+    // Determine payment amount (per player fee)
+    const amount = (league as any).perPlayerLeagueFee || 0;
+    
+    console.log("💳 Payment calculation:");
+    console.log("   - League perPlayerLeagueFee:", (league as any).perPlayerLeagueFee);
+    console.log("   - Calculated amount:", amount);
+
+    // Build user name
+    const userName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
+    console.log("💳 User name built:", userName);
+
+    // Create payment document based on user role
+    console.log("💳 Building payment data object...");
+    const paymentData: any = {
+      userId: userObjectId,
+      leagueId: leagueObjectId,
+      amount,
+      status: "unpaid",
     };
+
+    // Add role-specific fields
+    if (user.role === "captain") {
+      paymentData.captainName = userName;
+      console.log("💳 Added captainName:", userName);
+    } else if (user.role === "player") {
+      paymentData.playerName = userName;
+      console.log("💳 Added playerName:", userName);
+    } else if (user.role === "free-agent") {
+      paymentData.freeAgentName = userName;
+      console.log("💳 Added freeAgentName:", userName);
+    }
+
+    // Add team name if available
+    if (teamName) {
+      paymentData.teamName = teamName;
+      console.log("💳 Added teamName:", teamName);
+    }
+
+    console.log("💳 Final payment data object:");
+    console.log("   - userId:", paymentData.userId.toString());
+    console.log("   - leagueId:", paymentData.leagueId.toString());
+    console.log("   - amount:", paymentData.amount);
+    console.log("   - status:", paymentData.status);
+    console.log("   - captainName:", paymentData.captainName || "N/A");
+    console.log("   - playerName:", paymentData.playerName || "N/A");
+    console.log("   - freeAgentName:", paymentData.freeAgentName || "N/A");
+    console.log("   - teamName:", paymentData.teamName || "N/A");
+
+    console.log("💳 Creating Payment document...");
+    const payment = new Payment(paymentData);
+    console.log("💳 Payment document created (not saved yet)");
+    console.log("   - Payment _id:", payment._id);
+
+    console.log("💳 Saving payment to database...");
+    await payment.save();
+    console.log("✅ Payment saved successfully!");
+
+    console.log("💳 Final payment details:");
+    console.log("   - Payment ID:", payment._id.toString());
+    console.log("   - User ID:", payment.userId.toString());
+    console.log("   - League ID:", payment.leagueId.toString());
+    console.log("   - Amount: $", payment.amount);
+    console.log("   - Status:", payment.status);
+    console.log("   - Created At:", payment.createdAt);
+    console.log("💳 ========== createPayment FUNCTION COMPLETE ==========\n");
+
+    return payment;
   } catch (error: any) {
-    console.error("Error creating payments for user:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to create payments",
-    };
+    console.error("Error creating payment:", error);
+    throw error;
   }
 }
 
 /**
- * Get payment reminders (unpaid payments) for logged-in user
- * GET /api/payment/reminders
+ * Get payment for logged-in user and specific league
+ * GET /api/payments/my?leagueId=xxx
  */
-export async function getPaymentReminders(req: NextRequest) {
+export async function getMyPayment(req: NextRequest) {
   try {
     await connectDB();
-    const decoded = await verifyUser(req);
+    const decoded = await verifyUserToken(req);
+
+    const { searchParams } = new URL(req.url);
+    const leagueId = searchParams.get("leagueId");
+
+    if (!leagueId) {
+      return NextResponse.json(
+        { success: false, error: "leagueId query parameter is required" },
+        { status: 400 }
+      );
+    }
 
     const userId = toObjectId(decoded.userId);
+    const leagueObjectId = toObjectId(leagueId);
 
-    // Get user to check role and name
-    const user = await User.findById(userId);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    // Only create/fetch payments for players and captains
-    if (user.role !== "player" && user.role !== "captain") {
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Payment reminders only available for players and captains",
-          data: [],
-        },
-        { status: 200 }
-      );
-    }
-
-    // Get all leagues (both active and pending)
-    // Users should be able to pay for leagues even if they haven't started yet
-    const allLeagues = await League.find({});
-
-    // Get all existing payments for this user
-    const existingPayments = await Payment.find({
+    // Find payment
+    const payment = await Payment.findOne({
       userId,
-    });
-
-    // Find leagues that don't have payment records (both active and pending)
-    const leaguesWithoutPayments = allLeagues.filter((league: any) => {
-      return !existingPayments.some((payment: any) => {
-        return payment.leagueId.toString() === league._id.toString();
-      });
-    });
-
-    // Create missing payment records
-    if (leaguesWithoutPayments.length > 0) {
-      const userName = `${user.firstName} ${user.lastName}`.trim() || user.email;
-      
-      const newPaymentPromises = leaguesWithoutPayments.map(async (league: any) => {
-        const paymentData: any = {
-          userId,
-          leagueId: league._id,
-          amount: league.perPlayerLeagueFee || 0,
-          status: "unpaid",
-        };
-
-        // Add role-specific name field
-        if (user.role === "player") {
-          paymentData.playerName = userName;
-        } else if (user.role === "captain") {
-          paymentData.captainName = userName;
-        }
-
-        return Payment.create(paymentData);
-      });
-
-      await Promise.all(newPaymentPromises);
-      console.log(`Created ${leaguesWithoutPayments.length} missing payment records for user ${userId.toString()}`);
-    }
-
-    // Now find all unpaid payments for the user (including newly created ones)
-    const unpaidPayments = await Payment.find({
-      userId,
-      status: "unpaid",
+      leagueId: leagueObjectId,
     })
       .populate({
-        path: "leagueId",
-        select: "leagueName logo format startDate endDate perPlayerLeagueFee status",
-        model: "League",
-      })
-      .populate({
         path: "userId",
-        select: "firstName lastName email",
+        select: "firstName lastName email role",
         model: "User",
       })
-      .sort({ createdAt: -1 });
+      .populate({
+        path: "leagueId",
+        select: "leagueName logo format startDate endDate",
+        model: "League",
+      });
 
-    // Format payments for frontend
-    const formattedPayments = unpaidPayments.map((payment: any) => {
-      const league = payment.leagueId;
+    // If no payment exists, create one automatically
+    if (!payment) {
+      console.log(`No payment found for user ${userId.toString()} and league ${leagueObjectId.toString()}. Creating one...`);
       
-      // Format dates
-      const startDate = league?.startDate
-        ? new Date(league.startDate).toLocaleDateString("en-US", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })
-        : "";
-      const endDate = league?.endDate
-        ? new Date(league.endDate).toLocaleDateString("en-US", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })
-        : "";
+      try {
+        const newPayment = await createPayment(userId, leagueObjectId);
+        
+        // Populate the new payment
+        await newPayment.populate({
+          path: "userId",
+          select: "firstName lastName email role",
+          model: "User",
+        });
+        await newPayment.populate({
+          path: "leagueId",
+          select: "leagueName logo format startDate endDate",
+          model: "League",
+        });
 
-      // Determine league status based on start date
-      const currentDate = new Date();
-      const leagueStartDate = league?.startDate ? new Date(league.startDate) : null;
-      const leagueStatus = leagueStartDate && leagueStartDate <= currentDate ? "active" : "pending";
-
-      return {
-        _id: payment._id.toString(),
-        id: payment._id.toString(),
-        amount: `$${payment.amount || 0}`,
-        leagueDetails: {
-          name: league?.leagueName || "Unknown League",
-          logo: league?.logo || "/placeholder-logo.png",
-          format: league?.format || "5v5",
-          startDate,
-          endDate,
-          leagueFee: `$${league?.perPlayerLeagueFee || 0}`,
-          status: leagueStatus,
-        },
-      };
-    });
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Payment record created",
+            data: newPayment,
+          },
+          { status: 200 }
+        );
+      } catch (createError: any) {
+        console.error("Error creating payment:", createError);
+        return NextResponse.json(
+          {
+            success: false,
+            error: createError.message || "Failed to create payment record",
+          },
+          { status: 500 }
+        );
+      }
+    }
 
     return NextResponse.json(
       {
         success: true,
-        message: "Payment reminders retrieved successfully",
-        data: formattedPayments,
+        message: "Payment retrieved successfully",
+        data: payment,
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Error in getPaymentReminders:", error);
+    console.error("Error in getMyPayment:", error);
     if (error.message === "No token provided" || error.message === "Invalid token") {
       return NextResponse.json(
         { success: false, error: error.message },
@@ -253,105 +288,114 @@ export async function getPaymentReminders(req: NextRequest) {
       );
     }
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to get payment reminders" },
+      { success: false, error: error.message || "Failed to get payment" },
       { status: 500 }
     );
   }
 }
 
 /**
- * Update payment status (mark as paid)
- * PUT /api/payment/:id
+ * Update payment to paid status
+ * PATCH /api/payments/pay
+ * Body: { leagueId: string, transactionId: string, paymentMethod: "stripe" | "paypal" }
  */
-export async function updatePayment(req: NextRequest, { params }: { params: { id: string } }) {
+export async function updatePayment(req: NextRequest) {
   try {
     await connectDB();
-    const decoded = await verifyUser(req);
+    const decoded = await verifyUserToken(req);
 
-    const { id } = params;
-    const paymentId = toObjectId(id);
-    const { transactionId, paymentMethod, amount, status } = await req.json();
+    const body = await req.json();
+    const { leagueId, transactionId, paymentMethod } = body;
 
-    // Find the payment
-    const payment = await Payment.findById(paymentId)
-      .populate({
-        path: "userId",
-        select: "firstName lastName email",
-        model: "User",
-      });
-
-    if (!payment) {
+    if (!leagueId) {
       return NextResponse.json(
-        { success: false, error: "Payment not found" },
-        { status: 404 }
+        { success: false, error: "leagueId is required" },
+        { status: 400 }
       );
     }
 
-    // Verify the payment belongs to the logged-in user
+    if (!transactionId) {
+      return NextResponse.json(
+        { success: false, error: "transactionId is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!paymentMethod) {
+      return NextResponse.json(
+        { success: false, error: "paymentMethod is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!["stripe", "paypal"].includes(paymentMethod)) {
+      return NextResponse.json(
+        { success: false, error: "paymentMethod must be 'stripe' or 'paypal'" },
+        { status: 400 }
+      );
+    }
+
     const userId = toObjectId(decoded.userId);
-    if (payment.userId.toString() !== userId.toString()) {
+    const leagueObjectId = toObjectId(leagueId);
+
+    // Find existing payment
+    let payment = await Payment.findOne({
+      userId,
+      leagueId: leagueObjectId,
+    });
+
+    // If no payment exists, create one first
+    if (!payment) {
+      console.log(`No payment found. Creating unpaid payment for user ${userId.toString()} and league ${leagueObjectId.toString()}`);
+      try {
+        payment = await createPayment(userId, leagueObjectId);
+      } catch (createError: any) {
+        console.error("Error creating payment:", createError);
+        return NextResponse.json(
+          {
+            success: false,
+            error: createError.message || "Failed to create payment record",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Check if already paid
+    if (payment.status === "paid") {
       return NextResponse.json(
-        { success: false, error: "Unauthorized: This payment does not belong to you" },
-        { status: 403 }
+        {
+          success: false,
+          error: "Payment has already been processed",
+        },
+        { status: 400 }
       );
     }
 
-    // Update payment fields
-    if (transactionId !== undefined) {
-      (payment as any).transactionId = transactionId;
-    }
-
-    if (paymentMethod !== undefined) {
-      if (!["stripe", "paypal"].includes(paymentMethod)) {
-        return NextResponse.json(
-          { success: false, error: "Payment method must be 'stripe' or 'paypal'" },
-          { status: 400 }
-        );
-      }
-      (payment as any).paymentMethod = paymentMethod;
-    }
-
-    if (amount !== undefined) {
-      if (amount < 0) {
-        return NextResponse.json(
-          { success: false, error: "Amount must be positive" },
-          { status: 400 }
-        );
-      }
-      (payment as any).amount = amount;
-    }
-
-    if (status !== undefined) {
-      if (!["paid", "unpaid"].includes(status)) {
-        return NextResponse.json(
-          { success: false, error: "Status must be 'paid' or 'unpaid'" },
-          { status: 400 }
-        );
-      }
-      (payment as any).status = status;
-
-      // If marking as paid, paymentMethod is required
-      if (status === "paid" && !paymentMethod && !(payment as any).paymentMethod) {
-        return NextResponse.json(
-          { success: false, error: "Payment method is required when status is 'paid'" },
-          { status: 400 }
-        );
-      }
-    }
-
+    // Update payment
+    payment.status = "paid";
+    payment.transactionId = transactionId;
+    payment.paymentMethod = paymentMethod;
     await payment.save();
 
-    // Populate league for response
+    // Populate for response
+    await payment.populate({
+      path: "userId",
+      select: "firstName lastName email role",
+      model: "User",
+    });
     await payment.populate({
       path: "leagueId",
-      select: "leagueName logo format startDate endDate perPlayerLeagueFee",
+      select: "leagueName logo format startDate endDate",
       model: "League",
     });
+
+    console.log(`✅ Payment updated to paid for user ${userId.toString()} in league ${leagueObjectId.toString()}`);
 
     return NextResponse.json(
       {
         success: true,
-        message: "Payment updated successfully",
+        message: "Payment processed successfully",
         data: payment,
       },
       { status: 200 }
@@ -372,111 +416,43 @@ export async function updatePayment(req: NextRequest, { params }: { params: { id
 }
 
 /**
- * Create payment records for all existing players and captains when a new league is created
- * @param leagueId - The new league ID
- * @param leagueFee - The league fee per player
+ * Get all unpaid payments for logged-in user
+ * GET /api/payments/unpaid
  */
-export async function createPaymentsForNewLeague(
-  leagueId: string,
-  leagueFee: number
-) {
+export async function getAllUnpaidPayments(req: NextRequest) {
   try {
     await connectDB();
-
-    const leagueObjectId = toObjectId(leagueId);
-
-    // Get all players and captains
-    const users = await User.find({
-      role: { $in: ["player", "captain"] }
-    });
-
-    if (users.length === 0) {
-      return { success: true, message: "No players or captains found" };
-    }
-
-    // Create payment records for each user
-    const paymentPromises = users.map(async (user: any) => {
-      // Check if payment already exists
-      const existingPayment = await Payment.findOne({
-        userId: user._id,
-        leagueId: leagueObjectId,
-      });
-
-      if (existingPayment) {
-        return null; // Skip if payment already exists
-      }
-
-      // Create new payment record
-      const userName = `${user.firstName} ${user.lastName}`.trim() || user.email;
-      const paymentData: any = {
-        userId: user._id,
-        leagueId: leagueObjectId,
-        amount: leagueFee,
-        status: "unpaid",
-      };
-
-      // Add role-specific name field
-      if (user.role === "player") {
-        paymentData.playerName = userName;
-      } else if (user.role === "captain") {
-        paymentData.captainName = userName;
-      }
-
-      return Payment.create(paymentData);
-    });
-
-    const payments = await Promise.all(paymentPromises);
-    const createdPayments = payments.filter((p) => p !== null);
-
-    return {
-      success: true,
-      message: `Created ${createdPayments.length} payment records for new league`,
-      count: createdPayments.length,
-    };
-  } catch (error: any) {
-    console.error("Error creating payments for new league:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to create payments",
-    };
-  }
-}
-
-/**
- * Get all payments for a user (paid and unpaid)
- * GET /api/payment/all
- */
-export async function getAllPayments(req: NextRequest) {
-  try {
-    await connectDB();
-    const decoded = await verifyUser(req);
+    const decoded = await verifyUserToken(req);
 
     const userId = toObjectId(decoded.userId);
 
-    // Find all payments for the user
-    const payments = await Payment.find({ userId })
-      .populate({
-        path: "leagueId",
-        select: "leagueName logo format startDate endDate perPlayerLeagueFee",
-        model: "League",
-      })
+    // Find all unpaid payments for the user
+    const payments = await Payment.find({
+      userId,
+      status: "unpaid",
+    })
       .populate({
         path: "userId",
-        select: "firstName lastName email",
+        select: "firstName lastName email role",
         model: "User",
+      })
+      .populate({
+        path: "leagueId",
+        select: "leagueName logo format startDate endDate status",
+        model: "League",
       })
       .sort({ createdAt: -1 });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Payments retrieved successfully",
+        message: "Unpaid payments retrieved successfully",
         data: payments,
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Error in getAllPayments:", error);
+    console.error("Error in getAllUnpaidPayments:", error);
     if (error.message === "No token provided" || error.message === "Invalid token") {
       return NextResponse.json(
         { success: false, error: error.message },
@@ -484,7 +460,7 @@ export async function getAllPayments(req: NextRequest) {
       );
     }
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to get payments" },
+      { success: false, error: error.message || "Failed to get unpaid payments" },
       { status: 500 }
     );
   }

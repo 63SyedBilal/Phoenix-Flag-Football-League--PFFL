@@ -3,7 +3,6 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/modules";
 import { verifyAccessToken } from "@/lib/jwt";
 import { hashPassword } from "@/lib/auth";
-import { createPaymentsForUser } from "./payment";
 
 /**
  * Complete user profile - update existing user with profile details
@@ -65,13 +64,6 @@ export async function completeProfile(req: NextRequest) {
     user.lastName = lastName.trim();
 
     await user.save();
-
-    // Create payment records for active leagues if user is player or captain
-    // This handles cases where user completes profile after signup
-    if (user.role === "player" || user.role === "captain") {
-      const userName = `${user.firstName} ${user.lastName}`.trim() || user.email;
-      await createPaymentsForUser(user._id.toString(), user.role, userName);
-    }
 
     return NextResponse.json(
       {

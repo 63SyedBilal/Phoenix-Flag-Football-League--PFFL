@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import SignupForm from "@/components/forms/signup-form"
 import ProfileForm from "@/components/forms/profile-form"
@@ -11,7 +11,7 @@ import type { TeamFormData } from "@/components/forms/team-form"
 
 type Step = "signup" | "profile" | "team"
 
-function SignupPageContent() {
+export default function SignupPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const roleFromLogin = searchParams.get("role") || ""
@@ -240,22 +240,6 @@ function SignupPageContent() {
         )}
       </div>
     </div>
-  )
-}
-
-export default function SignupPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>Loading...</p>
-          </div>
-        </div>
-      }
-    >
-      <SignupPageContent />
-    </Suspense>
   )
 }
 

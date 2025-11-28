@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -19,21 +20,31 @@ export default function PfflLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [userRole, setUserRole] = useState<string | null>(null)
   const [navigation, setNavigation] = useState(allNavigation)
   const [userName, setUserName] = useState<string>("User")
   const [userEmail, setUserEmail] = useState<string>("user@pffl.com")
   const [userInitials, setUserInitials] = useState<string>("U")
-  const [isClient, setIsClient] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
+  // Check authentication on mount and when pathname changes
   useEffect(() => {
-    setIsClient(true)
-    
-    // Get user data from localStorage
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
+    const checkAuth = () => {
+      // Check authentication
+      const token = localStorage.getItem("token")
+      const storedUser = localStorage.getItem("user")
+      
+      if (!token || !storedUser) {
+        // Not authenticated - redirect to 404
+        setIsAuthenticated(false)
+        router.push("/not-found")
+        return
+      }
+
       try {
         const userData = JSON.parse(storedUser)
+        setIsAuthenticated(true)
         setUserRole(userData.role)
         
         // Set user name and email
@@ -59,16 +70,61 @@ export default function PfflLayout({
         setNavigation(filteredNav)
       } catch (error) {
         console.error("Error parsing user data:", error)
-        setNavigation(allNavigation)
+        setIsAuthenticated(false)
+        router.push("/not-found")
       }
     }
-  }, [])
+
+    checkAuth()
+
+    // Listen for storage changes (logout from other tabs/windows)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "token" || e.key === "user") {
+        checkAuth()
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [router, pathname]) // Re-check on pathname changes
+
+  // Double-check authentication before rendering (safety check)
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    const storedUser = localStorage.getItem("user")
+    
+    if (!token || !storedUser) {
+      if (isAuthenticated !== false) {
+        setIsAuthenticated(false)
+        router.push("/not-found")
+      }
+    }
+  })
+
+  // Don't render content if not authenticated
+  if (isAuthenticated === false) {
+    return null
+  }
+
+  // Show loading state while checking authentication
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
       <div className="flex h-screen bg-background">
         {/* Sidebar */}
-        <aside className="w-[290px] border-r border-border bg-background">
+        <aside className="w-[290px] bg-background">
           <div className="flex flex-col h-full justify-between pt-6 pb-6 px-[14px]">
             {/* Logo Section */}
             <div className="flex flex-col gap-3">
@@ -88,12 +144,9 @@ export default function PfflLayout({
               {/* Navigation */}
               <nav className="w-[262px] flex flex-col gap-2 mt-2">
                 {navigation.map((item) => {
-                  // Only calculate isActive on client to avoid hydration mismatch
-                  const isActive = isClient && (
-                    item.href === "/pffl/home"
-                      ? pathname === item.href
-                      : pathname === item.href || pathname?.startsWith(item.href + "/")
-                  )
+                  const isActive = item.href === "/pffl/home"
+                    ? pathname === item.href
+                    : pathname === item.href || pathname?.startsWith(item.href + "/")
 
                   return (
                     <Link
@@ -130,7 +183,7 @@ export default function PfflLayout({
             </div>
 
             {/* User Profile */}
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4">
               <div className="flex items-center gap-3 px-[14px] py-2">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                   <span className="text-sm font-medium text-white">{userInitials}</span>

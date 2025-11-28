@@ -7,6 +7,8 @@ import Image from "next/image"
 import NotificationCardPayment from "@/components/cards/notification-card-payment"
 import InvitationCard from "@/components/cards/invitation-card"
 import LeagueInvitationCard from "@/components/cards/league-invitation-card"
+import PaymentReminderCard from "@/components/cards/payment-reminder-card"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 
 interface Notification {
   _id: string
@@ -46,7 +48,9 @@ export default function PfflNotificationsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedItem, setSelectedItem] = useState("Select Item")
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unpaidPayments, setUnpaidPayments] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingPayments, setIsLoadingPayments] = useState(true)
   const [error, setError] = useState("")
   const [processingId, setProcessingId] = useState<string | null>(null)
 
@@ -83,6 +87,41 @@ export default function PfflNotificationsPage() {
     }
 
     fetchNotifications()
+  }, [])
+
+  // Fetch unpaid payments
+  useEffect(() => {
+    const fetchUnpaidPayments = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setIsLoadingPayments(false)
+          return
+        }
+
+        const response = await fetch("/api/payments/unpaid", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          setIsLoadingPayments(false)
+          return
+        }
+
+        const data = await response.json()
+        if (data.success) {
+          setUnpaidPayments(data.data || [])
+        }
+      } catch (err) {
+        console.error("Error fetching unpaid payments:", err)
+      } finally {
+        setIsLoadingPayments(false)
+      }
+    }
+
+    fetchUnpaidPayments()
   }, [])
 
   const handlePayNow = (id: string) => {
@@ -195,12 +234,23 @@ export default function PfflNotificationsPage() {
       )
     }
     if (activeFilter === "Payment Required") {
-      return false // Payment notifications would be handled separately
+      return false // Payment notifications handled separately
     }
     return true // All Notifications
   })
 
-  // Filter by search query
+  // Filter payments based on active filter
+  const filteredPayments = unpaidPayments.filter((payment) => {
+    if (activeFilter === "Payment Required") {
+      return true
+    }
+    if (activeFilter === "All Notifications") {
+      return true
+    }
+    return false
+  })
+
+  // Filter by search query for notifications
   const searchFilteredNotifications = filteredNotifications.filter((notification) => {
     if (!searchQuery) return true
     const searchLower = searchQuery.toLowerCase()
@@ -209,6 +259,18 @@ export default function PfflNotificationsPage() {
       (notification.sender && notification.sender.lastName && notification.sender.lastName.toLowerCase().includes(searchLower)) ||
       (notification.team && notification.team.teamName && notification.team.teamName.toLowerCase().includes(searchLower)) ||
       (notification.league && notification.league.leagueName && notification.league.leagueName.toLowerCase().includes(searchLower))
+    )
+  })
+
+  // Filter by search query for payments
+  const searchFilteredPayments = filteredPayments.filter((payment) => {
+    if (!searchQuery) return true
+    const searchLower = searchQuery.toLowerCase()
+    return (
+      (payment.leagueId?.leagueName && payment.leagueId.leagueName.toLowerCase().includes(searchLower)) ||
+      (payment.userId?.firstName && payment.userId.firstName.toLowerCase().includes(searchLower)) ||
+      (payment.userId?.lastName && payment.userId.lastName.toLowerCase().includes(searchLower)) ||
+      (payment.userId?.email && payment.userId.email.toLowerCase().includes(searchLower))
     )
   })
 
@@ -295,20 +357,50 @@ export default function PfflNotificationsPage() {
       </div>
 
       {/* Notification Cards */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>Loading notifications...</p>
-        </div>
+      {isLoading || isLoadingPayments ? (
+        <LoadingSpinner fullScreen text="Loading notifications..." />
       ) : error ? (
         <div className="flex items-center justify-center py-8">
           <p style={{ fontFamily: "Lato, sans-serif", color: "#EF4444" }}>{error}</p>
         </div>
-      ) : searchFilteredNotifications.length === 0 ? (
+      ) : searchFilteredNotifications.length === 0 && searchFilteredPayments.length === 0 ? (
         <div className="flex items-center justify-center py-8">
           <p style={{ fontFamily: "Lato, sans-serif", color: "#6B7280" }}>No notifications found</p>
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Payment Notifications */}
+          {searchFilteredPayments.map((payment) => {
+            const dueDate = payment.createdAt 
+              ? new Date(payment.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
+              : new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
+            
+            return (
+              <NotificationCardPayment
+                key={payment._id}
+                id={payment._id}
+                title="Payment Required"
+                dueDate={dueDate}
+                message="Your League Fee has not been paid. Please complete your payment to stay eligible for the upcoming league."
+                leagueDetails={{
+                  name: payment.leagueId?.leagueName || "Unknown League",
+                  logo: payment.leagueId?.logo || "/placeholder-logo.png",
+                  format: payment.leagueId?.format || "5v5",
+                  startDate: payment.leagueId?.startDate 
+                    ? new Date(payment.leagueId.startDate).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })
+                    : "N/A",
+                  endDate: payment.leagueId?.endDate
+                    ? new Date(payment.leagueId.endDate).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })
+                    : "N/A",
+                  leagueFee: `$${payment.amount || 0}`,
+                  status: payment.leagueId?.status === "active" ? "active" : "pending",
+                }}
+                onPayNow={() => router.push(`/pffl/settings/payment/${payment._id}?leagueId=${payment.leagueId?._id}`)}
+              />
+            )
+          })}
+
+          {/* Regular Notifications */}
           {searchFilteredNotifications.map((notification) => {
             const notificationId = notification._id?.toString() || notification._id
             
@@ -364,7 +456,6 @@ export default function PfflNotificationsPage() {
               )
             }
             
-            // Add other notification types here (payment, etc.)
             return null
           })}
         </div>

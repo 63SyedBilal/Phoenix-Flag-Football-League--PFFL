@@ -6,6 +6,7 @@ import User from "@/modules/user";
 import League from "@/modules/league";
 import SuperAdmin from "@/modules/superadmin";
 import { verifyAccessToken } from "@/lib/jwt";
+import { createPayment } from "@/controller/payment";
 import mongoose from "mongoose";
 
 // Helper to convert string ID to ObjectId
@@ -352,6 +353,55 @@ export async function acceptNotification(req: NextRequest) {
       (league as any).teams.push(teamId);
       await league.save();
 
+      // Create payment records for all players in the team (including captain)
+      // Only create payments for players and captains, not referees/stat-keepers
+      try {
+        // Get all unique player IDs from both squads
+        const squad5v5Ids = (team.squad5v5 || []).map((id: any) => id.toString());
+        const squad7v7Ids = (team.squad7v7 || []).map((id: any) => id.toString());
+        const captainId = team.captain.toString();
+        
+        // Combine all player IDs (including captain) and remove duplicates
+        const allPlayerIds = [...new Set([...squad5v5Ids, ...squad7v7Ids, captainId])];
+        
+        console.log(`💰 Creating payments for ${allPlayerIds.length} players in team ${team.teamName} for league ${league.leagueName}`);
+        
+        // Create payment for each player
+        const paymentPromises = allPlayerIds.map(async (playerIdStr: string) => {
+          try {
+            const playerId = toObjectId(playerIdStr);
+            
+            // Get user to check role
+            const player = await User.findById(playerId);
+            if (!player) {
+              console.warn(`⚠️ Player not found: ${playerIdStr}`);
+              return null;
+            }
+            
+            // Only create payment for players and captains, skip referees and stat-keepers
+            if (player.role !== "player" && player.role !== "captain" && player.role !== "free-agent") {
+              console.log(`⏭️ Skipping payment for ${player.email} (role: ${player.role})`);
+              return null;
+            }
+            
+            // Create payment
+            const payment = await createPayment(playerId, leagueId, teamId);
+            console.log(`✅ Payment created for ${player.email} (${player.role}): $${payment.amount}`);
+            return payment;
+          } catch (error: any) {
+            console.error(`❌ Error creating payment for player ${playerIdStr}:`, error);
+            return null;
+          }
+        });
+        
+        // Wait for all payments to be created (don't fail if some fail)
+        await Promise.allSettled(paymentPromises);
+        console.log(`✅ Payment creation process completed for team ${team.teamName}`);
+      } catch (paymentError: any) {
+        // Log error but don't fail the invitation acceptance
+        console.error("❌ Error creating payments (non-fatal):", paymentError);
+      }
+
       // Update notification status
       notification.status = "accepted";
       await notification.save();
@@ -364,7 +414,7 @@ export async function acceptNotification(req: NextRequest) {
       return NextResponse.json(
         {
           success: true,
-          message: "Invite accepted successfully. Your team has been added to the league.",
+          message: "Invite accepted successfully. Your team has been added to the league. Payment records have been created for all team members.",
           data: notification
         },
         { status: 200 }

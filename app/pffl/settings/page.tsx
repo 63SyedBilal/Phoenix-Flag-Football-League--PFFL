@@ -13,6 +13,10 @@ export default function PfflSettingsPage() {
   const router = useRouter()
 
   const handleLogout = () => {
+    // Clear all session data
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    // Redirect to login
     router.push("/login")
   }
 
@@ -31,6 +35,8 @@ export default function PfflSettingsPage() {
     </div>
   )
 }
+
+
 
 
 

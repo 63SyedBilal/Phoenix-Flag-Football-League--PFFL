@@ -10,7 +10,7 @@ const PaymentSchema = new mongoose.Schema(
     leagueId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref: "League", // Assuming you have a League model
+      ref: "League",
     },
     amount: {
       type: Number,
@@ -27,46 +27,32 @@ const PaymentSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    // Payment method - required when status is "paid"
+    stripePaymentIntentId: {
+      type: String,
+      trim: true,
+    },
     paymentMethod: {
       type: String,
       enum: ["stripe", "paypal"],
-      // Will be validated in controller when status is "paid"
     },
-    // Team name - for players only
-    teamName: {
-      type: String,
-      trim: true,
-    },
-    // Player name - for players
-    playerName: {
-      type: String,
-      trim: true,
-    },
-    // Captain name - for captains
-    captainName: {
-      type: String,
-      trim: true,
-    },
-    // Free agent name - for free agents
-    freeAgentName: {
-      type: String,
-      trim: true,
-    },
+
+    teamName: { type: String, trim: true },
+    playerName: { type: String, trim: true },
+    captainName: { type: String, trim: true },
+    freeAgentName: { type: String, trim: true },
   },
   { timestamps: true }
 );
 
-// Pre-save validation: paymentMethod required if status is "paid"
-PaymentSchema.pre("save", function (next) {
+// 🔥 FIXED — async hook WITHOUT next()
+PaymentSchema.pre("save", async function () {
   if (this.status === "paid" && !this.paymentMethod) {
-    return next(new Error("Payment method is required when status is 'paid'"));
+    throw new Error("Payment method is required when status is 'paid'");
   }
-  next();
 });
 
-// Prevent model overwrite error in Next.js development
-const Payment = mongoose.models.Payment || mongoose.model("Payment", PaymentSchema);
+// Prevent overwrite
+const Payment =
+  mongoose.models.Payment || mongoose.model("Payment", PaymentSchema);
 
 export default Payment;
-

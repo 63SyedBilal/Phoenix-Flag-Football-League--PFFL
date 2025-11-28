@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 import Image from "next/image"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 
 const paymentMethods = [
   { id: "paypal", name: "PayPal", logo: "PayPal" },
@@ -12,12 +13,59 @@ const paymentMethods = [
 export default function PaymentMethodPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const id = params?.id as string
+  const leagueId = searchParams.get("leagueId")
   const [selectedMethod, setSelectedMethod] = useState("stripe")
-  const amountDue = "$25.00"
+  const [amountDue, setAmountDue] = useState("$0.00")
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPayment = async () => {
+      if (!leagueId) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setIsLoading(false)
+          return
+        }
+
+        const response = await fetch(`/api/payments/my?leagueId=${leagueId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data) {
+            setAmountDue(`$${data.data.amount.toFixed(2)}`)
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching payment:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPayment()
+  }, [leagueId])
 
   const handleContinue = () => {
-    router.push(`/pffl/settings/payment/${id}/details?method=${selectedMethod}`)
+    router.push(`/pffl/settings/payment/${id}/details?method=${selectedMethod}&leagueId=${leagueId}`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <LoadingSpinner fullScreen text="Loading payment details..." />
+      </div>
+    )
   }
 
   return (
@@ -161,6 +209,7 @@ export default function PaymentMethodPage() {
     </div>
   )
 }
+
 
 
 

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Search, Mail } from "lucide-react"
 import Image from "next/image"
+import LoadingSpinner from "@/components/ui/loading-spinner"
 
 interface User {
   _id: string
@@ -23,7 +24,7 @@ interface UserWithProfile extends User {
   invitedFormats?: Set<"5v5" | "7v7">
 }
 
-function InvitePlayersPageContent() {
+export default function InvitePlayersPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<"players" | "free-agents">("players")
@@ -360,8 +361,28 @@ function InvitePlayersPageContent() {
 
       {/* User Cards */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <p style={{ color: "#6B7280" }}>Loading players...</p>
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((index) => (
+            <div
+              key={index}
+              className="bg-white border-[0.67px] border-[#E5E7EB] rounded-[14px] py-4 px-4 w-full shadow-sm animate-pulse"
+            >
+              <div className="flex items-center gap-3">
+                {/* Avatar Skeleton */}
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0"></div>
+
+                {/* User Info Skeleton */}
+                <div className="flex-1">
+                  <div className="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-48 mb-1"></div>
+                  <div className="h-4 bg-gray-200 rounded w-24"></div>
+                </div>
+
+                {/* Button Skeleton */}
+                <div className="w-24 h-10 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-8">
@@ -425,20 +446,6 @@ function InvitePlayersPageContent() {
         </div>
       )}
     </div>
-  )
-}
-
-export default function InvitePlayersPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-8">
-          <p style={{ color: "#6B7280" }}>Loading players...</p>
-        </div>
-      }
-    >
-      <InvitePlayersPageContent />
-    </Suspense>
   )
 }
 

@@ -3,7 +3,6 @@ import { connectDB } from "@/lib/db";
 import { League, User, Team, Notification } from "@/modules";
 import { verifyAccessToken } from "@/lib/jwt";
 import mongoose from "mongoose";
-import { createPaymentsForNewLeague } from "./payment";
 
 // Helper to convert string ID to ObjectId
 function toObjectId(id: string | mongoose.Types.ObjectId): mongoose.Types.ObjectId {
@@ -123,9 +122,6 @@ export async function createLeague(req: NextRequest) {
 
     const league = await League.create(leagueData);
     const leagueId = (league as any)._id.toString();
-
-    // Create payment records for all existing players and captains for this new league
-    await createPaymentsForNewLeague(leagueId, perPlayerLeagueFee || 0);
 
     // Populate related fields
     const populatedLeague = await League.findById(leagueId)

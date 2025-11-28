@@ -91,13 +91,21 @@ export default function PaymentReminderCard({
         <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-[#E5E7EB]">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-dashed border-gray-300">
-              <Image
-                src={leagueDetails.logo}
-                alt={leagueDetails.name}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full object-cover"
-              />
+              {leagueDetails.logo && leagueDetails.logo !== "/placeholder-logo.png" ? (
+                <Image
+                  src={leagueDetails.logo}
+                  alt={leagueDetails.name}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-xs font-semibold text-gray-500">
+                    {leagueDetails.name.substring(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="flex-1">
               <h4 className="font-semibold text-foreground text-lg">{leagueDetails.name}</h4>

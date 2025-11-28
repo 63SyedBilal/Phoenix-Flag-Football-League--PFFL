@@ -1,7 +1,8 @@
 "use client"
 
-import { Bell } from "lucide-react"
 import type React from "react"
+import { usePathname } from "next/navigation"
+import BellNotificationButton from "@/components/layout/bell-notification-button"
 
 export interface PageHeaderProps {
   title: string
@@ -9,6 +10,8 @@ export interface PageHeaderProps {
   showBell?: boolean
   showNotificationDot?: boolean
   rightAction?: React.ReactNode
+  notificationRoute?: string
+  useSuperadminPayments?: boolean
 }
 
 export default function PageHeader({
@@ -17,7 +20,20 @@ export default function PageHeader({
   showBell = true,
   showNotificationDot = false,
   rightAction,
+  notificationRoute,
+  useSuperadminPayments = false,
 }: PageHeaderProps) {
+  const pathname = usePathname()
+
+  // Determine notification route based on current path
+  const getNotificationRoute = () => {
+    if (notificationRoute) return notificationRoute
+    if (pathname?.startsWith("/superadmin")) {
+      return "/superadmin/settings/notifications"
+    }
+    return "/pffl/settings/notifications"
+  }
+
   return (
     <div className="flex items-start justify-between mb-4">
       <div>
@@ -26,17 +42,17 @@ export default function PageHeader({
       </div>
       {rightAction || (
         showBell && (
-          <button className="w-[60px] h-[60px] p-3 rounded-xl border border-[#0000001F] bg-white hover:bg-gray-50 transition-colors flex items-center justify-center relative">
-            <Bell className="w-5 h-5 text-foreground" />
-            {showNotificationDot && (
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-            )}
-          </button>
+          <BellNotificationButton
+            notificationRoute={getNotificationRoute()}
+            useSuperadminPayments={useSuperadminPayments || pathname?.startsWith("/superadmin")}
+          />
         )
       )}
     </div>
   )
 }
+
+
 
 
 

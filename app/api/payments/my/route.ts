@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
-import { getAllPayments } from "@/controller/payment";
+import { getMyPayment } from "@/controller/payment";
 
 export async function GET(req: NextRequest) {
-  return getAllPayments(req);
+  return getMyPayment(req);
 }
+
 
