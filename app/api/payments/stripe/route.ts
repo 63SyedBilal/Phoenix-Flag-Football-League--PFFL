@@ -5,10 +5,16 @@ import Payment from "@/modules/payment";
 import { verifyAccessToken } from "@/lib/jwt";
 import { verifyPaymentOwnership, validateCardDetails, logPaymentAttempt } from "@/lib/payment-security";
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-11-17.clover",
-});
+// Initialize Stripe lazily to avoid build-time errors
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+  }
+  return new Stripe(secretKey, {
+    apiVersion: "2025-11-17.clover",
+  });
+}
 
 // Helper to get token from request
 function getToken(req: NextRequest): string | null {
@@ -124,6 +130,7 @@ export async function POST(req: NextRequest) {
 
       console.log("💳 Creating payment method...");
       // Create a payment method with the card details
+      const stripe = getStripe();
       const paymentMethod = await stripe.paymentMethods.create({
         type: "card",
         card: {

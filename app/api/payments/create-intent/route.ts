@@ -5,10 +5,16 @@ import Payment from "@/modules/payment";
 import { verifyAccessToken } from "@/lib/jwt";
 import { verifyPaymentOwnership, logPaymentAttempt } from "@/lib/payment-security";
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-11-17.clover",
-});
+// Initialize Stripe lazily to avoid build-time errors
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+  }
+  return new Stripe(secretKey, {
+    apiVersion: "2025-11-17.clover",
+  });
+}
 
 // Helper to get token from request
 function getToken(req: NextRequest): string | null {
@@ -101,6 +107,7 @@ export async function POST(req: NextRequest) {
       
       try {
         // Retrieve existing payment intent
+        const stripe = getStripe();
         const existingIntent = await stripe.paymentIntents.retrieve(
           payment.stripePaymentIntentId
         );
@@ -127,6 +134,7 @@ export async function POST(req: NextRequest) {
     // Create new Payment Intent
     console.log("💳 Step 2: Creating Stripe Payment Intent...");
     
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(payment.amount * 100), // Convert to cents
       currency: "usd",
