@@ -35,6 +35,26 @@ interface SelectableTeam {
   _id?: string
   teamName?: string
   image?: string
+  squad5v5?: Array<{
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    profile?: {
+      jerseyNumber: number | null
+      position: string
+    }
+  }>
+  squad7v7?: Array<{
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    profile?: {
+      jerseyNumber: number | null
+      position: string
+    }
+  }>
   players?: Array<{
     jerseyNumber: string
     name: string
@@ -76,6 +96,7 @@ export default function CreateLeagueForm({
   const [searchStatKeeper, setSearchStatKeeper] = useState("")
   const [searchTeam, setSearchTeam] = useState("")
   const [leagueId, setLeagueId] = useState<string | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   // Fetch referees, stat keepers, and teams
   useEffect(() => {
@@ -165,15 +186,89 @@ export default function CreateLeagueForm({
         })
         if (teamsResponse.ok) {
           const teamsData = await teamsResponse.json()
-          const formattedTeams = (teamsData.data || []).map((team: any) => ({
-            id: team._id,
-            _id: team._id,
-            name: team.teamName,
-            teamName: team.teamName,
-            logo: team.image || "🏈",
-            image: team.image,
-            playerCount: team.players?.length || 0,
-            players: team.players || [],
+          const formattedTeams = await Promise.all((teamsData.data || []).map(async (team: any) => {
+            // Fetch profiles for squad5v5 players
+            const squad5v5WithProfiles = await Promise.all((team.squad5v5 || []).map(async (player: any) => {
+              try {
+                const profileResponse = await fetch(`/api/profile/${player._id || player}`, {
+                  headers: {
+                    "Authorization": `Bearer ${token}`,
+                  },
+                })
+                let profile = null
+                if (profileResponse.ok) {
+                  const profileData = await profileResponse.json()
+                  profile = profileData.data
+                }
+                return {
+                  _id: player._id || player,
+                  firstName: player.firstName || "",
+                  lastName: player.lastName || "",
+                  email: player.email || "",
+                  profile: profile ? {
+                    jerseyNumber: profile.jerseyNumber,
+                    position: profile.position || ""
+                  } : undefined
+                }
+              } catch (err) {
+                console.error("Error fetching profile:", err)
+                return {
+                  _id: player._id || player,
+                  firstName: player.firstName || "",
+                  lastName: player.lastName || "",
+                  email: player.email || "",
+                  profile: undefined
+                }
+              }
+            }))
+
+            // Fetch profiles for squad7v7 players
+            const squad7v7WithProfiles = await Promise.all((team.squad7v7 || []).map(async (player: any) => {
+              try {
+                const profileResponse = await fetch(`/api/profile/${player._id || player}`, {
+                  headers: {
+                    "Authorization": `Bearer ${token}`,
+                  },
+                })
+                let profile = null
+                if (profileResponse.ok) {
+                  const profileData = await profileResponse.json()
+                  profile = profileData.data
+                }
+                return {
+                  _id: player._id || player,
+                  firstName: player.firstName || "",
+                  lastName: player.lastName || "",
+                  email: player.email || "",
+                  profile: profile ? {
+                    jerseyNumber: profile.jerseyNumber,
+                    position: profile.position || ""
+                  } : undefined
+                }
+              } catch (err) {
+                console.error("Error fetching profile:", err)
+                return {
+                  _id: player._id || player,
+                  firstName: player.firstName || "",
+                  lastName: player.lastName || "",
+                  email: player.email || "",
+                  profile: undefined
+                }
+              }
+            }))
+
+            return {
+              id: team._id,
+              _id: team._id,
+              name: team.teamName,
+              teamName: team.teamName,
+              logo: team.image || "🏈",
+              image: team.image,
+              playerCount: team.players?.length || 0,
+              squad5v5: squad5v5WithProfiles,
+              squad7v7: squad7v7WithProfiles,
+              players: team.players || [],
+            }
           }))
           setTeams(formattedTeams)
         }
@@ -189,9 +284,22 @@ export default function CreateLeagueForm({
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      setFormData({ ...formData, logo: e.target.files[0] })
+      const file = e.target.files[0]
+      setFormData({ ...formData, logo: file })
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file)
+      setLogoPreview(previewUrl)
     }
   }
+
+  // Cleanup preview URL when component unmounts or logo is removed
+  useEffect(() => {
+    return () => {
+      if (logoPreview) {
+        URL.revokeObjectURL(logoPreview)
+      }
+    }
+  }, [logoPreview])
 
   const toggleReferee = (id: string) => {
     const newSet = new Set(selectedReferees)
@@ -248,10 +356,6 @@ export default function CreateLeagueForm({
         errors.push("Minimum players required is required")
       } else if (parseInt(formData.minPlayers) < 1) {
         errors.push("Minimum players must be at least 1")
-      }
-      
-      if (!formData.entryFeeType) {
-        errors.push("Entry fee type is required")
       }
       
       if (!formData.perPlayerFee || formData.perPlayerFee.trim() === "") {
@@ -322,9 +426,7 @@ export default function CreateLeagueForm({
           startDate: formData.startDate,
           endDate: formData.endDate,
           minimumPlayers: parseInt(formData.minPlayers),
-          entryFeeType: formData.entryFeeType === "stripe" || formData.entryFeeType === "paypal" 
-            ? formData.entryFeeType 
-            : "stripe",
+          entryFeeType: "stripe", // Default to stripe
           perPlayerLeagueFee: parseFloat(formData.perPlayerFee) || 0,
           logo: logoUrl,
           status: "pending",
@@ -373,7 +475,6 @@ export default function CreateLeagueForm({
         console.log("Step 1 - League ID type:", typeof extractedLeagueId)
         console.log("Step 1 - League ID stored in state")
         
-        setSuccessMessages(["League created successfully!"])
         setIsLoading(false)
         setError("")
         
@@ -525,13 +626,7 @@ export default function CreateLeagueForm({
           }
         }
 
-        // Set success and error messages separately
-        if (successMessages.length > 0) {
-          setSuccessMessages(successMessages)
-        } else {
-          setSuccessMessages(["League created successfully! No invitations to send."])
-        }
-        
+        // Set error messages if any
         if (errorMessages.length > 0) {
           setInvitationErrors(errorMessages)
         } else {
@@ -540,11 +635,9 @@ export default function CreateLeagueForm({
         
         setIsLoading(false)
         
-        // Close form and refresh after showing messages
-        setTimeout(() => {
-      onClose?.()
-          router.refresh()
-        }, 3000)
+        // Close form and refresh immediately
+        onClose?.()
+        router.refresh()
         return
       } catch (err: any) {
         console.error("Error sending invitations:", err)
@@ -760,7 +853,7 @@ export default function CreateLeagueForm({
                 Upload Logo
               </label>
               <div
-                className="w-full min-h-[161px] px-3 py-[10px] rounded-md border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                className="w-full min-h-[161px] px-3 py-[10px] rounded-md border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors relative"
                 style={{
                   border: "1px solid #D1D5DB",
                   borderStyle: "dashed",
@@ -768,13 +861,26 @@ export default function CreateLeagueForm({
                   backgroundColor: "#FFFFFF",
                 }}
               >
-                {formData.logo ? (
-                  <div className="flex items-center justify-center gap-4">
-                    <div className="text-4xl">{formData.logo.name.split(".")[0]}</div>
+                {formData.logo && logoPreview ? (
+                  <div className="flex flex-col items-center justify-center gap-3 w-full h-full absolute inset-0">
+                    <div className="relative w-full h-full flex items-center justify-center p-4">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="max-w-full max-h-full w-auto h-auto object-contain rounded-md"
+                        style={{ maxHeight: 'calc(100% - 40px)' }}
+                      />
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, logo: null })}
-                      className="text-red-600 hover:text-red-700"
+                      onClick={() => {
+                        if (logoPreview) {
+                          URL.revokeObjectURL(logoPreview)
+                        }
+                        setFormData({ ...formData, logo: null })
+                        setLogoPreview(null)
+                      }}
+                      className="text-red-600 hover:text-red-700 text-sm font-medium absolute bottom-3 z-10"
                     >
                       Remove
                     </button>
@@ -858,8 +964,8 @@ export default function CreateLeagueForm({
               </div>
             </div>
 
-            {/* Three Fields Row */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Two Fields Row */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
                 <label
                   className="font-medium"
@@ -890,45 +996,6 @@ export default function CreateLeagueForm({
                     }}
                   required
                 />
-              </div>
-              <div className="flex flex-col gap-3">
-                <label
-                  className="font-medium"
-                  style={{
-                    fontFamily: "Lato, sans-serif",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "20px",
-                    color: "#111827",
-                  }}
-                >
-                  Entry Fee Type <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.entryFeeType}
-                    onChange={(e) => {
-                      setFormData({ ...formData, entryFeeType: e.target.value })
-                      if (error) setError("") // Clear error when user starts typing
-                    }}
-                    className="w-full h-12 px-3 py-[10px] pr-10 rounded-md border appearance-none"
-                    style={{
-                      border: !formData.entryFeeType && error ? "1px solid #EF4444" : "1px solid #D1D5DB",
-                      boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
-                      backgroundColor: "#FFFFFF",
-                    }}
-                    required
-                  >
-                    <option value="">Select</option>
-                    <option value="stripe">Stripe</option>
-                    <option value="paypal">PayPal</option>
-                  </select>
-                  <img
-                    src="/assets/image/arrow-down.svg"
-                    alt=""
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
-                  />
-                </div>
               </div>
               <div className="flex flex-col gap-3">
                 <label
@@ -1162,7 +1229,11 @@ export default function CreateLeagueForm({
                           </div>
                           <div className="flex items-center justify-between w-full">
                             <p className="text-sm text-gray-600">
-                                  {team.playerCount} {team.playerCount === 1 ? "player" : "players"}
+                              {(() => {
+                                const squad = formData.format === "5v5" ? team.squad5v5 : team.squad7v7
+                                const squadCount = squad?.length || 0
+                                return `${squadCount} ${squadCount === 1 ? "player" : "players"} (${formData.format || "format"})`
+                              })()}
                             </p>
                             {isExpanded ? (
                               <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -1175,37 +1246,61 @@ export default function CreateLeagueForm({
                     </div>
 
                     {/* Team Roster */}
-                        {isExpanded && team.players && team.players.length > 0 && (
-                      <div
-                        className="border rounded-md p-3 mt-3 w-full"
-                        style={{
-                          gap: "12px",
-                          border: "1px solid rgba(0, 0, 0, 0.12)",
-                          borderRadius: "6px",
-                          backgroundColor: "#FFFFFF",
-                          padding: "12px",
-                        }}
-                      >
-                        <div className="space-y-2">
-                              {team.players.slice(0, 5).map((player: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between text-sm">
-                              <div className="grid grid-cols-3 gap-8 flex-1">
-                                    <span className="text-gray-700">#{player.jerseyNumber || idx + 1}</span>
-                                    <span className="text-gray-900 font-medium">
-                                      {player.firstName} {player.lastName}
-                                    </span>
-                                    <span className="text-gray-600">{player.position || "N/A"}</span>
+                        {isExpanded && (() => {
+                          // Get the correct squad based on league format
+                          const squad = formData.format === "5v5" ? team.squad5v5 : team.squad7v7
+                          const squadPlayers = squad || []
+                          
+                          if (squadPlayers.length === 0) {
+                            return (
+                              <div
+                                className="border rounded-md p-3 mt-3 w-full"
+                                style={{
+                                  gap: "12px",
+                                  border: "1px solid rgba(0, 0, 0, 0.12)",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#FFFFFF",
+                                  padding: "12px",
+                                }}
+                              >
+                                <div className="text-sm text-gray-500 text-center">
+                                  No players in {formData.format} squad
+                                </div>
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <div
+                              className="border rounded-md p-3 mt-3 w-full"
+                              style={{
+                                gap: "12px",
+                                border: "1px solid rgba(0, 0, 0, 0.12)",
+                                borderRadius: "6px",
+                                backgroundColor: "#FFFFFF",
+                                padding: "12px",
+                              }}
+                            >
+                              <div className="space-y-2">
+                                {squadPlayers.map((player: any, idx: number) => (
+                                  <div key={player._id || idx} className="flex items-center justify-between text-sm">
+                                    <div className="grid grid-cols-3 gap-8 flex-1">
+                                      <span className="text-gray-700">
+                                        #{player.profile?.jerseyNumber || idx + 1}
+                                      </span>
+                                      <span className="text-gray-900 font-medium">
+                                        {player.firstName} {player.lastName}
+                                      </span>
+                                      <span className="text-gray-600">
+                                        {player.profile?.position || "N/A"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
-                          ))}
-                              {team.players.length > 5 && (
-                                <div className="text-sm text-gray-500 text-center">
-                                  +{team.players.length - 5} more players
-                                </div>
-                              )}
-                        </div>
-                      </div>
-                    )}
+                          )
+                        })()}
                   </div>
                 )
               })}
@@ -1236,15 +1331,6 @@ export default function CreateLeagueForm({
           </div>
         )}
 
-        {/* Success Messages */}
-        {successMessages.length > 0 && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md space-y-1">
-            {successMessages.length > 1 && <div className="font-semibold mb-2">Successful Invitations:</div>}
-            {successMessages.map((msg, idx) => (
-              <div key={idx}>{msg}</div>
-            ))}
-          </div>
-        )}
 
         {/* Next Button */}
         <button

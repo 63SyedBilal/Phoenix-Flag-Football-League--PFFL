@@ -201,18 +201,7 @@ export default function LoginPage() {
                       )}
                     </button>
                   </div>
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      className="text-sm"
-                      style={{
-                        fontFamily: "Lato, sans-serif",
-                        color: "#6B7280",
-                      }}
-                    >
-                      Forgot Password
-                    </button>
-                  </div>
+                 
                 </div>
 
                 {/* Login Button */}
