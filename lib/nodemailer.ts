@@ -1,21 +1,32 @@
 import nodemailer from "nodemailer";
 
-// Configure transporter (SMTP)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER || "",
-    pass: process.env.SMTP_PASS || "",
-  },
-  tls: {
-    rejectUnauthorized: false, // Allow self-signed certificates
-  },
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-});
+// Create transporter lazily to ensure env vars are loaded
+function getTransporter() {
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  
+  if (!host || !user || !pass) {
+    throw new Error("SMTP configuration is missing. Please check your environment variables.");
+  }
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465, // true for 465, false for other ports
+    auth: {
+      user,
+      pass,
+    },
+    tls: {
+      rejectUnauthorized: false, // Allow self-signed certificates
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+  });
+}
 
 // Reusable sendMail function
 interface SendMailOptions {
@@ -27,10 +38,8 @@ interface SendMailOptions {
 
 export const sendMail = async ({ to, subject, text, html }: SendMailOptions) => {
   try {
-    // Verify SMTP configuration
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      throw new Error("SMTP configuration is missing. Please check your environment variables.");
-    }
+    // Get transporter (will throw if env vars are missing)
+    const transporter = getTransporter();
 
     // Verify connection before sending
     await transporter.verify();
