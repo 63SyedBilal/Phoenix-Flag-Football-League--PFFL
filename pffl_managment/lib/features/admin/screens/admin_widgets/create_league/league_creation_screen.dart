@@ -1,0 +1,63 @@
+import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
+import 'package:pffl_managment/features/admin/leagues/providers/create_league_viewmodel.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/Step1TeamInfoWidget.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/Step2SelectRefereesWidget.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/Step3SelectStatKeeperWidget.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/Step4InviteTeamWidget.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/league_header_widget.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/league_creation_progress_indicator.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/league_creation_action_button.dart';
+import 'package:provider/provider.dart';
+
+class LeagueCreationScreen extends StatelessWidget {
+  const LeagueCreationScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => CreateLeagueViewModel(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF9FAFB),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF9FAFB),
+          elevation: 0,
+          leading: ArrowBackButton(onPressed: () => Navigator.of(context).pop()),
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              const LeagueHeaderWidget(),
+              const SizedBox(height: 24),
+              const StepIndicatorWidget(),
+              const SizedBox(height: 24),
+              Expanded(
+                child: Consumer<CreateLeagueViewModel>(
+                  builder: (context, viewModel, child) {
+                    return _buildStep(viewModel.currentStep);
+                  },
+                ),
+              ),
+              const LeagueCreationActionButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStep(int step) {
+    switch (step) {
+      case 0:
+        return const Step1TeamInfoWidget();
+      case 1:
+        return const Step2SelectRefereesWidget();
+      case 2:
+        return const Step3SelectStatKeeperWidget();
+      case 3:
+        return const Step4InvuteTeamWidget();
+      default:
+        return const Step1TeamInfoWidget();
+    }
+  }
+}
