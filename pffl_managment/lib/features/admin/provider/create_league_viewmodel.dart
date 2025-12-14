@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/utils/validators.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/features/admin/leagues/providers/enhanced_leagues_provider.dart';
 import 'dart:io';
 
 enum EntryFeeType { captain, perPlayer, free }
@@ -801,12 +803,21 @@ class CreateLeagueViewModel extends ChangeNotifier {
         await sendInvitationToTeam(leagueId, teamId);
       }
 
-      // Step 6: Refresh leagues list (if there's a provider for it)
-      // The leagues will be refreshed when navigating back to the list
-
+      // Step 6: Refresh leagues list
       if (context.mounted) {
+        try {
+          final leaguesProvider = Provider.of<EnhancedLeaguesProvider>(context, listen: false);
+          await leaguesProvider.refreshLeagues();
+        } catch (e) {
+          debugPrint('Error refreshing leagues list: $e');
+          // Continue even if refresh fails
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('League created successfully!')),
+          const SnackBar(
+            content: Text('League created successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
 

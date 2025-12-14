@@ -77,8 +77,14 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const EditUpcommingMatches());
 
       case AppRoutes.adminCreateMatch:
+        final league = settings.arguments as LeagueCreationModel?;
+        if (league == null) {
+          throw Exception(
+            'League is required to create a game. Please navigate from a league detail page.',
+          );
+        }
         return MaterialPageRoute(
-          builder: (_) => const CreateUpcomingGamesScreen(),
+          builder: (_) => CreateUpcomingGamesScreen(league: league),
         );
 
       case AppRoutes.adminInvite:

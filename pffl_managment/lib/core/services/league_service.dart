@@ -245,6 +245,38 @@ class LeagueService {
     }
   }
 
+  /// Get all leagues
+  /// GET /api/league
+  static Future<List<LeagueModel>> getAllLeagues() async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/league');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['data'] != null) {
+          final leagues = (data['data'] as List)
+              .map((json) => LeagueModel.fromJson(json))
+              .toList();
+          return leagues;
+        }
+        return [];
+      } else {
+        print('Failed to fetch leagues: ${response.statusMessage}');
+        return [];
+      }
+    } on DioException catch (e) {
+      print('Error fetching leagues: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return [];
+    } catch (e) {
+      print('General error fetching leagues: $e');
+      return [];
+    }
+  }
+
   /// Get all teams
   /// GET /api/team
   static Future<List<TeamModel>> getAllTeams() async {
@@ -395,12 +427,23 @@ class LeagueModel {
   factory LeagueModel.fromJson(Map<String, dynamic> json) {
     final id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
     
+    // Parse dates - handle both ISO string and DateTime object
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue is String) {
+        return DateTime.parse(dateValue);
+      } else if (dateValue is DateTime) {
+        return dateValue;
+      } else {
+        throw FormatException('Invalid date format: $dateValue');
+      }
+    }
+    
     return LeagueModel(
       id: id,
       leagueName: json['leagueName'] ?? '',
       format: json['format'] ?? '5v5',
-      startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
+      startDate: parseDate(json['startDate']),
+      endDate: parseDate(json['endDate']),
       minimumPlayers: json['minimumPlayers'] ?? 0,
       perPlayerLeagueFee: (json['perPlayerLeagueFee'] ?? 0).toDouble(),
       logo: json['logo'],

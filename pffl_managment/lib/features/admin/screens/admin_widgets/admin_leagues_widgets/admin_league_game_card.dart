@@ -4,10 +4,17 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/edit_upcoming_games_screen.dart';
 
+import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
+
 class AdminLeagueGameCard extends StatelessWidget {
   final MatchModel match;
+  final LeagueCreationModel league;
 
-  const AdminLeagueGameCard({super.key, required this.match});
+  const AdminLeagueGameCard({
+    super.key,
+    required this.match,
+    required this.league,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +26,7 @@ class AdminLeagueGameCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
       ),
@@ -154,10 +161,11 @@ class AdminLeagueGameCard extends StatelessWidget {
                     child: ChangeNotifierProvider(
                       create: (_) {
                         final provider = UpcomingGamesProvider();
+                        provider.initializeWithLeague(league);
                         provider.loadMatch(match);
                         return provider;
                       },
-                      child: const EditUpcomingGamesScreen(),
+                      child: EditUpcomingGamesScreen(league: league),
                     ),
                   );
                 },

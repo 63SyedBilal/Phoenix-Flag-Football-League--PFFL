@@ -5,4 +5,5 @@ export { default as Profile } from "./profile";
 export { default as Team } from "./team";
 export { default as Notification } from "./notification";
 export { default as League } from "./league";
+export { default as Match } from "./match";
 

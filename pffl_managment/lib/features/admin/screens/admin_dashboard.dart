@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/admin_navigation_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_home/admin_home_screen.dart';
 import 'package:pffl_managment/features/admin/screens/admin_leagues/leagues_screen.dart';
-import 'package:pffl_managment/screens/leagues/common/league_provider.dart';
 import 'package:pffl_managment/screens/games/common/games_screen.dart';
 import 'package:pffl_managment/screens/games/common/games_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_users/admin_users_screen.dart';
@@ -46,10 +45,7 @@ class AdminDashboard extends StatelessWidget {
       case 0:
         return const AdminHomeScreen();
       case 1:
-        return ChangeNotifierProvider(
-          create: (_) => LeagueProvider(userRole: 'admin'),
-          child: const LeaguesScreen(),
-        );
+        return const LeaguesScreen();
       case 2:
         return ChangeNotifierProvider(
           create: (_) => GamesProvider(userRole: 'admin'),

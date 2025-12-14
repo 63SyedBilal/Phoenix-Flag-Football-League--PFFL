@@ -44,7 +44,11 @@ class LeagueDetailView extends StatelessWidget {
           floatingActionButton: provider.selectedTabIndex == 1
               ? AnimatedFAB(
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.adminCreateMatch);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.adminCreateMatch,
+                      arguments: league,
+                    );
                   },
                 )
               : null,
@@ -78,7 +82,7 @@ class LeagueDetailView extends StatelessWidget {
                           const LeagueKeyPlayersSection(),
                           const LeagueTeamStatsSection(),
                         ] else if (provider.selectedTabIndex == 1) ...[
-                          const AdminLeagueGamesSection(),
+                          AdminLeagueGamesSection(league: league),
                         ] else if (provider.selectedTabIndex == 2) ...[
                           const LeagueLeaderboardSection(),
                         ] else if (provider.selectedTabIndex == 3) ...[

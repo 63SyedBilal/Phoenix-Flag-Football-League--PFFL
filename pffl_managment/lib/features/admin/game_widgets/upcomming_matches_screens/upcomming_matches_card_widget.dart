@@ -88,6 +88,8 @@ class UpcommingMatchesCardWidget extends StatelessWidget {
                     child: ChangeNotifierProvider(
                       create: (_) {
                         final provider = UpcomingGamesProvider();
+                        // Initialize without league first, then load match
+                        provider.initializeWithoutLeague();
                         provider.loadMatch(match);
                         return provider;
                       },

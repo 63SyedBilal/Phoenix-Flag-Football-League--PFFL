@@ -6,7 +6,6 @@ import 'package:pffl_managment/features/admin/provider/dashboard_provider.dart';
 import 'package:pffl_managment/features/admin/shared/providers/animated_fab_provider.dart';
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:pffl_managment/features/admin/provider/leagues_provider.dart';
-import 'package:pffl_managment/features/admin/provider/leagues_data_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/refund_reason_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/theme_provider.dart';
@@ -28,6 +27,7 @@ import 'package:pffl_managment/features/player/providers/player_dashboard_provid
 import 'package:pffl_managment/features/referee/providers/referee_dashboard_provider.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_keeper_dashboard_provider.dart';
 import 'package:pffl_managment/features/free_agent/providers/free_agent_dashboard_provider.dart';
+import 'package:pffl_managment/features/admin/leagues/providers/enhanced_leagues_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:pffl_managment/core/services/match_service.dart';
 
 class UnifiedGamesProvider extends ChangeNotifier {
   // SINGLE SOURCE OF TRUTH - All games in one list
   List<MatchModel> _allGames = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
   // Getters
   List<MatchModel> get allGames => List.unmodifiable(_allGames);
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   List<MatchModel> get upcomingGames =>
       _allGames.where((game) => game.status == MatchStatus.upcoming).toList();
@@ -32,14 +37,39 @@ class UnifiedGamesProvider extends ChangeNotifier {
     return _allGames.where((game) => game.status == status).toList();
   }
 
-  // Admin-only: Add new game
+  /// Fetch games for a specific league from backend
+  Future<void> fetchGamesForLeague(String leagueId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final matches = await MatchService.getMatchesByLeague(leagueId);
+      _allGames = matches;
+      _sortGames();
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = 'Failed to load games: ${e.toString()}';
+      debugPrint('Error fetching games: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Refresh games for a league
+  Future<void> refreshGamesForLeague(String leagueId) async {
+    await fetchGamesForLeague(leagueId);
+  }
+
+  // Admin-only: Add new game (syncs with backend)
   void addGame(MatchModel game) {
     _allGames.add(game);
     _sortGames();
     notifyListeners();
   }
 
-  // Admin-only: Update existing game
+  // Admin-only: Update existing game (syncs with backend)
   void updateGame(String gameId, MatchModel updatedGame) {
     final index = _allGames.indexWhere((g) => g.id == gameId);
     if (index != -1) {
@@ -55,11 +85,33 @@ class UnifiedGamesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Sort games by date/time
+  // Sort games by stage priority, then by date/time
   void _sortGames() {
+    final stagePriority = {
+      'Final': 1,
+      'Semi-Final': 2,
+      'Quarter-Final': 3,
+      'Group Stage': 4,
+    };
+
     _allGames.sort((a, b) {
-      if (a.matchDateTime == null || b.matchDateTime == null) return 0;
-      return a.matchDateTime!.compareTo(b.matchDateTime!);
+      // First sort by stage priority
+      final aStage = a.roundName ?? 'Group Stage';
+      final bStage = b.roundName ?? 'Group Stage';
+      final aPriority = stagePriority[aStage] ?? 99;
+      final bPriority = stagePriority[bStage] ?? 99;
+
+      if (aPriority != bPriority) {
+        return aPriority.compareTo(bPriority);
+      }
+
+      // Then sort by date/time within same stage
+      if (a.matchDateTime != null && b.matchDateTime != null) {
+        return a.matchDateTime!.compareTo(b.matchDateTime!);
+      }
+      if (a.matchDateTime != null) return -1;
+      if (b.matchDateTime != null) return 1;
+      return 0;
     });
   }
 

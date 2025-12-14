@@ -3,9 +3,17 @@ import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/game_created_bottom_sheet.dart';
+import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
+import 'package:pffl_managment/core/services/league_service.dart' show TeamModel;
+import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
 
 class CreateUpcomingGamesScreen extends StatelessWidget {
-  const CreateUpcomingGamesScreen({super.key});
+  final LeagueCreationModel league;
+
+  const CreateUpcomingGamesScreen({
+    super.key,
+    required this.league,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +24,47 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: ChangeNotifierProvider(
-          create: (_) => UpcomingGamesProvider(),
+          create: (_) {
+            final provider = UpcomingGamesProvider();
+            // Initialize with league data
+            provider.initializeWithLeague(league);
+            return provider;
+          },
           child: Consumer<UpcomingGamesProvider>(
             builder: (context, provider, child) {
+              // Show loading state
+              if (provider.isLoadingTeams ||
+                  provider.isLoadingReferees ||
+                  provider.isLoadingStatKeepers) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              // Show error state
+              if (provider.errorMessage != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          provider.errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => provider.initializeWithLeague(league),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               return Column(
                 children: [
                   Expanded(
@@ -48,20 +94,20 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildDropdownField(
+                                child: _buildTeamDropdownField(
                                   label: 'Select Team A',
-                                  value: provider.selectedTeamA,
-                                  items: provider.availableTeams,
+                                  value: provider.selectedTeamAId,
+                                  teams: provider.availableTeams,
                                   hint: 'Team A',
                                   onChanged: (val) => provider.updateTeamA(val),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildDropdownField(
+                                child: _buildTeamDropdownField(
                                   label: 'Select Team B',
-                                  value: provider.selectedTeamB,
-                                  items: provider.availableTeams,
+                                  value: provider.selectedTeamBId,
+                                  teams: provider.availableTeams,
                                   hint: 'Team B',
                                   onChanged: (val) => provider.updateTeamB(val),
                                 ),
@@ -81,21 +127,21 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                             onChanged: (val) => provider.updateVenue(val),
                           ),
                           const SizedBox(height: 8),
-                          _buildDropdownField(
-                            label: 'Assign Referee (optional)',
-                            value: null,
-                            items: ['Referee 1', 'Referee 2'],
-                            hint: 'Select Referee',
-                            onChanged: (val) {},
-                          ),
+                          _buildRoundNameDropdownField(provider),
                           const SizedBox(height: 8),
-                          _buildDropdownField(
-                            label: 'Assign Stat Keeper (optional)',
-                            value: null,
-                            items: ['Stat Keeper 1', 'Stat Keeper 2'],
-                            hint: 'Select Stat Keeper',
-                            onChanged: (val) {},
-                          ),
+                          _buildRefereeDropdownField(provider),
+                          const SizedBox(height: 8),
+                          _buildStatKeeperDropdownField(provider),
+                          if (provider.errorMessage != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              provider.errorMessage!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 32),
                           _buildCreateButton(context, provider),
                         ],
@@ -185,14 +231,30 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
         const SizedBox(height: 8),
         GestureDetector(
           onTap: () async {
+            final firstDate = provider.leagueStartDate ?? DateTime.now();
+            final lastDate = provider.leagueEndDate ?? DateTime(2030);
+            final initialDate = provider.selectedDate ??
+                (firstDate.isAfter(DateTime.now()) ? firstDate : DateTime.now());
+
             final DateTime? picked = await showDatePicker(
               context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime.now(),
-              lastDate: DateTime(2030),
+              initialDate: initialDate,
+              firstDate: firstDate,
+              lastDate: lastDate,
             );
             if (picked != null) {
-              provider.updateDate(picked);
+              try {
+                provider.updateDate(picked);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             }
           },
           child: Container(
@@ -288,6 +350,243 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
     );
   }
 
+  /// Build team dropdown field
+  /// TODO: Teams are currently using dummy data
+  /// In the future, teams will be fetched from the backend API
+  /// Teams will be created by captains during team creation process
+  Widget _buildTeamDropdownField({
+    required String label,
+    required String? value,
+    required List<TeamModel> teams,
+    required String hint,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              hint: Text(
+                teams.isEmpty ? 'Loading teams...' : hint,
+                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey[400],
+                size: 20,
+              ),
+              isExpanded: true,
+              items: teams.isEmpty
+                  ? null
+                  : teams.map((TeamModel team) {
+                      return DropdownMenuItem<String>(
+                        value: team.id,
+                        child: Text(
+                          team.teamName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              onChanged: teams.isEmpty ? null : onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRefereeDropdownField(UpcomingGamesProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Assign Referee (optional)',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: provider.selectedRefereeId,
+              hint: Text(
+                'Select Referee',
+                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey[400],
+                size: 20,
+              ),
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text(
+                    'None',
+                    style: TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                ),
+                ...provider.availableReferees.map((UserModel referee) {
+                  return DropdownMenuItem<String>(
+                    value: referee.id,
+                    child: Text(
+                      referee.displayName,
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                  );
+                }),
+              ],
+              onChanged: (val) => provider.updateReferee(val),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatKeeperDropdownField(UpcomingGamesProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Assign Stat Keeper (optional)',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: provider.selectedStatKeeperId,
+              hint: Text(
+                'Select Stat Keeper',
+                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey[400],
+                size: 20,
+              ),
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text(
+                    'None',
+                    style: TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                ),
+                ...provider.availableStatKeepers.map((UserModel statKeeper) {
+                  return DropdownMenuItem<String>(
+                    value: statKeeper.id,
+                    child: Text(
+                      statKeeper.displayName,
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                  );
+                }),
+              ],
+              onChanged: (val) => provider.updateStatKeeper(val),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoundNameDropdownField(UpcomingGamesProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Game Stage',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: provider.selectedRoundName,
+              hint: Text(
+                'Select Stage',
+                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey[400],
+                size: 20,
+              ),
+              isExpanded: true,
+              items: provider.availableStages.map((String stage) {
+                return DropdownMenuItem<String>(
+                  value: stage,
+                  child: Text(
+                    stage,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                );
+              }).toList(),
+              onChanged: (val) => provider.updateRoundName(val),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCreateButton(
     BuildContext context,
     UpcomingGamesProvider provider,
@@ -304,10 +603,21 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
           onTap: () async {
-            await provider.saveMatch();
-            if (context.mounted) {
-              Navigator.pop(context); // Close create screen
-              showGameCreatedBottomSheet(context); // Show success sheet
+            try {
+              await provider.createMatch();
+              if (context.mounted) {
+                Navigator.pop(context); // Close create screen
+                showGameCreatedBottomSheet(context); // Show success sheet
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             }
           },
           child: const Center(
