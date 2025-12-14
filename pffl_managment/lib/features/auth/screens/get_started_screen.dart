@@ -35,6 +35,7 @@ class GetStartedScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             CustomButton(
+              width: double.maxFinite,
               text: "Create an account",
               backgroundColor: AppColors.darkTextPrimary,
               textColor: AppColors.darkScaffoldBackground,

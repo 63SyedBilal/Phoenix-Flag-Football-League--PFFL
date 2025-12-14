@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/models/stat_card_model.dart';
 import 'package:pffl_managment/core/models/quick_action_model.dart';
-import 'package:pffl_managment/features/admin/matches/models/match_model.dart';
 
 class DashboardViewModel extends ChangeNotifier {
   final String _userName = "Tyler";
@@ -54,7 +53,6 @@ class DashboardViewModel extends ChangeNotifier {
       title: 'Create League',
       icon: Icons.add,
       onTap: () {
-        // Navigation will be handled in the widget where context is available
         debugPrint('Create League tapped');
       },
     ),
@@ -72,43 +70,6 @@ class DashboardViewModel extends ChangeNotifier {
       title: 'View Reports',
       icon: Icons.bar_chart,
       onTap: () => _handleViewReports(),
-    ),
-  ];
-
-  // Upcoming Matches
-  List<MatchModel> get upcomingMatches => [
-    MatchModel(
-      leagueName: _leagueName,
-      homeTeam: 'RC',
-      homeTeamLogo:
-          'https://api.dicebear.com/7.x/shapes/png?seed=RC&backgroundColor=db1f35',
-      awayTeam: 'STA',
-      awayTeamLogo:
-          'https://api.dicebear.com/7.x/shapes/png?seed=STA&backgroundColor=f59e0b',
-      date: '08/11',
-      time: '01:05 AM PKT',
-    ),
-    MatchModel(
-      leagueName: 'Six Nations',
-      homeTeam: 'GEO',
-      homeTeamLogo:
-          'https://api.dicebear.com/7.x/shapes/png?seed=GEO&backgroundColor=3b82f6',
-      awayTeam: 'STB',
-      awayTeamLogo:
-          'https://api.dicebear.com/7.x/shapes/png?seed=STB&backgroundColor=10b981',
-      date: '08/11',
-      time: '02:15 AM PKT',
-    ),
-    MatchModel(
-      leagueName: 'World Cup Qualifiers',
-      homeTeam: 'WQ',
-      homeTeamLogo:
-          'https://api.dicebear.com/7.x/shapes/png?seed=WQ&backgroundColor=db1f35',
-      awayTeam: 'STC',
-      awayTeamLogo:
-          'https://api.dicebear.com/7.x/shapes/png?seed=STC&backgroundColor=f59e0b',
-      date: '08/11',
-      time: '03:30 AM PKT',
     ),
   ];
 

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
+import 'package:pffl_managment/core/utils/helpers.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
 import 'package:pffl_managment/core/widgets/text_with_text_field.dart';
 import 'package:pffl_managment/core/widgets/auth_link.dart';
-import 'package:pffl_managment/core/widgets/custombottomsheet/custom_bottom_sheet.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
-import 'package:another_flushbar/flushbar.dart';
 
 class CreateAccountScreen extends StatelessWidget {
   final TextEditingController firstNameController = TextEditingController();
@@ -172,63 +171,23 @@ class CreateAccountScreen extends StatelessWidget {
               backgroundColor: AppColors.primaryColor,
               textColor: Colors.white,
               text: 'Create Account',
-              onPressed: () async {
-                // Validate form fields
-                if (firstNameController.text.isEmpty ||
-                    lastNameController.text.isEmpty ||
-                    emailController.text.isEmpty ||
-                    passwordController.text.isEmpty ||
-                    confirmPasswordController.text.isEmpty) {
-                  // Show error message
-                  Flushbar(
-                    message: 'Please fill in all required fields.',
-                    duration: Duration(seconds: 3),
-                    backgroundColor: Colors.red,
-                    icon: Icon(Icons.error_outline, color: Colors.white),
-                  ).show(context);
-                  return;
-                }
-                
-                if (passwordController.text != confirmPasswordController.text) {
-                  // Show error message
-                  Flushbar(
-                    message: 'Passwords do not match.',
-                    duration: Duration(seconds: 3),
-                    backgroundColor: Colors.red,
-                    icon: Icon(Icons.error_outline, color: Colors.white),
-                  ).show(context);
-                  return;
-                }
-                
-                // Call the auth provider to register the user
-                final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                final success = await authProvider.register(
-                  firstName: firstNameController.text,
-                  lastName: lastNameController.text,
-                  email: emailController.text,
-                  phone: phoneController.text,
-                  password: passwordController.text,
+              onPressed: () {
+                final parentContext = context;
+                showCustomBottomSheet(
+                  icon: Icons.check_circle_outline,
                   context: context,
+                  title: 'Account Created',
+                  subtitle: "Let's set up your player profile to get started.",
+                  buttonText: 'Continue',
+                  onButtonPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamed(
+                      parentContext,
+                      AppRoutes.completeProfile,
+                    );
+                  },
+                  content: Container(),
                 );
-                
-                if (success) {
-                  // Show success bottom sheet
-                  final parentContext = context;
-                  showCustomBottomSheet(
-                    context: context,
-                    title: 'Account Created',
-                    subtitle: "Let's set up your player profile to get started.",
-                    buttonText: 'Continue',
-                    onButtonPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.pushNamed(
-                        parentContext,
-                        AppRoutes.completeProfile,
-                      );
-                    },
-                    content: Container(),
-                  );
-                }
               },
             ),
             const SizedBox(height: 12),

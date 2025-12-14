@@ -11,9 +11,7 @@ class SponserScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        leading: ArrowBackButton(),
-      ),
+      appBar: AppBar(leading: ArrowBackButton()),
       body: SafeArea(
         child: Column(
           children: [
@@ -55,9 +53,13 @@ class SponserScreen extends StatelessWidget {
                         height: 58,
                         child: ElevatedButton(
                           onPressed: () {
-                            context.read<SponsorScreenProvider>().saveSponsors();
+                            context
+                                .read<SponsorScreenProvider>()
+                                .saveSponsors();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Sponsors saved successfully')),
+                              const SnackBar(
+                                content: Text('Sponsors saved successfully'),
+                              ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -69,10 +71,7 @@ class SponserScreen extends StatelessWidget {
                           ),
                           child: const Text(
                             'Save',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
+                            style: TextStyle(fontSize: 16, color: Colors.white),
                           ),
                         ),
                       ),
@@ -81,19 +80,6 @@ class SponserScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: 1,
-                  ),
-                ),
-              ),
-             
             ),
           ],
         ),
@@ -105,10 +91,7 @@ class SponserScreen extends StatelessWidget {
 class AdSlotSection extends StatelessWidget {
   final int slotNumber;
 
-  const AdSlotSection({
-    Key? key,
-    required this.slotNumber,
-  }) : super(key: key);
+  const AdSlotSection({Key? key, required this.slotNumber}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -140,11 +123,17 @@ class AdSlotSection extends StatelessWidget {
                 const SizedBox(height: 12),
                 ThumbnailUploadWidget(
                   slotNumber: slotNumber,
-                  onUpload: () {
-                    provider.setUploadedImage(slotNumber, 'uploaded');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Upload functionality for Ad Slot $slotNumber')),
-                    );
+                  onUpload: () async {
+                    await provider.pickImage(slotNumber);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Image uploaded for Ad Slot $slotNumber',
+                          ),
+                        ),
+                      );
+                    }
                   },
                 ),
               ],
@@ -156,7 +145,7 @@ class AdSlotSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Rediect URL',
+                  'Redirect URL',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -167,7 +156,7 @@ class AdSlotSection extends StatelessWidget {
                 CustomTextField(
                   controller: provider.urlControllers[slotNumber - 1],
                   hintText: 'Enter Url',
-                )
+                ),
               ],
             ),
           ],
@@ -231,17 +220,11 @@ class ThumbnailUploadWidget extends StatelessWidget {
 class DashedBorderPainter extends StatelessWidget {
   final Widget child;
 
-  const DashedBorderPainter({
-    Key? key,
-    required this.child,
-  }) : super(key: key);
+  const DashedBorderPainter({Key? key, required this.child}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedBorderPainter(),
-      child: child,
-    );
+    return CustomPaint(painter: _DashedBorderPainter(), child: child);
   }
 }
 

@@ -8,7 +8,7 @@ import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/simple_dropdown_list.dart';
 import 'package:pffl_managment/core/widgets/dotted_border_widget.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/create_league_viewmodel.dart';
+import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class Step1TeamInfoWidget extends StatelessWidget {
@@ -354,9 +354,33 @@ class Step1TeamInfoWidget extends StatelessWidget {
                 ),
               ),
             ],
-          ),        
-          
+          ),
           const SizedBox(height: 18),
+          const Text('Minimum Players Required', style: AppTextStyles.labelLarge),
+          const SizedBox(height: 4),
+          SimpleDropdownList(
+            selectedValue: viewModel.minPlayers.toString(),
+            items: ['5', '6', '7', '8', '9', '10', '11', '12'],
+            onSelected: (value) {
+              final intValue = int.tryParse(value);
+              if (intValue != null) viewModel.setMinPlayers(intValue);
+            },
+            hintText: 'Select players',
+            maxHeight: 150.0,
+          ),
+          if (viewModel.minPlayersError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Text(
+                viewModel.minPlayersError!,
+                style: const TextStyle(
+                  color: AppColors.textDisabled,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          const SizedBox(height: 18),
+         
           const Text(
             'Per Player league Fee',
             style: AppTextStyles.labelLarge,
@@ -385,22 +409,5 @@ class Step1TeamInfoWidget extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  // Helper methods to convert between EntryFeeType and String
-  String _getEntryFeeTypeLabel(EntryFeeType type) {
-    return type == EntryFeeType.captain
-        ? 'Captain'
-        : type == EntryFeeType.perPlayer
-        ? 'Per Player'
-        : 'Free';
-  }
-
-  EntryFeeType _getEntryFeeTypeFromLabel(String label) {
-    return label == 'Captain'
-        ? EntryFeeType.captain
-        : label == 'Per Player'
-        ? EntryFeeType.perPlayer
-        : EntryFeeType.free;
   }
 }

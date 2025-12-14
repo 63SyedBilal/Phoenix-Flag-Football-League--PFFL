@@ -81,7 +81,7 @@ class LeagueKeyPlayerModel {
     required this.avatarUrl,
     required this.statValue,
     required this.statLabel,
-    this.gradientStart = const Color(0xFF1E3A8A),
+    this.gradientStart = const Color(0xFF0C1232),
     this.gradientEnd = const Color(0xFF3B82F6),
   });
 }

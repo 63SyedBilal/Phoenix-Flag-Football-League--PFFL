@@ -53,22 +53,13 @@ class PlayerHome extends StatelessWidget {
                   },
                 ),
 
-                const SizedBox(height: 16),
-
-                const Text(
-                  'Your Next Game',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
                 const SizedBox(height: 12),
                 // Show only the next game if available
                 if (games.isNotEmpty)
                   SharedUpcomingMatches(
                     games: [games[0]], // Show only the next game
                     maxVisibleGames: 1, // Show only 1 game for "Next Game"
+                    title: 'Your Next Game',
                     onViewMore: () {
                       // Navigate to full matches list
                       Navigator.push(
@@ -89,6 +80,7 @@ class PlayerHome extends StatelessWidget {
                 SharedUpcomingMatches(
                   games: games,
                   maxVisibleGames: 3, // Show only 3 games in main view
+                  title: 'Upcoming Games',
                   onViewMore: () {
                     // Navigate to full matches list
                     Navigator.push(

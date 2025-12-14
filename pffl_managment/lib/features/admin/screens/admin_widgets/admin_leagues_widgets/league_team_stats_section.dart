@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/league_detail_provider.dart';
+import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_team_stat_card.dart';
 import 'package:provider/provider.dart';
 
@@ -20,10 +20,12 @@ class LeagueTeamStatsSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               'Team Stats',
-              style: Theme.of(context).textTheme.titleSmall,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: const Color(0xFF6B7280),
+                ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           SizedBox(
             height: 90,
             child: ListView.separated(

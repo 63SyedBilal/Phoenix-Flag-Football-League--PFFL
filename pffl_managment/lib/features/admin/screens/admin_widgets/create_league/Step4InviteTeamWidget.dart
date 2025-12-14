@@ -3,7 +3,7 @@ import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/create_league_viewmodel.dart';
+import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class Step4InvuteTeamWidget extends StatelessWidget {

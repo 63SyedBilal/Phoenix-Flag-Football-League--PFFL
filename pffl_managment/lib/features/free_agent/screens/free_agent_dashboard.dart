@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/free_agent_navigation_provider.dart';
 import 'package:pffl_managment/features/bottom_nevigation/free_agent_bottom_nevigation/free_agent_bottom_nevigation.dart';
-import 'package:pffl_managment/features/free_agent/screens/free_agent_game/free_agent_game_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_home/free_agent_home_screen.dart';
-import 'package:pffl_managment/features/free_agent/screens/free_agent_league/free_agent_league_screen.dart';
-import 'package:pffl_managment/features/free_agent/screens/free_agent_setting/free_agent_setting_screen.dart';
+import 'package:pffl_managment/screens/games/common/games_screen.dart';
+import 'package:pffl_managment/screens/games/common/games_provider.dart';
+import 'package:pffl_managment/features/admin/screens/admin_leagues/leagues_screen.dart';
+import 'package:pffl_managment/screens/leagues/common/league_provider.dart';
+import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
+import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:pffl_managment/features/header_widgets/free_agent_header_widget/free_agent_header_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/free_agent/providers/free_agent_dashboard_provider.dart';
@@ -43,12 +46,21 @@ class FreeAgentDashboard extends StatelessWidget {
       case 0:
         return const FreeAgentHomeScreen();
       case 1:
-        return const FreeAgentGameScreen();
+        return ChangeNotifierProvider(
+          create: (_) => GamesProvider(userRole: 'free agent'),
+          child: const GamesScreen(),
+        );
       case 2:
-        return const FreeAgentLeagueScreen();
+        return ChangeNotifierProvider(
+          create: (_) => LeagueProvider(userRole: 'free agent'),
+          child: const LeaguesScreen(),
+        );
       case 3:
-        return const FreeAgentSettingScreen();
-   
+        return ChangeNotifierProvider(
+          create: (_) => RoleBasedSettingsProvider(userRole: 'free agent'),
+          child: const SettingsScreen(),
+        );
+
       default:
         return const Center(child: Text('Free Agent Dashboard'));
     }

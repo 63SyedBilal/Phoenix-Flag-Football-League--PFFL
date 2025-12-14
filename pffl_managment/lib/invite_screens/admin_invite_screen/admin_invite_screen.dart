@@ -313,7 +313,7 @@ class _ExpandableAgentCardState extends State<ExpandableAgentCard> {
                         Navigator.of(context).pop();
                       },
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF3B82F6), width: 1),
+                        side: const BorderSide(color: Color(0xFF0F173E), width: 1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(50),
                         ),
@@ -322,7 +322,7 @@ class _ExpandableAgentCardState extends State<ExpandableAgentCard> {
                       child: const Text(
                         'Cancel',
                         style: TextStyle(
-                          color: Color(0xFF3B82F6),
+                          color: Color(0xFF0F173E),
                           fontSize: 16,
                         ),
                       ),
@@ -335,7 +335,7 @@ class _ExpandableAgentCardState extends State<ExpandableAgentCard> {
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6), // Primary color
+                        backgroundColor: const Color(0xFF0F173E), // Primary color
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(50),
                         ),

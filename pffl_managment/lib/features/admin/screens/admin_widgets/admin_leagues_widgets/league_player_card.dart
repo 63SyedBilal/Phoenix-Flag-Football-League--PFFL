@@ -14,36 +14,38 @@ class LeaguePlayerCard extends StatelessWidget {
       height: 90,
       decoration: BoxDecoration(
         color: player.gradientStart,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Stack(
         children: [
           Positioned(
-            top: 10,
-            right: 0,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                index % 2 == 0 
-                    ? 'assets/images/image 14.png'
-                    : 'assets/images/Real Madrid.png',
-                width: 100,
-                height: 80,
-                fit: BoxFit.contain,
-              ),
+            top: 0,
+            right: -5,
+            bottom: 0,
+            child: Image.asset(
+              index % 2 == 0 
+                  ? 'assets/images/image 14.png'
+                  : 'assets/images/Real Madrid.png',
+              width: 95,
+              height: 90,
+              fit: BoxFit.cover,
             ),
           ),
+          
+          // Text Content
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.only(left: 10, top: 12, right: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Name - Single block, no space between lines
                 Text(
                   player.name.split(' ').first,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                     color: Colors.white,
+                    height: 0.95,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -53,31 +55,36 @@ class LeaguePlayerCard extends StatelessWidget {
                       ? player.name.split(' ').skip(1).join(' ')
                       : '',
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
+                    height: 1.0,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 10),
+                
+                const SizedBox(height: 22),
+                
+                // Stats Row
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      player.statValue.toString(),
+                      player.statValue.toString().padLeft(2, '0'),
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 30,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
+                        height: 1.0,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       player.statLabel,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),

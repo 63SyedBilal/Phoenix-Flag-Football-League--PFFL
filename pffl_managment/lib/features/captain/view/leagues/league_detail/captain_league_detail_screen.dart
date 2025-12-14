@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/admin/game_widgets/upcomming_matches_screens/upcomming_leagues_matches.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_detail_tab_bar.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_leader_board_section.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_offical_list.dart';
+import 'package:pffl_managment/features/admin/game_widgets/upcomming_matches_screens/upcomming_matches.dart' as upcomming_matches;
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_detail_tab_bar.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_leader_board_section.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_offical_list.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/league_detail_provider.dart';
+import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_detail_header.dart';
 import 'package:pffl_managment/features/key_players/league_key_players_section.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_team_list.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_team_list.dart';
 
 class CaptainLeagueDetailScreen extends StatelessWidget {
   final LeagueCreationModel league;
@@ -46,13 +46,13 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
                           return Column(
                             children: [
                               if (tabIndex == 0) ...[
-                                const UpcommingMatches(),
+                                const upcomming_matches.UpcommingMatches(),
                                 SponsorBannerScreen(),
                                 const LeagueLeaderboardSection(),
                                 const LeagueKeyPlayersSection(),
                                 const LeagueKeyPlayersSection(),
                               ] else if (tabIndex == 1) ...[
-                                const UpcommingMatches(),
+                                const upcomming_matches.UpcommingMatches(),
                               ] else if (tabIndex == 2) ...[
                                 const LeagueLeaderboardSection(),
                               ] else if (tabIndex == 3) ...[

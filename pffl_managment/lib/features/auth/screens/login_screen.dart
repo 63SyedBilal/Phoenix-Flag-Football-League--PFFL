@@ -61,29 +61,21 @@ class LoginScreen extends StatelessWidget {
                 },
               ),
               if (authProvider.loginEmailError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
+                Container(
+                  margin: const EdgeInsets.only(top: 8.0),
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
                   child: Row(
                     children: [
                       SvgIcons.infoFill(size: 16, color: Colors.red),
-                      const SizedBox(width: 4),
-                      Text(
-                        authProvider.loginEmailError!,
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
-                      ),
-                      Spacer(),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                          ),
-                          child: Text(
-                            "Forgot Password",
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          authProvider.loginEmailError!,
+                          style: const TextStyle(color: Colors.red, fontSize: 14),
                         ),
                       ),
                     ],
@@ -114,30 +106,49 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               if (authProvider.loginPasswordError != null)
-                Row(
-                  children: [
-                    SvgIcons.infoFill(size: 16, color: Colors.red),
-                    const SizedBox(width: 4),
-                    Text(
-                      authProvider.loginPasswordError!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                    Spacer(),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                        ),
+                Container(
+                  margin: const EdgeInsets.only(top: 8.0),
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.red, width: 1.0),
+                  ),
+                  child: Row(
+                    children: [
+                      SvgIcons.infoFill(size: 16, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Expanded(
                         child: Text(
-                          "Forgot Password",
-                          style: theme.textTheme.bodyMedium,
+                          authProvider.loginPasswordError!,
+                          style: const TextStyle(color: Colors.red, fontSize: 14),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+
+              if (authProvider.loginGeneralError != null)
+                Container(
+                  margin: const EdgeInsets.only(top: 16.0),
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.red, width: 1.0),
+                  ),
+                  child: Row(
+                    children: [
+                      SvgIcons.infoFill(size: 16, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          authProvider.loginGeneralError!,
+                          style: const TextStyle(color: Colors.red, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
               const SizedBox(height: 30),
@@ -154,7 +165,6 @@ class LoginScreen extends StatelessWidget {
                   if (success) {
                     if (authProvider.isLoggedIn) {
                       String route;
-                      // Map backend roles to Flutter route names
                       switch (authProvider.userRole) {
                         case 'superadmin':
                           route = AppRoutes.adminDashboard;
@@ -168,10 +178,10 @@ class LoginScreen extends StatelessWidget {
                         case 'player':
                           route = AppRoutes.playerDashboard;
                           break;
-                        case 'stat-keeper':
+                        case 'statkeeper':
                           route = AppRoutes.statKeeperDashboard;
                           break;
-                        case 'free-agent':
+                        case 'freeagent':
                           route = AppRoutes.freeAgentDashboard;
                           break;
                         default:

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/providers/captain_dashboard_provider.dart';
+import 'package:pffl_managment/core/captain_provider/home_screen_provider/captain_dashboard_provider.dart';
 
 class LeaguePaymentCard extends StatelessWidget {
   final String title;
@@ -10,7 +10,7 @@ class LeaguePaymentCard extends StatelessWidget {
   final String leagueFee;
   final String startDate;
   final String endDate;
-  final VoidCallback onPayNow;
+  final VoidCallback onPayNow;    
   final String? leagueLogo;
 
   const LeaguePaymentCard({

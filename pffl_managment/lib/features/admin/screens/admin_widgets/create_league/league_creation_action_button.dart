@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/utils/helpers.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/create_league_viewmodel.dart';
+import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:provider/provider.dart';
 
@@ -80,66 +81,22 @@ class LeagueCreationActionButton extends StatelessWidget {
         return () async {
           await viewModel.createLeague(context);
           if (context.mounted) {
-            // Show bottom sheet instead of snackbar
-            showModalBottomSheet(
+            showCustomBottomSheet(
               context: context,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              builder: (BuildContext context) {
-                return Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.check_circle,
-                        color: Color(0xFF10B981),
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'League Created',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'League created successfully!\nNotifications sent to all players.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 24),
-                      CustomButton(
-                        text: 'Continue',
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Close bottom sheet
-                          Navigator.of(context).pop(); // Close dialog
-                          // Navigate to admin dashboard
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            AppRoutes.adminDashboard,
-                            (route) => false,
-                          );
-                        },
-                        backgroundColor: const Color(0xFF0F173E),
-                        textColor: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ],
-                  ),
+              title: 'League created\nsuccessfully!',
+              subtitle: 'Invites have been sent to team captains and officials. You can now manage scheduling, rosters, and games for this league.',
+              buttonText: 'Continue',
+              onButtonPressed: () {
+                Navigator.of(context).pop();// Close bottom sheet
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.adminDashboard,
+                  (route) => false,
                 );
               },
-            );
-          }
+              content: const SizedBox(), // Empty content since we're using the optional icon
+            );          }
         };
       default:
         return null;

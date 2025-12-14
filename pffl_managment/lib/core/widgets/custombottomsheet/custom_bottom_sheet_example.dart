@@ -14,29 +14,33 @@ class CustomBottomSheetExample extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            showCustomBottomSheet(
+            showModalBottomSheet(
               context: context,
-              title: 'Create Account',
-              subtitle: 'Enter your information to create a new account',
-              buttonText: 'Submit',
-              onButtonPressed: () {
-                Navigator.of(context).pop();
-                // Handle submit action
-              },
-              content: Column(
-                children: [
-                  CustomTextField(
-                    hintText: 'First Name',
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    hintText: 'Last Name',
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    hintText: 'Email',
-                  ),
-                ],
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => CustomBottomSheet(
+                title: 'Create Account',
+                subtitle: 'Enter your information to create a new account',
+                buttonText: 'Submit',
+                onButtonPressed: () {
+                  Navigator.of(context).pop();
+                  // Handle submit action
+                },
+                content: Column(
+                  children: [
+                    CustomTextField(
+                      hintText: 'First Name',
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      hintText: 'Last Name',
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      hintText: 'Email',
+                    ),
+                  ],
+                ),
               ),
             );
           },

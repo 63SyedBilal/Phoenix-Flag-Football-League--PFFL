@@ -51,8 +51,7 @@ class LeagueDetailHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-      
-          Text(subtitle, style: Theme.of(context).textTheme.titleSmall),
+          Text(subtitle, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Color(0xFFD1D5DB),fontSize: 16,fontWeight: FontWeight.w500)),
         ],
       ),
     );

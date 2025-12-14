@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/create_league_viewmodel.dart';
+import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/Step1TeamInfoWidget.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/Step2SelectRefereesWidget.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/Step3SelectStatKeeperWidget.dart';

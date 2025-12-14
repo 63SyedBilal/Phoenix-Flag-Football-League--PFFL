@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/create_league_viewmodel.dart';
+import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class LeagueHeaderWidget extends StatelessWidget {

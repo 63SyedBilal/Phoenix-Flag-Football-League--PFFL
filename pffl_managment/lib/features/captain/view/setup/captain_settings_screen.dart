@@ -1,6 +1,24 @@
+// ========================================================================
+// OLD CAPTAIN SETTINGS SCREEN (SETUP) - DEPRECATED
+// ========================================================================
+// This file has been replaced by the new unified Settings module.
+// The new module is located at: lib/screens/settings/
+//
+// New implementation uses:
+// - lib/screens/settings/common/settings_screen.dart (UI)
+// - lib/screens/settings/common/settings_provider.dart (Provider)
+// - lib/screens/settings/roles/captain_settings.dart (Captain menu config)
+//
+// This file is kept for reference only. The new Settings module is now
+// active in captain_dashboard.dart (case 4).
+//
+// Date replaced: 2025-12-08
+// ========================================================================
+
+/*
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/admin/settings/widgets/change_passowrd.dart';
-import 'package:pffl_managment/features/admin/settings/widgets/payment_history.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/change_passowrd.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_history.dart';
 import 'package:pffl_managment/features/profile_screens/captain_profile_screen/captain_profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
@@ -122,3 +140,4 @@ class CaptainSettingsScreen extends StatelessWidget {
     );
   }
 }
+*/

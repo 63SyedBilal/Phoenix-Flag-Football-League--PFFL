@@ -9,7 +9,7 @@ class AppColors {
   static const Color lightTextPrimary = Colors.black87;
   static const Color lightTextSecondary = Colors.black54;
   static const Color circleColor = Color(0xffF2F2F2);
-  static final Color subtitleColor = const Color(0xff2E2E2E99);
+  static final Color subtitleColor = const Color.fromARGB(153, 46, 46, 46);
 
   // Dark theme colors
   static const Color darkScaffoldBackground = Color(0xFF121212);

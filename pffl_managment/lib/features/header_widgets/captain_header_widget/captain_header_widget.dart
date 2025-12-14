@@ -35,7 +35,7 @@ class CaptainHeaderWidget extends StatelessWidget {
         subtitle = 'Phoenix Flag Football League';
         break;
       case 1: // My Team
-        title = 'My Team';
+        title = 'Leagues';
         subtitle = 'Manage your account and app.';
         break;
       case 2: // Games
@@ -43,7 +43,7 @@ class CaptainHeaderWidget extends StatelessWidget {
         subtitle = 'Phoenix Flag Football League';
         break;
       case 3: // Leagues
-        title = 'Leagues';
+        title = 'My Team';
         subtitle = 'All the leagues are listed below';
         break;
       case 4: // Settings
@@ -110,12 +110,10 @@ class CaptainHeaderWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              // Show invite button only on My Team screen, placed to the right of notification icon
-              if (navigationProvider.selectedIndex == 1) ...[
+              if (navigationProvider.selectedIndex == 3) ...[
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Navigate to invite screen
                     Navigator.pushNamed(context, AppRoutes.adminInvite);
                   },
                   style: ElevatedButton.styleFrom(

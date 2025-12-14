@@ -37,7 +37,7 @@ class AllMatchesScreen extends StatelessWidget {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(6.0),
               itemCount: matches.length,
               itemBuilder: (context, index) {
                 return SharedGameCard(

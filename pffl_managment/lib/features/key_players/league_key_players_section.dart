@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/league_detail_provider.dart';
+import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_player_card.dart';
 import 'package:provider/provider.dart';
 
@@ -14,20 +14,18 @@ class LeagueKeyPlayersSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Key Players',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
+        Text(
+          'Key Players',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: const Color(0xFF6B7280),
+              ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         SizedBox(
           height: 90,
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
             scrollDirection: Axis.horizontal,
-            itemCount: players.length,
+            itemCount: players.length, // This will now be 4 instead of 2
             separatorBuilder: (context, index) => const SizedBox(width: 6),
             itemBuilder: (context, index) {
               return LeaguePlayerCard(player: players[index], index: index);

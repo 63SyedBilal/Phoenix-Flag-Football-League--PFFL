@@ -72,9 +72,9 @@ class AppTextStyles {
   //enter league information below to create a new tournament./
   static final TextStyle titleSmall = TextStyle(
     fontFamily: 'Lato',
-    fontSize: 16.0,
+    fontSize: 14.0,
     fontWeight: FontWeight.w500,
-    color: AppColors.subtitleColor,
+    color: Colors.brown[500],
     height: 1.3,
   );
 

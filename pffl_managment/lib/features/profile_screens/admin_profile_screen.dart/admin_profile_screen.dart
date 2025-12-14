@@ -15,6 +15,7 @@ class AdminProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: AppColors.lightAppBarBackground,
       appBar: AppBar(leading: ArrowBackButton()),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -146,6 +147,7 @@ class AdminProfileScreen extends StatelessWidget {
               const SizedBox(height: 30),
               
               CustomButton(
+                width: double.infinity,
                 textColor: AppColors.lightAppBarBackground,
                 text: 'Save',
                 onPressed: () {

@@ -38,7 +38,7 @@ class CaptainBottomNevigation extends StatelessWidget {
                   NavItem(
                     svgIcon: SvgIcons.users(size: 20),
                     svgIconSelected: SvgIcons.usersFilled(size: 20),
-                    label: 'My Team',
+                    label: 'Leagues',
                     isActive: viewModel.selectedIndex == 1,
                     onTap: () => viewModel.setIndex(1),
                   ),
@@ -52,7 +52,7 @@ class CaptainBottomNevigation extends StatelessWidget {
                   NavItem(
                     svgIcon: SvgIcons.leagues(size: 20),
                     svgIconSelected: SvgIcons.leaguesFilled(size: 20),
-                    label: 'Leagues',
+                    label: 'My Team',
                     isActive: viewModel.selectedIndex == 3,
                     onTap: () => viewModel.setIndex(3),
                   ),

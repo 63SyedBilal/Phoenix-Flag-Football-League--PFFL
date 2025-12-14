@@ -8,6 +8,68 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET || "",
 })
 
+/**
+ * Validate Cloudinary configuration
+ * Throws error if required environment variables are missing
+ */
+export function validateCloudinaryConfig(): void {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    const missing = [];
+    if (!cloudName) missing.push('CLOUDINARY_CLOUD_NAME');
+    if (!apiKey) missing.push('CLOUDINARY_API_KEY');
+    if (!apiSecret) missing.push('CLOUDINARY_API_SECRET');
+    
+    throw new Error(
+      `Cloudinary configuration is missing. Please set the following environment variables: ${missing.join(', ')}`
+    );
+  }
+}
+
+/**
+ * Extract error message from Cloudinary error object
+ * Cloudinary errors have specific structure with http_code, message, etc.
+ */
+function extractCloudinaryErrorMessage(error: any): string {
+  // Cloudinary errors have specific structure
+  if (error && typeof error === 'object') {
+    // Check for Cloudinary error properties
+    if (error.http_code) {
+      const httpCode = error.http_code;
+      const message = error.message || 'Unknown Cloudinary error';
+      
+      // Provide specific messages for common error codes
+      if (httpCode === 401) {
+        return `Cloudinary authentication failed (401). Please check your API credentials. Original: ${message}`;
+      } else if (httpCode === 400) {
+        return `Cloudinary invalid request (400). ${message}`;
+      } else if (httpCode === 403) {
+        return `Cloudinary access forbidden (403). ${message}`;
+      } else if (httpCode === 404) {
+        return `Cloudinary resource not found (404). ${message}`;
+      } else if (httpCode === 500) {
+        return `Cloudinary server error (500). ${message}`;
+      }
+      
+      return `Cloudinary error (${httpCode}): ${message}`;
+    }
+    
+    // Check for standard error message
+    if (error.message) {
+      return error.message;
+    }
+    
+    // If no message, stringify the error
+    return JSON.stringify(error);
+  }
+  
+  // Fallback for non-object errors
+  return String(error);
+}
+
 export interface UploadOptions {
   folder?: string
   public_id?: string
@@ -37,6 +99,9 @@ export async function uploadToCloudinary(
   options: UploadOptions = {}
 ): Promise<UploadResult> {
   try {
+    // Validate configuration first
+    validateCloudinaryConfig();
+    
     const uploadOptions = {
       folder: options.folder || "pffl",
       public_id: options.public_id,
@@ -90,8 +155,23 @@ export async function uploadToCloudinary(
       bytes: result.bytes,
     }
   } catch (error) {
-    console.error("Cloudinary upload error:", error)
-    throw new Error(`Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`)
+    console.error("Cloudinary upload error:", error);
+    console.error("Error type:", typeof error);
+    console.error("Error constructor:", error?.constructor?.name);
+    console.error("Full error object:", JSON.stringify(error, null, 2));
+    
+    // Re-throw with original error message if it's a config error
+    if (error instanceof Error && error.message.includes('Cloudinary configuration is missing')) {
+      throw error;
+    }
+    
+    // Extract actual error message from Cloudinary error object
+    const errorMessage = extractCloudinaryErrorMessage(error);
+    const errorDetails = error instanceof Error ? error.stack : JSON.stringify(error, null, 2);
+    console.error("Cloudinary error details:", errorDetails);
+    console.error("Extracted error message:", errorMessage);
+    
+    throw new Error(`Failed to upload file: ${errorMessage}`);
   }
 }
 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/constants/app_assets.dart';
+import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/svg_icons.dart';
-import 'package:pffl_managment/features/admin/game_widgets/upcomming_matches_screens/edit_upcomming_matches.dart';
-import 'package:pffl_managment/features/admin/matches/models/match_model.dart';
-import 'package:pffl_managment/core/widgets/custom_dialog.dart';
+// Assuming AppAdminIcons is here or exported
+import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/edit_upcoming_games_screen.dart';
 
 class UpcommingMatchesCardWidget extends StatelessWidget {
   final MatchModel match;
@@ -81,10 +82,17 @@ class UpcommingMatchesCardWidget extends StatelessWidget {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return CustomDialog(
-                    message: "",
-                    content: EditUpcommingGames(),
-                    
+                  return Dialog(
+                    backgroundColor: Colors.transparent,
+                    insetPadding: const EdgeInsets.all(16),
+                    child: ChangeNotifierProvider(
+                      create: (_) {
+                        final provider = UpcomingGamesProvider();
+                        provider.loadMatch(match);
+                        return provider;
+                      },
+                      child: const EditUpcomingGamesScreen(),
+                    ),
                   );
                 },
               );
@@ -150,7 +158,8 @@ class TeamWidget extends StatelessWidget {
                     return Container(
                       color: colorScheme.surfaceContainerHighest,
                       child: Icon(
-                        AppAdminIcons.sportsFootball,
+                        Icons
+                            .sports_football, // Fallback icon if AppAdminIcons is missing
                         size: 16,
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -185,7 +194,7 @@ class TeamWidget extends StatelessWidget {
                     return Container(
                       color: colorScheme.surfaceContainerHighest,
                       child: Icon(
-                        AppAdminIcons.sportsFootball,
+                        Icons.sports_football, // Fallback icon
                         size: 16,
                         color: colorScheme.onSurfaceVariant,
                       ),

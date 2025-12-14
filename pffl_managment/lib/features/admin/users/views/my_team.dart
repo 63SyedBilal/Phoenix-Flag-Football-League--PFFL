@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/models/user_model.dart';
-import 'package:pffl_managment/features/admin/users/providers/users_provider.dart';
+import 'package:pffl_managment/features/admin/provider/admin_user_provider/users_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:provider/provider.dart';
 

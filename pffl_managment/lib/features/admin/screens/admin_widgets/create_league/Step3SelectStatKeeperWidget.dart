@@ -3,23 +3,44 @@ import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/core/utils/app_icons.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
-import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/features/admin/leagues/providers/create_league_viewmodel.dart';
+import 'package:pffl_managment/core/services/user_service.dart';
+import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:provider/provider.dart';
 
-class Step3SelectStatKeeperWidget extends StatelessWidget {
+class Step3SelectStatKeeperWidget extends StatefulWidget {
   const Step3SelectStatKeeperWidget({super.key});
+
+  @override
+  State<Step3SelectStatKeeperWidget> createState() => _Step3SelectStatKeeperWidgetState();
+}
+
+class _Step3SelectStatKeeperWidgetState extends State<Step3SelectStatKeeperWidget> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch stat keepers when widget is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = Provider.of<CreateLeagueViewModel>(context, listen: false);
+      viewModel.fetchStatKeepers();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
-    List<PlayerModel> filteredStatKeepers = viewModel.availableStatKeepers;
+    
+    // Filter stat keepers based on search query
+    List<UserModel> filteredStatKeepers = viewModel.statKeepers;
     if (viewModel.statKeeperSearchQuery.isNotEmpty) {
-      filteredStatKeepers = viewModel.availableStatKeepers
+      filteredStatKeepers = viewModel.statKeepers
           .where(
-            (statKeeper) => statKeeper.name.toLowerCase().contains(
-              viewModel.statKeeperSearchQuery,
-            ),
+            (statKeeper) => 
+              statKeeper.displayName.toLowerCase().contains(
+                viewModel.statKeeperSearchQuery,
+              ) ||
+              statKeeper.email.toLowerCase().contains(
+                viewModel.statKeeperSearchQuery,
+              ),
           )
           .toList();
     }
@@ -55,21 +76,43 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Show error message if no stat keepers are selected
-          if (viewModel.selectedStatKeeperIds.isEmpty && viewModel.currentStep == 2)
+          if (viewModel.isLoadingStatKeepers)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (filteredStatKeepers.isEmpty)
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                'Please select at least one stat keeper',
-                style: TextStyle(
-                  color: AppColors.textDisabled,
-                  fontSize: 12,
+              padding: const EdgeInsets.all(20.0),
+              child: Center(
+                child: Text(
+                  'No stat keepers found',
+                  style: TextStyle(
+                    color: AppColors.textDisabled,
+                    fontSize: 14,
+                  ),
                 ),
               ),
-            ),
-          ...filteredStatKeepers.map((statKeeper) {
-            return _buildStatKeeperItem(context, statKeeper, viewModel);
-          }).toList(),
+            )
+          else ...[
+            // Show error message if no stat keepers are selected
+            if (viewModel.selectedStatKeeperIds.isEmpty && viewModel.currentStep == 2)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Please select at least one stat keeper',
+                  style: TextStyle(
+                    color: AppColors.textDisabled,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ...filteredStatKeepers.map((statKeeper) {
+              return _buildStatKeeperItem(context, statKeeper, viewModel);
+            }).toList(),
+          ],
         ],
       ),
     );
@@ -77,12 +120,15 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
 
   Widget _buildStatKeeperItem(
     BuildContext context,
-    PlayerModel statKeeper,
+    UserModel statKeeper,
     CreateLeagueViewModel viewModel,
   ) {
     // Check if this stat keeper is selected
     bool isSelected = viewModel.selectedStatKeeperIds.contains(statKeeper.id);
-    final hasSentEmail = viewModel.isEmailSent(statKeeper.id);
+    final hasSentEmail = viewModel.isStatKeeperEmailSending(statKeeper.id);
+    
+    // Generate avatar URL from email
+    final avatarUrl = 'https://api.dicebear.com/7.x/avataaars/png?seed=${statKeeper.email}';
     
     return GestureDetector(
       onTap: () {
@@ -110,14 +156,29 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
                   ? Border.all(color: AppColors.primary, width: 2)
                   : null,
                 image: DecorationImage(
-                  image: NetworkImage(statKeeper.avatarUrl),
+                  image: NetworkImage(avatarUrl),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(statKeeper.name, style: AppTextStyles.titleMedium),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    statKeeper.displayName,
+                    style: AppTextStyles.titleMedium,
+                  ),
+                  Text(
+                    statKeeper.email,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textDisabled,
+                    ),
+                  ),
+                ],
+              ),
             ),
             if (isSelected)
               const Icon(
@@ -141,10 +202,12 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
                 onPressed: hasSentEmail
                     ? null
                     : () {
-                        viewModel.sendEmailToStatKeeper(statKeeper.id);
+                        // Note: We need leagueId to send invitation
+                        // This will be handled after league creation
+                        // For now, just show a message
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Email invitation sent to stat keeper'),
+                            content: Text('Invitation will be sent after league creation'),
                             duration: Duration(seconds: 2),
                           ),
                         );

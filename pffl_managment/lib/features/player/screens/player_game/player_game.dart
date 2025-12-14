@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/captain/providers/captain_games_provider.dart';
-import 'package:pffl_managment/core/widgets/upcomingmatches/shared_game_card.dart';
 import 'package:pffl_managment/features/captain/view/games/widgets/date_selector.dart';
 import 'package:provider/provider.dart';
 
@@ -27,7 +26,7 @@ class PlayerGame extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: provider.games.length,
                       itemBuilder: (context, index) {
-                        return SharedGameCard(game: provider.games[index]);
+                        return null;   
                       },
                     );
                   },
