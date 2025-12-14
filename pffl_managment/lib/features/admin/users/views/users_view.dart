@@ -11,12 +11,21 @@ class UsersView extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Search bar
-            Consumer<UsersProvider>(
-              builder: (context, viewModel, child) {
-                return Padding(
+        child: Consumer<UsersProvider>(
+          builder: (context, viewModel, child) {
+            // Initialize provider on first build
+            if (!viewModel.isLoading && 
+                viewModel.allUsers.isEmpty && 
+                viewModel.errorMessage == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                viewModel.initialize();
+              });
+            }
+
+            return Column(
+              children: [
+                // Search bar
+                Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
@@ -48,13 +57,10 @@ class UsersView extends StatelessWidget {
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            Consumer<UsersProvider>(
-              builder: (context, viewModel, child) {
-                return SingleChildScrollView(
+                ),
+                const SizedBox(height: 16),
+                // Filter tabs
+                SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
@@ -183,37 +189,111 @@ class UsersView extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 6),
+                      // Stat Keepers tab
+                      GestureDetector(
+                        onTap: () => viewModel.selectFilter('stat_keepers'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: viewModel.selectedFilter == 'stat_keepers'
+                                ? const Color(0xFF3B82F6)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(0xFFE5E7EB),
+                              width: 0.67,
+                            ),
+                          ),
+                          child: Text(
+                            'Stat Keepers',
+                            style: TextStyle(
+                              fontFamily: 'Lato',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: viewModel.selectedFilter == 'stat_keepers'
+                                  ? Colors.white
+                                  : const Color(0xFF000000),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
+                const SizedBox(height: 24),
 
-            const SizedBox(height: 24),
-
+                // Loading state
+                if (viewModel.isLoading)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            // Error state
+            else if (viewModel.errorMessage != null)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        viewModel.errorMessage!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.red,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => viewModel.refresh(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            // Empty state
+            else if (viewModel.filteredUsers.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    viewModel.searchQuery.isNotEmpty
+                        ? 'No users found matching your search'
+                        : 'No users found',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF666666),
+                    ),
+                  ),
+                ),
+              )
             // Users list
-            Expanded(
-              child: Consumer<UsersProvider>(
-                builder: (context, viewModel, child) {
-                  return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: viewModel.filteredUsers.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return _buildUserCard(context, viewModel.filteredUsers[index]);
-                    },
-                  );
-                },
+            else
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: viewModel.filteredUsers.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _buildUserCard(context, viewModel.filteredUsers[index], viewModel);
+                  },
+                ),
               ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildUserCard(BuildContext context, UserModel user) {
+  Widget _buildUserCard(BuildContext context, UserModel user, UsersProvider provider) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -346,7 +426,7 @@ class UsersView extends StatelessWidget {
             icon: const Icon(Icons.more_vert_outlined),
             onSelected: (String result) {
               if (result == 'change_role') {
-                _showChangeRoleCard(context, user);
+                _showChangeRoleCard(context, user, provider);
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -399,14 +479,26 @@ class UsersView extends StatelessWidget {
     );
   }
 
-  void _showChangeRoleCard(BuildContext context, UserModel user) {
+  void _showChangeRoleCard(BuildContext context, UserModel user, UsersProvider provider) {
     // Show a dialog or bottom sheet with change role options
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          
-          title: Text('Change Player Role', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, fontFamily: 'Serotiva'),),
+      builder: (BuildContext dialogContext) {
+        String? selectedRole;
+        bool isUpdating = false;
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text(
+                'Change User Role',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Serotiva',
+                ),
+              ),
           content: Container(
             width: 300,
             child: Column(
@@ -455,53 +547,96 @@ class UsersView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Cancel button with border and rounded corners
-                    OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Color(0xFF3B82F6), width: 1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
+                        // Cancel button with border and rounded corners
+                        OutlinedButton(
+                          onPressed: isUpdating
+                              ? null
+                              : () {
+                                  Navigator.of(context).pop();
+                                },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF3B82F6), width: 1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Color(0xFF3B82F6),
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 18),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Color(0xFF3B82F6),
-                          fontSize: 16,
+                        const SizedBox(width: 8),
+                        // Confirm button with primary color and rounded corners
+                        ElevatedButton(
+                          onPressed: (isUpdating || selectedRole == null)
+                              ? null
+                              : () async {
+                                  setState(() {
+                                    isUpdating = true;
+                                  });
+
+                                  final success = await provider.updateUserRole(
+                                    user.id,
+                                    selectedRole!,
+                                  );
+
+                                  if (context.mounted) {
+                                    if (success) {
+                                      Navigator.of(context).pop();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('User role updated to $selectedRole'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    } else {
+                                      setState(() {
+                                        isUpdating = false;
+                                      });
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Failed to update user role'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3B82F6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                          ),
+                          child: isUpdating
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'Confirm',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
                         ),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    // Confirm button with primary color and rounded corners
-                    ElevatedButton(
-                      onPressed: () {
-                        // Handle confirm action
-                        Navigator.of(context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF3B82F6), // Primary color
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 18),
-                      ),
-                      child: Text(
-                        'Confirm',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ],
             ),
           ),
+            );
+          },
         );
       },
     );

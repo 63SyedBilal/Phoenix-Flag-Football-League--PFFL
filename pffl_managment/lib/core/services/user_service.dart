@@ -71,6 +71,95 @@ class UserService {
   static Future<List<UserModel>> getCaptains() async {
     return getUsersByRole('captain');
   }
+
+  /// Fetch all users
+  /// GET /api/user
+  static Future<List<UserModel>> getAllUsers() async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/user');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['data'] != null) {
+          final users = (data['data'] as List)
+              .map((json) => UserModel.fromJson(json))
+              .toList();
+          return users;
+        }
+        return [];
+      } else {
+        print('Failed to fetch all users: ${response.statusMessage}');
+        return [];
+      }
+    } on DioException catch (e) {
+      print('Error fetching all users: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return [];
+    } catch (e) {
+      print('General error fetching all users: $e');
+      return [];
+    }
+  }
+
+  /// Get all profiles
+  /// GET /api/profile
+  static Future<List<Map<String, dynamic>>> getAllProfiles() async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/profile');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['data'] != null) {
+          return (data['data'] as List).cast<Map<String, dynamic>>();
+        }
+        return [];
+      } else {
+        print('Failed to fetch profiles: ${response.statusMessage}');
+        return [];
+      }
+    } on DioException catch (e) {
+      print('Error fetching profiles: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return [];
+    } catch (e) {
+      print('General error fetching profiles: $e');
+      return [];
+    }
+  }
+
+  /// Update user role
+  /// PUT /api/user/:id
+  static Future<bool> updateUserRole(String userId, String newRole) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.put(
+        '/user/$userId',
+        data: {'role': newRole},
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Failed to update user role: ${response.statusMessage}');
+        return false;
+      }
+    } on DioException catch (e) {
+      print('Error updating user role: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return false;
+    } catch (e) {
+      print('General error updating user role: $e');
+      return false;
+    }
+  }
 }
 
 /// User model for API responses

@@ -5,6 +5,7 @@ import 'package:pffl_managment/features/admin/screens/admin_leagues/leagues_scre
 import 'package:pffl_managment/screens/games/common/games_screen.dart';
 import 'package:pffl_managment/screens/games/common/games_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_users/admin_users_screen.dart';
+import 'package:pffl_managment/features/admin/provider/admin_user_provider/users_provider.dart';
 import 'package:pffl_managment/features/bottom_nevigation/admin_bottom_nevigation/admin_bottom_nevigation.dart';
 import 'package:pffl_managment/features/header_widgets/admin_header_widget/admin_header_widget.dart';
 import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
@@ -52,7 +53,10 @@ class AdminDashboard extends StatelessWidget {
           child: const GamesScreen(),
         );
       case 3:
-        return const AdminUsersScreen();
+        return ChangeNotifierProvider(
+          create: (_) => UsersProvider(),
+          child: const AdminUsersScreen(),
+        );
       case 4:
         return ChangeNotifierProvider(
           create: (_) => RoleBasedSettingsProvider(userRole: 'admin'),
