@@ -41,8 +41,39 @@ class AdminLeagueGamesSection extends StatelessWidget {
 
         final matches = snapshot.data ?? [];
         
-        // Sort matches by stage priority and date
-        final sortedMatches = _sortMatchesByStage(matches);
+        // Sort matches by creation order (using id as proxy for creation time)
+        // In MongoDB, ObjectIds contain timestamp, so sorting by id gives creation order
+        final sortedMatches = List<MatchModel>.from(matches);
+        sortedMatches.sort((a, b) {
+          // Primary sort: by creation order (using id)
+          if (a.id != null && b.id != null) {
+            // MongoDB ObjectIds are sortable by creation time
+            return a.id!.compareTo(b.id!);
+          }
+          // Fallback: if one has id and other doesn't, prioritize the one with id
+          if (a.id != null) return -1;
+          if (b.id != null) return 1;
+          
+          // Secondary fallback: use matchDateTime if available
+          if (a.matchDateTime != null && b.matchDateTime != null) {
+            return a.matchDateTime!.compareTo(b.matchDateTime!);
+          }
+          if (a.matchDateTime != null) return -1;
+          if (b.matchDateTime != null) return 1;
+          
+          return 0;
+        });
+
+        // Calculate total games from sorted matches list
+        int totalGames = sortedMatches.length;
+        for (final match in sortedMatches) {
+          if (match.gameNumber != null && match.gameNumber!.isNotEmpty) {
+            final total = _extractTotalFromGameNumber(match.gameNumber!, totalGames);
+            if (total > totalGames) {
+              totalGames = total;
+            }
+          }
+        }
 
         return Padding(
           padding: const EdgeInsets.all(16.0),
@@ -63,10 +94,18 @@ class AdminLeagueGamesSection extends StatelessWidget {
                   ),
                 )
               else
-                ...sortedMatches.map((match) => AdminLeagueGameCard(
-                      match: match,
-                      league: league,
-                    )),
+                ...sortedMatches.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final match = entry.value;
+                  final sequenceNumber = index + 1;
+                  
+                  return AdminLeagueGameCard(
+                    match: match,
+                    league: league,
+                    totalGames: totalGames,
+                    sequenceNumber: sequenceNumber,
+                  );
+                }),
             ],
           ),
         );
@@ -74,36 +113,16 @@ class AdminLeagueGamesSection extends StatelessWidget {
     );
   }
 
-  /// Sort matches by stage priority (Final > Semi-Final > Quarter-Final > Group Stage)
-  /// Then by date/time within each stage
-  List<MatchModel> _sortMatchesByStage(List<MatchModel> matches) {
-    final stagePriority = {
-      'Final': 1,
-      'Semi-Final': 2,
-      'Quarter-Final': 3,
-      'Group Stage': 4,
-    };
-
-    matches.sort((a, b) {
-      final aStage = a.roundName ?? 'Group Stage';
-      final bStage = b.roundName ?? 'Group Stage';
-      final aPriority = stagePriority[aStage] ?? 99;
-      final bPriority = stagePriority[bStage] ?? 99;
-
-      // First sort by stage priority
-      if (aPriority != bPriority) {
-        return aPriority.compareTo(bPriority);
+  /// Extract total number from gameNumber string like "Game 8 of 12"
+  int _extractTotalFromGameNumber(String gameNumber, int defaultTotal) {
+    try {
+      final parts = gameNumber.split(' of ');
+      if (parts.length == 2) {
+        return int.parse(parts[1]);
       }
-
-      // Then sort by date/time within same stage
-      if (a.matchDateTime != null && b.matchDateTime != null) {
-        return a.matchDateTime!.compareTo(b.matchDateTime!);
-      }
-      if (a.matchDateTime != null) return -1;
-      if (b.matchDateTime != null) return 1;
-      return 0;
-    });
-
-    return matches;
+    } catch (e) {
+      // If parsing fails, return default
+    }
+    return defaultTotal;
   }
 }

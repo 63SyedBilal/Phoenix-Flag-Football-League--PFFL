@@ -329,7 +329,9 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         },
                         child: AbsorbPointer(
                           child: CustomTextField(
-                            hintText: DateFormatter.format(viewModel.endDate),
+                            hintText: viewModel.endDate != null
+                                ? DateFormatter.formatDate(viewModel.endDate!)
+                                : '',
                             suffixIcon: const Icon(
                               AppIcons.calendar,
                               size: 20,

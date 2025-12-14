@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart'
-    show TeamModel;
-    // TODO: LeagueService will be used when backend team fetching is implemented
+    show TeamModel, LeagueService;
 import 'package:pffl_managment/core/services/user_service.dart'
     show UserService, UserModel;
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
@@ -33,51 +32,6 @@ class UpcomingGamesProvider extends ChangeNotifier {
   bool _isLoadingStatKeepers = false;
   String? _errorMessage;
 
-  // TODO: TEMPORARY - Dummy teams for development/testing
-  // In the future, teams will be fetched from the backend API
-  // Teams will be created by captains during team creation process
-  // This list should be removed once backend team fetching is fully implemented
-  // NOTE: Using valid MongoDB ObjectId format (24 hex characters) for dummy IDs
-  // so backend validation doesn't fail. These teams don't exist in database.
-  static List<TeamModel> _getDummyTeams() {
-    return [
-      TeamModel(
-        id: '507f1f77bcf86cd799439011', // Valid ObjectId format
-        teamName: 'Shadow Wolves',
-        enterCode: 'SW',
-        location: 'City Arena',
-        skillLevel: 'intermediate',
-      ),
-      TeamModel(
-        id: '507f1f77bcf86cd799439012', // Valid ObjectId format
-        teamName: 'Iron Rangers',
-        enterCode: 'IR',
-        location: 'Main Stadium',
-        skillLevel: 'advanced',
-      ),
-      TeamModel(
-        id: '507f1f77bcf86cd799439013', // Valid ObjectId format
-        teamName: 'Eagle Eye',
-        enterCode: 'EE',
-        location: 'Training Ground A',
-        skillLevel: 'beginner',
-      ),
-      TeamModel(
-        id: '507f1f77bcf86cd799439014', // Valid ObjectId format
-        teamName: 'Thunder Strike',
-        enterCode: 'TS',
-        location: 'City Arena',
-        skillLevel: 'professional',
-      ),
-      TeamModel(
-        id: '507f1f77bcf86cd799439015', // Valid ObjectId format
-        teamName: 'Mystic Dragons',
-        enterCode: 'MD',
-        location: 'Training Ground B',
-        skillLevel: 'intermediate',
-      ),
-    ];
-  }
 
   // Game stages
   static const List<String> _availableStages = [
@@ -122,73 +76,87 @@ class UpcomingGamesProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   /// Initialize provider with league information
-  /// TODO: In the future, teams will be fetched from the backend API
-  /// Teams will be created by captains during team creation process
-  /// For now, using dummy teams to allow the flow to continue
   Future<void> initializeWithLeague(LeagueCreationModel league) async {
     _leagueId = league.id;
     _leagueStartDate = league.startDate;
     _leagueEndDate = league.endDate;
     
     // Fetch teams, referees, and stat keepers
-    // TODO: Replace with actual backend API calls when ready
-    // Teams will be fetched from backend in the future
     await Future.wait([
-      fetchTeamsForLeague(league.id), // Currently returns dummy teams
+      fetchTeamsForLeague(league.id),
       fetchReferees(),
       fetchStatKeepers(),
     ]);
   }
 
   /// Initialize provider without league (for editing matches outside league context)
-  /// TODO: In the future, teams will be fetched from the backend API
-  /// Teams will be created by captains during team creation process
   Future<void> initializeWithoutLeague() async {
     _leagueId = null;
     _leagueStartDate = null;
     _leagueEndDate = null;
     
     // Fetch teams, referees, and stat keepers without league filter
-    // TODO: Replace with actual backend API call when ready
-    // For now, using dummy teams to allow the flow to continue
     await Future.wait([
-      fetchTeamsForLeague(''), // Empty string will use dummy teams
+      fetchTeamsForLeague(''),
       fetchReferees(),
       fetchStatKeepers(),
     ]);
   }
 
   /// Fetch teams for a specific league
-  /// TODO: In the future, teams will be fetched from the backend API
-  /// Teams will be created by captains during team creation process
-  /// For now, using dummy teams to allow the flow to continue
+  /// Only returns teams that were invited/added to the league during league creation
   Future<void> fetchTeamsForLeague(String leagueId) async {
     _isLoadingTeams = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // TODO: Replace with actual backend API call
-      // final allTeams = await LeagueService.getTeamsByLeague(leagueId);
-      // _teams = allTeams;
+      if (leagueId.isEmpty) {
+        // No league ID, use empty list
+        debugPrint('⚠️ Empty league ID provided, returning empty teams list');
+        _teams = [];
+        _isLoadingTeams = false;
+        notifyListeners();
+        return;
+      }
+
+      debugPrint('📡 Fetching teams for league ID: $leagueId');
       
-      // TEMPORARY: Using dummy teams until backend team fetching is implemented
-      // Teams will be fetched from backend in the future
-      // Teams will be created by captains during team creation
-      await Future.delayed(const Duration(milliseconds: 500)); // Simulate API call
-      _teams = _getDummyTeams();
+      // Fetch league details which includes populated teams
+      final league = await LeagueService.getLeagueById(leagueId);
       
-      // Uncomment below when backend is ready:
-      // final allTeams = await LeagueService.getAllTeams();
-      // Filter teams that belong to this league
-      // Note: We'll need to check if team is in league.teams array
-      // For now, we'll use all teams and let backend validate
-      // _teams = allTeams;
-    } catch (e) {
-      // If backend fetch fails, fall back to dummy teams
-      // TODO: Remove this fallback once backend is fully implemented
-      print('Error fetching teams from backend, using dummy teams: $e');
-      _teams = _getDummyTeams();
+      if (league == null) {
+        debugPrint('❌ League not found for ID: $leagueId');
+        _teams = [];
+        _errorMessage = 'League not found';
+        _isLoadingTeams = false;
+        notifyListeners();
+        return;
+      }
+      
+      debugPrint('✅ League fetched: ${league.leagueName}');
+      debugPrint('📊 Teams count in league: ${league.teams.length}');
+      
+      if (league.teams.isNotEmpty) {
+        // Use teams from the league (only teams invited/added during league creation)
+        _teams = league.teams;
+        debugPrint('✅ Loaded ${_teams.length} teams from league: ${league.leagueName}');
+        for (var team in _teams) {
+          debugPrint('   - Team: ${team.teamName} (ID: ${team.id})');
+        }
+      } else {
+        // League has no teams yet
+        _teams = [];
+        debugPrint('⚠️ League has no teams assigned');
+        debugPrint('   - Make sure teams were invited in Step 4 of league creation');
+        debugPrint('   - Teams should be automatically assigned when email icon is clicked');
+        _errorMessage = 'No teams assigned to this league. Please invite teams in Step 4.';
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error fetching teams for league: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
+      _teams = [];
+      _errorMessage = 'Failed to load teams for this league: ${e.toString()}';
     } finally {
       _isLoadingTeams = false;
       notifyListeners();
@@ -304,7 +272,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateDate(DateTime date) {
+  Future<void> updateDate(DateTime date) async {
     // Validate date is within league range (only if league is set)
     if (_leagueStartDate != null && _leagueEndDate != null) {
       if (date.isBefore(_leagueStartDate!) || date.isAfter(_leagueEndDate!)) {
@@ -313,11 +281,22 @@ class UpcomingGamesProvider extends ChangeNotifier {
         );
       }
     }
+    
+    // Validate time if both date and time are set
+    if (_selectedTime != null && _leagueId != null) {
+      await _validateGameTime(date, _selectedTime!, _editingMatch?.id);
+    }
+    
     _selectedDate = date;
     notifyListeners();
   }
 
-  void updateTime(TimeOfDay time) {
+  Future<void> updateTime(TimeOfDay time) async {
+    // Validate time if both date and time are set
+    if (_selectedDate != null && _leagueId != null) {
+      await _validateGameTime(_selectedDate!, time, _editingMatch?.id);
+    }
+    
     _selectedTime = time;
     notifyListeners();
   }
@@ -342,8 +321,63 @@ class UpcomingGamesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Validate game time and date constraints
+  /// - Maximum 4 games per day
+  /// - No time conflicts with existing games
+  Future<void> _validateGameTime(
+    DateTime date,
+    TimeOfDay time,
+    String? excludeMatchId,
+  ) async {
+    if (_leagueId == null) return;
+
+    try {
+      // Fetch all games for the league
+      final allGames = await MatchService.getMatchesByLeague(_leagueId!);
+      
+      // Filter games on the same date (excluding the current match if editing)
+      final gamesOnSameDate = allGames.where((game) {
+        if (game.id == excludeMatchId) return false;
+        if (game.matchDateTime == null) return false;
+        
+        return game.matchDateTime!.year == date.year &&
+            game.matchDateTime!.month == date.month &&
+            game.matchDateTime!.day == date.day;
+      }).toList();
+
+      // Check maximum 4 games per day
+      if (gamesOnSameDate.length >= 4) {
+        throw Exception('Maximum 4 games can be scheduled per day');
+      }
+
+      // Check for time conflicts
+      final selectedTimeMinutes = time.hour * 60 + time.minute;
+      for (final game in gamesOnSameDate) {
+        if (game.matchDateTime != null) {
+          final gameTimeMinutes =
+              game.matchDateTime!.hour * 60 + game.matchDateTime!.minute;
+          
+          // Consider games at the same time or within 30 minutes as conflicting
+          final timeDifference = (selectedTimeMinutes - gameTimeMinutes).abs();
+          if (timeDifference < 30) {
+            throw Exception('Game time conflicts with existing game on this date');
+          }
+        }
+      }
+    } catch (e) {
+      // Re-throw validation errors
+      if (e.toString().contains('Maximum 4 games') ||
+          e.toString().contains('conflicts')) {
+        rethrow;
+      }
+      // For other errors (like network issues), log but don't block
+      print('Error validating game time: $e');
+    }
+  }
+
+
   /// Validate all required fields are filled
-  bool validateFields() {
+  Future<bool> validateFields() async {
     if (_leagueId == null) {
       _errorMessage = 'League ID is required';
       notifyListeners();
@@ -387,6 +421,16 @@ class UpcomingGamesProvider extends ChangeNotifier {
         return false;
       }
     }
+    
+    // Validate time constraints
+    try {
+      await _validateGameTime(_selectedDate!, _selectedTime!, _editingMatch?.id);
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+    
     _errorMessage = null;
     notifyListeners();
     return true;
@@ -394,7 +438,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
 
   /// Create a new match
   Future<MatchModel> createMatch() async {
-    if (!validateFields()) {
+    if (!await validateFields()) {
       throw Exception(_errorMessage ?? 'Validation failed');
     }
 
@@ -444,7 +488,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
       throw Exception('No match selected for editing');
     }
 
-    if (!validateFields()) {
+    if (!await validateFields()) {
       throw Exception(_errorMessage ?? 'Validation failed');
     }
 
@@ -470,6 +514,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
         'gameTime': timeStr,
         'venue': _selectedVenue ?? '',
         'roundName': _selectedRoundName ?? 'Group Stage',
+        'gameNumber': _editingMatch!.gameNumber ?? '',
         if (_selectedRefereeId != null) 'refereeId': _selectedRefereeId,
         if (_selectedStatKeeperId != null) 'statKeeperId': _selectedStatKeeperId,
       };

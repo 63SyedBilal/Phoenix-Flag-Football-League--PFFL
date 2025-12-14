@@ -1,60 +1,43 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+/// Utility class for consistent date and time formatting across the app
 class DateFormatter {
-  static const List<String> _months = [
-    '',
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  /// Formats a DateTime to a readable string format
-  /// Example: December 10, 2025
+  /// Format date in a standard format (MM/dd/yyyy)
+  /// Example: DateTime(2024, 10, 28) -> "10/28/2024"
   static String format(DateTime? date) {
-    if (date == null) return '10 December 2025';
-    return '${date.day} ${_months[date.month]} ${date.year}';
+    if (date == null) return '';
+    return DateFormat('MM/dd/yyyy').format(date);
   }
 
-  /// Formats a DateTime to a short format
-  /// Example: Dec 10, 2025
-  static String formatShort(DateTime? date) {
-    if (date == null) return 'Dec 10, 2025';
-    const List<String> shortMonths = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${shortMonths[date.month]} ${date.day}, ${date.year}';
+  /// Format date in a standard format (MM/dd/yyyy)
+  /// Example: DateTime(2024, 10, 28) -> "10/28/2024"
+  static String formatDate(DateTime date) {
+    return DateFormat('MM/dd/yyyy').format(date);
   }
 
-  /// Formats a DateTime to numeric format
-  /// Example: 12/10/2025
-  static String formatNumeric(DateTime? date) {
-    if (date == null) return '12/10/2025';
-    return '${date.month}/${date.day}/${date.year}';
+  /// Format game date as "Sat 28 Oct"
+  /// Example: DateTime(2024, 10, 28) -> "Sat 28 Oct"
+  static String formatGameDate(DateTime date) {
+    return DateFormat('EEE d MMM').format(date);
   }
 
-  /// Formats a DateTime to ISO format
-  /// Example: 2025-12-10
-  static String formatISO(DateTime? date) {
-    if (date == null) return '2025-12-10';
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  /// Format game time as "01:05 AM PKT" or appropriate format
+  /// Example: TimeOfDay(hour: 1, minute: 5) -> "01:05 AM PKT"
+  static String formatGameTime(TimeOfDay time, {String timezone = 'PKT'}) {
+    final hour = time.hour;
+    final minute = time.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    final displayMinute = minute.toString().padLeft(2, '0');
+    return '$displayHour:$displayMinute $period $timezone';
+  }
+
+  /// Format date and time together
+  static String formatGameDateTime(DateTime dateTime, {String timezone = 'PKT'}) {
+    final dateStr = formatGameDate(dateTime);
+    final time = TimeOfDay.fromDateTime(dateTime);
+    final timeStr = formatGameTime(time, timezone: timezone);
+    return '$dateStr $timeStr';
   }
 }

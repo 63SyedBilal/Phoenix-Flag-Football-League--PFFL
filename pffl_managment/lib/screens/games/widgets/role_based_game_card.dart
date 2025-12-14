@@ -11,6 +11,7 @@ class RoleBasedGameCard extends StatelessWidget {
   final bool canEdit;
   final bool shouldShowPaymentPrompt;
   final VoidCallback? onPayLeagueFee;
+  final Function(String?)? onTeamTap;
 
   const RoleBasedGameCard({
     Key? key,
@@ -19,6 +20,7 @@ class RoleBasedGameCard extends StatelessWidget {
     this.canEdit = false,
     this.shouldShowPaymentPrompt = false,
     this.onPayLeagueFee,
+    this.onTeamTap,
   }) : super(key: key);
 
   @override
@@ -81,20 +83,31 @@ class RoleBasedGameCard extends StatelessWidget {
                 // Home team
                 SizedBox(
                   width: 100,
-                  child: Row(
-                    children: [
-                      _buildTeamLogo(match.homeTeamLogo),
-                      const SizedBox(width: 8),
-                      Text(
-                        match.homeTeam,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Lato',
-                          color: Color(0xFF111827),
+                  child: GestureDetector(
+                    onTap: onTeamTap != null && match.homeTeamId != null
+                        ? () => onTeamTap!(match.homeTeamId)
+                        : null,
+                    child: Row(
+                      children: [
+                        _buildTeamLogo(match.homeTeamLogo),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            match.homeTeam,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Lato',
+                              color: const Color(0xFF111827),
+                              decoration: onTeamTap != null && match.homeTeamId != null
+                                  ? TextDecoration.underline
+                                  : null,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 // Date and time
@@ -124,21 +137,33 @@ class RoleBasedGameCard extends StatelessWidget {
                 // Away team
                 SizedBox(
                   width: 100,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        match.awayTeam,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Lato',
-                          color: Color(0xFF111827),
+                  child: GestureDetector(
+                    onTap: onTeamTap != null && match.awayTeamId != null
+                        ? () => onTeamTap!(match.awayTeamId)
+                        : null,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            match.awayTeam,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Lato',
+                              color: const Color(0xFF111827),
+                              decoration: onTeamTap != null && match.awayTeamId != null
+                                  ? TextDecoration.underline
+                                  : null,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.right,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildTeamLogo(match.awayTeamLogo),
-                    ],
+                        const SizedBox(width: 8),
+                        _buildTeamLogo(match.awayTeamLogo),
+                      ],
+                    ),
                   ),
                 ),
               ],

@@ -141,13 +141,16 @@ class EditUpcomingGamesScreen extends StatelessWidget {
                     );
                     if (picked != null) {
                       try {
-                        provider.updateDate(picked);
+                        await provider.updateDate(picked);
                       } catch (e) {
                         if (context.mounted) {
+                          // Display user-friendly error message
+                          final errorMessage = e.toString().replaceAll('Exception: ', '');
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(e.toString()),
+                              content: Text(errorMessage),
                               backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 4),
                             ),
                           );
                         }
@@ -182,7 +185,21 @@ class EditUpcomingGamesScreen extends StatelessWidget {
                       initialTime: provider.selectedTime ?? TimeOfDay.now(),
                     );
                     if (picked != null) {
-                      provider.updateTime(picked);
+                      try {
+                        await provider.updateTime(picked);
+                      } catch (e) {
+                        if (context.mounted) {
+                          // Display user-friendly error message
+                          final errorMessage = e.toString().replaceAll('Exception: ', '');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(errorMessage),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 4),
+                            ),
+                          );
+                        }
+                      }
                     }
                   },
                 ),
@@ -324,10 +341,13 @@ class EditUpcomingGamesScreen extends StatelessWidget {
                           }
                         } catch (e) {
                           if (context.mounted) {
+                            // Display user-friendly error message
+                            final errorMessage = e.toString().replaceAll('Exception: ', '');
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(e.toString()),
+                                content: Text(errorMessage),
                                 backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 4),
                               ),
                             );
                           }

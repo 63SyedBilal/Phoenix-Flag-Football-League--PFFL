@@ -3,17 +3,23 @@ import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/edit_upcoming_games_screen.dart';
-
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
+import 'package:pffl_managment/core/utils/date_formatter.dart';
+import 'package:pffl_managment/screens/games/game_tabs/game_details_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AdminLeagueGameCard extends StatelessWidget {
   final MatchModel match;
   final LeagueCreationModel league;
+  final int totalGames;
+  final int? sequenceNumber; // Position in the sorted list (1-based)
 
   const AdminLeagueGameCard({
     super.key,
     required this.match,
     required this.league,
+    required this.totalGames,
+    this.sequenceNumber,
   });
 
   @override
@@ -25,11 +31,6 @@ class AdminLeagueGameCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
-      ),
       child: isCompleted
           ? _buildCompletedCard(context)
           : _buildUpcomingCard(context),
@@ -199,86 +200,169 @@ class AdminLeagueGameCard extends StatelessWidget {
   }
 
   Widget _buildCompletedCard(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                match.gameNumber ?? 'Game 8 of 12',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
+    // Calculate game number based on sequence position
+    final gameNumber = _getGameNumber();
+    final formattedDate = match.matchDateTime != null
+        ? DateFormatter.formatGameDate(match.matchDateTime!)
+        : match.date;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GameDetailsScreen(match: match),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFF000000).withValues(alpha: 0.12),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row: Game number and date
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  gameNumber,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF374151),
+                    fontFamily: 'Lato',
+                  ),
                 ),
-              ),
-              Text(
-                match.date,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF666666),
+                Text(
+                  formattedDate,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF374151),
+                    fontFamily: 'Lato',
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _buildTeamScoreRow(
-            match.homeTeamLogo,
-            match.homeTeam,
-            match.homeScore ?? 0, // Removed '!' and provided a default value
-          ),
-          const SizedBox(height: 10),
-          _buildTeamScoreRow(
-            match.awayTeamLogo,
-            match.awayTeam,
-            match.awayScore ?? 0, // Removed '!' and provided a default value
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Team 1 row (Home team - gray text)
+            _buildTeamRow(
+              flagUrl: match.homeTeamLogo,
+              teamName: match.homeTeam,
+              score: match.homeScore,
+              isHomeTeam: true,
+            ),
+            const SizedBox(height: 12),
+            // Team 2 row (Away team - black text)
+            _buildTeamRow(
+              flagUrl: match.awayTeamLogo,
+              teamName: match.awayTeam,
+              score: match.awayScore,
+              isHomeTeam: false,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTeamScoreRow(String logo, String name, int score) {
+  Widget _buildTeamRow({
+    required String flagUrl,
+    required String teamName,
+    int? score,
+    required bool isHomeTeam,
+  }) {
+    // Home team has gray text, Away team has black text (matching image)
+    final textColor = isHomeTeam ? const Color(0xFF6B7280) : const Color(0xFF111827);
+    final scoreColor = const Color(0xFF374151);
+    
     return Row(
       children: [
+        // Flag icon (rectangular like in image)
         Container(
           width: 32,
           height: 24,
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(2)),
-          child: Image.network(
-            logo,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Container(
-              color: const Color(0xFFF0F0F0),
-              child: const Center(
-                child: Text('🏴', style: TextStyle(fontSize: 16)),
-              ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(1.6),
+            border: Border.all(
+              color: const Color(0xFFE5E7EB),
+              width: 0.5,
             ),
           ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(1.6),
+            child: flagUrl.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: flagUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: const Color(0xFFF3F4F6),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Icon(
+                        Icons.flag,
+                        size: 12,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: const Color(0xFFF3F4F6),
+                    child: const Icon(
+                      Icons.flag,
+                      size: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+          ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
+        // Team name
         Expanded(
           child: Text(
-            name,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF333333),
+            teamName,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: textColor,
+              fontFamily: 'Lato',
             ),
           ),
         ),
+        // Score
         Text(
-          score.toString(),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
+          score?.toString() ?? '',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: scoreColor,
+            fontFamily: 'Lato',
           ),
         ),
       ],
     );
+  }
+
+  /// Extract game number from gameNumber field or calculate from sequence
+  String _getGameNumber() {
+    // If gameNumber is already set, use it
+    if (match.gameNumber != null && match.gameNumber!.isNotEmpty) {
+      return match.gameNumber!;
+    }
+    // Otherwise, calculate from sequence number (position in creation order)
+    if (sequenceNumber != null) {
+      return 'Game $sequenceNumber of $totalGames';
+    }
+    // Fallback
+    return 'Game 1 of $totalGames';
   }
 }

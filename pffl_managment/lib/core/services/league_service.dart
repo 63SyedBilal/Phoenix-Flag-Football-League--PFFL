@@ -277,35 +277,124 @@ class LeagueService {
     }
   }
 
+  /// Get league by ID
+  /// GET /api/league/:id
+  /// Fetches league with teams that were assigned during league creation (Step 4)
+  static Future<LeagueDetailModel?> getLeagueById(String leagueId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      print('📡 Fetching league by ID: $leagueId');
+      final response = await dio.get('/league/$leagueId');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        print('✅ League API response received');
+        
+        if (data['data'] != null) {
+          final leagueData = data['data'];
+          print('📊 League data structure:');
+          print('   - League Name: ${leagueData['leagueName']}');
+          print('   - Teams field exists: ${leagueData['teams'] != null}');
+          print('   - Teams type: ${leagueData['teams']?.runtimeType}');
+          
+          if (leagueData['teams'] != null) {
+            final teamsArray = leagueData['teams'];
+            print('   - Teams array length: ${teamsArray is List ? teamsArray.length : 'N/A'}');
+            if (teamsArray is List && teamsArray.isNotEmpty) {
+              print('   - First team sample: ${teamsArray[0]}');
+            } else if (teamsArray is List && teamsArray.isEmpty) {
+              print('   - ⚠️ Teams array is EMPTY - no teams assigned to this league');
+            }
+          } else {
+            print('   - ⚠️ Teams field is null or missing');
+          }
+          
+          final league = LeagueDetailModel.fromJson(leagueData);
+          print('✅ League parsed successfully. Teams count: ${league.teams.length}');
+          if (league.teams.isEmpty) {
+            print('   - ⚠️ WARNING: No teams found in league! Teams should be assigned when invited in Step 4.');
+          }
+          return league;
+        }
+        print('❌ Response data field is null');
+        return null;
+      } else {
+        print('❌ Failed to fetch league: ${response.statusMessage}');
+        return null;
+      }
+    } on DioException catch (e) {
+      print('❌ DioException fetching league: ${e.message}');
+      print('❌ Error type: ${e.type}');
+      if (e.response != null) {
+        print('❌ Error status: ${e.response?.statusCode}');
+        print('❌ Error response data: ${e.response?.data}');
+      }
+      return null;
+    } catch (e) {
+      print('❌ General error fetching league: $e');
+      print('❌ Error type: ${e.runtimeType}');
+      return null;
+    }
+  }
+
   /// Get all teams
   /// GET /api/team
   static Future<List<TeamModel>> getAllTeams() async {
     try {
       final dio = await _getAuthenticatedDio();
+      print('📡 Calling GET /api/team...');
       final response = await dio.get('/team');
 
       if (response.statusCode == 200) {
         final data = response.data;
+        print('✅ API Response received: ${data.toString().substring(0, 200)}...');
+        
         if (data['data'] != null) {
-          final teams = (data['data'] as List)
-              .map((json) => TeamModel.fromJson(json))
+          final teamsList = data['data'] as List;
+          print('📊 Found ${teamsList.length} teams in response');
+          
+          if (teamsList.isEmpty) {
+            print('⚠️ Teams array is empty');
+            return [];
+          }
+          
+          final teams = teamsList
+              .map((json) {
+                try {
+                  print('🔄 Parsing team: ${json['teamName'] ?? 'Unknown'}');
+                  return TeamModel.fromJson(json);
+                } catch (e) {
+                  print('❌ Error parsing team: $e');
+                  print('❌ Team JSON: $json');
+                  rethrow;
+                }
+              })
               .toList();
+          
+          print('✅ Successfully parsed ${teams.length} teams');
           return teams;
+        } else {
+          print('⚠️ Response data field is null');
+          print('📋 Full response: $data');
+          return [];
         }
-        return [];
       } else {
-        print('Failed to fetch teams: ${response.statusMessage}');
+        print('❌ Failed to fetch teams: ${response.statusCode} - ${response.statusMessage}');
+        print('❌ Response data: ${response.data}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching teams: ${e.message}');
+      print('❌ DioException fetching teams: ${e.message}');
+      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
+        print('❌ Error status: ${e.response?.statusCode}');
+        print('❌ Error response data: ${e.response?.data}');
       }
-      return [];
+      rethrow;
     } catch (e) {
-      print('General error fetching teams: $e');
-      return [];
+      print('❌ General error fetching teams: $e');
+      print('❌ Error type: ${e.runtimeType}');
+      rethrow;
     }
   }
 }
@@ -448,6 +537,80 @@ class LeagueModel {
       perPlayerLeagueFee: (json['perPlayerLeagueFee'] ?? 0).toDouble(),
       logo: json['logo'],
       status: json['status'] ?? 'pending',
+    );
+  }
+}
+
+/// League detail model with teams
+class LeagueDetailModel {
+  final String id;
+  final String leagueName;
+  final String format;
+  final DateTime startDate;
+  final DateTime endDate;
+  final List<TeamModel> teams;
+
+  LeagueDetailModel({
+    required this.id,
+    required this.leagueName,
+    required this.format,
+    required this.startDate,
+    required this.endDate,
+    required this.teams,
+  });
+
+  factory LeagueDetailModel.fromJson(Map<String, dynamic> json) {
+    final id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
+    
+    // Parse dates
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue is String) {
+        return DateTime.parse(dateValue);
+      } else if (dateValue is DateTime) {
+        return dateValue;
+      } else {
+        throw FormatException('Invalid date format: $dateValue');
+      }
+    }
+    
+    // Parse teams array
+    // Teams are assigned to league during Step 4 of league creation
+    List<TeamModel> teams = [];
+    if (json['teams'] != null && json['teams'] is List) {
+      final teamsList = json['teams'] as List;
+      print('🔄 Parsing ${teamsList.length} teams from league...');
+      
+      if (teamsList.isEmpty) {
+        print('   - ⚠️ Teams array is EMPTY - no teams assigned to this league');
+        print('   - Teams should be assigned when invited in Step 4 of league creation');
+      } else {
+        teams = teamsList.map((teamJson) {
+          try {
+            print('   - Parsing team: ${teamJson['teamName'] ?? teamJson['_id'] ?? 'Unknown'}');
+            return TeamModel.fromJson(teamJson);
+          } catch (e) {
+            print('   ❌ Error parsing team: $e');
+            print('   ❌ Team JSON: $teamJson');
+            rethrow;
+          }
+        }).toList();
+        
+        print('✅ Successfully parsed ${teams.length} teams');
+      }
+    } else {
+      print('⚠️ Teams field is null or not a List. Type: ${json['teams']?.runtimeType}');
+      if (json['teams'] != null) {
+        print('⚠️ Teams value: ${json['teams']}');
+      }
+    }
+    
+    return LeagueDetailModel(
+      id: id,
+      leagueName: json['leagueName'] ?? '',
+      format: json['format'] ?? '5v5',
+      startDate: parseDate(json['startDate']),
+      endDate: parseDate(json['endDate']),
+      teams: teams,
     );
   }
 }

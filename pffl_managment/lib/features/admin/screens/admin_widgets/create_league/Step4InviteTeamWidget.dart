@@ -11,7 +11,18 @@ class Step4InvuteTeamWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<CreateLeagueViewModel>(context);
+    final viewModel = Provider.of<CreateLeagueViewModel>(context);
+    
+    // Fetch teams if empty and not loading when widget builds
+    // Note: Step 4 widget is shown when currentStep == 3 (0-indexed)
+    if (viewModel.currentStep == 3 && 
+        viewModel.teams.isEmpty && 
+        !viewModel.isLoadingTeams) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        viewModel.fetchTeams();
+      });
+    }
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -23,11 +34,13 @@ class Step4InvuteTeamWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: AppColors.borderDefault),
             ),
-            child:CustomTextField(
+            child: CustomTextField(
               hintText: 'Search by team name',
               suffixIcon: const Icon(Icons.search),
-              onChanged: (query) {},
-          ),
+              onChanged: (query) {
+                viewModel.setTeamSearchQuery(query);
+              },
+            ),
           ),
           const SizedBox(height: 12),
           _TeamList(),
@@ -38,72 +51,97 @@ class Step4InvuteTeamWidget extends StatelessWidget {
 }
 
 class _TeamList extends StatelessWidget {
-  _TeamList();
+  const _TeamList();
 
-  final List<Map<String, dynamic>> _teams = [
-    {
-      'id': '1',
-      'name': 'STC',
-      'players': 5,
-      'total': 8,
-      'emailSent': false,
-      'playersList': [
-        {'number': '01', 'name': 'Alex Morgan (C)', 'position': 'Quarterback'},
-        {'number': '02', 'name': 'John Carter', 'position': 'Receiver'},
-        {'number': '03', 'name': 'Michael Lee', 'position': 'Center'},
-        {'number': '04', 'name': 'Rebecca Torres', 'position': 'Slot Receiver'},
-        {'number': '05', 'name': 'Anthony Brooks', 'position': 'Rusher'},
-      ],
-    },
-    {
-      'id': '2',
-      'name': 'GEO',
-      'players': 12,
-      'total': 12,
-      'emailSent': true,
-      'playersList': [
-        {'number': '01', 'name': 'Player One', 'position': 'Position 1'},
-        {'number': '02', 'name': 'Player Two', 'position': 'Position 2'},
-        {'number': '03', 'name': 'Player Three', 'position': 'Position 3'},
-        {'number': '04', 'name': 'Player Four', 'position': 'Position 4'},
-        {'number': '05', 'name': 'Player Five', 'position': 'Position 5'},
-        {'number': '06', 'name': 'Player Six', 'position': 'Position 6'},
-        {'number': '07', 'name': 'Player Seven', 'position': 'Position 7'},
-        {'number': '08', 'name': 'Player Eight', 'position': 'Position 8'},
-        {'number': '09', 'name': 'Player Nine', 'position': 'Position 9'},
-        {'number': '10', 'name': 'Player Ten', 'position': 'Position 10'},
-        {'number': '11', 'name': 'Player Eleven', 'position': 'Position 11'},
-        {'number': '12', 'name': 'Player Twelve', 'position': 'Position 12'},
-      ],
-    },
-    {
-      'id': '3',
-      'name': 'RTA',
-      'players': 8,
-      'total': 8,
-      'emailSent': false,
-      'playersList': [
-        {'number': '01', 'name': 'Player A', 'position': 'Position A'},
-        {'number': '02', 'name': 'Player B', 'position': 'Position B'},
-        {'number': '03', 'name': 'Player C', 'position': 'Position C'},
-        {'number': '04', 'name': 'Player D', 'position': 'Position D'},
-        {'number': '05', 'name': 'Player E', 'position': 'Position E'},
-        {'number': '06', 'name': 'Player F', 'position': 'Position F'},
-        {'number': '07', 'name': 'Player G', 'position': 'Position G'},
-        {'number': '08', 'name': 'Player H', 'position': 'Position H'},
-      ],
-    },
-  ];
+  // Map TeamModel to UI format
+  Map<String, dynamic> _mapTeamToUIFormat(
+    dynamic team,
+    CreateLeagueViewModel viewModel,
+  ) {
+    // Determine which squad to use (prefer 5v5, fallback to 7v7)
+    final squad5v5 = team.squad5v5;
+    final squad7v7 = team.squad7v7;
+    
+    final players = (squad5v5 != null && squad5v5.isNotEmpty)
+        ? squad5v5
+        : (squad7v7 ?? []);
+    
+    final playerCount = players.length;
+    final maxPlayers = (squad5v5 != null && squad5v5.isNotEmpty) ? 5 : 7;
+    
+    // Map players to playersList format
+    final playersList = players.asMap().entries.map((entry) {
+      final index = entry.key;
+      final player = entry.value;
+      
+      // Handle player data - could be Map or already parsed
+      String firstName = '';
+      String lastName = '';
+      
+      if (player is Map) {
+        firstName = player['firstName']?.toString() ?? '';
+        lastName = player['lastName']?.toString() ?? '';
+      }
+      
+      final name = '$firstName $lastName'.trim();
+      
+      return {
+        'number': '${(index + 1).toString().padLeft(2, '0')}',
+        'name': name.isEmpty ? 'Player ${index + 1}' : name,
+        'position': 'N/A', // Position not available in team response
+      };
+    }).toList();
+    
+    return {
+      'id': team.id,
+      'name': team.teamName,
+      'players': playerCount,
+      'total': maxPlayers,
+      'emailSent': viewModel.isTeamEmailSent(team.id),
+      'playersList': playersList,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
+    
+    // Show loading indicator
+    if (viewModel.isLoadingTeams) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
+    // Show empty state
+    final filteredTeams = viewModel.filteredTeams;
+    if (filteredTeams.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: Text(
+            viewModel.teamSearchQuery.isNotEmpty
+                ? 'No teams found matching your search'
+                : 'No teams found',
+            style: const TextStyle(
+              color: AppColors.textDisabled,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+    
     return Column(
-      children: _teams.map((team) {
+      children: filteredTeams.map((team) {
+        // Map team to UI format
+        final teamData = _mapTeamToUIFormat(team, viewModel);
         // Update the team's expanded state from the view model
-        final updatedTeam = Map<String, dynamic>.from(team);
-        updatedTeam['expanded'] = viewModel.isTeamExpanded(team['id']);
-        return _buildTeamItem(updatedTeam, viewModel, context);
+        teamData['expanded'] = viewModel.isTeamExpanded(team.id);
+        return _buildTeamItem(teamData, viewModel, context);
       }).toList(),
     );
   }
@@ -178,7 +216,48 @@ class _TeamList extends StatelessWidget {
                                 alpha: 0.3,
                               ),
                       ),
-                      onPressed: team['emailSent'] ? null : () {},
+                      onPressed: (team['emailSent'] || 
+                                  viewModel.isTeamEmailSending(team['id']) ||
+                                  viewModel.leagueId.isEmpty)
+                          ? null
+                          : () async {
+                              final teamId = team['id'] as String;
+                              final leagueId = viewModel.leagueId;
+                              
+                              if (leagueId.isEmpty) {
+                                // League not created yet - show message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('League is being created. Please wait...'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                                return;
+                              }
+                              
+                              // Send invitation - team will be automatically assigned to league
+                              final success = await viewModel.sendInvitationToTeam(leagueId, teamId);
+                              
+                              if (context.mounted) {
+                                if (success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('✅ Invitation sent! Team assigned to league.'),
+                                      duration: Duration(seconds: 2),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('❌ Failed to send invitation. Please try again.'),
+                                      duration: Duration(seconds: 2),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                     ),
                   ],
                 ),

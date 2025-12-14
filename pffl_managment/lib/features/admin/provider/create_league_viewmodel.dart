@@ -24,6 +24,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
   List<String> _selectedFreeAgentIds = []; // New property for free agents
   String _captainId =
       ''; // Keep for now to avoid breaking changes, but not used
+  String _leagueId = ''; // Store leagueId after league is created
   double _registrationFee = 50.0;
   DateTime? _startDate = DateTime(2025, 12, 10); // Default start date
   DateTime? _endDate = DateTime(2026, 3, 20); // Default end date
@@ -53,7 +54,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
   List<TeamModel> _teams = [];
   bool _isLoadingTeams = false;
   List<String> _selectedTeamIds = [];
-  final Map<String, bool> _teamEmailStatus = {};
+  final Map<String, bool> _teamEmailStatus = {}; // Tracks if email is currently being sent
+  final Map<String, bool> _teamEmailSent = {}; // Tracks if email was successfully sent
   String _teamSearchQuery = '';
 
   // Search query for referees
@@ -74,6 +76,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
   String get leagueName => _leagueName;
   String get selectedLogoId => _selectedLogoId;
   String get uploadedLogoPath => _uploadedLogoPath;
+  String get leagueId => _leagueId;
   List<String> get selectedPlayerIds => _selectedPlayerIds;
   List<String> get selectedRefereeIds => _selectedRefereeIds; // New getter
   List<String> get selectedStatKeeperIds =>
@@ -106,6 +109,17 @@ class CreateLeagueViewModel extends ChangeNotifier {
   bool get isLoadingTeams => _isLoadingTeams;
   List<String> get selectedTeamIds => _selectedTeamIds;
   String get teamSearchQuery => _teamSearchQuery;
+
+  // Get filtered teams based on search query
+  List<TeamModel> get filteredTeams {
+    if (_teamSearchQuery.isEmpty) {
+      return _teams;
+    }
+    return _teams.where((team) {
+      final teamName = team.teamName.toLowerCase();
+      return teamName.contains(_teamSearchQuery);
+    }).toList();
+  }
 
   // Method to check if an email is being sent to a referee
   bool isEmailSending(String refereeId) =>
@@ -622,9 +636,20 @@ class CreateLeagueViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      debugPrint('🔄 Fetching teams from API...');
       _teams = await LeagueService.getAllTeams();
+      debugPrint('✅ Teams fetched successfully: ${_teams.length} teams');
+      if (_teams.isEmpty) {
+        debugPrint('⚠️ No teams found in database');
+      } else {
+        debugPrint('📋 Team names: ${_teams.map((t) => t.teamName).join(", ")}');
+      }
     } catch (e) {
-      debugPrint('Error fetching teams: $e');
+      debugPrint('❌ Error fetching teams: $e');
+      debugPrint('❌ Error type: ${e.runtimeType}');
+      if (e is Error) {
+        debugPrint('❌ Error stack: ${e.stackTrace}');
+      }
       _teams = [];
     } finally {
       _isLoadingTeams = false;
@@ -647,24 +672,34 @@ class CreateLeagueViewModel extends ChangeNotifier {
     return _teamEmailStatus[teamId] ?? false;
   }
 
+  // Check if email was successfully sent to a team
+  bool isTeamEmailSent(String teamId) {
+    return _teamEmailSent[teamId] ?? false;
+  }
+
   // Send invitation to team
+  // Teams are automatically assigned to the league when invited (Step 4 of league creation)
   Future<bool> sendInvitationToTeam(String leagueId, String teamId) async {
     _teamEmailStatus[teamId] = true;
     notifyListeners();
 
     try {
+      debugPrint('📤 Sending invitation to team: leagueId=$leagueId, teamId=$teamId');
       final success = await LeagueService.inviteTeamToLeague(leagueId, teamId);
+      _teamEmailStatus[teamId] = false;
       if (success) {
-        _teamEmailStatus[teamId] = false;
+        _teamEmailSent[teamId] = true;
+        debugPrint('✅ Team invitation sent successfully. Team automatically assigned to league.');
         notifyListeners();
         return true;
       } else {
-        _teamEmailStatus[teamId] = false;
+        debugPrint('❌ Team invitation failed: success=false');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      debugPrint('Error sending invitation to team: $e');
+      debugPrint('❌ Error sending invitation to team: $e');
+      debugPrint('❌ Error type: ${e.runtimeType}');
       _teamEmailStatus[teamId] = false;
       notifyListeners();
       return false;
@@ -682,8 +717,87 @@ class CreateLeagueViewModel extends ChangeNotifier {
   }
 
   void nextStep() {
-    if (_currentStep < 4) {
+    if (_currentStep < 3) {  // Step 4 is at index 3 (0-indexed: 0,1,2,3)
       _currentStep++;
+      // When reaching Step 4, create league in background so email icon works immediately
+      if (_currentStep == 3) {
+        // Create league if not already created (allows email icon to work immediately)
+        if (_leagueId.isEmpty && !_isLoading) {
+          _createLeagueForStep4();
+        }
+        // Fetch teams when reaching step 4
+        if (_teams.isEmpty && !_isLoadingTeams) {
+          fetchTeams();
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  /// Create league when entering Step 4 so email icon can work immediately
+  /// Teams can be invited and assigned as soon as Step 4 is reached
+  Future<void> _createLeagueForStep4() async {
+    if (_leagueId.isNotEmpty) {
+      // League already created
+      return;
+    }
+
+    // Validate required fields
+    if (_leagueName.isEmpty || _startDate == null || _endDate == null) {
+      debugPrint('⚠️ Cannot create league for Step 4: Missing required fields');
+      return;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Upload logo if provided
+      String? logoUrl;
+      if (_uploadedLogoPath.isNotEmpty) {
+        try {
+          final logoFile = File(_uploadedLogoPath);
+          if (await logoFile.exists()) {
+            logoUrl = await LeagueService.uploadLogo(logoFile);
+          }
+        } catch (e) {
+          debugPrint('⚠️ Logo upload failed for Step 4: $e');
+          // Continue without logo
+        }
+      } else if (_selectedLogoId.isNotEmpty) {
+        final selectedLogo = teamLogos.firstWhere(
+          (logo) => logo.id == _selectedLogoId,
+          orElse: () => teamLogos.first,
+        );
+        logoUrl = selectedLogo.url;
+      }
+
+      // Create league
+      final leagueData = {
+        'leagueName': _leagueName,
+        'format': formatString,
+        'startDate': _startDate!.toIso8601String(),
+        'endDate': _endDate!.toIso8601String(),
+        'minimumPlayers': _minPlayers,
+        'entryFeeType': 'stripe',
+        'perPlayerLeagueFee': _perPlayerFee,
+        'logo': logoUrl ?? '',
+        'status': 'pending',
+      };
+
+      final leagueResponse = await LeagueService.createLeague(leagueData);
+      
+      if (leagueResponse != null && leagueResponse.data.id.isNotEmpty) {
+        _leagueId = leagueResponse.data.id;
+        debugPrint('✅ League created for Step 4. ID: $_leagueId');
+        debugPrint('✅ Email icon is now enabled - teams can be invited');
+      } else {
+        debugPrint('❌ Failed to create league for Step 4');
+      }
+    } catch (e) {
+      debugPrint('❌ Error creating league for Step 4: $e');
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
@@ -758,35 +872,43 @@ class CreateLeagueViewModel extends ChangeNotifier {
         return;
       }
 
-      // Step 2: Create league via API
-      // logoUrl is guaranteed to be non-null at this point
-      final leagueData = {
-        'leagueName': _leagueName,
-        'format': formatString, // "5v5" or "7v7"
-        'startDate': _startDate!.toIso8601String(),
-        'endDate': _endDate!.toIso8601String(),
-        'minimumPlayers': _minPlayers,
-        'entryFeeType': 'stripe', // Backend expects this
-        'perPlayerLeagueFee': _perPlayerFee,
-        'logo': logoUrl, // logoUrl is guaranteed to be set at this point
-        'status': 'pending',
-      };
-
-      final leagueResponse = await LeagueService.createLeague(leagueData);
+      // Step 2: Create league via API (only if not already created in Step 4)
+      // If league was already created when entering Step 4, use existing leagueId
+      String leagueId = _leagueId;
       
-      if (leagueResponse == null || leagueResponse.data.id.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to create league')),
-          );
-        }
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
+      if (leagueId.isEmpty) {
+        // League not created yet, create it now
+        final leagueData = {
+          'leagueName': _leagueName,
+          'format': formatString, // "5v5" or "7v7"
+          'startDate': _startDate!.toIso8601String(),
+          'endDate': _endDate!.toIso8601String(),
+          'minimumPlayers': _minPlayers,
+          'entryFeeType': 'stripe', // Backend expects this
+          'perPlayerLeagueFee': _perPlayerFee,
+          'logo': logoUrl, // logoUrl is guaranteed to be set at this point
+          'status': 'pending',
+        };
 
-      final leagueId = leagueResponse.data.id;
-      debugPrint('League created successfully with ID: $leagueId');
+        final leagueResponse = await LeagueService.createLeague(leagueData);
+        
+        if (leagueResponse == null || leagueResponse.data.id.isEmpty) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to create league')),
+            );
+          }
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
+
+        leagueId = leagueResponse.data.id;
+        _leagueId = leagueId; // Store leagueId
+        debugPrint('✅ League created successfully with ID: $leagueId');
+      } else {
+        debugPrint('✅ League already created with ID: $leagueId. Using existing league.');
+      }
 
       // Step 3: Send invitations to free agents
       for (final freeAgentId in _selectedFreeAgentIds) {

@@ -83,6 +83,38 @@ class MatchService {
     }
   }
 
+  /// Get all matches from all leagues
+  /// GET /api/match
+  static Future<List<MatchModel>> getAllMatches() async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/match');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['data'] != null) {
+          final matches = (data['data'] as List)
+              .map((json) => _parseMatchFromJson(json))
+              .toList();
+          return matches;
+        }
+        return [];
+      } else {
+        print('Failed to fetch all matches: ${response.statusMessage}');
+        return [];
+      }
+    } on DioException catch (e) {
+      print('Error fetching all matches: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return [];
+    } catch (e) {
+      print('General error fetching all matches: $e');
+      return [];
+    }
+  }
+
   /// Get all matches for a league
   /// GET /api/match?leagueId=:id
   static Future<List<MatchModel>> getMatchesByLeague(String leagueId) async {
@@ -244,6 +276,11 @@ class MatchService {
     final leagueName = leagueData is Map
         ? (leagueData['leagueName'] ?? '')
         : json['leagueName'] ?? '';
+    
+    // Extract league ID for filtering
+    final leagueId = leagueData is Map
+        ? (leagueData['_id']?.toString() ?? leagueData['id']?.toString())
+        : (json['leagueId']?.toString());
 
     // Debug: Print team data to understand the format
     print('DEBUG: teamA data type: ${json['teamA'].runtimeType}, value: ${json['teamA']}');
@@ -253,6 +290,7 @@ class MatchService {
     // First check if team name is stored directly in database
     String teamAName = json['teamAName']?.toString() ?? '';
     String teamALogo = '';
+    String? homeTeamId;
 
     // If stored name is empty, fallback to existing logic
     if (teamAName.isEmpty) {
@@ -262,6 +300,9 @@ class MatchService {
         // Team data is null - skip
         teamAName = '';
       } else if (teamAData is Map) {
+        // Extract team ID for filtering
+        homeTeamId = _extractTeamId(teamAData);
+        
         // Check if team is populated (has teamName) or just has _id
         if (teamAData['teamName'] != null || teamAData['enterCode'] != null) {
           // Team is populated from backend (real team data)
@@ -269,18 +310,23 @@ class MatchService {
           teamALogo = teamAData['image'] ?? '';
         } else {
           // Team has _id but not populated - look up from dummy teams
-          final teamId = _extractTeamId(teamAData);
-          teamAName = _lookupTeamName(teamId);
+          teamAName = _lookupTeamName(homeTeamId);
         }
       } else if (teamAData is String) {
         // Team is just an ObjectId string - look up from dummy teams
-        teamAName = _lookupTeamName(teamAData);
+        homeTeamId = teamAData;
+        teamAName = _lookupTeamName(homeTeamId);
       }
     } else {
       // Stored name exists, but try to get logo from populated data if available
       final teamAData = json['teamA'];
-      if (teamAData is Map && teamAData['image'] != null) {
-        teamALogo = teamAData['image'] ?? '';
+      if (teamAData is Map) {
+        homeTeamId = _extractTeamId(teamAData);
+        if (teamAData['image'] != null) {
+          teamALogo = teamAData['image'] ?? '';
+        }
+      } else if (teamAData is String) {
+        homeTeamId = teamAData;
       }
     }
 
@@ -288,6 +334,7 @@ class MatchService {
     // First check if team name is stored directly in database
     String teamBName = json['teamBName']?.toString() ?? '';
     String teamBLogo = '';
+    String? awayTeamId;
 
     // If stored name is empty, fallback to existing logic
     if (teamBName.isEmpty) {
@@ -297,6 +344,9 @@ class MatchService {
         // Team data is null - skip
         teamBName = '';
       } else if (teamBData is Map) {
+        // Extract team ID for filtering
+        awayTeamId = _extractTeamId(teamBData);
+        
         // Check if team is populated (has teamName) or just has _id
         if (teamBData['teamName'] != null || teamBData['enterCode'] != null) {
           // Team is populated from backend (real team data)
@@ -304,18 +354,23 @@ class MatchService {
           teamBLogo = teamBData['image'] ?? '';
         } else {
           // Team has _id but not populated - look up from dummy teams
-          final teamId = _extractTeamId(teamBData);
-          teamBName = _lookupTeamName(teamId);
+          teamBName = _lookupTeamName(awayTeamId);
         }
       } else if (teamBData is String) {
         // Team is just an ObjectId string - look up from dummy teams
-        teamBName = _lookupTeamName(teamBData);
+        awayTeamId = teamBData;
+        teamBName = _lookupTeamName(awayTeamId);
       }
     } else {
       // Stored name exists, but try to get logo from populated data if available
       final teamBData = json['teamB'];
-      if (teamBData is Map && teamBData['image'] != null) {
-        teamBLogo = teamBData['image'] ?? '';
+      if (teamBData is Map) {
+        awayTeamId = _extractTeamId(teamBData);
+        if (teamBData['image'] != null) {
+          teamBLogo = teamBData['image'] ?? '';
+        }
+      } else if (teamBData is String) {
+        awayTeamId = teamBData;
       }
     }
 
@@ -380,6 +435,9 @@ class MatchService {
       gameNumber: json['gameNumber'] ?? '',
       homeScore: json['homeScore'],
       awayScore: json['awayScore'],
+      leagueId: leagueId,
+      homeTeamId: homeTeamId,
+      awayTeamId: awayTeamId,
     );
   }
 }

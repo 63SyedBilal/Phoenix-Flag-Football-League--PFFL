@@ -21,6 +21,11 @@ class MatchModel {
   final String? roundName;
   final String? gameNumber;
 
+  // Filtering fields
+  final String? leagueId;
+  final String? homeTeamId;
+  final String? awayTeamId;
+
   MatchModel({
     this.id,
     required this.leagueName,
@@ -39,5 +44,38 @@ class MatchModel {
     this.awayScore,
     this.roundName,
     this.gameNumber,
+    this.leagueId,
+    this.homeTeamId,
+    this.awayTeamId,
   });
+
+  /// Extract sequence number from gameNumber string like "Game 8 of 12"
+  /// Returns the sequence number (8 in the example)
+  int? getSequenceNumber() {
+    if (gameNumber == null || gameNumber!.isEmpty) return null;
+    try {
+      final parts = gameNumber!.split(' ');
+      if (parts.length >= 2) {
+        return int.parse(parts[1]);
+      }
+    } catch (e) {
+      // If parsing fails, return null
+    }
+    return null;
+  }
+
+  /// Extract total games from gameNumber string like "Game 8 of 12"
+  /// Returns the total number (12 in the example)
+  int? getTotalGames() {
+    if (gameNumber == null || gameNumber!.isEmpty) return null;
+    try {
+      final parts = gameNumber!.split(' of ');
+      if (parts.length == 2) {
+        return int.parse(parts[1]);
+      }
+    } catch (e) {
+      // If parsing fails, return null
+    }
+    return null;
+  }
 }
