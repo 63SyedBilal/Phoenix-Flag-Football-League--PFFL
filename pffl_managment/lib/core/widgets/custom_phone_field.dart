@@ -82,15 +82,20 @@ class _CustomPhoneFieldState extends State<CustomPhoneField> {
               trailingSpace: false,
               useBottomSheetSafeArea: true,
             ),
-            ignoreBlank: true,
-            autoValidateMode: AutovalidateMode.disabled,
+            ignoreBlank: false,
+            autoValidateMode: AutovalidateMode.onUserInteraction,
             selectorTextStyle:
-                widget.selectorTextStyle ?? theme.textTheme.bodyMedium,
+                widget.selectorTextStyle ?? theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
             initialValue: widget.initialValue,
-            hintText: widget.hintText,
+            hintText: widget.hintText ?? 'Enter phone number',
             isEnabled: widget.enabled,
+            spaceBetweenSelectorAndTextField: 8,
+            countries: const [], // Empty means all countries
             inputDecoration: InputDecoration(
-              prefixIconConstraints: BoxConstraints(minWidth: 40),
+              prefixIconConstraints: const BoxConstraints(minWidth: 40),
               prefixIcon: Icon(
                 Icons.keyboard_arrow_down_rounded,
                 color: AppColors.textSecondary,
@@ -99,21 +104,36 @@ class _CustomPhoneFieldState extends State<CustomPhoneField> {
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 10,
+                vertical: 14,
               ),
               hintText: widget.hintText,
               hintStyle: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.textDisabled,
-                fontSize: 12.0, // Reduced hint text size
+                fontSize: 12.0,
               ),
             ),
-            textStyle: widget.style ?? theme.textTheme.bodyMedium,
+            textStyle: widget.style ?? theme.textTheme.bodyMedium?.copyWith(
+              fontSize: 14,
+            ),
             textAlign: TextAlign.left,
             focusNode: _focusNode,
             textFieldController: _controller,
-            formatInput: true, // Enable auto formatting
+            formatInput: true,
+            keyboardType: const TextInputType.numberWithOptions(
+              signed: false,
+              decimal: false,
+            ),
+            inputBorder: InputBorder.none,
+            onSaved: (PhoneNumber number) {
+              // Optional: Handle save action
+            },
+            locale: 'en', // Set locale for formatting
+            maxLength: 15, // Maximum phone number length
           ),
 
           // Arrow icon positioned next to the country selector

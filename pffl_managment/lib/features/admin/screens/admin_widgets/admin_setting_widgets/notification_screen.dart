@@ -1,89 +1,139 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/providers/notifications_provider.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: ArrowBackButton(
-          onPressed: () => Navigator.pop(context),
+    return ChangeNotifierProvider(
+      create: (_) => NotificationsProvider()..initialize(),
+      child: Scaffold(
+        appBar: AppBar(
+          leading: ArrowBackButton(
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-          
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              /// TITLE
-              const Text(
-                "Notifications",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                /// TITLE
+                const Text(
+                  "Notifications",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 6),
+                const SizedBox(height: 6),
 
-              /// SUBTEXT
-              Text(
-                "Stay updated with important alerts and reminders.",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
+                /// SUBTEXT
+                Text(
+                  "Stay updated with important alerts and reminders.",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              /// NOTIFICATIONS LIST
-              Expanded(
-                child: ListView(
-                  children: const [
-                    NotificationCard(
-                      title: "Payment Received",
-                      date: "09 Dec 2025",
-                      msg:
-                          "A player has successfully paid the League Fee. Please review the payment details.",
-                    ),
-                    NotificationCard(
-                      title: "Payment Refunded",
-                      date: "09 Dec 2025",
-                      msg:
-                          "The player's League Fee has been successfully refunded. Please review the refund details if needed.",
-                    ),
-                    NotificationCard(
-                      title: "Payment Processed",
-                      date: "10 Dec 2025",
-                      msg:
-                          "The player's League Fee has been successfully processed. Please check your account for the updated balance.",
-                    ),
-                    NotificationCard(
-                      title: "Payment Pending",
-                      date: "11 Dec 2025",
-                      msg:
-                          "The player's League Fee is currently pending. We are awaiting confirmation from the payment provider.",
-                    ),
-                    NotificationCard(
-                      title: "League Created Successfully",
-                      date: "09 Dec 2025",
-                      msg:
-                          "Your new league has been created successfully.\nYou can now manage teams, and schedules from your league dashboard.",
-                    ),
-                  ],
+                /// NOTIFICATIONS LIST
+                Consumer<NotificationsProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.isLoading) {
+                      return const Expanded(
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (provider.errorMessage != null) {
+                      return Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                provider.errorMessage!,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () => provider.refresh(),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (provider.notifications.isEmpty) {
+                      return Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.notifications_none,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No notifications',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'You\'ll see notifications here when they arrive',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () => provider.refresh(),
+                        child: ListView(
+                          children: provider.notifications.map((notification) {
+                            return NotificationCard(
+                              title: notification.title,
+                              date: notification.date,
+                              msg: notification.message,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

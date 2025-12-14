@@ -207,3 +207,64 @@ class UserModel {
   }
 }
 
+/// Service for invite-related API calls
+class InviteService {
+  static final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: AppConfig.baseUrl,
+      connectTimeout: AppConfig.connectTimeout,
+      receiveTimeout: AppConfig.receiveTimeout,
+      headers: {'Content-Type': 'application/json'},
+    ),
+  );
+
+  /// Get Dio instance with authentication token
+  static Future<Dio> _getAuthenticatedDio() async {
+    final token = await AuthService.getToken();
+    if (token != null) {
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+    }
+    return _dio;
+  }
+
+  /// Send invitation to user by email
+  /// POST /api/invite
+  /// Body: { email: string, role: string }
+  /// Returns true for both new user creation (201) and existing user role invitation (200)
+  static Future<bool> sendInvite(String email, String role) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.post(
+        '/invite',
+        data: {
+          'email': email,
+          'role': role,
+        },
+      );
+
+      // Both 200 (existing user - role invitation sent) and 201 (new user created) are success
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        print('Failed to send invite: ${response.statusMessage}');
+        return false;
+      }
+    } on DioException catch (e) {
+      print('Error sending invite: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        // 409 Conflict is now handled on backend - should not occur for role invitations
+        // But if it does, we'll treat it as an error (e.g., duplicate key error)
+        if (e.response?.statusCode == 409) {
+          print('Conflict error: ${e.response?.data}');
+          return false;
+        }
+      }
+      return false;
+    } catch (e) {
+      print('General error sending invite: $e');
+      return false;
+    }
+  }
+}
+
