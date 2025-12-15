@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/phone_number.dart';
+import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
+import 'package:pffl_managment/core/providers/phone_field_provider.dart';
 
-class CustomPhoneField extends StatefulWidget {
+/// Custom phone number input field widget using Provider for state management
+class CustomPhoneField extends StatelessWidget {
   final ValueChanged<PhoneNumber>? onInputChanged;
   final ValueChanged<bool>? onInputValidated;
   final String? hintText;
@@ -10,6 +14,7 @@ class CustomPhoneField extends StatefulWidget {
   final TextStyle? style;
   final TextStyle? selectorTextStyle;
   final bool enabled;
+  final String? errorText; // Error message to display below field
 
   const CustomPhoneField({
     super.key,
@@ -20,124 +25,132 @@ class CustomPhoneField extends StatefulWidget {
     this.style,
     this.selectorTextStyle,
     this.enabled = true,
+    this.errorText,
   });
-
-  @override
-  State<CustomPhoneField> createState() => _CustomPhoneFieldState();
-}
-
-class _CustomPhoneFieldState extends State<CustomPhoneField> {
-  late FocusNode _focusNode;
-  bool _isFocused = false;
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-    _focusNode.addListener(_onFocusChange);
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    _focusNode.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onFocusChange() {
-    setState(() {
-      _isFocused = _focusNode.hasFocus;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: _isFocused
-              ? AppColors
-                    .primary // Focused border color
-              : AppColors.borderDefault, // Normal border color
-          width: 1,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Stack(
-        children: [
-          InternationalPhoneNumberInput(
-            onInputChanged: widget.onInputChanged,
-            onInputValidated: widget.onInputValidated,
-            selectorConfig: SelectorConfig(
-              selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
-              showFlags: true,
-              useEmoji: true,
-              setSelectorButtonAsPrefixIcon: true,
-              leadingPadding: 8,
-              trailingSpace: false,
-              useBottomSheetSafeArea: true,
-            ),
-            ignoreBlank: false,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            selectorTextStyle:
-                widget.selectorTextStyle ?? theme.textTheme.bodyMedium?.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-            initialValue: widget.initialValue,
-            hintText: widget.hintText ?? 'Enter phone number',
-            isEnabled: widget.enabled,
-            spaceBetweenSelectorAndTextField: 8,
-            countries: const [], // Empty means all countries
-            inputDecoration: InputDecoration(
-              prefixIconConstraints: const BoxConstraints(minWidth: 40),
-              prefixIcon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: AppColors.textSecondary,
-                size: 20,
-              ),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              errorBorder: InputBorder.none,
-              focusedErrorBorder: InputBorder.none,
-              disabledBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 14,
-              ),
-              hintText: widget.hintText,
-              hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.textDisabled,
-                fontSize: 12.0,
-              ),
-            ),
-            textStyle: widget.style ?? theme.textTheme.bodyMedium?.copyWith(
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.left,
-            focusNode: _focusNode,
-            textFieldController: _controller,
-            formatInput: true,
-            keyboardType: const TextInputType.numberWithOptions(
-              signed: false,
-              decimal: false,
-            ),
-            inputBorder: InputBorder.none,
-            onSaved: (PhoneNumber number) {
-              // Optional: Handle save action
-            },
-            locale: 'en', // Set locale for formatting
-            maxLength: 15, // Maximum phone number length
-          ),
+    return ChangeNotifierProvider(
+      create: (_) {
+        final provider = PhoneFieldProvider(initialValue: initialValue);
+        provider.onInputChanged = onInputChanged;
+        provider.onInputValidated = onInputValidated;
+        return provider;
+      },
+      child: Consumer<PhoneFieldProvider>(
+        builder: (context, provider, child) {
+          // Update provider if initialValue changes from parent
+          if (initialValue != null &&
+              (provider.countryISOCode != initialValue?.countryISOCode ||
+                  provider.controller.text != initialValue?.number)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              provider.updateInitialValue(initialValue);
+            });
+          }
 
-          // Arrow icon positioned next to the country selector
-        ],
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: errorText != null
+                        ? Colors.red
+                        : (provider.isFocused
+                              ? AppColors.primary
+                              : AppColors.borderDefault),
+                    width: errorText != null ? 1.5 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: IntlPhoneField(
+                  controller: provider.controller,
+                  focusNode: provider.focusNode,
+                  initialCountryCode: provider.countryISOCode,
+                  initialValue: initialValue?.number,
+                  enabled: enabled,
+                  decoration: InputDecoration(
+                    hintText: hintText ?? 'Enter phone number',
+                    hintStyle:
+                        style ??
+                        theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textDisabled,
+                          fontSize: 12.0,
+                        ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                    errorStyle: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                      height: 1.0,
+                    ),
+                  ),
+                  style:
+                      style ??
+                      theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
+                  textAlign: TextAlign.left,
+                  keyboardType: TextInputType.phone,
+                  onChanged: (PhoneNumber phone) {
+                    provider.handleInputChanged(phone);
+                  },
+                  onCountryChanged: (country) {
+                    // Country changed - update provider
+                    final phoneNumber = PhoneNumber(
+                      countryCode: country.code,
+                      countryISOCode: country.code,
+                      number: provider.controller.text,
+                    );
+                    provider.handleInputChanged(phoneNumber);
+                  },
+                  validator: (phone) {
+                    if (phone == null || phone.number.isEmpty) {
+                      provider.handleInputValidated(false);
+                      return null; // Let errorText handle display
+                    }
+                    final isValid = phone.isValidNumber();
+                    provider.handleInputValidated(isValid);
+                    return null; // Let errorText handle display
+                  },
+                  disableLengthCheck: false,
+                  showDropdownIcon: true,
+                  dropdownIcon: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  dropdownIconPosition: IconPosition.leading,
+                  flagsButtonPadding: const EdgeInsets.only(left: 8),
+                  invalidNumberMessage: null, // We handle errors via errorText
+                ),
+              ),
+              // Show error message below field if provided
+              if (errorText != null) ...[
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text(
+                    errorText!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }

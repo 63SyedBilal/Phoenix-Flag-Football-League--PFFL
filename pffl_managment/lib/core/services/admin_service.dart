@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 
 /// Service for admin-related API calls
@@ -41,7 +40,9 @@ class AdminService {
       final fileExtension = fileName.split('.').last.toLowerCase();
       final allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
       if (!allowedExtensions.contains(fileExtension)) {
-        throw Exception('Invalid file format. Allowed formats: ${allowedExtensions.join(", ")}');
+        throw Exception(
+          'Invalid file format. Allowed formats: ${allowedExtensions.join(", ")}',
+        );
       }
 
       final formData = FormData.fromMap({
@@ -52,21 +53,27 @@ class AdminService {
         'folder': 'pffl/profiles',
       });
 
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: AppConfig.baseUrl,
-          connectTimeout: AppConfig.connectTimeout,
-          receiveTimeout: Duration(seconds: 60),
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
+      // Use working Dio instance with proper URL and increased timeout for file uploads
+      final dio = await AuthService.getWorkingDio();
+      // Increase timeouts for file uploads
+      dio.options.connectTimeout = const Duration(
+        seconds: 120,
+      ); // 2 minutes for connection
+      dio.options.receiveTimeout = const Duration(
+        seconds: 120,
+      ); // 2 minutes for upload
+      dio.options.sendTimeout = const Duration(
+        seconds: 120,
+      ); // 2 minutes for sending
 
-      final response = await dio.post(
-        '/upload',
-        data: formData,
-      );
+      // Ensure token is set
+      dio.options.headers['Authorization'] = 'Bearer $token';
+
+      print('📤 Uploading image: ${imageFile.path}');
+      print('📤 File size: ${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
+      print('📤 API URL: ${dio.options.baseUrl}/upload');
+
+      final response = await dio.post('/upload', data: formData);
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -101,10 +108,7 @@ class AdminService {
   ) async {
     try {
       final dio = await _getAuthenticatedDio();
-      final response = await dio.put(
-        '/superadmin/$adminId',
-        data: profileData,
-      );
+      final response = await dio.put('/superadmin/$adminId', data: profileData);
 
       if (response.statusCode == 200) {
         final data = response.data;

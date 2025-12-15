@@ -46,7 +46,7 @@ dependencies:
   
   # SVG support
   flutter_svg: ^2.0.10
-  intl_phone_number_input: ^0.7.5
+  intl_phone_field: ^3.2.0
   
   # Shared preferences for local storage
   shared_preferences: ^2.3.2

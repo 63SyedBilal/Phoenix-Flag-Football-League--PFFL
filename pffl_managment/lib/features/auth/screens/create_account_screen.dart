@@ -7,7 +7,7 @@ import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
 import 'package:pffl_managment/core/widgets/text_with_text_field.dart';
 import 'package:pffl_managment/core/widgets/auth_link.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:intl_phone_field/phone_number.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 
@@ -103,7 +103,11 @@ class CreateAccountScreen extends StatelessWidget {
               onInputValidated: (bool value) {
                 // Handle phone number validation
               },
-              initialValue: PhoneNumber(isoCode: 'US'),
+              initialValue: PhoneNumber(
+                countryISOCode: 'US',
+                countryCode: '+1',
+                number: '',
+              ),
               hintText: 'e.g +1 123 456 7890',
             ),
             const SizedBox(height: 18),

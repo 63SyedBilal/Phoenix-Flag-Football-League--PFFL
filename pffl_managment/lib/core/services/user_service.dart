@@ -234,7 +234,14 @@ class InviteService {
 
       // Both 200 (existing user - role invitation sent) and 201 (new user created) are success
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Invite sent successfully');
+        final responseData = response.data;
+        final emailSent = responseData['emailSent'] ?? true;
+        
+        if (emailSent) {
+          print('✅ Invite sent successfully');
+        } else {
+          print('⚠️ Invite processed successfully, but email was not sent (SMTP not configured)');
+        }
         return true;
       } else {
         print('❌ Failed to send invite: ${response.statusMessage}');

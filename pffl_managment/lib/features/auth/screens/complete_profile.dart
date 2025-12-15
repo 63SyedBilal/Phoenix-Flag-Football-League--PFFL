@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:intl_phone_field/phone_number.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/core/utils/helpers.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
@@ -9,6 +9,7 @@ import 'package:pffl_managment/core/widgets/simple_dropdown_list.dart';
 import 'package:pffl_managment/core/widgets/text_with_text_field.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
+
 class CompleteProfile extends StatelessWidget {
   const CompleteProfile({super.key});
 
@@ -135,7 +136,11 @@ class CompleteProfile extends StatelessWidget {
                 onInputValidated: (bool value) {
                   // Handle phone number validation
                 },
-                initialValue: PhoneNumber(isoCode: 'US'),
+                initialValue: PhoneNumber(
+                  countryISOCode: 'US',
+                  countryCode: '+1',
+                  number: '',
+                ),
                 hintText: 'e.g +1 123 456 7890',
               ),
               const SizedBox(height: 20),
@@ -164,28 +169,27 @@ class CompleteProfile extends StatelessWidget {
               CustomButton(
                 textColor: AppColors.lightAppBarBackground,
                 text: 'Complete',
-                  onPressed: () {
-                final parentContext = context;
-                showCustomBottomSheet(
-                  context: context,
-                  title: 'Profile Created',
-                  subtitle: "Welcome to PFFL.!\nLet's see some games.",
-                  buttonText: 'Continue',
-                  onButtonPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushNamed(
-                      parentContext,
-                      AppRoutes.adminDashboard,
-                    );
-                  },
-                  content: Container(),
-                );
-              },
+                onPressed: () {
+                  final parentContext = context;
+                  showCustomBottomSheet(
+                    context: context,
+                    title: 'Profile Created',
+                    subtitle: "Welcome to PFFL.!\nLet's see some games.",
+                    buttonText: 'Continue',
+                    onButtonPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushNamed(
+                        parentContext,
+                        AppRoutes.adminDashboard,
+                      );
+                    },
+                    content: Container(),
+                  );
+                },
                 // onPressed: () {
                 //   Navigator.pushNamed(context, AppRoutes.adminDashboard);
                 // },
               ),
-
             ],
           ),
         ),

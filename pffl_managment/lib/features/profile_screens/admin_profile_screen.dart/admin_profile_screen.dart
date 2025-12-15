@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:intl_phone_field/phone_number.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
@@ -18,7 +18,7 @@ class AdminProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return ChangeNotifierProvider(
       create: (_) => AdminProfileProvider()..initialize(),
       child: _AdminProfileScreenContent(theme: theme),
@@ -28,14 +28,16 @@ class AdminProfileScreen extends StatelessWidget {
 
 class _AdminProfileScreenContent extends StatefulWidget {
   final ThemeData theme;
-  
+
   const _AdminProfileScreenContent({required this.theme});
 
   @override
-  State<_AdminProfileScreenContent> createState() => _AdminProfileScreenContentState();
+  State<_AdminProfileScreenContent> createState() =>
+      _AdminProfileScreenContentState();
 }
 
-class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> {
+class _AdminProfileScreenContentState
+    extends State<_AdminProfileScreenContent> {
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
@@ -104,7 +106,7 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                               type: FileType.image,
                               withData: false,
                             );
-                            
+
                             if (result != null && result.files.isNotEmpty) {
                               final file = result.files.first;
                               if (file.path != null) {
@@ -123,10 +125,10 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                             child: Container(
                               width: 120,
                               height: 120,
-                              decoration: const BoxDecoration(shape: BoxShape.circle),
-                              child: ClipOval(
-                                child: _buildAvatar(provider),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
                               ),
+                              child: ClipOval(child: _buildAvatar(provider)),
                             ),
                           ),
                         ),
@@ -135,11 +137,12 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                           left: 29,
                           child: GestureDetector(
                             onTap: () async {
-                              final result = await FilePicker.platform.pickFiles(
-                                type: FileType.image,
-                                withData: false,
-                              );
-                              
+                              final result = await FilePicker.platform
+                                  .pickFiles(
+                                    type: FileType.image,
+                                    withData: false,
+                                  );
+
                               if (result != null && result.files.isNotEmpty) {
                                 final file = result.files.first;
                                 if (file.path != null) {
@@ -161,7 +164,11 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
-                                  Icon(Icons.upload, size: 12, color: Colors.white),
+                                  Icon(
+                                    Icons.upload,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
                                   SizedBox(width: 6),
                                   Text(
                                     'Upload',
@@ -182,14 +189,14 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                     ),
                   ),
 
-              const SizedBox(height: 20),
-              Center(
-                child: Text(
-                  'Profile Pic',
-                  textAlign: TextAlign.center,
-                  style: widget.theme.textTheme.labelLarge,
-                ),
-              ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      'Profile Pic',
+                      textAlign: TextAlign.center,
+                      style: widget.theme.textTheme.labelLarge,
+                    ),
+                  ),
                   const SizedBox(height: 30),
                   Row(
                     children: [
@@ -197,7 +204,10 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("First Name", style: widget.theme.textTheme.labelLarge),
+                            Text(
+                              "First Name",
+                              style: widget.theme.textTheme.labelLarge,
+                            ),
                             const SizedBox(height: 4),
                             CustomTextField(
                               hintText: 'First Name',
@@ -214,7 +224,10 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Last Name", style: widget.theme.textTheme.labelLarge),
+                            Text(
+                              "Last Name",
+                              style: widget.theme.textTheme.labelLarge,
+                            ),
                             const SizedBox(height: 4),
                             CustomTextField(
                               hintText: 'Last Name',
@@ -229,7 +242,10 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                     ],
                   ),
                   const SizedBox(height: 18),
-                  Text("Email Address", style: widget.theme.textTheme.labelLarge),
+                  Text(
+                    "Email Address",
+                    style: widget.theme.textTheme.labelLarge,
+                  ),
                   const SizedBox(height: 4),
                   CustomTextField(
                     hintText: 'Email Address',
@@ -243,28 +259,53 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Phone Number", style: widget.theme.textTheme.labelLarge),
+                      Text(
+                        "Phone Number",
+                        style: widget.theme.textTheme.labelLarge,
+                      ),
                       const SizedBox(height: 4),
                       CustomPhoneField(
                         hintText: 'Enter your phone number',
                         initialValue: provider.phone.isNotEmpty
                             ? _parsePhoneNumber(provider.phone)
                             : null,
+                        errorText:
+                            provider.phoneError, // Show phone-specific error
                         onInputChanged: (PhoneNumber number) {
                           // Store the full phone number with country code
-                          final fullNumber = number.phoneNumber ?? '';
+                          // completeNumber already includes country code (e.g., +1234567890)
+                          String fullNumber;
+                          
+                          if (number.completeNumber.isNotEmpty) {
+                            // Use completeNumber which already has country code + number
+                            fullNumber = number.completeNumber;
+                          } else if (number.number.isNotEmpty) {
+                            // If completeNumber is empty but number exists, construct it
+                            fullNumber = '${number.countryCode}${number.number}';
+                          } else {
+                            // No phone number entered yet - just store country code
+                            fullNumber = number.countryCode;
+                          }
+                          
+                          debugPrint('📞 Phone input changed');
+                          debugPrint('📞 Country code: ${number.countryCode}');
+                          debugPrint('📞 ISO code: ${number.countryISOCode}');
+                          debugPrint('📞 Phone number (digits only): ${number.number}');
+                          debugPrint('📞 Complete number (with country code): ${number.completeNumber}');
+                          debugPrint('📞 Final full number stored: $fullNumber');
+                          
                           provider.updatePhone(fullNumber);
                         },
                         onInputValidated: (bool isValid) {
-                          // Optional: You can add validation feedback here
-                          if (!isValid && provider.phone.isNotEmpty) {
-                            // Phone number is invalid
-                          }
+                          // Update phone validation state
+                          provider.setPhoneValid(isValid);
                         },
                       ),
                     ],
                   ),
-                  if (provider.errorMessage != null) ...[
+                  // Show general error message below phone field
+                  if (provider.errorMessage != null &&
+                      provider.phoneError == null) ...[
                     const SizedBox(height: 12),
                     Text(
                       provider.errorMessage!,
@@ -272,7 +313,7 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                     ),
                   ],
                   const SizedBox(height: 30),
-                  
+
                   CustomButton(
                     width: double.infinity,
                     textColor: AppColors.lightAppBarBackground,
@@ -287,12 +328,16 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
                               backgroundColor: Colors.green,
                             ),
                           );
-                          Navigator.pushNamed(context, AppRoutes.adminDashboard);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.adminDashboard,
+                          );
                         } else if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                provider.errorMessage ?? 'Failed to update profile',
+                                provider.errorMessage ??
+                                    'Failed to update profile',
                               ),
                               backgroundColor: Colors.red,
                             ),
@@ -348,37 +393,37 @@ class _AdminProfileScreenContentState extends State<_AdminProfileScreenContent> 
   /// Handles various formats: +1234567890, 1234567890, etc.
   PhoneNumber? _parsePhoneNumber(String phoneString) {
     if (phoneString.isEmpty) return null;
-    
+
     try {
       // Remove any spaces, dashes, or parentheses
       final cleaned = phoneString.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-      
+
       // If it starts with +, it includes country code
       if (cleaned.startsWith('+')) {
         // Try to detect country from the number
         if (cleaned.length >= 11 && cleaned.startsWith('+1')) {
           // US number
           return PhoneNumber(
-            phoneNumber: cleaned.substring(2), // Remove +1
-            isoCode: 'US',
-            dialCode: '+1',
+            countryISOCode: 'US',
+            countryCode: '+1',
+            number: cleaned.substring(2), // Remove +1
           );
         } else {
           // For other countries, try to extract country code
           // Default: try to parse with first 1-3 digits as country code
           // For simplicity, default to US if we can't determine
           return PhoneNumber(
-            phoneNumber: cleaned.substring(1), // Remove +
-            isoCode: 'US',
-            dialCode: '+1',
+            countryISOCode: 'US',
+            countryCode: '+1',
+            number: cleaned.substring(1), // Remove +
           );
         }
       } else {
         // Assume US number if no country code
         return PhoneNumber(
-          phoneNumber: cleaned,
-          isoCode: 'US',
-          dialCode: '+1',
+          countryISOCode: 'US',
+          countryCode: '+1',
+          number: cleaned,
         );
       }
     } catch (e) {

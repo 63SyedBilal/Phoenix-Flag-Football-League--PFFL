@@ -15,6 +15,8 @@ class AdminProfileProvider extends ChangeNotifier {
   File? _selectedImageFile;
   bool _isLoading = false;
   String? _errorMessage;
+  String? _phoneError; // Phone-specific error
+  bool _isPhoneValid = true;
   String? _adminId;
 
   // Getters
@@ -26,6 +28,7 @@ class AdminProfileProvider extends ChangeNotifier {
   File? get selectedImageFile => _selectedImageFile;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get phoneError => _phoneError;
 
   /// Initialize and load profile data
   Future<void> initialize() async {
@@ -95,6 +98,34 @@ class AdminProfileProvider extends ChangeNotifier {
   /// Update phone
   void updatePhone(String value) {
     _phone = value;
+    // Clear phone error when user starts typing
+    if (_phoneError != null) {
+      _phoneError = null;
+    }
+    notifyListeners();
+  }
+
+  /// Set phone validation state
+  void setPhoneValid(bool isValid) {
+    _isPhoneValid = isValid;
+    if (!isValid && _phone.isNotEmpty) {
+      _phoneError = 'Please enter a valid phone number';
+    } else {
+      _phoneError = null;
+    }
+    notifyListeners();
+  }
+
+  /// Set error message
+  void setError(String message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
+  /// Clear error message
+  void clearError() {
+    _errorMessage = null;
+    _phoneError = null;
     notifyListeners();
   }
 
