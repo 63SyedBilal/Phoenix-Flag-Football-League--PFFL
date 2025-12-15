@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 
 /// Service for notification-related API calls
@@ -38,6 +39,35 @@ class NotificationService {
     } catch (e) {
       print('General error fetching notifications: $e');
       return [];
+    }
+  }
+
+  /// Accept a notification/invitation
+  /// PUT /api/notification/accept/:notificationId
+  /// Returns true on success, throws exception on error
+  static Future<bool> acceptNotification(String notificationId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.put(
+        AppConfig.getNotificationAcceptEndpoint(notificationId),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ Notification accepted successfully');
+        return true;
+      } else {
+        throw Exception(
+          'Failed to accept notification: ${response.statusMessage}',
+        );
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? 
+          'Failed to accept notification: ${e.message}';
+      print('❌ Error accepting notification: $errorMessage');
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ General error accepting notification: $e');
+      throw Exception('Failed to accept notification: ${e.toString()}');
     }
   }
 }

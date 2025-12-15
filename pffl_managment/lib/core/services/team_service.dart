@@ -112,6 +112,45 @@ class TeamService {
     }
   }
 
+  /// Get team by player ID (where player is in squad5v5 or squad7v7)
+  /// GET /api/team?playerId=xxx
+  /// Returns team data or null if player is not in any team
+  static Future<Map<String, dynamic>?> getTeamByPlayer(String playerId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get(
+        AppConfig.teamEndpoint,
+        queryParameters: {'playerId': playerId},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        if (data == null) {
+          return null; // No team found
+        }
+        if (data is Map) {
+          return data as Map<String, dynamic>;
+        }
+        return null;
+      } else if (response.statusCode == 404) {
+        return null; // Team not found - player has no team
+      } else {
+        throw Exception(
+          'Failed to fetch team: ${response.statusMessage}',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return null; // Team not found - player has no team
+      }
+      final errorMessage = e.response?.data['error'] ?? 
+          'Failed to fetch team: ${e.message}';
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Failed to fetch team: ${e.toString()}');
+    }
+  }
+
   /// Invite a player to the team
   /// POST /api/team/invite-player
   /// Body: { playerId: string, teamId: string, format: "5v5" | "7v7" }

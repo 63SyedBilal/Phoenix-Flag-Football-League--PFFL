@@ -31,6 +31,7 @@ import 'package:pffl_managment/features/admin/leagues/providers/enhanced_leagues
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
 import 'package:pffl_managment/invite_screens/captain_invite_screen/providers/captain_invite_provider.dart';
+import 'package:pffl_managment/features/player/providers/player_team_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -77,6 +78,7 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CompleteProfileProvider()),
         ChangeNotifierProvider(create: (_) => CreateTeamProvider()),
         ChangeNotifierProvider(create: (_) => CaptainInviteProvider()),
+        ChangeNotifierProvider(create: (_) => PlayerTeamProvider()),
       ],
       child: child,
     );
