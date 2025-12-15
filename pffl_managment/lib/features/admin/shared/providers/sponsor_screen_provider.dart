@@ -1,0 +1,170 @@
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+
+class SponsorScreenProvider extends ChangeNotifier {
+  final List<Map<String, String>?> _uploadedImages = [null, null, null];
+  final List<TextEditingController> _urlControllers = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
+  ];
+  final List<String?> _validationErrors = [null, null, null];
+  bool _isSaving = false;
+
+  List<Map<String, String>?> get uploadedImages => _uploadedImages;
+  List<TextEditingController> get urlControllers => _urlControllers;
+  List<String?> get validationErrors => _validationErrors;
+  bool get isSaving => _isSaving;
+
+  // Get preview image for a slot
+  Map<String, String>? getPreviewImage(int slotNumber) {
+    if (slotNumber < 1 || slotNumber > 3) return null;
+    final index = slotNumber - 1;
+
+    // Priority: uploaded file > URL > null
+    if (_uploadedImages[index] != null) {
+      return _uploadedImages[index];
+    }
+
+    final url = _urlControllers[index].text.trim();
+    if (url.isNotEmpty && _isValidUrl(url)) {
+      return {'type': 'network', 'path': url};
+    }
+
+    return null;
+  }
+
+  bool _isValidUrl(String url) {
+    if (url.isEmpty) return false;
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> pickImage(int slotNumber) async {
+    if (slotNumber < 1 || slotNumber > 3) return;
+
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final filePath = result.files.single.path!;
+        final file = File(filePath);
+
+        // Check file size (max 2MB)
+        final fileSize = await file.length();
+        if (fileSize > 2 * 1024 * 1024) {
+          _validationErrors[slotNumber - 1] = 'Image must be less than 2MB';
+          notifyListeners();
+          return;
+        }
+
+        _uploadedImages[slotNumber - 1] = {'type': 'file', 'path': filePath};
+        _validationErrors[slotNumber - 1] = null;
+
+        // Clear URL if file is uploaded
+        _urlControllers[slotNumber - 1].clear();
+
+        notifyListeners();
+        debugPrint('Image uploaded for slot $slotNumber: $filePath');
+      }
+    } catch (e) {
+      _validationErrors[slotNumber - 1] = 'Failed to pick image: $e';
+      notifyListeners();
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  void validateUrl(int slotNumber) {
+    if (slotNumber < 1 || slotNumber > 3) return;
+    final index = slotNumber - 1;
+    final url = _urlControllers[index].text.trim();
+
+    if (url.isEmpty) {
+      _validationErrors[index] = null;
+    } else if (!_isValidUrl(url)) {
+      _validationErrors[index] = 'Invalid URL format';
+    } else {
+      _validationErrors[index] = null;
+    }
+    notifyListeners();
+  }
+
+  void clearSlot(int slotNumber) {
+    if (slotNumber < 1 || slotNumber > 3) return;
+    final index = slotNumber - 1;
+
+    _uploadedImages[index] = null;
+    _urlControllers[index].clear();
+    _validationErrors[index] = null;
+    notifyListeners();
+  }
+
+  List<Map<String, String>> getImagesForSave() {
+    final List<Map<String, String>> images = [];
+
+    for (int i = 0; i < 3; i++) {
+      // Priority: uploaded file > URL > default
+      if (_uploadedImages[i] != null) {
+        images.add(_uploadedImages[i]!);
+      } else {
+        final url = _urlControllers[i].text.trim();
+        if (url.isNotEmpty && _isValidUrl(url)) {
+          images.add({'type': 'network', 'path': url});
+        } else {
+          // Use default image
+          images.add({
+            'type': 'asset',
+            'path': 'assets/images/sponser/sponser${i + 1}.png',
+          });
+        }
+      }
+    }
+
+    return images;
+  }
+
+  Future<bool> saveSponsors() async {
+    // Validate all URLs
+    for (int i = 0; i < 3; i++) {
+      validateUrl(i + 1);
+    }
+
+    // Check if there are any validation errors
+    if (_validationErrors.any((error) => error != null)) {
+      return false;
+    }
+
+    _isSaving = true;
+    notifyListeners();
+
+    try {
+      // Small delay to show loading state
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      _isSaving = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isSaving = false;
+      notifyListeners();
+      debugPrint('Error saving sponsors: $e');
+      return false;
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _urlControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+}

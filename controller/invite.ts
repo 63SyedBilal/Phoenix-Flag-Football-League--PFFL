@@ -43,10 +43,163 @@ export async function inviteUser(req: NextRequest) {
     const existing = await User.findOne({ email: emailLower });
     
     if (existing) {
-      console.log("❌ User already exists with email:", emailLower);
-      return NextResponse.json({ 
-        error: "A user with this email already exists. Please use a different email address." 
-      }, { status: 409 });
+      console.log("ℹ️ User already exists with email:", emailLower);
+      console.log("📧 Current role:", (existing as any).role);
+      console.log("📧 Requested role:", role);
+      
+      const mappedRole = mapRoleToSchema(role);
+      
+      // If user already has this role, return success (idempotent)
+      if ((existing as any).role === mappedRole) {
+        console.log("✅ User already has this role. Sending role invitation email.");
+        
+        // Send role invitation email
+        const emailSubject = "PFFL - Role Invitation";
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Role Invitation</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 50%, #1E3A8A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0;">Role Invitation</h1>
+              </div>
+              <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <p>Hello,</p>
+                <p>You have been invited to join Phoenix Flag Football League as a <strong>${role}</strong>.</p>
+                <p>Your account already exists. You can login with your existing credentials.</p>
+                <p>Please login at: <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login" style="color: #3B82F6;">${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login</a></p>
+                <p>Best regards,<br>The PFFL Team</p>
+              </div>
+            </body>
+          </html>
+        `;
+        
+        const emailText = `
+Role Invitation
+
+You have been invited to join Phoenix Flag Football League as a ${role}.
+
+Your account already exists. You can login with your existing credentials.
+
+Please login at: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
+
+Best regards,
+The PFFL Team
+        `;
+        
+        // Try to send email, but don't fail if SMTP is not configured
+        let emailSent = false;
+        try {
+          await sendMail({
+            to: email,
+            subject: emailSubject,
+            text: emailText,
+            html: emailHtml,
+          });
+          console.log("✅ Role invitation email sent successfully");
+          emailSent = true;
+        } catch (emailError: any) {
+          console.error("⚠️ Failed to send role invitation email:", emailError);
+          console.error("⚠️ Role invitation will still be processed, but email was not sent");
+          // Don't fail the request - role invitation is still valid
+        }
+        
+        return NextResponse.json(
+          {
+            message: emailSent 
+              ? "Role invitation sent successfully" 
+              : "Role invitation processed (email could not be sent - check SMTP configuration)",
+            data: {
+              id: (existing as any)._id,
+              email: (existing as any).email,
+              role: (existing as any).role,
+            },
+            emailSent: emailSent,
+          },
+          { status: 200 }
+        );
+      }
+      
+      // User exists but has different role - update role and send email
+      console.log("🔄 Updating user role from", (existing as any).role, "to", mappedRole);
+      
+      // Update user role FIRST (before sending email)
+      (existing as any).role = mappedRole;
+      await existing.save();
+      console.log("✅ User role updated successfully from", (existing as any).role, "to", mappedRole);
+      
+      // Try to send role update email, but don't fail if SMTP is not configured
+      let emailSent = false;
+      const emailSubject = "PFFL - Role Updated";
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Role Updated</title>
+          </head>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 50%, #1E3A8A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="color: white; margin: 0;">Role Updated</h1>
+            </div>
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+              <p>Hello,</p>
+              <p>Your role in Phoenix Flag Football League has been updated to <strong>${role}</strong>.</p>
+              <p>You can login with your existing credentials.</p>
+              <p>Please login at: <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login" style="color: #3B82F6;">${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login</a></p>
+              <p>Best regards,<br>The PFFL Team</p>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      const emailText = `
+Role Updated
+
+Your role in Phoenix Flag Football League has been updated to ${role}.
+
+You can login with your existing credentials.
+
+Please login at: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
+
+Best regards,
+The PFFL Team
+      `;
+      
+      try {
+        await sendMail({
+          to: email,
+          subject: emailSubject,
+          text: emailText,
+          html: emailHtml,
+        });
+        console.log("✅ Role update email sent successfully");
+        emailSent = true;
+      } catch (emailError: any) {
+        console.error("⚠️ Failed to send role update email:", emailError);
+        console.error("⚠️ Role has been updated successfully, but email notification was not sent");
+        // Don't fail the request - role update is successful
+      }
+      
+      return NextResponse.json(
+        {
+          message: emailSent 
+            ? "Role updated and invitation sent successfully" 
+            : "Role updated successfully (email could not be sent - check SMTP configuration)",
+          data: {
+            id: (existing as any)._id,
+            email: (existing as any).email,
+            role: mappedRole,
+          },
+          emailSent: emailSent,
+        },
+        { status: 200 }
+      );
     }
     
     console.log("✅ Email is available:", emailLower);
@@ -55,73 +208,7 @@ export async function inviteUser(req: NextRequest) {
     const password = generateSimplePassword();
     const mappedRole = mapRoleToSchema(role);
 
-    // Send email with password
-    const emailSubject = "Welcome to PFFL - Your Account Credentials";
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Welcome to PFFL</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 50%, #1E3A8A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">Welcome to PFFL!</h1>
-          </div>
-          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p>Hello,</p>
-            <p>You have been invited to join Phoenix Flag Football League as a <strong>${role}</strong>.</p>
-            <p>Your account has been created. Please use the following credentials to login:</p>
-            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #3B82F6;">
-              <p style="margin: 0;"><strong>Email:</strong> ${email}</p>
-              <p style="margin: 10px 0 0 0;"><strong>Password:</strong> <span style="font-size: 18px; font-weight: bold; color: #3B82F6;">${password}</span></p>
-            </div>
-            <p>Please login at: <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login" style="color: #3B82F6;">${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login</a></p>
-            <p><strong>Important:</strong> Please change your password after your first login for security.</p>
-            <p>If you have any questions, feel free to reach out to our support team.</p>
-            <p>Best regards,<br>The PFFL Team</p>
-          </div>
-        </body>
-      </html>
-    `;
-
-    const emailText = `
-Welcome to PFFL!
-
-You have been invited to join Phoenix Flag Football League as a ${role}.
-
-Your account has been created. Please use the following credentials to login:
-
-Email: ${email}
-Password: ${password}
-
-Please login at: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
-
-Important: Please change your password after your first login for security.
-
-If you have any questions, feel free to reach out to our support team.
-
-Best regards,
-The PFFL Team
-    `;
-
-    try {
-      await sendMail({
-        to: email,
-        subject: emailSubject,
-        text: emailText,
-        html: emailHtml,
-      });
-    } catch (emailError: any) {
-      console.error("Failed to send email:", emailError);
-      return NextResponse.json(
-        { error: emailError.message || "Failed to send invitation email. Please check your SMTP configuration." },
-        { status: 500 }
-      );
-    }
-
-    // Save user to database (password will be hashed by pre-save hook)
+    // Save user to database FIRST (password will be hashed by pre-save hook)
     // Don't set phone field to avoid unique constraint issues - it will be undefined
     try {
       const userData: any = {
@@ -156,14 +243,84 @@ The PFFL Team
         console.log("✅ User created successfully:", (user as any).email);
       }
 
+      // Try to send welcome email AFTER user is created
+      let emailSent = false;
+      const emailSubject = "Welcome to PFFL - Your Account Credentials";
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Welcome to PFFL</title>
+          </head>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 50%, #1E3A8A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="color: white; margin: 0;">Welcome to PFFL!</h1>
+            </div>
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+              <p>Hello,</p>
+              <p>You have been invited to join Phoenix Flag Football League as a <strong>${role}</strong>.</p>
+              <p>Your account has been created. Please use the following credentials to login:</p>
+              <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #3B82F6;">
+                <p style="margin: 0;"><strong>Email:</strong> ${email}</p>
+                <p style="margin: 10px 0 0 0;"><strong>Password:</strong> <span style="font-size: 18px; font-weight: bold; color: #3B82F6;">${password}</span></p>
+              </div>
+              <p>Please login at: <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login" style="color: #3B82F6;">${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login</a></p>
+              <p><strong>Important:</strong> Please change your password after your first login for security.</p>
+              <p>If you have any questions, feel free to reach out to our support team.</p>
+              <p>Best regards,<br>The PFFL Team</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const emailText = `
+Welcome to PFFL!
+
+You have been invited to join Phoenix Flag Football League as a ${role}.
+
+Your account has been created. Please use the following credentials to login:
+
+Email: ${email}
+Password: ${password}
+
+Please login at: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
+
+Important: Please change your password after your first login for security.
+
+If you have any questions, feel free to reach out to our support team.
+
+Best regards,
+The PFFL Team
+      `;
+
+      try {
+        await sendMail({
+          to: email,
+          subject: emailSubject,
+          text: emailText,
+          html: emailHtml,
+        });
+        console.log("✅ Welcome email sent successfully");
+        emailSent = true;
+      } catch (emailError: any) {
+        console.error("⚠️ Failed to send welcome email:", emailError);
+        console.error("⚠️ User has been created successfully, but welcome email was not sent");
+        // Don't fail the request - user creation is successful
+      }
+
       return NextResponse.json(
         {
-          message: "User invited successfully",
+          message: emailSent 
+            ? "User invited successfully" 
+            : "User created successfully (welcome email could not be sent - check SMTP configuration)",
           data: {
             id: (user as any)._id,
             email: (user as any).email,
             role: (user as any).role,
           },
+          emailSent: emailSent,
         },
         { status: 201 }
       );

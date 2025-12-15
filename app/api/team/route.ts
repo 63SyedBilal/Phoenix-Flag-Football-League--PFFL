@@ -1,12 +1,59 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createTeam, getAllTeams } from "@/controller/team";
 
+// CORS headers helper
+function getCorsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+// Handle preflight OPTIONS request
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: getCorsHeaders() });
+}
+
 export async function POST(req: NextRequest) {
-  return createTeam(req);
+  try {
+    const response = await createTeam(req);
+    const headers = new Headers(response.headers);
+    Object.entries(getCorsHeaders()).forEach(([key, value]) => {
+      headers.set(key, value);
+    });
+    return new NextResponse(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: headers,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500, headers: getCorsHeaders() }
+    );
+  }
 }
 
 export async function GET(req: NextRequest) {
-  return getAllTeams(req);
+  try {
+    const response = await getAllTeams(req);
+    const headers = new Headers(response.headers);
+    Object.entries(getCorsHeaders()).forEach(([key, value]) => {
+      headers.set(key, value);
+    });
+    return new NextResponse(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: headers,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500, headers: getCorsHeaders() }
+    );
+  }
 }
 
 

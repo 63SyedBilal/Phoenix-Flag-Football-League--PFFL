@@ -1,0 +1,105 @@
+import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/utils/helpers.dart';
+import 'package:pffl_managment/core/widgets/custom_button.dart';
+import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
+import 'package:provider/provider.dart';
+
+class LeagueCreationActionButton extends StatelessWidget {
+  const LeagueCreationActionButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = Provider.of<CreateLeagueViewModel>(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: CustomButton(
+              text: _getButtonText(viewModel.currentStep),
+              onPressed: _getButtonAction(context, viewModel) ?? () {},
+              backgroundColor: const Color(0xFF0F173E),
+              textColor: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              isLoading: viewModel.isLoading,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getButtonText(int step) {
+    switch (step) {
+      case 0:
+      case 1:
+      case 2:
+        return 'Next';
+      case 3:
+        return 'Create League';
+      default:
+        return 'Next';
+    }
+  }
+
+  VoidCallback? _getButtonAction(
+    BuildContext context,
+    CreateLeagueViewModel viewModel,
+  ) {
+    if (viewModel.isLoading) return null;
+    bool isCurrentStepValid = false;
+    switch (viewModel.currentStep) {
+      case 0:
+        isCurrentStepValid = viewModel.isStep1Valid;
+        break;
+      case 1:
+        isCurrentStepValid = viewModel.isStep2Valid;
+        break;
+      case 2:
+        isCurrentStepValid = viewModel.isStep3Valid;
+        break;
+      case 3:
+        isCurrentStepValid = viewModel.isStep4Valid;
+        break;
+    }
+
+    if (!isCurrentStepValid && viewModel.currentStep < 4) {
+      return null;
+    }
+
+    switch (viewModel.currentStep) {
+      case 0:
+      case 1:
+      case 2:
+        return viewModel.nextStep;
+      case 3:
+        return () async {
+          await viewModel.createLeague(context);
+          if (context.mounted) {
+            showCustomBottomSheet(
+              context: context,
+              title: 'League created\nsuccessfully!',
+              subtitle: 'Invites have been sent to team captains and officials. You can now manage scheduling, rosters, and games for this league.',
+              buttonText: 'Continue',
+              onButtonPressed: () {
+                Navigator.of(context).pop();// Close bottom sheet
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.adminDashboard,
+                  (route) => false,
+                );
+              },
+              content: const SizedBox(), // Empty content since we're using the optional icon
+            );          }
+        };
+      default:
+        return null;
+    }
+  }
+}
