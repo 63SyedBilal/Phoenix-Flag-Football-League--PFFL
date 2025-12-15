@@ -22,7 +22,9 @@ class PlayerListItem extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundImage: player.imageUrl != null
-                ? AssetImage(player.imageUrl!)
+                ? (player.imageUrl!.startsWith('http') || player.imageUrl!.startsWith('https')
+                    ? NetworkImage(player.imageUrl!)
+                    : AssetImage(player.imageUrl!) as ImageProvider)
                 : null,
             backgroundColor: Colors.grey.shade200,
             child: player.imageUrl == null

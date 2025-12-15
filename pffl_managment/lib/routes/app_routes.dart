@@ -14,6 +14,8 @@ class AppRoutes {
 
   // Captain Routes
   static const String captainDashboard = '/captain/dashboard';
+  static const String captainCreateTeam = '/captain/create-team';
+  static const String captainInvite = '/captain/invite';
   static const String captainTeamManagement = '/captain/team-management';
   static const String captainGameScheduling = '/captain/game-scheduling';
   static const String captainLeagueDetail = '/captain/league-detail';

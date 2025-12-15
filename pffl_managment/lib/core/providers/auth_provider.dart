@@ -10,6 +10,8 @@ class AuthProvider extends ChangeNotifier {
   String _userId = '';
   String _userEmail = '';
   String _userName = '';
+  bool _needsProfileForm = false;
+  bool _needsTeamForm = false;
 
   // Password visibility states
   bool _isLoginPasswordVisible = false;
@@ -27,6 +29,8 @@ class AuthProvider extends ChangeNotifier {
   String get userId => _userId;
   String get userEmail => _userEmail;
   String get userName => _userName;
+  bool get needsProfileForm => _needsProfileForm;
+  bool get needsTeamForm => _needsTeamForm;
 
   // Password visibility getters
   bool get isLoginPasswordVisible => _isLoginPasswordVisible;
@@ -101,6 +105,8 @@ class AuthProvider extends ChangeNotifier {
         _userName = userData.firstName != null && userData.lastName != null
             ? '${userData.firstName} ${userData.lastName}'.trim()
             : userData.email;
+        _needsProfileForm = userData.needsProfileForm;
+        _needsTeamForm = userData.needsTeamForm;
         
         // Save to shared preferences
         final prefs = await SharedPreferences.getInstance();
@@ -150,6 +156,8 @@ class AuthProvider extends ChangeNotifier {
     _userId = '';
     _userEmail = '';
     _userName = '';
+    _needsProfileForm = false;
+    _needsTeamForm = false;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');

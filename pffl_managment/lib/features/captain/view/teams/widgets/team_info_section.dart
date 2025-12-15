@@ -30,10 +30,25 @@ class TeamInfoSection extends StatelessWidget {
                       style: BorderStyle.none,
                     ),
                   ),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: const Icon(Icons.shield, color: Colors.black),
-                  ),
+                  child: team.logoUrl != null && team.logoUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            team.logoUrl!,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: const Icon(Icons.shield, color: Colors.black),
+                              );
+                            },
+                          ),
+                        )
+                      : CircleAvatar(
+                          backgroundColor: Colors.white,
+                          child: const Icon(Icons.shield, color: Colors.black),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Text(
