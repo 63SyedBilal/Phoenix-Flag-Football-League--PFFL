@@ -15,6 +15,17 @@ class UsersProvider extends ChangeNotifier {
   List<UserModel> _allUsers = [];
   bool _isLoading = false;
   String? _errorMessage;
+  
+  // Helper method to safely notify listeners
+  void _safeNotifyListeners() {
+    if (!hasListeners) return; // Check if disposed
+    try {
+      notifyListeners();
+    } catch (e) {
+      // Provider was disposed, ignore
+      debugPrint('UsersProvider: Cannot notify listeners (disposed)');
+    }
+  }
 
   // Cached data for mapping
   List<Map<String, dynamic>> _profiles = [];
@@ -96,7 +107,7 @@ class UsersProvider extends ChangeNotifier {
 
   void selectFilter(String filterId) {
     _selectedFilter = filterId;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateSearchQuery(String query) {
@@ -107,13 +118,13 @@ class UsersProvider extends ChangeNotifier {
 
     // Set a new timer to debounce the search
     _searchDebounceTimer = Timer(const Duration(milliseconds: 300), () {
-      notifyListeners();
+      _safeNotifyListeners();
     });
   }
 
   void toggleNotifications() {
     _hasNotifications = !_hasNotifications;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void inviteUser() {
@@ -331,7 +342,7 @@ class UsersProvider extends ChangeNotifier {
           );
 
           _allUsers[userIndex] = updatedUser;
-          notifyListeners();
+          _safeNotifyListeners();
           debugPrint('✅ User role updated successfully');
         }
         return true;
@@ -351,7 +362,7 @@ class UsersProvider extends ChangeNotifier {
     
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await fetchAllUsers();
@@ -360,7 +371,7 @@ class UsersProvider extends ChangeNotifier {
       _errorMessage = 'Failed to load users: ${e.toString()}';
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 

@@ -570,9 +570,14 @@ class CreateLeagueViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      debugPrint('🔄 Fetching free agents...');
       _freeAgents = await UserService.getFreeAgents();
+      debugPrint('✅ Fetched ${_freeAgents.length} free agents');
+      if (_freeAgents.isEmpty) {
+        debugPrint('⚠️ No free agents found in database');
+      }
     } catch (e) {
-      debugPrint('Error fetching free agents: $e');
+      debugPrint('❌ Error fetching free agents: $e');
       _freeAgents = [];
     } finally {
       _isLoadingFreeAgents = false;

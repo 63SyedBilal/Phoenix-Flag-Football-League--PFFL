@@ -21,21 +21,34 @@ class AdminInviteProvider extends ChangeNotifier {
   // State variables
   List<FreeAgentModel> _freeAgents = [];
   bool _isLoading = false;
+  bool _isSendingInvite = false; // Separate loading state for sending invites
   String? _errorMessage;
   String _manualEmail = '';
   String? _manualSelectedRole;
   Map<String, String?> _agentSelectedRoles = {}; // agentId -> selectedRole
   Map<String, bool> _agentExpanded = {}; // agentId -> isExpanded
+  Map<String, bool> _agentInviteSending = {}; // agentId -> isSendingInvite
+
+  // Available roles
+  static const List<String> availableRoles = [
+    'Player',
+    'Captain',
+    'Referee',
+    'Stat Keeper',
+  ];
 
   // Getters
   List<FreeAgentModel> get freeAgents => _freeAgents;
   bool get isLoading => _isLoading;
+  bool get isSendingInvite => _isSendingInvite;
   String? get errorMessage => _errorMessage;
   String get manualEmail => _manualEmail;
   String? get manualSelectedRole => _manualSelectedRole;
+  List<String> get roles => availableRoles;
   
   String? getAgentSelectedRole(String agentId) => _agentSelectedRoles[agentId];
   bool isAgentExpanded(String agentId) => _agentExpanded[agentId] ?? false;
+  bool isAgentInviteSending(String agentId) => _agentInviteSending[agentId] ?? false;
 
   /// Initialize and fetch free agents
   Future<void> initialize() async {
@@ -108,8 +121,15 @@ class AdminInviteProvider extends ChangeNotifier {
       return false;
     }
 
+    // Validate email format
+    if (!_isValidEmail(_manualEmail)) {
+      _errorMessage = 'Please enter a valid email address';
+      notifyListeners();
+      return false;
+    }
+
     try {
-      _isLoading = true;
+      _isSendingInvite = true;
       _errorMessage = null;
       notifyListeners();
 
@@ -117,26 +137,26 @@ class AdminInviteProvider extends ChangeNotifier {
       
       // Map role to backend format
       final backendRole = _mapRoleToBackend(_manualSelectedRole!);
-      final success = await user_service.InviteService.sendInvite(_manualEmail, backendRole);
+      final success = await user_service.InviteService.sendInvite(_manualEmail.trim(), backendRole);
 
       if (success) {
         debugPrint('✅ Invite sent successfully (new user created or role invitation sent)');
         // Clear form
         _manualEmail = '';
         _manualSelectedRole = null;
-        _isLoading = false;
+        _isSendingInvite = false;
         notifyListeners();
         return true;
       } else {
         _errorMessage = 'Failed to send invitation';
-        _isLoading = false;
+        _isSendingInvite = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
       debugPrint('❌ Error sending invite: $e');
       _errorMessage = 'Failed to send invitation: ${e.toString()}';
-      _isLoading = false;
+      _isSendingInvite = false;
       notifyListeners();
       return false;
     }
@@ -154,7 +174,7 @@ class AdminInviteProvider extends ChangeNotifier {
     final agent = _freeAgents.firstWhere((a) => a.id == agentId);
     
     try {
-      _isLoading = true;
+      _agentInviteSending[agentId] = true;
       _errorMessage = null;
       notifyListeners();
 
@@ -166,24 +186,30 @@ class AdminInviteProvider extends ChangeNotifier {
 
       if (success) {
         debugPrint('✅ Invite sent successfully (new user created or role invitation sent)');
-        // Clear agent role selection
+        // Clear agent role selection and collapse card
         _agentSelectedRoles[agentId] = null;
-        _isLoading = false;
+        _agentExpanded[agentId] = false;
+        _agentInviteSending[agentId] = false;
         notifyListeners();
         return true;
       } else {
         _errorMessage = 'Failed to send invitation';
-        _isLoading = false;
+        _agentInviteSending[agentId] = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
       debugPrint('❌ Error sending invite: $e');
       _errorMessage = 'Failed to send invitation: ${e.toString()}';
-      _isLoading = false;
+      _agentInviteSending[agentId] = false;
       notifyListeners();
       return false;
     }
+  }
+
+  /// Validate email format
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
   /// Map UI role to backend role format

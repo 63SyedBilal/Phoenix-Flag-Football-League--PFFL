@@ -24,7 +24,9 @@ class AdminInviteScreen extends StatelessWidget {
         body: Consumer<AdminInviteProvider>(
           builder: (context, provider, child) {
             // Initialize on first build
-            if (!provider.isLoading && provider.freeAgents.isEmpty && provider.errorMessage == null) {
+            if (!provider.isLoading &&
+                provider.freeAgents.isEmpty &&
+                provider.errorMessage == null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 provider.initialize();
               });
@@ -71,7 +73,8 @@ class AdminInviteScreen extends StatelessWidget {
                               border: Border.all(color: Colors.black26),
                             ),
                             child: TextField(
-                              onChanged: (value) => provider.updateManualEmail(value),
+                              onChanged: (value) =>
+                                  provider.updateManualEmail(value),
                               decoration: const InputDecoration(
                                 hintText: "james.richardson@pffl.com",
                                 hintStyle: TextStyle(
@@ -79,7 +82,9 @@ class AdminInviteScreen extends StatelessWidget {
                                   color: Colors.black54,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
                               ),
                               style: const TextStyle(
                                 fontSize: 14,
@@ -115,7 +120,10 @@ class AdminInviteScreen extends StatelessWidget {
                                         : Colors.black,
                                   ),
                                 ),
-                                const Icon(Icons.arrow_drop_down, color: Colors.black),
+                                const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.black,
+                                ),
                               ],
                             ),
                           ),
@@ -124,7 +132,7 @@ class AdminInviteScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     GestureDetector(
-                      onTap: provider.isLoading
+                      onTap: provider.isSendingInvite
                           ? null
                           : () async {
                               final success = await provider.sendManualInvite();
@@ -132,14 +140,19 @@ class AdminInviteScreen extends StatelessWidget {
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Invitation sent successfully'),
+                                      content: Text(
+                                        'Invitation sent successfully',
+                                      ),
                                       backgroundColor: Colors.green,
                                     ),
                                   );
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(provider.errorMessage ?? 'Failed to send invitation'),
+                                      content: Text(
+                                        provider.errorMessage ??
+                                            'Failed to send invitation',
+                                      ),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -149,24 +162,29 @@ class AdminInviteScreen extends StatelessWidget {
                       child: Container(
                         height: 50,
                         decoration: BoxDecoration(
-                          color: provider.isLoading
+                          color: provider.isSendingInvite
                               ? Colors.grey
                               : const Color(0xff0B1437),
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: Center(
-                          child: provider.isLoading
+                          child: provider.isSendingInvite
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
                                   "Send Invite",
-                                  style: TextStyle(fontSize: 16, color: Colors.white),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
                                 ),
                         ),
                       ),
@@ -189,7 +207,8 @@ class AdminInviteScreen extends StatelessWidget {
                           child: CircularProgressIndicator(),
                         ),
                       )
-                    else if (provider.errorMessage != null && provider.freeAgents.isEmpty)
+                    else if (provider.errorMessage != null &&
+                        provider.freeAgents.isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.all(20.0),
@@ -216,13 +235,15 @@ class AdminInviteScreen extends StatelessWidget {
                         ),
                       )
                     else
-                      ...provider.freeAgents.map((agent) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ExpandableAgentCard(
-                              agent: agent,
-                              provider: provider,
-                            ),
-                          )),
+                      ...provider.freeAgents.map(
+                        (agent) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ExpandableAgentCard(
+                            agent: agent,
+                            provider: provider,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 50),
                   ],
                 ),
@@ -268,7 +289,10 @@ class AdminInviteScreen extends StatelessWidget {
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.67),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 0.67,
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -350,11 +374,17 @@ class AdminInviteScreen extends StatelessWidget {
                         OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF0F173E), width: 1),
+                            side: const BorderSide(
+                              color: Color(0xFF0F173E),
+                              width: 1,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 18,
+                            ),
                           ),
                           child: const Text(
                             'Cancel',
@@ -377,7 +407,10 @@ class AdminInviteScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 18,
+                            ),
                           ),
                           child: const Text(
                             'Confirm',
@@ -450,7 +483,10 @@ class ExpandableAgentCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         agent.email,
-                        style: const TextStyle(color: Colors.black, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -485,7 +521,9 @@ class ExpandableAgentCard extends StatelessWidget {
                       selectedRole ?? "Select role",
                       style: TextStyle(
                         fontSize: 14,
-                        color: selectedRole == null ? Colors.black54 : Colors.black,
+                        color: selectedRole == null
+                            ? Colors.black54
+                            : Colors.black,
                       ),
                     ),
                     const Icon(Icons.arrow_drop_down, color: Colors.black),
@@ -495,7 +533,7 @@ class ExpandableAgentCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: provider.isLoading
+              onTap: provider.isAgentInviteSending(agent.id)
                   ? null
                   : () async {
                       final success = await provider.sendAgentInvite(agent.id);
@@ -510,7 +548,10 @@ class ExpandableAgentCard extends StatelessWidget {
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(provider.errorMessage ?? 'Failed to send invitation'),
+                              content: Text(
+                                provider.errorMessage ??
+                                    'Failed to send invitation',
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -520,19 +561,21 @@ class ExpandableAgentCard extends StatelessWidget {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: provider.isLoading
+                  color: provider.isAgentInviteSending(agent.id)
                       ? Colors.grey
                       : const Color(0xff0B1437),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Center(
-                  child: provider.isLoading
+                  child: provider.isAgentInviteSending(agent.id)
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text(
@@ -582,7 +625,10 @@ class ExpandableAgentCard extends StatelessWidget {
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.67),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 0.67,
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -664,11 +710,17 @@ class ExpandableAgentCard extends StatelessWidget {
                         OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF0F173E), width: 1),
+                            side: const BorderSide(
+                              color: Color(0xFF0F173E),
+                              width: 1,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 18,
+                            ),
                           ),
                           child: const Text(
                             'Cancel',
@@ -691,7 +743,10 @@ class ExpandableAgentCard extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 18,
+                            ),
                           ),
                           child: const Text(
                             'Confirm',

@@ -1,25 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 
 /// Service for notification-related API calls
 class NotificationService {
-  static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: AppConfig.baseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
-
-  /// Get Dio instance with authentication token
+  /// Get Dio instance with authentication token and working URL
   static Future<Dio> _getAuthenticatedDio() async {
-    final token = await AuthService.getToken();
-    if (token != null) {
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-    }
-    return _dio;
+    // Use AuthService's working Dio instance which has the correct URL
+    return await AuthService.getWorkingDio();
   }
 
   /// Get all notifications for logged-in user

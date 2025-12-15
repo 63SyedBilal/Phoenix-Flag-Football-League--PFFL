@@ -6,22 +6,13 @@ import 'package:pffl_managment/core/services/auth_service.dart';
 
 /// Service for admin-related API calls
 class AdminService {
-  static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: AppConfig.baseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: Duration(seconds: 60), // Increase for file uploads
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
-
-  /// Get Dio instance with authentication token
+  /// Get Dio instance with authentication token and working URL
   static Future<Dio> _getAuthenticatedDio() async {
-    final token = await AuthService.getToken();
-    if (token != null) {
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-    }
-    return _dio;
+    // Use AuthService's working Dio instance which has the correct URL
+    final dio = await AuthService.getWorkingDio();
+    // Increase timeout for file uploads
+    dio.options.receiveTimeout = const Duration(seconds: 60);
+    return dio;
   }
 
   /// Upload image to server

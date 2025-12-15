@@ -1,16 +1,31 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/config/app_config.dart';
 
 class AuthService {
-  static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: AppConfig.baseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
+  // Lazy initialization to ensure platform detection works
+  static Dio? _dioInstance;
+
+  static Dio get _dio {
+    _dioInstance ??= Dio(
+      BaseOptions(
+        baseUrl: AppConfig.baseUrl, // This will use the getter
+        connectTimeout: AppConfig.connectTimeout,
+        receiveTimeout: AppConfig.receiveTimeout,
+        sendTimeout: AppConfig.sendTimeout,
+        headers: {'Content-Type': 'application/json'},
+        // Enable follow redirects
+        followRedirects: true,
+        maxRedirects: 5,
+        // Validate status codes
+        validateStatus: (status) => status != null && status < 500,
+      ),
+    );
+    // Ensure baseUrl is always current
+    _dioInstance!.options.baseUrl = AppConfig.baseUrl;
+    return _dioInstance!;
+  }
 
   // Allow overriding the base URL for testing
   static String? _baseUrlOverride;
@@ -22,8 +37,40 @@ class AuthService {
     if (url != null) {
       _dio.options.baseUrl = url;
     } else {
-      _dio.options.baseUrl = AppConfig.baseUrl;
+      _dio.options.baseUrl = AppConfig.baseUrl; // Use getter
     }
+  }
+
+  // Reset Dio instance (useful for testing or reconfiguration)
+  static void resetDio() {
+    _dioInstance = null;
+  }
+
+  // Store the working base URL after successful login
+  static String? _workingBaseUrl;
+
+  // Get a working Dio instance with URL fallback (for other services to use)
+  static Future<Dio> getWorkingDio() async {
+    // Use the working baseUrl from login, or fallback to AppConfig
+    final workingBaseUrl = _workingBaseUrl ?? AppConfig.baseUrl;
+
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: workingBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
+
+    // Add authentication token
+    final token = await getToken();
+    if (token != null) {
+      dio.options.headers['Authorization'] = 'Bearer $token';
+    }
+
+    return dio;
   }
 
   /// Map backend role names to frontend role names
@@ -41,65 +88,163 @@ class AuthService {
     }
   }
 
-  // Login API
+  // Login API with automatic URL fallback
   static Future<AuthResponse?> login(String email, String password) async {
-    try {
-      print('Attempting to login with email: $email');
-      print('Using base URL: $effectiveBaseUrl');
-      final response = await _dio.post(
-        AppConfig.loginEndpoint,
-        data: {'email': email.trim(), 'password': password},
-      );
+    // List of URLs to try (in order)
+    final urlsToTry = <String>[];
 
-      print('Login response status: ${response.statusCode}');
-      print('Login response data: ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = response.data;
-        final tempResponse = AuthResponse.fromJson(data);
-
-        // Map role from backend to frontend format
-        final mappedRole = mapRole(tempResponse.data.role);
-        final mappedUserData = UserData(
-          id: tempResponse.data.id,
-          firstName: tempResponse.data.firstName,
-          lastName: tempResponse.data.lastName,
-          email: tempResponse.data.email,
-          phone: tempResponse.data.phone,
-          role: mappedRole,
-          needsProfileCompletion: tempResponse.data.needsProfileCompletion,
-          needsProfileForm: tempResponse.data.needsProfileForm,
-          needsTeamForm: tempResponse.data.needsTeamForm,
-        );
-
-        final authResponse = AuthResponse(
-          message: tempResponse.message,
-          data: mappedUserData,
-          token: tempResponse.token,
-        );
-
-        // Save token for future requests
-        await saveToken(authResponse.token);
-
-        return authResponse;
-      } else {
-        print(
-          'Login failed with status: ${response.statusCode}, message: ${response.statusMessage}',
-        );
-        return null;
-      }
-    } on DioException catch (e) {
-      print('Login Dio error: ${e.message}');
-      if (e.response != null) {
-        print('Error response status: ${e.response?.statusCode}');
-        print('Error response data: ${e.response?.data}');
-      }
-      rethrow; // Re-throw to let AuthProvider handle the error
-    } catch (e) {
-      print('Login general error: $e');
-      // Return null to indicate login failure
-      return null;
+    if (Platform.isAndroid) {
+      // For Android, try multiple URLs in order
+      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      urlsToTry.add(
+        'http://localhost:3000/api',
+      ); // ADB port forwarding (try first)
+      urlsToTry.add(
+        'http://127.0.0.1:3000/api',
+      ); // 127.0.0.1 (ADB port forwarding)
+      urlsToTry.add('http://10.0.2.2:3000/api'); // Emulator IP
+      urlsToTry.add('http://192.168.18.26:3000/api'); // Network IP
+    } else if (Platform.isIOS) {
+      urlsToTry.add('http://localhost:3000/api'); // iOS Simulator
+      urlsToTry.add('http://127.0.0.1:3000/api'); // Fallback
+    } else {
+      urlsToTry.add(AppConfig.baseUrl); // Default
     }
+
+    DioException? lastError;
+
+    // Try each URL until one works
+    for (final url in urlsToTry) {
+      try {
+        print('=== LOGIN ATTEMPT ===');
+        print('Email: $email');
+        print(
+          'Platform: ${Platform.isAndroid
+              ? "Android"
+              : Platform.isIOS
+              ? "iOS"
+              : "Other"}',
+        );
+        print('Trying URL: $url');
+        print('Full login URL: $url${AppConfig.loginEndpoint}');
+        print('Connect timeout: ${AppConfig.connectTimeout.inSeconds}s');
+        print('===================');
+
+        // Create a fresh Dio instance for this attempt
+        final dio = Dio(
+          BaseOptions(
+            baseUrl: url,
+            connectTimeout: const Duration(
+              seconds: 15,
+            ), // Faster timeout for quick fallback
+            receiveTimeout: const Duration(seconds: 15),
+            sendTimeout: const Duration(seconds: 15),
+            headers: {'Content-Type': 'application/json'},
+            // Additional options for better connectivity
+            followRedirects: true,
+            maxRedirects: 5,
+          ),
+        );
+
+        final response = await dio.post(
+          AppConfig.loginEndpoint,
+          data: {'email': email.trim(), 'password': password},
+        );
+
+        print('✅ Login successful with URL: $url');
+        print('Login response status: ${response.statusCode}');
+        print('Login response data: ${response.data}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = response.data;
+          final tempResponse = AuthResponse.fromJson(data);
+
+          // Map role from backend to frontend format
+          final mappedRole = mapRole(tempResponse.data.role);
+          final mappedUserData = UserData(
+            id: tempResponse.data.id,
+            firstName: tempResponse.data.firstName,
+            lastName: tempResponse.data.lastName,
+            email: tempResponse.data.email,
+            phone: tempResponse.data.phone,
+            role: mappedRole,
+            needsProfileCompletion: tempResponse.data.needsProfileCompletion,
+            needsProfileForm: tempResponse.data.needsProfileForm,
+            needsTeamForm: tempResponse.data.needsTeamForm,
+          );
+
+          final authResponse = AuthResponse(
+            message: tempResponse.message,
+            data: mappedUserData,
+            token: tempResponse.token,
+          );
+
+          // Save token and working URL for future requests
+          await saveToken(authResponse.token);
+          // Save the working URL for other services to use
+          _workingBaseUrl = url;
+          print('💾 Saved working base URL: $url');
+          // Update the main Dio instance with working URL
+          _dioInstance?.options.baseUrl = url;
+          if (_dioInstance != null) {
+            _dioInstance!.options.baseUrl = url;
+          }
+
+          return authResponse;
+        } else {
+          print(
+            'Login failed with status: ${response.statusCode}, message: ${response.statusMessage}',
+          );
+          return null;
+        }
+      } on DioException catch (e) {
+        print('❌ Failed with URL: $url');
+        print('Error: ${e.message}');
+        print('Error type: ${e.type}');
+        lastError = e;
+
+        // If this is not the last URL, continue to next
+        if (url != urlsToTry.last) {
+          print('Trying next URL...');
+          continue;
+        }
+
+        // If all URLs failed, throw the last error
+        rethrow;
+      } catch (e) {
+        print('❌ Unexpected error with URL: $url');
+        print('Error: $e');
+        if (url != urlsToTry.last) {
+          continue;
+        }
+        rethrow;
+      }
+    }
+
+    // If we get here, all URLs failed
+    print('❌ All URLs failed. Last error: ${lastError?.message}');
+
+    // Final error handling
+    if (lastError != null) {
+      print('Login Dio error: ${lastError.message}');
+      print('Error type: ${lastError.type}');
+
+      // Handle different error types
+      if (lastError.type == DioExceptionType.connectionTimeout ||
+          lastError.type == DioExceptionType.sendTimeout ||
+          lastError.type == DioExceptionType.receiveTimeout) {
+        print('Connection timeout - All URLs failed');
+        print('Tried URLs:');
+        for (final url in urlsToTry) {
+          print('  - $url');
+        }
+      }
+
+      // Re-throw to let AuthProvider handle the error
+      throw lastError;
+    }
+
+    return null;
   }
 
   // Register API
@@ -107,6 +252,15 @@ class AuthService {
     try {
       print('Attempting to register user with email: ${userData['email']}');
       print('Using base URL: $effectiveBaseUrl');
+      print(
+        'Full register URL: ${AppConfig.getApiUrl(AppConfig.registerEndpoint)}',
+      );
+
+      // Ensure Dio instance has updated timeouts
+      _dio.options.connectTimeout = AppConfig.connectTimeout;
+      _dio.options.receiveTimeout = AppConfig.receiveTimeout;
+      _dio.options.sendTimeout = AppConfig.sendTimeout;
+
       final response = await _dio.post(
         AppConfig.registerEndpoint,
         data: userData,
@@ -125,11 +279,28 @@ class AuthService {
         return null;
       }
     } on DioException catch (e) {
-      print('Registration error: ${e.message}');
+      print('Registration Dio error: ${e.message}');
+      print('Error type: ${e.type}');
+
+      // Handle different error types
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        print(
+          'Connection timeout - Check if server is running at: $effectiveBaseUrl',
+        );
+      } else if (e.type == DioExceptionType.connectionError) {
+        print('Connection error - Server might be unreachable');
+      }
+
+      if (e.response != null) {
+        print('Error response status: ${e.response?.statusCode}');
+        print('Error response data: ${e.response?.data}');
+      }
       // Return null to indicate registration failure
       return null;
     } catch (e) {
-      print('Registration error: $e');
+      print('Registration general error: $e');
       // Return null to indicate registration failure
       return null;
     }
@@ -153,8 +324,34 @@ class AuthService {
     await prefs.remove('auth_token');
   }
 
+  // Track if interceptors are already configured
+  static bool _interceptorsConfigured = false;
+
   // Configure Dio with interceptors
   static void configureDio() {
+    // Prevent duplicate interceptors
+    if (_interceptorsConfigured) {
+      return;
+    }
+
+    // Ensure baseUrl and timeouts are set correctly
+    _dio.options.baseUrl = AppConfig.baseUrl; // Use getter to get current URL
+    _dio.options.connectTimeout = AppConfig.connectTimeout;
+    _dio.options.receiveTimeout = AppConfig.receiveTimeout;
+    _dio.options.sendTimeout = AppConfig.sendTimeout;
+
+    print('=== DIO CONFIGURATION ===');
+    print('Base URL: ${_dio.options.baseUrl}');
+    print(
+      'Platform: ${Platform.isAndroid
+          ? "Android"
+          : Platform.isIOS
+          ? "iOS"
+          : "Other"}',
+    );
+    print('Connect Timeout: ${_dio.options.connectTimeout?.inSeconds ?? 0}s');
+    print('=======================');
+
     // Add interceptor to automatically attach token to requests
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -177,6 +374,27 @@ class AuthService {
         },
       ),
     );
+
+    _interceptorsConfigured = true;
+  }
+
+  // Test server connectivity
+  static Future<bool> testConnection() async {
+    try {
+      print('Testing connection to: $effectiveBaseUrl');
+      final response = await _dio.get(
+        '/test-db',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+      print('Connection test successful: ${response.statusCode}');
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Connection test failed: $e');
+      return false;
+    }
   }
 }
 

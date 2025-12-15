@@ -43,10 +43,155 @@ export async function inviteUser(req: NextRequest) {
     const existing = await User.findOne({ email: emailLower });
     
     if (existing) {
-      console.log("❌ User already exists with email:", emailLower);
-      return NextResponse.json({ 
-        error: "A user with this email already exists. Please use a different email address." 
-      }, { status: 409 });
+      console.log("ℹ️ User already exists with email:", emailLower);
+      console.log("📧 Current role:", (existing as any).role);
+      console.log("📧 Requested role:", role);
+      
+      const mappedRole = mapRoleToSchema(role);
+      
+      // If user already has this role, return success (idempotent)
+      if ((existing as any).role === mappedRole) {
+        console.log("✅ User already has this role. Sending role invitation email.");
+        
+        // Send role invitation email
+        const emailSubject = "PFFL - Role Invitation";
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Role Invitation</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 50%, #1E3A8A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0;">Role Invitation</h1>
+              </div>
+              <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                <p>Hello,</p>
+                <p>You have been invited to join Phoenix Flag Football League as a <strong>${role}</strong>.</p>
+                <p>Your account already exists. You can login with your existing credentials.</p>
+                <p>Please login at: <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login" style="color: #3B82F6;">${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login</a></p>
+                <p>Best regards,<br>The PFFL Team</p>
+              </div>
+            </body>
+          </html>
+        `;
+        
+        const emailText = `
+Role Invitation
+
+You have been invited to join Phoenix Flag Football League as a ${role}.
+
+Your account already exists. You can login with your existing credentials.
+
+Please login at: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
+
+Best regards,
+The PFFL Team
+        `;
+        
+        try {
+          await sendMail({
+            to: email,
+            subject: emailSubject,
+            text: emailText,
+            html: emailHtml,
+          });
+          console.log("✅ Role invitation email sent successfully");
+        } catch (emailError: any) {
+          console.error("Failed to send role invitation email:", emailError);
+          return NextResponse.json(
+            { error: emailError.message || "Failed to send invitation email. Please check your SMTP configuration." },
+            { status: 500 }
+          );
+        }
+        
+        return NextResponse.json(
+          {
+            message: "Role invitation sent successfully",
+            data: {
+              id: (existing as any)._id,
+              email: (existing as any).email,
+              role: (existing as any).role,
+            },
+          },
+          { status: 200 }
+        );
+      }
+      
+      // User exists but has different role - update role and send email
+      console.log("🔄 Updating user role from", (existing as any).role, "to", mappedRole);
+      
+      // Update user role
+      (existing as any).role = mappedRole;
+      await existing.save();
+      
+      // Send role update email
+      const emailSubject = "PFFL - Role Updated";
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Role Updated</title>
+          </head>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 50%, #1E3A8A 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="color: white; margin: 0;">Role Updated</h1>
+            </div>
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+              <p>Hello,</p>
+              <p>Your role in Phoenix Flag Football League has been updated to <strong>${role}</strong>.</p>
+              <p>You can login with your existing credentials.</p>
+              <p>Please login at: <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login" style="color: #3B82F6;">${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login</a></p>
+              <p>Best regards,<br>The PFFL Team</p>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      const emailText = `
+Role Updated
+
+Your role in Phoenix Flag Football League has been updated to ${role}.
+
+You can login with your existing credentials.
+
+Please login at: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login
+
+Best regards,
+The PFFL Team
+      `;
+      
+      try {
+        await sendMail({
+          to: email,
+          subject: emailSubject,
+          text: emailText,
+          html: emailHtml,
+        });
+        console.log("✅ Role update email sent successfully");
+      } catch (emailError: any) {
+        console.error("Failed to send role update email:", emailError);
+        return NextResponse.json(
+          { error: emailError.message || "Failed to send invitation email. Please check your SMTP configuration." },
+          { status: 500 }
+        );
+      }
+      
+      return NextResponse.json(
+        {
+          message: "Role updated and invitation sent successfully",
+          data: {
+            id: (existing as any)._id,
+            email: (existing as any).email,
+            role: mappedRole,
+          },
+        },
+        { status: 200 }
+      );
     }
     
     console.log("✅ Email is available:", emailLower);

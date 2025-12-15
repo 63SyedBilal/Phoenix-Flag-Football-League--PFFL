@@ -19,6 +19,17 @@ class GamesProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _selectedTeamId;
+  
+  // Helper method to safely notify listeners
+  void _safeNotifyListeners() {
+    if (!hasListeners) return; // Check if disposed
+    try {
+      notifyListeners();
+    } catch (e) {
+      // Provider was disposed, ignore
+      debugPrint('GamesProvider: Cannot notify listeners (disposed)');
+    }
+  }
 
   GamesProvider({
     required this.userRole,
@@ -144,19 +155,19 @@ class GamesProvider extends ChangeNotifier {
 
   void selectFilter(String filterId) {
     _selectedFilter = filterId;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   /// Select team for filtering
   void selectTeam(String? teamId) {
     _selectedTeamId = teamId;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   /// Clear team filter
   void clearTeamFilter() {
     _selectedTeamId = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   /// Fetch all leagues from backend
@@ -189,7 +200,7 @@ class GamesProvider extends ChangeNotifier {
     
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       // Fetch leagues and matches in parallel
@@ -203,7 +214,7 @@ class GamesProvider extends ChangeNotifier {
       _errorMessage = 'Failed to load data: ${e.toString()}';
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 

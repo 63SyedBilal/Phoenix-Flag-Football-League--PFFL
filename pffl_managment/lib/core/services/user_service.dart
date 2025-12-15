@@ -1,36 +1,28 @@
 import 'package:dio/dio.dart';
-import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 
 /// Service for user-related API calls
 class UserService {
-  static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: AppConfig.baseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
-
-  /// Get Dio instance with authentication token
+  /// Get Dio instance with authentication token and working URL
   static Future<Dio> _getAuthenticatedDio() async {
-    final token = await AuthService.getToken();
-    if (token != null) {
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-    }
-    return _dio;
+    // Use AuthService's working Dio instance which has the correct URL
+    return await AuthService.getWorkingDio();
   }
 
   /// Fetch users by role
   /// GET /api/user?role=free-agent
   static Future<List<UserModel>> getUsersByRole(String role) async {
     try {
+      print('📡 Fetching users with role: $role');
       final dio = await _getAuthenticatedDio();
+      print('📡 API URL: ${dio.options.baseUrl}/user?role=$role');
+      
       final response = await dio.get(
         '/user',
         queryParameters: {'role': role},
       );
+
+      print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -38,21 +30,25 @@ class UserService {
           final users = (data['data'] as List)
               .map((json) => UserModel.fromJson(json))
               .toList();
+          print('✅ Fetched ${users.length} users with role: $role');
           return users;
         }
+        print('⚠️ No data field in response');
         return [];
       } else {
-        print('Failed to fetch users: ${response.statusMessage}');
+        print('❌ Failed to fetch users: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching users by role: ${e.message}');
+      print('❌ Error fetching users by role: ${e.message}');
+      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
+        print('❌ Error status: ${e.response?.statusCode}');
+        print('❌ Error response: ${e.response?.data}');
       }
       rethrow;
     } catch (e) {
-      print('General error fetching users: $e');
+      print('❌ General error fetching users: $e');
       return [];
     }
   }
@@ -209,22 +205,10 @@ class UserModel {
 
 /// Service for invite-related API calls
 class InviteService {
-  static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: AppConfig.baseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
-
-  /// Get Dio instance with authentication token
+  /// Get Dio instance with authentication token and working URL
   static Future<Dio> _getAuthenticatedDio() async {
-    final token = await AuthService.getToken();
-    if (token != null) {
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-    }
-    return _dio;
+    // Use AuthService's working Dio instance which has the correct URL
+    return await AuthService.getWorkingDio();
   }
 
   /// Send invitation to user by email
@@ -233,36 +217,48 @@ class InviteService {
   /// Returns true for both new user creation (201) and existing user role invitation (200)
   static Future<bool> sendInvite(String email, String role) async {
     try {
+      print('📧 Sending invite to: $email with role: $role');
       final dio = await _getAuthenticatedDio();
+      print('📧 API URL: ${dio.options.baseUrl}/invite');
+      
       final response = await dio.post(
         '/invite',
         data: {
-          'email': email,
+          'email': email.trim(),
           'role': role,
         },
       );
 
+      print('📧 Response status: ${response.statusCode}');
+      print('📧 Response data: ${response.data}');
+
       // Both 200 (existing user - role invitation sent) and 201 (new user created) are success
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Invite sent successfully');
         return true;
       } else {
-        print('Failed to send invite: ${response.statusMessage}');
+        print('❌ Failed to send invite: ${response.statusMessage}');
+        print('❌ Response: ${response.data}');
         return false;
       }
     } on DioException catch (e) {
-      print('Error sending invite: ${e.message}');
+      print('❌ Error sending invite: ${e.message}');
+      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
-        // 409 Conflict is now handled on backend - should not occur for role invitations
-        // But if it does, we'll treat it as an error (e.g., duplicate key error)
+        print('❌ Error status: ${e.response?.statusCode}');
+        print('❌ Error response: ${e.response?.data}');
+        
+        // Handle 409 Conflict - user already exists, but we can still send role invitation
         if (e.response?.statusCode == 409) {
-          print('Conflict error: ${e.response?.data}');
+          print('⚠️ User already exists. This might be expected for role invitations.');
+          // For existing users, we might need a different endpoint or handle differently
+          // For now, return false but log the issue
           return false;
         }
       }
       return false;
     } catch (e) {
-      print('General error sending invite: $e');
+      print('❌ General error sending invite: $e');
       return false;
     }
   }
