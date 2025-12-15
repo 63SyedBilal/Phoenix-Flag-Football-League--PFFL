@@ -22,6 +22,12 @@ import 'package:pffl_managment/features/referee/screens/referee_dashboard.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_keeper_dashboard.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
 import 'package:pffl_managment/screens/games/common/games_screen.dart';
+import 'package:pffl_managment/screens/notification/player_notification/player_notification.dart';
+import 'package:pffl_managment/screens/notification/captain_notification/captain_notification.dart';
+import 'package:pffl_managment/screens/notification/admin_notification/admin_notification.dart';
+import 'package:pffl_managment/screens/notification/referee_notification/referee_notification.dart';
+import 'package:pffl_managment/screens/notification/statkeeper_notification/statkeeper_notification.dart';
+import 'package:pffl_managment/screens/notification/freeagent_notification/freeagent_notification.dart';
 
 import 'app_routes.dart';
 
@@ -117,6 +123,27 @@ class RouteGenerator {
 
       case AppRoutes.freeAgentDashboard:
         return MaterialPageRoute(builder: (_) => const FreeAgentDashboard());
+
+      // Notification Routes
+      case AppRoutes.playerNotification:
+        return MaterialPageRoute(builder: (_) => const PlayerNotification());
+
+      case AppRoutes.captainNotification:
+        return MaterialPageRoute(builder: (_) => const CaptainNotification());
+
+      case AppRoutes.adminNotification:
+        return MaterialPageRoute(builder: (_) => const AdminNotification());
+
+      case AppRoutes.refereeNotification:
+        return MaterialPageRoute(builder: (_) => const RefereeNotification());
+
+      case AppRoutes.statKeeperNotification:
+        return MaterialPageRoute(
+          builder: (_) => const StatKeeperNotification(),
+        );
+
+      case AppRoutes.freeAgentNotification:
+        return MaterialPageRoute(builder: (_) => const FreeAgentNotification());
 
       // Default route
       default:

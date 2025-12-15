@@ -18,9 +18,9 @@ class PlayerMyTeam extends StatelessWidget {
           child: Consumer2<PlayerTeamProvider, AuthProvider>(
             builder: (context, provider, authProvider, child) {
               // Load team data when userId is available and not already loading/loaded
-              if (authProvider.userId.isNotEmpty && 
-                  !provider.isLoading && 
-                  provider.team == null && 
+              if (authProvider.userId.isNotEmpty &&
+                  !provider.isLoading &&
+                  provider.team == null &&
                   provider.errorMessage == null) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   provider.loadTeamData(userId: authProvider.userId);
@@ -39,7 +39,11 @@ class PlayerMyTeam extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           provider.errorMessage!,
@@ -51,7 +55,8 @@ class PlayerMyTeam extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () => provider.refresh(userId: authProvider.userId),
+                          onPressed: () =>
+                              provider.refresh(userId: authProvider.userId),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -106,7 +111,11 @@ class PlayerMyTeam extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TeamInfoSection(team: team),
+                    TeamInfoSection(
+                      team: team,
+                      selectedFormat: provider.selectedFormat,
+                      onFormatChanged: (format) => provider.setFormat(format),
+                    ),
                     const SizedBox(height: 24),
                     ListView.builder(
                       shrinkWrap: true,

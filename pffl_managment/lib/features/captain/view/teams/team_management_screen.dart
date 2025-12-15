@@ -63,7 +63,11 @@ class TeamManagementScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TeamInfoSection(team: team),
+                    TeamInfoSection(
+                      team: team,
+                      selectedFormat: provider.selectedFormat,
+                      onFormatChanged: (format) => provider.setFormat(format),
+                    ),
                     const SizedBox(height: 24),
                     ListView.builder(
                       shrinkWrap: true,
