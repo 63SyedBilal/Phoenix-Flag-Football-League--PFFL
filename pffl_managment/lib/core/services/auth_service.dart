@@ -254,18 +254,18 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
-      // For Android physical device, try localhost first if ADB forwarding is set up
-      // ADB port forwarding (adb reverse tcp:3000 tcp:3000) - fastest option
+      // For Android, prioritize network IP first (works for both emulator and physical device on same WiFi)
       urlsToTry.add(
-        'http://localhost:3000/api',
-      ); // ADB port forwarding (try first)
+        'http://192.168.18.26:3000/api',
+      ); // Network IP (try first - works for both emulator and physical device)
+
+      // ADB port forwarding (adb reverse tcp:3000 tcp:3000) - fastest if set up
+      urlsToTry.add('http://localhost:3000/api'); // ADB port forwarding
       urlsToTry.add(
         'http://127.0.0.1:3000/api',
       ); // 127.0.0.1 (ADB port forwarding fallback)
-      // Network IP - works for physical devices on same WiFi
-      urlsToTry.add(
-        'http://192.168.18.26:3000/api',
-      ); // Network IP (fallback if ADB forwarding not working)
+
+      // Emulator IP (only try if network IP fails)
       urlsToTry.add('http://10.0.2.2:3000/api'); // Emulator IP
     } else if (Platform.isIOS) {
       urlsToTry.add('http://localhost:3000/api'); // iOS Simulator
@@ -293,11 +293,11 @@ class AuthService {
         print('===================');
 
         // Create a fresh Dio instance for this attempt
-        // Use shorter timeout for faster fallback (10 seconds per URL)
+        // Use shorter timeout for faster fallback (5 seconds per URL for faster switching)
         final dio = Dio(
           BaseOptions(
             baseUrl: url,
-            connectTimeout: const Duration(seconds: 10),
+            connectTimeout: const Duration(seconds: 5),
             receiveTimeout: const Duration(seconds: 10),
             sendTimeout: const Duration(seconds: 10),
             headers: {'Content-Type': 'application/json'},
