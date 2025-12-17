@@ -94,16 +94,17 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
-      // For Android, try multiple URLs in order
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      // For Android physical device, prioritize network IP
+      // Network IP works best for physical devices on same WiFi
       urlsToTry.add(
-        'http://localhost:3000/api',
-      ); // ADB port forwarding (try first)
+        'http://192.168.18.26:3000/api',
+      ); // Network IP (first priority for physical device)
+      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      urlsToTry.add('http://localhost:3000/api'); // ADB port forwarding
       urlsToTry.add(
         'http://127.0.0.1:3000/api',
       ); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add('http://10.0.2.2:3000/api'); // Emulator IP
-      urlsToTry.add('http://192.168.18.26:3000/api'); // Network IP
     } else if (Platform.isIOS) {
       urlsToTry.add('http://localhost:3000/api'); // iOS Simulator
       urlsToTry.add('http://127.0.0.1:3000/api'); // Fallback
@@ -135,8 +136,8 @@ class AuthService {
           BaseOptions(
             baseUrl: url,
             connectTimeout: const Duration(
-              seconds: 15,
-            ), // Faster timeout for quick fallback
+              seconds: 30,
+            ), // Increased timeout for network connections
             receiveTimeout: const Duration(seconds: 15),
             sendTimeout: const Duration(seconds: 15),
             headers: {'Content-Type': 'application/json'},
