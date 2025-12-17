@@ -3,6 +3,7 @@ import 'package:pffl_managment/core/providers/bottom_nevigation_provider/admin_n
 import 'package:pffl_managment/features/admin/provider/dashboard_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 class AdminHeaderWidget extends StatelessWidget {
   const AdminHeaderWidget({super.key});
@@ -126,7 +127,9 @@ class NotificationButton extends StatelessWidget {
     final scaffoldBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
 
     return GestureDetector(
-      onTap: () => viewModel.toggleNotifications(),
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.adminNotification);
+      },
       child: Container(
         width: 45,
         height: 45,

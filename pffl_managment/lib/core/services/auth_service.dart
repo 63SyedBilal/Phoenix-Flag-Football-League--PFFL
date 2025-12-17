@@ -94,16 +94,17 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
-      // For Android, try multiple URLs in order
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      // For Android physical device, prioritize network IP
+      // Network IP works best for physical devices on same WiFi
       urlsToTry.add(
-        'http://localhost:3000/api',
-      ); // ADB port forwarding (try first)
+        'http://192.168.18.26:3000/api',
+      ); // Network IP (first priority for physical device)
+      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      urlsToTry.add('http://localhost:3000/api'); // ADB port forwarding
       urlsToTry.add(
         'http://127.0.0.1:3000/api',
       ); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add('http://10.0.2.2:3000/api'); // Emulator IP
-      urlsToTry.add('http://192.168.18.26:3000/api'); // Network IP
     } else if (Platform.isIOS) {
       urlsToTry.add('http://localhost:3000/api'); // iOS Simulator
       urlsToTry.add('http://127.0.0.1:3000/api'); // Fallback
@@ -135,8 +136,8 @@ class AuthService {
           BaseOptions(
             baseUrl: url,
             connectTimeout: const Duration(
-              seconds: 15,
-            ), // Faster timeout for quick fallback
+              seconds: 30,
+            ), // Increased timeout for network connections
             receiveTimeout: const Duration(seconds: 15),
             sendTimeout: const Duration(seconds: 15),
             headers: {'Content-Type': 'application/json'},
@@ -247,63 +248,142 @@ class AuthService {
     return null;
   }
 
-  // Register API
+  // Register API with automatic URL fallback (same as login)
   static Future<AuthResponse?> register(Map<String, dynamic> userData) async {
-    try {
-      print('Attempting to register user with email: ${userData['email']}');
-      print('Using base URL: $effectiveBaseUrl');
-      print(
-        'Full register URL: ${AppConfig.getApiUrl(AppConfig.registerEndpoint)}',
-      );
+    // List of URLs to try (in order) - prioritize localhost if ADB forwarding is set up
+    final urlsToTry = <String>[];
 
-      // Ensure Dio instance has updated timeouts
-      _dio.options.connectTimeout = AppConfig.connectTimeout;
-      _dio.options.receiveTimeout = AppConfig.receiveTimeout;
-      _dio.options.sendTimeout = AppConfig.sendTimeout;
+    if (Platform.isAndroid) {
+      // For Android physical device, try localhost first if ADB forwarding is set up
+      // ADB port forwarding (adb reverse tcp:3000 tcp:3000) - fastest option
+      urlsToTry.add(
+        'http://localhost:3000/api',
+      ); // ADB port forwarding (try first)
+      urlsToTry.add(
+        'http://127.0.0.1:3000/api',
+      ); // 127.0.0.1 (ADB port forwarding fallback)
+      // Network IP - works for physical devices on same WiFi
+      urlsToTry.add(
+        'http://192.168.18.26:3000/api',
+      ); // Network IP (fallback if ADB forwarding not working)
+      urlsToTry.add('http://10.0.2.2:3000/api'); // Emulator IP
+    } else if (Platform.isIOS) {
+      urlsToTry.add('http://localhost:3000/api'); // iOS Simulator
+      urlsToTry.add('http://127.0.0.1:3000/api'); // Fallback
+    } else {
+      urlsToTry.add(AppConfig.baseUrl); // Default
+    }
 
-      final response = await _dio.post(
-        AppConfig.registerEndpoint,
-        data: userData,
-      );
+    DioException? lastError;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = response.data;
-        final authResponse = AuthResponse.fromJson(data);
+    // Try each URL until one works
+    for (final url in urlsToTry) {
+      try {
+        print('=== REGISTER ATTEMPT ===');
+        print('Email: ${userData['email']}');
+        print(
+          'Platform: ${Platform.isAndroid
+              ? "Android"
+              : Platform.isIOS
+              ? "iOS"
+              : "Other"}',
+        );
+        print('Trying URL: $url');
+        print('Full register URL: $url${AppConfig.registerEndpoint}');
+        print('===================');
 
-        // Save token for future requests
-        await saveToken(authResponse.token);
+        // Create a fresh Dio instance for this attempt
+        // Use shorter timeout for faster fallback (10 seconds per URL)
+        final dio = Dio(
+          BaseOptions(
+            baseUrl: url,
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+            sendTimeout: const Duration(seconds: 10),
+            headers: {'Content-Type': 'application/json'},
+            followRedirects: true,
+            maxRedirects: 5,
+          ),
+        );
 
-        return authResponse;
-      } else {
-        print('Registration failed: ${response.statusMessage}');
-        return null;
+        final response = await dio.post(
+          AppConfig.registerEndpoint,
+          data: userData,
+        );
+
+        print('✅ Register successful with URL: $url');
+        print('Register response status: ${response.statusCode}');
+        print('Register response data: ${response.data}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = response.data;
+          final authResponse = AuthResponse.fromJson(data);
+
+          // Save token for future requests
+          await saveToken(authResponse.token);
+
+          // Save the working URL for other services to use
+          _workingBaseUrl = url;
+          print('💾 Saved working base URL: $url');
+          // Update the main Dio instance with working URL
+          _dioInstance?.options.baseUrl = url;
+          if (_dioInstance != null) {
+            _dioInstance!.options.baseUrl = url;
+          }
+
+          return authResponse;
+        } else {
+          print('Registration failed with status: ${response.statusCode}');
+          return null;
+        }
+      } on DioException catch (e) {
+        print('❌ Failed with URL: $url');
+        print('Error: ${e.message}');
+        print('Error type: ${e.type}');
+        lastError = e;
+
+        // If this is not the last URL, continue to next
+        if (url != urlsToTry.last) {
+          print('Trying next URL...');
+          continue;
+        }
+
+        // If all URLs failed, throw the last error
+        rethrow;
+      } catch (e) {
+        print('❌ Unexpected error with URL: $url');
+        print('Error: $e');
+        if (url != urlsToTry.last) {
+          continue;
+        }
+        rethrow;
       }
-    } on DioException catch (e) {
-      print('Registration Dio error: ${e.message}');
-      print('Error type: ${e.type}');
+    }
+
+    // If we get here, all URLs failed
+    print('❌ All URLs failed. Last error: ${lastError?.message}');
+
+    // Final error handling
+    if (lastError != null) {
+      print('Register Dio error: ${lastError.message}');
+      print('Error type: ${lastError.type}');
 
       // Handle different error types
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        print(
-          'Connection timeout - Check if server is running at: $effectiveBaseUrl',
-        );
-      } else if (e.type == DioExceptionType.connectionError) {
-        print('Connection error - Server might be unreachable');
+      if (lastError.type == DioExceptionType.connectionTimeout ||
+          lastError.type == DioExceptionType.sendTimeout ||
+          lastError.type == DioExceptionType.receiveTimeout) {
+        print('Connection timeout - All URLs failed');
+        print('Tried URLs:');
+        for (final url in urlsToTry) {
+          print('  - $url');
+        }
       }
 
-      if (e.response != null) {
-        print('Error response status: ${e.response?.statusCode}');
-        print('Error response data: ${e.response?.data}');
-      }
-      // Return null to indicate registration failure
-      return null;
-    } catch (e) {
-      print('Registration general error: $e');
-      // Return null to indicate registration failure
-      return null;
+      // Re-throw to let SignupProvider handle the error
+      throw lastError;
     }
+
+    return null;
   }
 
   // Method to store token for future requests

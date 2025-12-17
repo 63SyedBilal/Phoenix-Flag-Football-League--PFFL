@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
-import 'package:provider/provider.dart';
 import '../../../model/team_model.dart';
-import '../../../providers/captain_team_provider.dart';
 
 class TeamInfoSection extends StatelessWidget {
   final TeamModel team;
+  final String? selectedFormat;
+  final Function(String)? onFormatChanged;
   final GlobalKey _iconKey = GlobalKey();
 
-  TeamInfoSection({super.key, required this.team});
+  TeamInfoSection({
+    super.key,
+    required this.team,
+    this.selectedFormat,
+    this.onFormatChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +35,25 @@ class TeamInfoSection extends StatelessWidget {
                       style: BorderStyle.none,
                     ),
                   ),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: const Icon(Icons.shield, color: Colors.black),
-                  ),
+                  child: team.logoUrl != null && team.logoUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            team.logoUrl!,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: const Icon(Icons.shield, color: Colors.black),
+                              );
+                            },
+                          ),
+                        )
+                      : CircleAvatar(
+                          backgroundColor: Colors.white,
+                          child: const Icon(Icons.shield, color: Colors.black),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -178,28 +198,27 @@ class TeamInfoSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Consumer<CaptainTeamProvider>(
-          builder: (context, provider, child) {
-            return Row(
-              children: [
-                _buildFormatBadge(
-                  context,
-                  label: '5v5',
-                  isSelected: provider.selectedFormat == '5v5',
-                  onTap: () => provider.setFormat('5v5'),
-                ),
-                const SizedBox(width: 8),
-                _buildFormatBadge(
-                  context,
-                  label: '7v7',
-                  isSelected: provider.selectedFormat == '7v7',
-                  onTap: () => provider.setFormat('7v7'),
-                ),
-              ],
-            );
-          },
-        ),
+        // Format selection (only show if format callbacks are provided)
+        if (selectedFormat != null && onFormatChanged != null) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildFormatBadge(
+                context,
+                label: '5v5',
+                isSelected: selectedFormat == '5v5',
+                onTap: () => onFormatChanged!('5v5'),
+              ),
+              const SizedBox(width: 8),
+              _buildFormatBadge(
+                context,
+                label: '7v7',
+                isSelected: selectedFormat == '7v7',
+                onTap: () => onFormatChanged!('7v7'),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

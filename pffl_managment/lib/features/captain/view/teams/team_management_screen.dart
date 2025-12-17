@@ -20,9 +20,42 @@ class TeamManagementScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              if (provider.errorMessage != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          provider.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => provider.refresh(),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               final team = provider.team;
               if (team == null) {
-                return const Center(child: Text('Failed to load team data'));
+                return const Center(
+                  child: Text(
+                    'No team found. Please create a team first.',
+                    textAlign: TextAlign.center,
+                  ),
+                );
               }
 
               return SingleChildScrollView(
@@ -30,7 +63,11 @@ class TeamManagementScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TeamInfoSection(team: team),
+                    TeamInfoSection(
+                      team: team,
+                      selectedFormat: provider.selectedFormat,
+                      onFormatChanged: (format) => provider.setFormat(format),
+                    ),
                     const SizedBox(height: 24),
                     ListView.builder(
                       shrinkWrap: true,

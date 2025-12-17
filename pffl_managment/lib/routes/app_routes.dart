@@ -14,6 +14,8 @@ class AppRoutes {
 
   // Captain Routes
   static const String captainDashboard = '/captain/dashboard';
+  static const String captainCreateTeam = '/captain/create-team';
+  static const String captainInvite = '/captain/invite';
   static const String captainTeamManagement = '/captain/team-management';
   static const String captainGameScheduling = '/captain/game-scheduling';
   static const String captainLeagueDetail = '/captain/league-detail';
@@ -41,6 +43,14 @@ class AppRoutes {
 
   // Free Agent Routes
   static const String freeAgentDashboard = '/free-agent/dashboard';
+
+  // Notification Routes
+  static const String playerNotification = '/player/notifications';
+  static const String captainNotification = '/captain/notifications';
+  static const String adminNotification = '/admin/notifications';
+  static const String refereeNotification = '/referee/notifications';
+  static const String statKeeperNotification = '/stat-keeper/notifications';
+  static const String freeAgentNotification = '/free-agent/notifications';
 
   // Common Routes
   static const String home = '/';

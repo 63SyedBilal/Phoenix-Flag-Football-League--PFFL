@@ -3,17 +3,80 @@ import 'player_model.dart';
 class TeamModel {
   final String id;
   final String name;
-  final String logoUrl;
-  final String format;
+  final String? logoUrl; // Can be null if no image uploaded
+  final String format; // '5v5' or '7v7'
   final List<PlayerModel> players;
-  final int maxPlayers;
+  final int maxPlayers; // 8 for 5v5, 12 for 7v7
 
   TeamModel({
     required this.id,
     required this.name,
-    required this.logoUrl,
+    this.logoUrl,
     required this.format,
     required this.players,
     required this.maxPlayers,
   });
+
+  factory TeamModel.fromJson(Map<String, dynamic> json, String format) {
+    final teamId = json['_id']?.toString() ?? json['id']?.toString() ?? '';
+    final teamName = json['teamName'] ?? json['name'] ?? '';
+    final image = json['image'] as String?;
+    
+    // Get squad based on format
+    final squadField = format == '5v5' ? 'squad5v5' : 'squad7v7';
+    final squad = json[squadField] as List<dynamic>? ?? [];
+    
+    // Get captain
+    final captain = json['captain'] as Map<String, dynamic>?;
+    
+    // Map players from squad
+    final players = <PlayerModel>[];
+    
+    // Add captain first if exists
+    if (captain != null) {
+      final captainId = captain['_id']?.toString() ?? captain['id']?.toString() ?? '';
+      final captainFirstName = captain['firstName'] ?? '';
+      final captainLastName = captain['lastName'] ?? '';
+      final captainEmail = captain['email'] ?? '';
+      
+      players.add(PlayerModel(
+        id: captainId,
+        name: '$captainFirstName $captainLastName'.trim(),
+        number: '', // Will be updated from profile
+        email: captainEmail,
+        position: '', // Will be updated from profile
+        isCaptain: true,
+      ));
+    }
+    
+    // Add squad players
+    for (var playerData in squad) {
+      if (playerData is Map<String, dynamic>) {
+        final playerId = playerData['_id']?.toString() ?? playerData['id']?.toString() ?? '';
+        final firstName = playerData['firstName'] ?? '';
+        final lastName = playerData['lastName'] ?? '';
+        final email = playerData['email'] ?? '';
+        
+        players.add(PlayerModel(
+          id: playerId,
+          name: '$firstName $lastName'.trim(),
+          number: '', // Will be updated from profile
+          email: email,
+          position: '', // Will be updated from profile
+          isCaptain: false,
+        ));
+      }
+    }
+    
+    final maxPlayers = format == '5v5' ? 8 : 12;
+    
+    return TeamModel(
+      id: teamId,
+      name: teamName,
+      logoUrl: image?.isNotEmpty == true ? image : null,
+      format: format,
+      players: players,
+      maxPlayers: maxPlayers,
+    );
+  }
 }

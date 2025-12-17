@@ -10,8 +10,9 @@ const TeamSchema = new mongoose.Schema(
 
     enterCode: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
+      sparse: true, // Allow multiple null/undefined values
       trim: true
     },
 

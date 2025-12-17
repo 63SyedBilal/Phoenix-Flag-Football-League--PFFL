@@ -45,10 +45,29 @@ export async function createTeam(req: NextRequest) {
       return NextResponse.json({ error: "Team already exists for this captain" }, { status: 409 });
     }
 
-    // Check if enterCode already exists
-    const existingCode = await Team.findOne({ enterCode: enterCode?.trim() });
-    if (existingCode) {
-      return NextResponse.json({ error: "Enter code already exists" }, { status: 409 });
+    // Auto-generate enterCode if not provided
+    let finalEnterCode = enterCode?.trim();
+    if (!finalEnterCode || finalEnterCode === '') {
+      // Generate a unique code based on team name and timestamp
+      const timestamp = Date.now().toString().slice(-6); // Last 6 digits
+      const teamNameCode = teamName.trim().substring(0, Math.min(3, teamName.length)).toUpperCase().replace(/[^A-Z0-9]/g, '');
+      finalEnterCode = `${teamNameCode}${timestamp}`;
+    }
+
+    // Check if enterCode already exists, regenerate if needed
+    let codeExists = true;
+    let attempts = 0;
+    while (codeExists && attempts < 10) {
+      const existingCode = await Team.findOne({ enterCode: finalEnterCode });
+      if (!existingCode) {
+        codeExists = false;
+      } else {
+        // If code exists, generate a new one
+        const timestamp = Date.now().toString().slice(-6);
+        const teamNameCode = teamName.trim().substring(0, Math.min(3, teamName.length)).toUpperCase().replace(/[^A-Z0-9]/g, '');
+        finalEnterCode = `${teamNameCode}${timestamp}${attempts}`;
+        attempts++;
+      }
     }
 
     // Validate squad5v5 if provided
@@ -75,13 +94,13 @@ export async function createTeam(req: NextRequest) {
       }
     }
 
-    if (!teamName || !enterCode || !location) {
-      return NextResponse.json({ error: "Team name, enter code, and location are required" }, { status: 400 });
+    if (!teamName || !location) {
+      return NextResponse.json({ error: "Team name and location are required" }, { status: 400 });
     }
 
     const teamData: any = {
       teamName: teamName.trim(),
-      enterCode: enterCode.trim(),
+      enterCode: finalEnterCode,
       location: location.trim(),
       skillLevel: skillLevel || "beginner",
       image: image || "",

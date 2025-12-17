@@ -6,6 +6,7 @@ import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/left_alaign_button.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/core/utils/svg_icons.dart';
+import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
@@ -75,7 +76,10 @@ class LoginScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           authProvider.loginEmailError!,
-                          style: const TextStyle(color: Colors.red, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],
@@ -121,7 +125,10 @@ class LoginScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           authProvider.loginPasswordError!,
-                          style: const TextStyle(color: Colors.red, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],
@@ -144,7 +151,10 @@ class LoginScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           authProvider.loginGeneralError!,
-                          style: const TextStyle(color: Colors.red, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],
@@ -173,10 +183,24 @@ class LoginScreen extends StatelessWidget {
                           route = AppRoutes.refereeDashboard;
                           break;
                         case 'captain':
-                          route = AppRoutes.captainDashboard;
+                          // Check if profile or team form is needed for Captain role
+                          if (authProvider.needsProfileForm) {
+                            route = AppRoutes.completeProfile;
+                          } else if (authProvider.needsTeamForm) {
+                            route = AppRoutes.captainCreateTeam;
+                          } else {
+                            route = AppRoutes.captainDashboard;
+                          }
                           break;
                         case 'player':
-                          route = AppRoutes.playerDashboard;
+                          // Check if profile is completed for Player role
+                          final isProfileCompleted =
+                              await CompleteProfileProvider.checkProfileCompletion(
+                                authProvider.userId,
+                              );
+                          route = isProfileCompleted
+                              ? AppRoutes.playerDashboard
+                              : AppRoutes.completeProfile;
                           break;
                         case 'statkeeper':
                           route = AppRoutes.statKeeperDashboard;
@@ -187,7 +211,7 @@ class LoginScreen extends StatelessWidget {
                         default:
                           route = AppRoutes.playerDashboard;
                       }
-                      
+
                       Navigator.pushNamedAndRemoveUntil(
                         context,
                         route,
@@ -199,35 +223,35 @@ class LoginScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-              // Center(
-              //   child: GestureDetector(
-              //     onTap: () {
-              //       Navigator.pushNamed(context, AppRoutes.signup);
-              //     },
-              //     child: RichText(
-              //       text: TextSpan(
-              //         style: theme.textTheme.bodyMedium,
-              //         children: [
-              //           TextSpan(
-              //             text: "Don't have an account? ",
-              //             style: TextStyle(
-              //               color: theme.brightness == Brightness.dark
-              //                   ? Colors.white70
-              //                   : Colors.black87,
-              //             ),
-              //           ),
-              //           TextSpan(
-              //             text: "Sign Up",
-              //             style: TextStyle(
-              //               color: theme.primaryColor,
-              //               fontWeight: FontWeight.bold,
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-              //     ),
-              //   ),
-              // ),
+              Center(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.signup);
+                  },
+                  child: RichText(
+                    text: TextSpan(
+                      style: theme.textTheme.bodyMedium,
+                      children: [
+                        TextSpan(
+                          text: "Don't have an account? ",
+                          style: TextStyle(
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.white70
+                                : Colors.black87,
+                          ),
+                        ),
+                        TextSpan(
+                          text: "Create Account",
+                          style: TextStyle(
+                            color: theme.primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

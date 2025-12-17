@@ -88,25 +88,30 @@ class CaptainHeaderWidget extends StatelessWidget {
                 ),
               ),
               // Notification icon
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: brightness == Brightness.light
-                        ? Colors.grey[300]!
-                        : Colors.grey[700]!,
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.captainNotification);
+                },
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: brightness == Brightness.light
+                          ? Colors.grey[300]!
+                          : Colors.grey[700]!,
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.notifications_outlined,
-                    size: 20,
-                    color: brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
+                  child: Center(
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      size: 20,
+                      color: brightness == Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -114,7 +119,7 @@ class CaptainHeaderWidget extends StatelessWidget {
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.adminInvite);
+                    Navigator.pushNamed(context, AppRoutes.captainInvite);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3B82F6),
@@ -126,11 +131,7 @@ class CaptainHeaderWidget extends StatelessWidget {
                       vertical: 12,
                     ),
                   ),
-                  icon: const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.add, color: Colors.white, size: 18),
                   label: const Text(
                     'Invite',
                     style: TextStyle(

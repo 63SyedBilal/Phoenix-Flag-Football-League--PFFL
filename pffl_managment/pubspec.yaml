@@ -57,6 +57,9 @@ dependencies:
   # File picker for image upload
   file_picker: ^8.0.3
   
+  # Color picker
+  flutter_colorpicker: ^1.0.3
+  
   # Cached network images for better performance
   cached_network_image: ^3.4.1
   

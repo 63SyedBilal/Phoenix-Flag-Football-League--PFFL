@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/services/team_service.dart';
+import 'package:pffl_managment/core/services/profile_service.dart';
 import '../model/player_model.dart';
 import '../model/team_model.dart';
 
@@ -6,10 +8,12 @@ class CaptainTeamProvider extends ChangeNotifier {
   Map<String, TeamModel> _teams = {};
   String _selectedFormat = '5v5';
   bool _isLoading = false;
+  String? _errorMessage;
 
   TeamModel? get team => _teams[_selectedFormat];
   String get selectedFormat => _selectedFormat;
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   CaptainTeamProvider() {
     loadTeamData();
@@ -24,115 +28,112 @@ class CaptainTeamProvider extends ChangeNotifier {
 
   Future<void> loadTeamData() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      // Fetch team data from API
+      final teamData = await TeamService.getTeamByCaptain();
+      
+      if (teamData == null) {
+        _errorMessage = 'No team found. Please create a team first.';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
 
-    // Mock Data
-    _teams = {
-      '5v5': TeamModel(
-        id: 't1',
-        name: 'STA',
-        logoUrl: 'assets/images/image 12.png',
+      // Create TeamModel for both formats
+      final team5v5Base = TeamModel.fromJson(teamData, '5v5');
+      final team7v7Base = TeamModel.fromJson(teamData, '7v7');
+
+      // Fetch profiles for all players to get jersey numbers and positions
+      final enrichedPlayers5v5 = await _enrichPlayersWithProfiles(team5v5Base.players);
+      final enrichedPlayers7v7 = await _enrichPlayersWithProfiles(team7v7Base.players);
+
+      // Create updated team models with enriched players
+      final team5v5 = TeamModel(
+        id: team5v5Base.id,
+        name: team5v5Base.name,
+        logoUrl: team5v5Base.logoUrl,
         format: '5v5',
+        players: enrichedPlayers5v5,
         maxPlayers: 8,
-        players: [
-          PlayerModel(
-            id: 'p1',
-            name: 'James Richardson',
-            number: '10',
-            email: 'james.r@pffl.com',
-            position: 'Rusher',
-            isCaptain: true,
-            isPaid: true,
-            additionalPositionsCount: 5,
-            imageUrl: 'assets/images/image 14.png',
-          ),
-          PlayerModel(
-            id: 'p2',
-            name: 'George Martin',
-            number: '10',
-            email: 'georgemartin.j@pffl.com',
-            position: 'Rusher',
-            isCaptain: false,
-            isPaid: true,
-            isVerified: true,
-            additionalPositionsCount: 5,
-            imageUrl: 'assets/images/image 15.png',
-          ),
-          PlayerModel(
-            id: 'p3',
-            name: 'George Martin',
-            number: '10',
-            email: 'georgemartin.j@pffl.com',
-            position: 'Rusher',
-            isCaptain: false,
-            isPaid: true,
-            isVerified: true,
-            additionalPositionsCount: 5,
-            imageUrl: 'assets/images/image 15.png',
-          ),
-          PlayerModel(
-            id: 'p4',
-            name: 'George Lee',
-            number: '27',
-            email: 'georgelee.j@pffl.com',
-            position: 'Rusher',
-            isCaptain: false,
-            isPaid: false,
-            hasAlert: true,
-            additionalPositionsCount: 5,
-            imageUrl: 'assets/images/image 15.png',
-          ),
-          PlayerModel(
-            id: 'p5',
-            name: 'George Martin',
-            number: '10',
-            email: 'georgemartin.j@pffl.com',
-            position: 'Rusher',
-            isCaptain: false,
-            isPaid: true,
-            hasAlert: true,
-            additionalPositionsCount: 5,
-            imageUrl: 'assets/images/image 15.png',
-          ),
-        ],
-      ),
-      '7v7': TeamModel(
-        id: 't2',
-        name: 'STA 7s',
-        logoUrl: 'assets/images/image 12.png',
-        format: '7v7',
-        maxPlayers: 12,
-        players: [
-          PlayerModel(
-            id: 'p6',
-            name: 'Sarah Connor',
-            number: '01',
-            email: 'sarah.c@pffl.com',
-            position: 'Receiver',
-            isCaptain: true,
-          ),
-          PlayerModel(
-            id: 'p7',
-            name: 'Kyle Reese',
-            number: '02',
-            email: 'kyle.r@pffl.com',
-            position: 'Quarterback',
-          ),
-          PlayerModel(
-            id: 'p8',
-            name: 'John Doe',
-            number: '03',
-            email: 'john.d@pffl.com',
-            position: 'Rusher',
-          ),
-        ],
-      ),
-    };
+      );
 
-    _isLoading = false;
-    notifyListeners();
+      final team7v7 = TeamModel(
+        id: team7v7Base.id,
+        name: team7v7Base.name,
+        logoUrl: team7v7Base.logoUrl,
+        format: '7v7',
+        players: enrichedPlayers7v7,
+        maxPlayers: 12,
+      );
+
+      _teams = {
+        '5v5': team5v5,
+        '7v7': team7v7,
+      };
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Failed to load team data: ${e.toString()}';
+      print('❌ Error loading team data: $e');
+      notifyListeners();
+    }
+  }
+
+  /// Fetch profiles for players to enrich with jersey numbers and positions
+  Future<List<PlayerModel>> _enrichPlayersWithProfiles(List<PlayerModel> players) async {
+    final enrichedPlayers = <PlayerModel>[];
+    
+    for (var player in players) {
+      try {
+        final profile = await ProfileService.getProfile(player.id);
+        if (profile != null) {
+          // Update player with profile data
+          final jerseyNumber = profile['jerseyNumber']?.toString() ?? '';
+          final position = profile['position']?.toString() ?? '';
+          final image = profile['image']?.toString();
+          
+          // Parse position string (can be comma-separated)
+          final positions = position.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+          final primaryPosition = positions.isNotEmpty ? positions[0] : '';
+          final additionalPositionsCount = positions.length > 1 ? positions.length - 1 : 0;
+          
+          // Create updated player model
+          final updatedPlayer = PlayerModel(
+            id: player.id,
+            name: player.name,
+            number: jerseyNumber,
+            email: player.email,
+            position: primaryPosition,
+            isCaptain: player.isCaptain,
+            imageUrl: image,
+            isVerified: player.isVerified,
+            hasAlert: player.hasAlert,
+            isPaid: player.isPaid,
+            additionalPositionsCount: additionalPositionsCount,
+          );
+          
+          enrichedPlayers.add(updatedPlayer);
+        } else {
+          // No profile found, use original player data
+          enrichedPlayers.add(player);
+        }
+      } catch (e) {
+        print('⚠️ Error fetching profile for ${player.id}: $e');
+        // Continue with original player data if profile fetch fails
+        enrichedPlayers.add(player);
+      }
+    }
+    
+    return enrichedPlayers;
+  }
+
+  /// Refresh team data
+  Future<void> refresh() async {
+    await loadTeamData();
   }
 }

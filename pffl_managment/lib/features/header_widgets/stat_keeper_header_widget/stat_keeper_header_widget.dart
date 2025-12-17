@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/stat_keeper_navigation_provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 class StatKeeperHeaderWidget extends StatelessWidget {
   const StatKeeperHeaderWidget({super.key});
@@ -87,25 +88,30 @@ class StatKeeperHeaderWidget extends StatelessWidget {
                 ),
               ),
               // Notification icon
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: brightness == Brightness.light
-                        ? Colors.grey[300]!
-                        : Colors.grey[700]!,
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.statKeeperNotification);
+                },
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: brightness == Brightness.light
+                          ? Colors.grey[300]!
+                          : Colors.grey[700]!,
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.notifications_outlined,
-                    size: 20,
-                    color: brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white,
+                  child: Center(
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      size: 20,
+                      color: brightness == Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+                    ),
                   ),
                 ),
               ),

@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl_phone_field/phone_number.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
-import 'package:pffl_managment/core/utils/helpers.dart';
+import 'package:pffl_managment/core/utils/svg_icons.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
-import 'package:pffl_managment/core/widgets/text_with_text_field.dart';
+import 'package:pffl_managment/core/widgets/custom_text_field.dart';
+import 'package:pffl_managment/core/widgets/password_strength_indicator.dart';
 import 'package:pffl_managment/core/widgets/auth_link.dart';
-import 'package:pffl_managment/routes/app_routes.dart';
-import 'package:intl_phone_field/phone_number.dart';
-import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/features/auth/providers/signup_provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 class CreateAccountScreen extends StatelessWidget {
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
       TextEditingController();
 
   CreateAccountScreen({super.key});
@@ -25,184 +26,350 @@ class CreateAccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final authProvider = Provider.of<AuthProvider>(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ArrowBackButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ),
-        backgroundColor: theme.appBarTheme.backgroundColor,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Join PFFL Today", style: theme.textTheme.headlineLarge),
-            const SizedBox(height: 8),
-            Text(
-              "Create your player account",
-              style: theme.textTheme.titleSmall,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('First Name', style: theme.textTheme.bodyMedium),
-                      const SizedBox(height: 4),
-                      TextWithTextField(
-                        hintText: 'e.g bilal',
-                        controller: firstNameController,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Last Name', style: theme.textTheme.bodyMedium),
-                      const SizedBox(height: 4),
-                      TextWithTextField(
-                        hintText: 'e.g ahmed',
-                        controller: lastNameController,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-
-            Text('Email', style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 4),
-            TextWithTextField(
-              hintText: 'e.g bilal@phoenixleague.com',
-              controller: emailController,
-            ),
-            const SizedBox(height: 18),
-
-            // Phone Number
-            Text('Phone Number', style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 4),
-            CustomPhoneField(
-              onInputChanged: (PhoneNumber number) {
-                // Handle phone number input
-              },
-              onInputValidated: (bool value) {
-                // Handle phone number validation
-              },
-              initialValue: PhoneNumber(
-                countryISOCode: 'US',
-                countryCode: '+1',
-                number: '',
-              ),
-              hintText: 'e.g +1 123 456 7890',
-            ),
-            const SizedBox(height: 18),
-            Text('Create Password', style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 4),
-            TextWithTextField(
-              hintText: 'Create your password',
-              obscureText: !authProvider.isSignupPasswordVisible,
-              controller: passwordController,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  authProvider.isSignupPasswordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: theme.brightness == Brightness.dark
-                      ? Colors.white70
-                      : Colors.grey,
-                ),
-                onPressed: authProvider.toggleSignupPasswordVisibility,
-              ),
-            ),
-            const Text("Password strength:"),
-            SizedBox(height: 18),
-            Text('Confirm Password', style: theme.textTheme.bodyMedium),
-            SizedBox(height: 4),
-            TextWithTextField(
-              hintText: 'Re-enter your password',
-              obscureText: !authProvider.isConfirmPasswordVisible,
-              controller: confirmPasswordController,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  authProvider.isConfirmPasswordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: theme.brightness == Brightness.dark
-                      ? Colors.white70
-                      : Colors.grey,
-                ),
-                onPressed: authProvider.toggleConfirmPasswordVisibility,
-              ),
-            ),
-            Row(
-              children: [
-                Checkbox(
-                  value: false,
-                  onChanged: (value) {},
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                Text(
-                  'I agree to Terms & Privacy',
-                  style: TextStyle(
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.white70
-                        : Color(0xFF9CA3AF),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            CustomButton(
-              backgroundColor: AppColors.primaryColor,
-              textColor: Colors.white,
-              text: 'Create Account',
+    return ChangeNotifierProvider(
+      create: (_) => SignupProvider(),
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ArrowBackButton(
               onPressed: () {
-                final parentContext = context;
-                showCustomBottomSheet(
-                  icon: Icons.check_circle_outline,
-                  context: context,
-                  title: 'Account Created',
-                  subtitle: "Let's set up your player profile to get started.",
-                  buttonText: 'Continue',
-                  onButtonPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushNamed(
-                      parentContext,
-                      AppRoutes.completeProfile,
-                    );
-                  },
-                  content: Container(),
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+          backgroundColor: theme.appBarTheme.backgroundColor,
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Consumer<SignupProvider>(
+              builder: (context, signupProvider, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    Text(
+                      "Join PFFL Today",
+                      style: theme.textTheme.headlineLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Create your account to get started",
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 26),
+
+                    // First Name and Last Name Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'First Name',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              CustomTextField(
+                                controller: _firstNameController,
+                                hintText: 'e.g John',
+                                onChanged: (value) {
+                                  signupProvider.updateFirstName(value);
+                                },
+                              ),
+                              if (signupProvider.firstNameError != null)
+                                _buildErrorContainer(
+                                  signupProvider.firstNameError!,
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Last Name',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              CustomTextField(
+                                controller: _lastNameController,
+                                hintText: 'e.g Doe',
+                                onChanged: (value) {
+                                  signupProvider.updateLastName(value);
+                                },
+                              ),
+                              if (signupProvider.lastNameError != null)
+                                _buildErrorContainer(
+                                  signupProvider.lastNameError!,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Email Field
+                    Text('Email Address', style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 8),
+                    CustomTextField(
+                      controller: _emailController,
+                      hintText: 'e.g john@example.com',
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (value) {
+                        signupProvider.updateEmail(value);
+                      },
+                    ),
+                    if (signupProvider.emailError != null)
+                      _buildErrorContainer(signupProvider.emailError!),
+
+                    const SizedBox(height: 16),
+
+                    // Phone Number Field
+                    Text('Phone Number', style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 8),
+                    CustomPhoneField(
+                      onInputChanged: (PhoneNumber number) {
+                        signupProvider.updatePhoneNumber(number);
+                      },
+                      onInputValidated: (bool value) {
+                        // Validation handled in provider
+                      },
+                      initialValue: PhoneNumber(
+                        countryISOCode: 'US',
+                        countryCode: '+1',
+                        number: '',
+                      ),
+                      hintText: 'e.g +1 123 456 7890',
+                      errorText: signupProvider.phoneError,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Create Password Field
+                    Text('Create Password', style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 8),
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        return CustomTextField(
+                          controller: _passwordController,
+                          hintText: 'Create your password',
+                          obscureText: !authProvider.isSignupPasswordVisible,
+                          onChanged: (value) {
+                            signupProvider.updatePassword(value);
+                          },
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              authProvider.isSignupPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.white70
+                                  : Colors.grey,
+                            ),
+                            onPressed: () {
+                              authProvider.toggleSignupPasswordVisibility();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    // Password Strength Indicator
+                    PasswordStrengthIndicator(
+                      strength: signupProvider.passwordStrength,
+                      password: signupProvider.password,
+                    ),
+                    if (signupProvider.passwordError != null)
+                      _buildErrorContainer(signupProvider.passwordError!),
+
+                    const SizedBox(height: 16),
+
+                    // Confirm Password Field
+                    Text('Confirm Password', style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 8),
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        return CustomTextField(
+                          controller: _confirmPasswordController,
+                          hintText: 'Re-enter your password',
+                          obscureText: !authProvider.isConfirmPasswordVisible,
+                          onChanged: (value) {
+                            signupProvider.updateConfirmPassword(value);
+                          },
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              authProvider.isConfirmPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.white70
+                                  : Colors.grey,
+                            ),
+                            onPressed: () {
+                              authProvider.toggleConfirmPasswordVisibility();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    if (signupProvider.confirmPasswordError != null)
+                      _buildErrorContainer(
+                        signupProvider.confirmPasswordError!,
+                      ),
+
+                    const SizedBox(height: 16),
+
+                    // Agreement Checkbox
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: signupProvider.agreedToTerms,
+                          onChanged: (value) {
+                            signupProvider.updateAgreedToTerms(value ?? false);
+                          },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              signupProvider.updateAgreedToTerms(
+                                !signupProvider.agreedToTerms,
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Text(
+                                'I Agree to Terms & Privacy',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.brightness == Brightness.dark
+                                      ? Colors.white70
+                                      : AppColors.primaryColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (signupProvider.agreementError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+                        child: _buildErrorContainer(
+                          signupProvider.agreementError!,
+                        ),
+                      ),
+
+                    // General Error Message
+                    if (signupProvider.generalError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: _buildErrorContainer(
+                          signupProvider.generalError!,
+                        ),
+                      ),
+
+                    const SizedBox(height: 24),
+
+                    // Create Account Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: CustomButton(
+                        text: 'Create Account',
+                        backgroundColor:
+                            signupProvider.isFormValid &&
+                                !signupProvider.isLoading
+                            ? AppColors.primaryColor
+                            : AppColors.primaryColor.withOpacity(0.5),
+                        textColor: Colors.white,
+                        isLoading: signupProvider.isLoading,
+                        onPressed:
+                            signupProvider.isFormValid &&
+                                !signupProvider.isLoading
+                            ? () =>
+                                  _handleCreateAccount(context, signupProvider)
+                            : () {},
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Login Link
+                    AuthLink(
+                      text: 'Already have an account? ',
+                      linkText: 'Login',
+                      routeName: AppRoutes.login,
+                    ),
+                  ],
                 );
               },
             ),
-            const SizedBox(height: 12),
-            AuthLink(
-              text: 'Already have an account? ',
-              linkText: 'Login',
-              routeName: AppRoutes.login,
-            ),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildErrorContainer(String errorMessage) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: Colors.red, width: 1.0),
+      ),
+      child: Row(
+        children: [
+          SvgIcons.infoFill(size: 16, color: Colors.red),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              errorMessage,
+              style: const TextStyle(color: Colors.red, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleCreateAccount(
+    BuildContext context,
+    SignupProvider signupProvider,
+  ) async {
+    // Hide keyboard
+    FocusScope.of(context).unfocus();
+
+    // Attempt signup
+    final success = await signupProvider.signup(context);
+
+    if (success && context.mounted) {
+      // Show success message and redirect to login
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Please login.'),
+          backgroundColor: AppColors.primaryColor,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Navigate back to login screen
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    }
   }
 }

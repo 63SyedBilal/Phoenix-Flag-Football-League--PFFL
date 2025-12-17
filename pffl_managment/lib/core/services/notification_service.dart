@@ -40,4 +40,54 @@ class NotificationService {
       return [];
     }
   }
+
+  /// Accept a notification/invitation
+  /// PUT /api/notification/accept/:notificationId
+  /// Returns true on success, throws exception on error
+  static Future<bool> acceptNotification(String notificationId) async {
+    try {
+      print('📡 Accepting notification: $notificationId');
+      final dio = await _getAuthenticatedDio();
+      
+      // Use the endpoint format: /notification/accept/:notificationId
+      final endpoint = '/notification/accept/$notificationId';
+      print('📡 Endpoint: $endpoint');
+      print('📡 Full URL: ${dio.options.baseUrl}$endpoint');
+      
+      final response = await dio.put(endpoint);
+
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        print('✅ Notification accepted successfully');
+        return true;
+      } else {
+        final errorMsg = response.data?['error'] ?? response.statusMessage ?? 'Unknown error';
+        print('❌ Failed to accept notification: $errorMsg');
+        throw Exception('Failed to accept notification: $errorMsg');
+      }
+    } on DioException catch (e) {
+      print('❌ DioException type: ${e.type}');
+      print('❌ DioException message: ${e.message}');
+      
+      if (e.response != null) {
+        print('❌ Response status: ${e.response?.statusCode}');
+        print('❌ Response data: ${e.response?.data}');
+        
+        final errorMessage = e.response?.data?['error'] ?? 
+            e.response?.data?['message'] ??
+            'Failed to accept notification: ${e.message}';
+        print('❌ Error message: $errorMessage');
+        throw Exception(errorMessage);
+      } else {
+        final errorMessage = 'Network error: ${e.message}';
+        print('❌ Network error: $errorMessage');
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      print('❌ General error accepting notification: $e');
+      throw Exception('Failed to accept notification: ${e.toString()}');
+    }
+  }
 }
