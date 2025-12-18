@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pffl_managment/core/services/profile_service.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
+import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/config/app_config.dart';
 import 'dart:io';
 
 /// Provider for Complete Profile screen state and business logic
+/// Profile data is stored directly in the User model (no separate Profile collection)
 class CompleteProfileProvider extends ChangeNotifier {
-  // Form fields
+  // Basic user info fields
+  String? _firstName;
+  String? _lastName;
+  String? _email;
+  String? _phone;
+  
+  // Profile fields
   final List<String> _selectedPositions = [];
   String? _jerseyNumber;
   String? _emergencyContactName;
@@ -24,7 +32,13 @@ class CompleteProfileProvider extends ChangeNotifier {
   // Validation state
   final Map<String, String?> _fieldErrors = {};
   
-  // Getters
+  // Getters - Basic info
+  String? get firstName => _firstName;
+  String? get lastName => _lastName;
+  String? get email => _email;
+  String? get phone => _phone;
+  
+  // Getters - Profile fields
   List<String> get selectedPositions => List.unmodifiable(_selectedPositions);
   String get positionsDisplayText {
     if (_selectedPositions.isEmpty) {
@@ -55,35 +69,56 @@ class CompleteProfileProvider extends ChangeNotifier {
         _fieldErrors.isEmpty;
   }
   
-  /// Initialize provider - check if profile already exists
+  /// Initialize provider - load user data and check if profile already exists
   Future<void> initialize() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('userId');
       
       if (userId == null) {
-        print('⚠️ No userId found in SharedPreferences');
+        debugPrint('⚠️ No userId found in SharedPreferences');
         return;
       }
       
-      // Check SharedPreferences first
+      // Load saved user data
+      _firstName = prefs.getString('firstName');
+      _lastName = prefs.getString('lastName');
+      _email = prefs.getString('userEmail');
+      
+      // Check if profile already completed
       final isCompleted = prefs.getBool('profile_completed_$userId');
       if (isCompleted == true) {
-        print('✅ Profile already completed (from SharedPreferences)');
+        debugPrint('✅ Profile already completed');
         return;
       }
-      
-      // Check API if not in SharedPreferences
-      final profile = await ProfileService.getProfile(userId);
-      if (profile != null) {
-        // Profile exists, mark as completed
-        await prefs.setBool('profile_completed_$userId', true);
-        print('✅ Profile already exists (from API)');
-      }
     } catch (e) {
-      print('❌ Error initializing provider: $e');
-      // Don't throw - allow user to proceed with form
+      debugPrint('❌ Error initializing provider: $e');
     }
+  }
+  
+  // Setters for basic info
+  void setFirstName(String? value) {
+    _firstName = value;
+    _clearFieldError('firstName');
+    notifyListeners();
+  }
+  
+  void setLastName(String? value) {
+    _lastName = value;
+    _clearFieldError('lastName');
+    notifyListeners();
+  }
+  
+  void setEmail(String? value) {
+    _email = value;
+    _clearFieldError('email');
+    notifyListeners();
+  }
+  
+  void setPhone(String? value) {
+    _phone = value;
+    _clearFieldError('phone');
+    notifyListeners();
   }
   
   /// Toggle position selection (add if not selected, remove if selected)
@@ -131,14 +166,13 @@ class CompleteProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Set emergency phone (from CustomPhoneField)
+  /// Set emergency phone
   void setEmergencyPhone(String? phone) {
     _emergencyPhone = phone;
     _clearFieldError('emergencyPhone');
     
     // Basic validation
     if (phone != null && phone.isNotEmpty) {
-      // Remove spaces and check if it's a valid phone format
       final cleaned = phone.replaceAll(RegExp(r'\s+'), '');
       if (cleaned.length < 10) {
         _setFieldError('emergencyPhone', 'Please enter a valid phone number');
@@ -217,7 +251,7 @@ class CompleteProfileProvider extends ChangeNotifier {
     return isValid;
   }
   
-  /// Submit profile to backend
+  /// Submit profile to backend - saves directly to User model
   Future<bool> submitProfile() async {
     // Validate form
     if (!_validateForm()) {
@@ -239,23 +273,20 @@ class CompleteProfileProvider extends ChangeNotifier {
           if (await imageFile.exists()) {
             imageUrl = await AdminService.uploadImage(imageFile);
             _profileImageUrl = imageUrl;
-            print('✅ Image uploaded: $imageUrl');
+            debugPrint('✅ Image uploaded: $imageUrl');
           }
         } catch (e) {
-          print('⚠️ Image upload failed: $e');
+          debugPrint('⚠️ Image upload failed: $e');
           // Continue without image - it's optional
         }
       }
       
-      // Prepare profile data
-      // Convert selected positions list to comma-separated string for backend
+      // Prepare profile data - all stored in User model
       final positionString = _selectedPositions.join(', ');
       final profileData = <String, dynamic>{
         'position': positionString,
-        'emergencyNumber': _emergencyContactName!,
-        'emergencyPhoneNumber': _emergencyPhone!,
-        'yearOfExperience': 0,
-        'paymentStatus': 'unpaid',
+        'emergencyContactName': _emergencyContactName!,
+        'emergencyPhone': _emergencyPhone!,
       };
       
       // Add optional fields
@@ -267,30 +298,38 @@ class CompleteProfileProvider extends ChangeNotifier {
       }
       
       if (imageUrl != null && imageUrl.isNotEmpty) {
-        profileData['image'] = imageUrl;
+        profileData['profileImage'] = imageUrl;
       }
       
-      // Create profile via API
-      await ProfileService.createProfile(profileData);
+      // Submit to complete-profile endpoint (updates User model directly)
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.put(
+        AppConfig.completeProfileEndpoint,
+        data: profileData,
+      );
       
-      // Save completion status to SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
-      if (userId != null) {
-        await prefs.setBool('profile_completed_$userId', true);
-        print('✅ Profile completion saved to SharedPreferences');
+      if (response.statusCode == 200) {
+        // Save completion status to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final userId = prefs.getString('userId');
+        if (userId != null) {
+          await prefs.setBool('profile_completed_$userId', true);
+          debugPrint('✅ Profile completion saved to SharedPreferences');
+        }
+        
+        // Show success sheet
+        _showSuccessSheet = true;
+        _isLoading = false;
+        notifyListeners();
+        
+        return true;
+      } else {
+        throw Exception(response.data['error'] ?? 'Failed to complete profile');
       }
-      
-      // Show success sheet
-      _showSuccessSheet = true;
-      _isLoading = false;
-      notifyListeners();
-      
-      return true;
     } catch (e) {
       _isLoading = false;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      print('❌ Error submitting profile: $e');
+      debugPrint('❌ Error submitting profile: $e');
       notifyListeners();
       return false;
     }
@@ -313,17 +352,10 @@ class CompleteProfileProvider extends ChangeNotifier {
         return true;
       }
       
-      // Check API
-      final profile = await ProfileService.getProfile(userId);
-      if (profile != null) {
-        // Save to SharedPreferences for future checks
-        await prefs.setBool('profile_completed_$userId', true);
-        return true;
-      }
-      
+      // Could also check via API if needed
       return false;
     } catch (e) {
-      print('❌ Error checking profile completion: $e');
+      debugPrint('❌ Error checking profile completion: $e');
       return false;
     }
   }
@@ -340,8 +372,6 @@ class CompleteProfileProvider extends ChangeNotifier {
   
   @override
   void dispose() {
-    // Clean up if needed
     super.dispose();
   }
 }
-

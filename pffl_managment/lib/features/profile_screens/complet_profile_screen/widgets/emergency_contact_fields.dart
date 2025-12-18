@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/phone_number.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
+import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 
 /// Emergency contact name and phone fields widget
@@ -90,7 +90,7 @@ class EmergencyContactFields extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            CustomPhoneField(
+            ImprovedPhoneField(
               onInputChanged: (PhoneNumber number) {
                 String fullNumber;
                 if (number.completeNumber.isNotEmpty) {
@@ -105,12 +105,8 @@ class EmergencyContactFields extends StatelessWidget {
               onInputValidated: (bool isValid) {
                 // Validation handled in provider
               },
-              initialValue: PhoneNumber(
-                countryISOCode: 'US',
-                countryCode: '+1',
-                number: '',
-              ),
-              hintText: 'e.g +1 123 456 7890',
+              initialCountryCode: 'US',
+              hintText: 'Enter phone number',
               errorText: phoneError,
             ),
           ],
