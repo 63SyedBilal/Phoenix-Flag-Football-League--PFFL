@@ -357,19 +357,20 @@ class CreateAccountScreen extends StatelessWidget {
     final success = await signupProvider.signup(context);
 
     if (success && context.mounted) {
-      // Show success message and redirect to login
+      // Show success message and redirect to Free Agent active leagues screen
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Account created successfully! Please login.'),
-          backgroundColor: AppColors.primaryColor,
-          duration: Duration(seconds: 3),
+          content: Text('Account created successfully!'),
+          backgroundColor: const Color(0xFF10B981), // Success green color
+          duration: Duration(seconds: 2),
         ),
       );
 
-      // Navigate back to login screen
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+      // Navigate to Free Agent active leagues screen
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.freeAgentActiveLeagues,
+        (route) => false,
+      );
     }
   }
 }

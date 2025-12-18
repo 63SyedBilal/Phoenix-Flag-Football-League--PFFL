@@ -21,6 +21,7 @@ import 'package:pffl_managment/features/player/screens/player_dashboard.dart';
 import 'package:pffl_managment/features/referee/screens/referee_dashboard.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_keeper_dashboard.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
+import 'package:pffl_managment/features/free_agent/screens/free_agent_active_leagues_screen.dart';
 import 'package:pffl_managment/screens/games/common/games_screen.dart';
 import 'package:pffl_managment/screens/notification/player_notification/player_notification.dart';
 import 'package:pffl_managment/screens/notification/captain_notification/captain_notification.dart';
@@ -123,6 +124,11 @@ class RouteGenerator {
 
       case AppRoutes.freeAgentDashboard:
         return MaterialPageRoute(builder: (_) => const FreeAgentDashboard());
+
+      case AppRoutes.freeAgentActiveLeagues:
+        return MaterialPageRoute(
+          builder: (_) => const FreeAgentActiveLeaguesScreen(),
+        );
 
       // Notification Routes
       case AppRoutes.playerNotification:
