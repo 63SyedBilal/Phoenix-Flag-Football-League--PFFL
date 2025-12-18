@@ -63,6 +63,11 @@ class UserService {
     return getUsersByRole('stat-keeper');
   }
 
+  /// Fetch all referees
+  static Future<List<UserModel>> getReferees() async {
+    return getUsersByRole('referee');
+  }
+
   /// Fetch all captains
   static Future<List<UserModel>> getCaptains() async {
     return getUsersByRole('captain');

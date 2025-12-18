@@ -42,6 +42,10 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Map to track email sending status for free agents
   final Map<String, bool> _freeAgentEmailStatus = {};
   
+  // Referees list from API
+  List<UserModel> _referees = [];
+  bool _isLoadingReferees = false;
+  
   // Free agents list from API
   List<UserModel> _freeAgents = [];
   bool _isLoadingFreeAgents = false;
@@ -49,6 +53,10 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Stat keepers list from API
   List<UserModel> _statKeepers = [];
   bool _isLoadingStatKeepers = false;
+  
+  // Referee invitation tracking (sent invites, not selection)
+  final Map<String, bool> _refereeInviteSending = {}; // Currently sending
+  final Map<String, bool> _refereeInviteSent = {}; // Successfully sent
   
   // Teams list from API
   List<TeamModel> _teams = [];
@@ -82,6 +90,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
   List<String> get selectedStatKeeperIds =>
       _selectedStatKeeperIds; // New getter
   List<String> get selectedFreeAgentIds => _selectedFreeAgentIds; // New getter
+  List<UserModel> get referees => _referees;
+  bool get isLoadingReferees => _isLoadingReferees;
   List<UserModel> get freeAgents => _freeAgents;
   bool get isLoadingFreeAgents => _isLoadingFreeAgents;
   String get captainId =>
@@ -101,6 +111,19 @@ class CreateLeagueViewModel extends ChangeNotifier {
   String get leagueNameText => _leagueNameText;
   String get perPlayerFeeText => _perPlayerFeeText;
   String get refereeSearchQuery => _refereeSearchQuery;
+  
+  // Get filtered referees based on search query
+  List<UserModel> get filteredReferees {
+    if (_refereeSearchQuery.isEmpty) {
+      return _referees;
+    }
+    return _referees.where((referee) {
+      final name = referee.displayName.toLowerCase();
+      final email = referee.email.toLowerCase();
+      return name.contains(_refereeSearchQuery) || email.contains(_refereeSearchQuery);
+    }).toList();
+  }
+  
   String get statKeeperSearchQuery => _statKeeperSearchQuery;
   String get freeAgentSearchQuery => _freeAgentSearchQuery;
   List<UserModel> get statKeepers => _statKeepers;
@@ -153,8 +176,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _dateRangeError == null &&
       _minPlayers > 0 &&
       _minPlayersError == null;
-  bool get isStep2Valid =>
-      _selectedFreeAgentIds.isNotEmpty; // At least one free agent must be selected
+  bool get isStep2Valid => true; // No selection required - invitations sent via icon only
   bool get isStep3Valid =>
       _selectedStatKeeperIds.isNotEmpty; // At least one stat keeper must be selected
   bool get isStep4Valid =>
@@ -472,6 +494,73 @@ class CreateLeagueViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Fetch referees from API
+  Future<void> fetchReferees() async {
+    if (_isLoadingReferees) return;
+    
+    _isLoadingReferees = true;
+    notifyListeners();
+
+    try {
+      debugPrint('🔄 Fetching referees...');
+      _referees = await UserService.getReferees();
+      debugPrint('✅ Fetched ${_referees.length} referees');
+    } catch (e) {
+      debugPrint('❌ Error fetching referees: $e');
+      _referees = [];
+    } finally {
+      _isLoadingReferees = false;
+      notifyListeners();
+    }
+  }
+
+  // Check if invitation is being sent to a referee
+  bool isRefereeInviteSending(String refereeId) {
+    return _refereeInviteSending[refereeId] ?? false;
+  }
+
+  // Check if invitation was successfully sent to a referee
+  bool isRefereeInviteSent(String refereeId) {
+    return _refereeInviteSent[refereeId] ?? false;
+  }
+
+  // Send invitation to referee (triggered by icon tap)
+  // Referee will receive notification on their dashboard
+  // When referee accepts, league is assigned to them
+  Future<bool> sendInvitationToReferee(String refereeId) async {
+    // Need leagueId to send invitation
+    if (_leagueId.isEmpty) {
+      debugPrint('⚠️ Cannot send referee invitation: League not created yet');
+      return false;
+    }
+
+    _refereeInviteSending[refereeId] = true;
+    notifyListeners();
+
+    try {
+      debugPrint('📤 Sending invitation to referee: $refereeId for league: $_leagueId');
+      final success = await LeagueService.inviteRefereeToLeague(_leagueId, refereeId);
+      
+      _refereeInviteSending[refereeId] = false;
+      
+      if (success) {
+        _refereeInviteSent[refereeId] = true;
+        debugPrint('✅ Referee invitation sent successfully');
+        notifyListeners();
+        return true;
+      } else {
+        debugPrint('❌ Referee invitation failed');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      debugPrint('❌ Error sending invitation to referee: $e');
+      _refereeInviteSending[refereeId] = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Fetch stat keepers from API
   Future<void> fetchStatKeepers() async {
     if (_isLoadingStatKeepers) return;
@@ -724,11 +813,24 @@ class CreateLeagueViewModel extends ChangeNotifier {
   void nextStep() {
     if (_currentStep < 3) {  // Step 4 is at index 3 (0-indexed: 0,1,2,3)
       _currentStep++;
+      
+      // When reaching Step 2 (Referee Invitation), fetch referees and create league
+      if (_currentStep == 1) {
+        // Create league if not already created (allows invitation icon to work immediately)
+        if (_leagueId.isEmpty && !_isLoading) {
+          _createLeagueInBackground();
+        }
+        // Fetch referees for invitation
+        if (_referees.isEmpty && !_isLoadingReferees) {
+          fetchReferees();
+        }
+      }
+      
       // When reaching Step 4, create league in background so email icon works immediately
       if (_currentStep == 3) {
         // Create league if not already created (allows email icon to work immediately)
         if (_leagueId.isEmpty && !_isLoading) {
-          _createLeagueForStep4();
+          _createLeagueInBackground();
         }
         // Fetch teams when reaching step 4
         if (_teams.isEmpty && !_isLoadingTeams) {
@@ -739,9 +841,9 @@ class CreateLeagueViewModel extends ChangeNotifier {
     }
   }
 
-  /// Create league when entering Step 4 so email icon can work immediately
-  /// Teams can be invited and assigned as soon as Step 4 is reached
-  Future<void> _createLeagueForStep4() async {
+  /// Create league in background so invitation icons can work immediately
+  /// This is called when entering Step 2 (Referee) or Step 4 (Teams)
+  Future<void> _createLeagueInBackground() async {
     if (_leagueId.isNotEmpty) {
       // League already created
       return;
@@ -749,7 +851,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
     // Validate required fields
     if (_leagueName.isEmpty || _startDate == null || _endDate == null) {
-      debugPrint('⚠️ Cannot create league for Step 4: Missing required fields');
+      debugPrint('⚠️ Cannot create league: Missing required fields');
       return;
     }
 
@@ -766,7 +868,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
             logoUrl = await LeagueService.uploadLogo(logoFile);
           }
         } catch (e) {
-          debugPrint('⚠️ Logo upload failed for Step 4: $e');
+          debugPrint('⚠️ Logo upload failed: $e');
           // Continue without logo
         }
       } else if (_selectedLogoId.isNotEmpty) {
@@ -794,13 +896,13 @@ class CreateLeagueViewModel extends ChangeNotifier {
       
       if (leagueResponse != null && leagueResponse.data.id.isNotEmpty) {
         _leagueId = leagueResponse.data.id;
-        debugPrint('✅ League created for Step 4. ID: $_leagueId');
-        debugPrint('✅ Email icon is now enabled - teams can be invited');
+        debugPrint('✅ League created in background. ID: $_leagueId');
+        debugPrint('✅ Invitation icons are now enabled');
       } else {
-        debugPrint('❌ Failed to create league for Step 4');
+        debugPrint('❌ Failed to create league in background');
       }
     } catch (e) {
-      debugPrint('❌ Error creating league for Step 4: $e');
+      debugPrint('❌ Error creating league: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -976,8 +1078,12 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _emailSendingStatus.clear(); // Clear email sending status
     _statKeeperEmailStatus.clear(); // Clear stat keeper email status
     _freeAgentEmailStatus.clear(); // Clear free agent email status
+    _refereeInviteSending.clear(); // Clear referee invite sending status
+    _refereeInviteSent.clear(); // Clear referee invite sent status
     _leagueNameText = '';
     _perPlayerFeeText = '250';
+    _referees = [];
+    _refereeSearchQuery = '';
     _freeAgents = [];
     _freeAgentSearchQuery = '';
     _statKeepers = [];
