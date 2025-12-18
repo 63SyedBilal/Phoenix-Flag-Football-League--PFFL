@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
-import 'package:pffl_managment/core/services/auth_service.dart';
 
 /// Provider for Admin Profile Screen
 class AdminProfileProvider extends ChangeNotifier {

@@ -282,7 +282,7 @@ class FreeAgentLeagueSelectionCard extends StatelessWidget {
 
   /// Build league icon - circular with logo or default icon with dotted border
   Widget _buildLeagueIcon() {
-    final hasLogo = league.teamLogo != null && league.teamLogo!.isNotEmpty;
+    final hasLogo = league.teamLogo.isNotEmpty;
 
     return Container(
       width: 30,
@@ -291,7 +291,7 @@ class FreeAgentLeagueSelectionCard extends StatelessWidget {
       child: hasLogo
           ? ClipOval(
               child: CachedNetworkImage(
-                imageUrl: league.teamLogo!,
+                imageUrl: league.teamLogo,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => _buildDefaultIcon(),
                 errorWidget: (context, url, error) => _buildDefaultIcon(),
