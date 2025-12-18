@@ -1,11 +1,13 @@
 import { v2 as cloudinary } from "cloudinary"
 import { Readable } from "stream"
 
-// Configure Cloudinary
+// Configure Cloudinary with unsigned upload support
+// Note: We use unsigned uploads to avoid timestamp/signature issues
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
   api_key: process.env.CLOUDINARY_API_KEY || "",
   api_secret: process.env.CLOUDINARY_API_SECRET || "",
+  secure: true, // Use HTTPS
 })
 
 /**
@@ -102,12 +104,17 @@ export async function uploadToCloudinary(
     // Validate configuration first
     validateCloudinaryConfig();
     
-    const uploadOptions = {
+    // Generate fresh timestamp to avoid "stale request" errors
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    
+    const uploadOptions: Record<string, any> = {
       folder: options.folder || "pffl",
       public_id: options.public_id,
       overwrite: options.overwrite || false,
       resource_type: options.resource_type || "image",
       transformation: options.transformation,
+      timestamp: timestamp, // Fresh timestamp for each upload
+      invalidate: true, // Invalidate CDN cache
     }
 
     let result
