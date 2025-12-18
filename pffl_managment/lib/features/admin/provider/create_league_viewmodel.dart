@@ -58,6 +58,10 @@ class CreateLeagueViewModel extends ChangeNotifier {
   final Map<String, bool> _refereeInviteSending = {}; // Currently sending
   final Map<String, bool> _refereeInviteSent = {}; // Successfully sent
   
+  // Stat keeper invitation tracking (sent invites, not selection)
+  final Map<String, bool> _statKeeperInviteSending = {}; // Currently sending
+  final Map<String, bool> _statKeeperInviteSent = {}; // Successfully sent
+  
   // Teams list from API
   List<TeamModel> _teams = [];
   bool _isLoadingTeams = false;
@@ -125,6 +129,19 @@ class CreateLeagueViewModel extends ChangeNotifier {
   }
   
   String get statKeeperSearchQuery => _statKeeperSearchQuery;
+  
+  // Get filtered stat keepers based on search query
+  List<UserModel> get filteredStatKeepers {
+    if (_statKeeperSearchQuery.isEmpty) {
+      return _statKeepers;
+    }
+    return _statKeepers.where((statKeeper) {
+      final name = statKeeper.displayName.toLowerCase();
+      final email = statKeeper.email.toLowerCase();
+      return name.contains(_statKeeperSearchQuery) || email.contains(_statKeeperSearchQuery);
+    }).toList();
+  }
+  
   String get freeAgentSearchQuery => _freeAgentSearchQuery;
   List<UserModel> get statKeepers => _statKeepers;
   bool get isLoadingStatKeepers => _isLoadingStatKeepers;
@@ -177,8 +194,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _minPlayers > 0 &&
       _minPlayersError == null;
   bool get isStep2Valid => true; // No selection required - invitations sent via icon only
-  bool get isStep3Valid =>
-      _selectedStatKeeperIds.isNotEmpty; // At least one stat keeper must be selected
+  bool get isStep3Valid => true; // No selection required - invitations sent via icon only
   bool get isStep4Valid =>
       (_entryFeeType != EntryFeeType.perPlayer ||
       (_perPlayerFee > 0 &&
@@ -579,12 +595,59 @@ class CreateLeagueViewModel extends ChangeNotifier {
     }
   }
 
-  // Check if email is being sent to a stat keeper
+  // Check if invitation is being sent to a stat keeper
+  bool isStatKeeperInviteSending(String statKeeperId) {
+    return _statKeeperInviteSending[statKeeperId] ?? false;
+  }
+
+  // Check if invitation was successfully sent to a stat keeper
+  bool isStatKeeperInviteSent(String statKeeperId) {
+    return _statKeeperInviteSent[statKeeperId] ?? false;
+  }
+
+  // Send invitation to stat keeper (triggered by icon tap)
+  // Stat keeper will receive notification on their dashboard
+  // When stat keeper accepts, league is assigned to them
+  Future<bool> sendInvitationToStatKeeperIcon(String statKeeperId) async {
+    // Need leagueId to send invitation
+    if (_leagueId.isEmpty) {
+      debugPrint('⚠️ Cannot send stat keeper invitation: League not created yet');
+      return false;
+    }
+
+    _statKeeperInviteSending[statKeeperId] = true;
+    notifyListeners();
+
+    try {
+      debugPrint('📤 Sending invitation to stat keeper: $statKeeperId for league: $_leagueId');
+      final success = await LeagueService.inviteStatKeeperToLeague(_leagueId, statKeeperId);
+      
+      _statKeeperInviteSending[statKeeperId] = false;
+      
+      if (success) {
+        _statKeeperInviteSent[statKeeperId] = true;
+        debugPrint('✅ Stat keeper invitation sent successfully');
+        notifyListeners();
+        return true;
+      } else {
+        debugPrint('❌ Stat keeper invitation failed');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      debugPrint('❌ Error sending invitation to stat keeper: $e');
+      _statKeeperInviteSending[statKeeperId] = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Legacy method - kept for backward compatibility with createLeague flow
   bool isStatKeeperEmailSending(String statKeeperId) {
     return _statKeeperEmailStatus[statKeeperId] ?? false;
   }
 
-  // Send invitation to stat keeper
+  // Legacy: Send invitation to stat keeper (called during league creation)
   Future<bool> sendInvitationToStatKeeper(String leagueId, String statKeeperId) async {
     _statKeeperEmailStatus[statKeeperId] = true;
     notifyListeners();
@@ -823,6 +886,18 @@ class CreateLeagueViewModel extends ChangeNotifier {
         // Fetch referees for invitation
         if (_referees.isEmpty && !_isLoadingReferees) {
           fetchReferees();
+        }
+      }
+      
+      // When reaching Step 3 (Stat Keeper Invitation), fetch stat keepers
+      if (_currentStep == 2) {
+        // Create league if not already created (allows invitation icon to work immediately)
+        if (_leagueId.isEmpty && !_isLoading) {
+          _createLeagueInBackground();
+        }
+        // Fetch stat keepers for invitation
+        if (_statKeepers.isEmpty && !_isLoadingStatKeepers) {
+          fetchStatKeepers();
         }
       }
       
@@ -1080,6 +1155,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _freeAgentEmailStatus.clear(); // Clear free agent email status
     _refereeInviteSending.clear(); // Clear referee invite sending status
     _refereeInviteSent.clear(); // Clear referee invite sent status
+    _statKeeperInviteSending.clear(); // Clear stat keeper invite sending status
+    _statKeeperInviteSent.clear(); // Clear stat keeper invite sent status
     _leagueNameText = '';
     _perPlayerFeeText = '250';
     _referees = [];
@@ -1087,6 +1164,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _freeAgents = [];
     _freeAgentSearchQuery = '';
     _statKeepers = [];
+    _statKeeperSearchQuery = '';
     _teams = [];
     _selectedTeamIds = [];
     _teamSearchQuery = '';
