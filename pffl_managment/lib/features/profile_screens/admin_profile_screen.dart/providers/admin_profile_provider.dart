@@ -15,7 +15,6 @@ class AdminProfileProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _phoneError; // Phone-specific error
-  bool _isPhoneValid = true;
   String? _adminId;
 
   // Getters
@@ -106,7 +105,6 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Set phone validation state
   void setPhoneValid(bool isValid) {
-    _isPhoneValid = isValid;
     if (!isValid && _phone.isNotEmpty) {
       _phoneError = 'Please enter a valid phone number';
     } else {

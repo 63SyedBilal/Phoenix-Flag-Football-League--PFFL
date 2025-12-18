@@ -567,6 +567,7 @@ class UsersView extends StatelessWidget {
                         const SizedBox(width: 8),
                         // Confirm button with primary color and rounded corners
                         ElevatedButton(
+                          // ignore: unnecessary_null_comparison
                           onPressed: (isUpdating || selectedRole == null)
                               ? null
                               : () async {

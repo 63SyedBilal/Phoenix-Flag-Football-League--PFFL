@@ -5,11 +5,14 @@ import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 
 /// Emergency contact name and phone fields widget
+/// Uses same styling as Create Account screen for consistency
 class EmergencyContactFields extends StatelessWidget {
   const EmergencyContactFields({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Consumer<CompleteProfileProvider>(
       builder: (context, provider, _) {
         final nameError = provider.fieldErrors['emergencyContactName'];
@@ -18,15 +21,8 @@ class EmergencyContactFields extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Contact Name Field
-            const Text(
-              'Emergency Contact Name',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF000000),
-              ),
-            ),
+            // Contact Name Field - same styling as Create Account
+            Text('Emergency Contact Name', style: theme.textTheme.bodyMedium),
             const SizedBox(height: 8),
             TextField(
               onChanged: provider.setEmergencyContactName,
@@ -39,56 +35,48 @@ class EmergencyContactFields extends StatelessWidget {
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   borderSide: BorderSide(
                     color: nameError != null ? Colors.red : const Color(0xFFE5E7EB),
                     width: nameError != null ? 1.5 : 1,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   borderSide: BorderSide(
                     color: nameError != null ? Colors.red : const Color(0xFFE5E7EB),
                     width: nameError != null ? 1.5 : 1,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   borderSide: BorderSide(
                     color: nameError != null ? Colors.red : const Color(0xFF3B82F6),
                     width: nameError != null ? 1.5 : 1,
                   ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: 12,
                   vertical: 14,
                 ),
               ),
             ),
             if (nameError != null) ...[
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Text(
-                  nameError,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 12,
-                    height: 1.0,
-                  ),
+              const SizedBox(height: 6),
+              Text(
+                nameError,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                  height: 1.2,
                 ),
               ),
             ],
-            const SizedBox(height: 20),
-            // Phone Field
-            const Text(
-              'Emergency Phone Number',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF000000),
-              ),
-            ),
+            
+            const SizedBox(height: 16),
+            
+            // Phone Field - EXACT same as Create Account screen
+            Text('Emergency Phone Number', style: theme.textTheme.bodyMedium),
             const SizedBox(height: 8),
             ImprovedPhoneField(
               onInputChanged: (PhoneNumber number) {

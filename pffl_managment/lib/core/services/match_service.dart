@@ -210,7 +210,6 @@ class MatchService {
     }
   }
 
-  /// TODO: TEMPORARY - Dummy teams for development/testing
   /// In the future, teams will be fetched from the backend API
   /// Teams will be created by captains during team creation process
   /// This list should be removed once backend team fetching is fully implemented
