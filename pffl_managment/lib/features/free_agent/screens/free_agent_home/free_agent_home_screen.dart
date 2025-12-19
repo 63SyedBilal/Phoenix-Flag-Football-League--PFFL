@@ -10,47 +10,156 @@ class FreeAgentHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dashboardProvider = Provider.of<FreeAgentDashboardProvider>(context);
-    final games = dashboardProvider.upcomingGames;
-
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24),
-                SharedUpcomingMatches(
-
-                  games: games,
-                  maxVisibleGames: 3, // Show only 3 games in main view
-                  title: 'Upcoming Games',
-                  onViewMore: () {
-                    // Navigate to full matches list
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AllMatchesScreen(
-                          matches: games,
-                          title: 'Upcoming Games',
-                        ),
-                      ),
-                    );
-                  },
+        child: Consumer<FreeAgentDashboardProvider>(
+          builder: (context, dashboardProvider, child) {
+            return RefreshIndicator(
+              onRefresh: () => dashboardProvider.refreshData(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 24),
+                      _buildUpcomingGamesSection(context, dashboardProvider),
+                      const SizedBox(height: 8),
+                      const SponsorBannerScreen(),
+                    ],
+                  ),
                 ),
-                SizedBox(height: 8,),
-                SponsorBannerScreen(),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildUpcomingGamesSection(
+    BuildContext context,
+    FreeAgentDashboardProvider provider,
+  ) {
+    // Loading state
+    if (provider.isLoading && provider.upcomingGames.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Upcoming Games',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Error state
+    if (provider.error != null && provider.upcomingGames.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Upcoming Games',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+                  const SizedBox(height: 8),
+                  Text(
+                    provider.error!,
+                    style: TextStyle(color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => provider.refreshData(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Empty state
+    if (provider.upcomingGames.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Upcoming Games',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                children: [
+                  Icon(Icons.sports_football_outlined, size: 48, color: Colors.grey[400]),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No upcoming games scheduled',
+                    style: TextStyle(color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Games list
+    final games = provider.upcomingGames;
+    return SharedUpcomingMatches(
+      games: games,
+      maxVisibleGames: 3,
+      title: 'Upcoming Games',
+      onViewMore: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AllMatchesScreen(
+              matches: games,
+              title: 'Upcoming Games',
+            ),
+          ),
+        );
+      },
     );
   }
 }

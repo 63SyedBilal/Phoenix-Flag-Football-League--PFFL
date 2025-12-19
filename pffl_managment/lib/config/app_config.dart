@@ -7,8 +7,18 @@ class AppConfig {
   // Network IP for physical devices and network access
   // For Android emulator, use: 'http://10.0.2.2:3000/api'
   // For iOS simulator, use: 'http://localhost:3000/api'
-  // For physical device, use your local network IP: 'http://192.168.18.26:3000/api'
-  // Current IP: 192.168.18.26 (update this if your IP changes)
+  // For physical device, use your local network IP: 'http://192.168.18.32:3000/api'
+  // Current IP: 192.168.18.32 (updated automatically)
+
+  // Server Configuration
+  static const String serverHost = '0.0.0.0'; // Listen on all interfaces
+  static const int serverPort = 3000; // Backend server port
+  static const String apiPath = '/api'; // API base path
+
+  // Network IP Configuration
+  static const String networkIp = '192.168.18.32'; // Current system IP
+  static const String localhost = 'localhost';
+  static const String androidEmulatorIp = '10.0.2.2';
 
   // Get base URL based on platform
   // NOTE: Android Emulator sometimes can't reach 10.0.2.2
@@ -16,29 +26,33 @@ class AppConfig {
   static String get baseUrl {
     if (kIsWeb) {
       // Web platform
-      return 'http://localhost:3000/api';
+      return 'http://$localhost:$serverPort$apiPath';
     } else if (Platform.isAndroid) {
       // Android - Try network IP first (works for both emulator and physical device)
       // If this doesn't work, try 10.0.2.2 for emulator
-      return 'http://192.168.18.26:3000/api'; // Network IP (works for emulator and device)
+      return 'http://$networkIp:$serverPort$apiPath'; // Network IP (works for emulator and device)
       // Alternative for Android Emulator only (if network IP doesn't work):
-      // return 'http://10.0.2.2:3000/api';
+      // return 'http://$androidEmulatorIp:$serverPort$apiPath';
     } else if (Platform.isIOS) {
       // iOS Simulator
-      return 'http://localhost:3000/api';
+      return 'http://$localhost:$serverPort$apiPath';
     } else {
-      // Default to network IP for other platforms
-      return 'http://192.168.18.26:3000/api';
+      // Default to network IP for other platforms (Windows, Linux, macOS)
+      return 'http://$networkIp:$serverPort$apiPath';
     }
   }
 
   // Alternative: Use network IP for physical devices
   // Change this if you're using a physical Android device
-  static const String networkBaseUrl = 'http://192.168.18.26:3000/api';
+  static String get networkBaseUrl => 'http://$networkIp:$serverPort$apiPath';
 
   // Emulator/Simulator URLs
-  static const String androidEmulatorUrl = 'http://10.0.2.2:3000/api';
-  static const String iosSimulatorUrl = 'http://localhost:3000/api';
+  static String get androidEmulatorUrl => 'http://$androidEmulatorIp:$serverPort$apiPath';
+  static String get iosSimulatorUrl => 'http://$localhost:$serverPort$apiPath';
+  
+  // Full server URLs (without /api)
+  static String get serverBaseUrl => 'http://$networkIp:$serverPort';
+  static String get localhostServerUrl => 'http://$localhost:$serverPort';
 
   // API Endpoints - Authentication
   static const String loginEndpoint = '/login';

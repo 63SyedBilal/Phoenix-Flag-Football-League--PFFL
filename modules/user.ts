@@ -22,10 +22,10 @@ const UserSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-  trim: true,
-  unique: true,
-  sparse: true,      // 💯 THIS FIXES THE ERROR
-  default: undefined // make sure nothing like "" or null is stored
+      trim: true,
+      unique: true,
+      sparse: true,
+      default: undefined,
     },
     password: {
       type: String,
@@ -33,8 +33,33 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["player", "captain", "referee", "stat-keeper", "free-agent"],
+      enum: ["player", "captain", "referee", "stat-keeper", "free-agent", "superadmin"],
       default: "free-agent",
+    },
+    // Profile fields - stored directly in User instead of separate Profile collection
+    profileImage: {
+      type: String,
+      default: "",
+    },
+    position: {
+      type: String,
+      default: "",
+    },
+    jerseyNumber: {
+      type: Number,
+      default: null,
+    },
+    emergencyContactName: {
+      type: String,
+      default: "",
+    },
+    emergencyPhone: {
+      type: String,
+      default: "",
+    },
+    profileCompleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

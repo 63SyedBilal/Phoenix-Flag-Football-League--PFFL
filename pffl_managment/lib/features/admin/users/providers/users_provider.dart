@@ -157,13 +157,14 @@ class UsersProvider extends ChangeNotifier {
         role = UserRole.player; // Default fallback
     }
 
-    // Get image from profile or generate placeholder
-    String imageUrl;
+    // Get profile image URL (null if not available)
+    String? imageUrl;
     if (profile != null && profile['image'] != null && profile['image'].toString().isNotEmpty) {
-      imageUrl = profile['image'].toString();
-    } else {
-      // Generate placeholder using dicebear
-      imageUrl = 'https://api.dicebear.com/7.x/avataaars/png?seed=${Uri.encodeComponent(name)}&backgroundColor=b6e3f4';
+      final img = profile['image'].toString();
+      // Only use valid http URLs
+      if (img.startsWith('http')) {
+        imageUrl = img;
+      }
     }
 
     // Determine team name

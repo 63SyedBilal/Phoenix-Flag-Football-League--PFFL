@@ -4,6 +4,7 @@ import League from "@/modules/league";
 import User from "@/modules/user";
 import Payment from "@/modules/payment";
 import Team from "@/modules/team";
+import Match from "@/modules/match";
 import { verifyAccessToken } from "@/lib/jwt";
 
 function getToken(req: NextRequest): string | null {
@@ -88,6 +89,10 @@ export async function GET(req: NextRequest) {
     const pendingPaymentsCount = unpaidPayments.length;
     console.log("📊 Pending payments:", pendingPaymentsCount, "Total amount:", totalPendingAmount);
 
+    // Get total matches/games count from Match collection
+    const totalMatches = await Match.countDocuments();
+    console.log("📊 Total matches/games:", totalMatches);
+
     // Calculate active games - count teams in active leagues only
     const totalTeamsCount = await Team.countDocuments();
     console.log("📊 Total teams:", totalTeamsCount);
@@ -134,6 +139,7 @@ export async function GET(req: NextRequest) {
         thisMonth: leaguesThisMonth
       },
       games: {
+        total: totalMatches,
         active: activeGamesCount,
         today: gamesToday
       },

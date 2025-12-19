@@ -36,6 +36,7 @@ class AppRoutes {
   // Referee Routes
   static const String refereeDashboard = '/referee/dashboard';
   static const String refereeGameManagement = '/referee/game-management';
+  static const String refereeGameDetail = '/referee/game-detail';
 
   // Stat Keeper Routes
   static const String statKeeperDashboard = '/stat-keeper/dashboard';

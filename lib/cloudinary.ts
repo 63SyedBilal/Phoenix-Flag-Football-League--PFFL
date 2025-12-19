@@ -1,12 +1,18 @@
 import { v2 as cloudinary } from "cloudinary"
 import { Readable } from "stream"
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
-  api_key: process.env.CLOUDINARY_API_KEY || "",
-  api_secret: process.env.CLOUDINARY_API_SECRET || "",
-})
+/**
+ * Configure Cloudinary fresh on each request to avoid stale timestamp issues
+ * This ensures the SDK uses current system time for signatures
+ */
+function configureCloudinary(): void {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
+    api_key: process.env.CLOUDINARY_API_KEY || "",
+    api_secret: process.env.CLOUDINARY_API_SECRET || "",
+    secure: true,
+  });
+}
 
 /**
  * Validate Cloudinary configuration
@@ -27,6 +33,9 @@ export function validateCloudinaryConfig(): void {
       `Cloudinary configuration is missing. Please set the following environment variables: ${missing.join(', ')}`
     );
   }
+  
+  // Configure fresh on each validation
+  configureCloudinary();
 }
 
 /**
@@ -99,50 +108,45 @@ export async function uploadToCloudinary(
   options: UploadOptions = {}
 ): Promise<UploadResult> {
   try {
-    // Validate configuration first
+    // Validate and configure Cloudinary fresh for each upload
+    // This avoids stale timestamp/signature issues
     validateCloudinaryConfig();
     
-    const uploadOptions = {
+    console.log("🔄 Starting Cloudinary upload...");
+    console.log("📅 Current server time:", new Date().toISOString());
+    
+    // Use simple upload options - let Cloudinary SDK handle timestamp/signature
+    const uploadOptions: Record<string, any> = {
       folder: options.folder || "pffl",
-      public_id: options.public_id,
-      overwrite: options.overwrite || false,
+      overwrite: true, // Allow overwriting
       resource_type: options.resource_type || "image",
-      transformation: options.transformation,
+      use_filename: true,
+      unique_filename: true,
+    }
+    
+    // Only add optional parameters if provided
+    if (options.public_id) {
+      uploadOptions.public_id = options.public_id;
+    }
+    if (options.transformation) {
+      uploadOptions.transformation = options.transformation;
     }
 
     let result
 
     if (Buffer.isBuffer(file)) {
-      // Upload from buffer
-      result = await new Promise<UploadResult>((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          uploadOptions,
-          (error, result) => {
-            if (error) reject(error)
-            else if (result) {
-              resolve({
-                public_id: result.public_id,
-                secure_url: result.secure_url,
-                url: result.url,
-                width: result.width,
-                height: result.height,
-                format: result.format,
-                bytes: result.bytes,
-              })
-            } else {
-              reject(new Error("Upload failed: No result returned"))
-            }
-          }
-        )
-
-        const bufferStream = new Readable()
-        bufferStream.push(file)
-        bufferStream.push(null)
-        bufferStream.pipe(uploadStream)
-      })
+      console.log("📤 Uploading buffer to Cloudinary...");
+      // Upload from buffer using base64 data URL
+      const base64Data = file.toString('base64');
+      const dataUrl = `data:image/jpeg;base64,${base64Data}`;
+      
+      result = await cloudinary.uploader.upload(dataUrl, uploadOptions);
+      console.log("✅ Buffer upload successful");
     } else {
+      console.log("📤 Uploading file path to Cloudinary...");
       // Upload from file path
       result = await cloudinary.uploader.upload(file, uploadOptions)
+      console.log("✅ File upload successful");
     }
 
     return {

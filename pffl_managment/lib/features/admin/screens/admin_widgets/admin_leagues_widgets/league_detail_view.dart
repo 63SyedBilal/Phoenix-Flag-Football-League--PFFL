@@ -60,6 +60,7 @@ class LeagueDetailView extends StatelessWidget {
                   subtitle:
                       'Stay updated with all details, Games, and stats\nfor this league.',
                   onBackPressed: () => Navigator.of(context).pop(),
+                  logoUrl: league.teamLogo,
                 ),
                 const SizedBox(height: 8),
                 const LeagueDetailTabBar(),
