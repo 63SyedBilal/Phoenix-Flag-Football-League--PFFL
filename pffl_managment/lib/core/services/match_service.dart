@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
@@ -211,7 +210,6 @@ class MatchService {
     }
   }
 
-  /// TODO: TEMPORARY - Dummy teams for development/testing
   /// In the future, teams will be fetched from the backend API
   /// Teams will be created by captains during team creation process
   /// This list should be removed once backend team fetching is fully implemented

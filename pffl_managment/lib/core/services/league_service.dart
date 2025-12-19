@@ -171,6 +171,43 @@ class LeagueService {
     }
   }
 
+  /// Invite referee to league
+  /// POST /api/league/:leagueId/invite/referee
+  /// Sends notification to referee - when referee accepts, league is assigned
+  static Future<bool> inviteRefereeToLeague(
+    String leagueId,
+    String refereeId,
+  ) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.post(
+        '/league/$leagueId/invite/referee',
+        data: {
+          'refereeId': refereeId,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Referee invitation sent successfully');
+        return true;
+      }
+      return false;
+    } on DioException catch (e) {
+      print('Error inviting referee: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        // Handle 409 - invite already sent
+        if (e.response?.statusCode == 409) {
+          print('⚠️ Invite already sent to this referee');
+        }
+      }
+      return false;
+    } catch (e) {
+      print('General error inviting referee: $e');
+      return false;
+    }
+  }
+
   /// Invite stat keeper to league
   /// POST /api/league/:leagueId/invite/statkeeper
   static Future<bool> inviteStatKeeperToLeague(

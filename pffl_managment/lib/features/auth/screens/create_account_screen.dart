@@ -5,7 +5,7 @@ import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/core/utils/svg_icons.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
-import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
+import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/password_strength_indicator.dart';
 import 'package:pffl_managment/core/widgets/auth_link.dart';
@@ -136,19 +136,15 @@ class CreateAccountScreen extends StatelessWidget {
                     // Phone Number Field
                     Text('Phone Number', style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 8),
-                    CustomPhoneField(
+                    ImprovedPhoneField(
                       onInputChanged: (PhoneNumber number) {
                         signupProvider.updatePhoneNumber(number);
                       },
                       onInputValidated: (bool value) {
                         // Validation handled in provider
                       },
-                      initialValue: PhoneNumber(
-                        countryISOCode: 'US',
-                        countryCode: '+1',
-                        number: '',
-                      ),
-                      hintText: 'e.g +1 123 456 7890',
+                      initialCountryCode: 'US',
+                      hintText: 'Enter phone number',
                       errorText: signupProvider.phoneError,
                     ),
 

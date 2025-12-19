@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/models/user_model.dart';
+import 'package:pffl_managment/core/widgets/user_avatar_widget.dart';
 import 'package:pffl_managment/features/admin/provider/admin_user_provider/users_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:provider/provider.dart';
@@ -232,17 +233,11 @@ class UsersView extends StatelessWidget {
       child: Row(
         children: [
           // User avatar
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFF3F4F6), width: 2),
-              image: DecorationImage(
-                image: NetworkImage(user.imageUrl),
-                fit: BoxFit.cover,
-              ),
-            ),
+          UserAvatarWidget(
+            imageUrl: user.imageUrl,
+            size: 48,
+            borderWidth: 2,
+            borderColor: const Color(0xFFF3F4F6),
           ),
           const SizedBox(width: 12),
 

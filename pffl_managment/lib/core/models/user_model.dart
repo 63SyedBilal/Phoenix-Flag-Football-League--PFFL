@@ -7,7 +7,7 @@ class UserModel {
   final UserRole role;
   final String team;
   final UserStatus status;
-  final String imageUrl;
+  final String? imageUrl;
 
   UserModel({
     required this.id,
@@ -16,8 +16,12 @@ class UserModel {
     required this.role,
     required this.team,
     required this.status,
-    required this.imageUrl,
+    this.imageUrl,
   });
+
+  /// Check if user has a valid profile image URL
+  bool get hasProfileImage =>
+      imageUrl != null && imageUrl!.isNotEmpty && imageUrl!.startsWith('http');
 }
 
 enum UserRole { player, captain, referee, statKeeper }

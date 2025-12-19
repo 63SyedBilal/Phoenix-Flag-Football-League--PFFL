@@ -19,6 +19,8 @@ import 'package:pffl_managment/invite_screens/admin_invite_screen/admin_invite_s
 import 'package:pffl_managment/invite_screens/captain_invite_screen/captain_invite_screen.dart';
 import 'package:pffl_managment/features/player/screens/player_dashboard.dart';
 import 'package:pffl_managment/features/referee/screens/referee_dashboard.dart';
+import 'package:pffl_managment/features/referee/screens/referee_game_detail/referee_game_detail_screen.dart';
+import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_keeper_dashboard.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_active_leagues_screen.dart';
@@ -118,6 +120,12 @@ class RouteGenerator {
 
       case AppRoutes.refereeDashboard:
         return MaterialPageRoute(builder: (_) => const RefereeDashboard());
+
+      case AppRoutes.refereeGameDetail:
+        final match = settings.arguments as MatchModel;
+        return MaterialPageRoute(
+          builder: (_) => RefereeGameDetailScreen(match: match),
+        );
 
       case AppRoutes.statKeeperDashboard:
         return MaterialPageRoute(builder: (_) => const StatKeeperDashboard());

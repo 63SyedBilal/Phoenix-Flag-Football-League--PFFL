@@ -6,6 +6,7 @@ import { hashPassword } from "@/lib/auth";
 
 /**
  * Complete user profile - update existing user with profile details
+ * All profile data is stored directly in the User model
  * PUT /api/complete-profile
  */
 export async function completeProfile(req: NextRequest) {
@@ -24,19 +25,32 @@ export async function completeProfile(req: NextRequest) {
     const token = authHeader.substring(7);
     const decoded = verifyAccessToken(token);
 
-    const { firstName, lastName, phone, password } = await req.json();
-
-    if (!firstName || !lastName) {
-      return NextResponse.json(
-        { error: "First name and last name are required" },
-        { status: 400 }
-      );
-    }
+    const { 
+      firstName, 
+      lastName, 
+      phone, 
+      password,
+      // Profile fields - now stored in User
+      profileImage,
+      position,
+      jerseyNumber,
+      emergencyContactName,
+      emergencyPhone,
+    } = await req.json();
 
     // Find user
     const user = await User.findById(decoded.userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Update basic info if provided
+    if (firstName && firstName.trim() !== "") {
+      user.firstName = firstName.trim();
+    }
+    
+    if (lastName && lastName.trim() !== "") {
+      user.lastName = lastName.trim();
     }
 
     // Check phone uniqueness if phone is provided
@@ -59,9 +73,29 @@ export async function completeProfile(req: NextRequest) {
       user.password = await hashPassword(password);
     }
 
-    // Update user profile
-    user.firstName = firstName.trim();
-    user.lastName = lastName.trim();
+    // Update profile fields (stored directly in User)
+    if (profileImage !== undefined) {
+      user.profileImage = profileImage;
+    }
+    
+    if (position !== undefined) {
+      user.position = position;
+    }
+    
+    if (jerseyNumber !== undefined) {
+      user.jerseyNumber = jerseyNumber;
+    }
+    
+    if (emergencyContactName !== undefined) {
+      user.emergencyContactName = emergencyContactName;
+    }
+    
+    if (emergencyPhone !== undefined) {
+      user.emergencyPhone = emergencyPhone;
+    }
+
+    // Mark profile as completed
+    user.profileCompleted = true;
 
     await user.save();
 
@@ -75,6 +109,12 @@ export async function completeProfile(req: NextRequest) {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          profileImage: user.profileImage,
+          position: user.position,
+          jerseyNumber: user.jerseyNumber,
+          emergencyContactName: user.emergencyContactName,
+          emergencyPhone: user.emergencyPhone,
+          profileCompleted: user.profileCompleted,
         },
       },
       { status: 200 }
