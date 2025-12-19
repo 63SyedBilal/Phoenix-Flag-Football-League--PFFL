@@ -117,11 +117,11 @@ const MatchSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["upcoming", "live", "halfTime", "completed", "cancelled"],
+      enum: ["upcoming", "halfTime", "completed", "cancelled"],
       default: "upcoming"
     },
 
-    tossWinnerTeam: {
+    gameWinnerTeam: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Team",
       default: null

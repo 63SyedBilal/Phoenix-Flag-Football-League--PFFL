@@ -196,8 +196,8 @@ export async function createMatch(req: NextRequest) {
     if (match.statKeeperId) {
       await match.populate("statKeeperId", "firstName lastName email");
     }
-    if (match.tossWinnerTeam) {
-      await match.populate("tossWinnerTeam", "teamName enterCode");
+    if (match.gameWinnerTeam) {
+      await match.populate("gameWinnerTeam", "teamName enterCode");
     }
 
     // Convert to plain object
@@ -261,7 +261,7 @@ export async function getAllMatches(req: NextRequest) {
       .populate("teamB.playerPoints.playerId", "firstName lastName email")
       .populate("refereeId", "firstName lastName email role")
       .populate("statKeeperId", "firstName lastName email role")
-      .populate("tossWinnerTeam", "teamName enterCode")
+      .populate("gameWinnerTeam", "teamName enterCode")
       .sort({ gameDate: 1, gameTime: 1 })
       .lean()
       .exec();
@@ -310,7 +310,7 @@ export async function getMatch(req: NextRequest, { params }: { params: { id: str
       .populate("teamB.playerPoints.playerId", "firstName lastName email")
       .populate("refereeId", "firstName lastName email role")
       .populate("statKeeperId", "firstName lastName email role")
-      .populate("tossWinnerTeam", "teamName enterCode")
+      .populate("gameWinnerTeam", "teamName enterCode")
       .lean()
       .exec();
 
@@ -366,7 +366,7 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
       status,
       teamA,
       teamB,
-      tossWinnerTeam,
+      gameWinnerTeam,
       halfTimeSwitched,
       completedAt,
     } = await req.json();
@@ -441,8 +441,8 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
       }
     }
 
-    if (tossWinnerTeam !== undefined) {
-      (match as any).tossWinnerTeam = tossWinnerTeam ? toObjectId(tossWinnerTeam) : null;
+    if (gameWinnerTeam !== undefined) {
+      (match as any).gameWinnerTeam = gameWinnerTeam ? toObjectId(gameWinnerTeam) : null;
     }
 
     if (halfTimeSwitched !== undefined) {
@@ -563,8 +563,8 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
     if ((match as any).statKeeperId) {
       await match.populate("statKeeperId", "firstName lastName email role");
     }
-    if ((match as any).tossWinnerTeam) {
-      await match.populate("tossWinnerTeam", "teamName enterCode");
+    if ((match as any).gameWinnerTeam) {
+      await match.populate("gameWinnerTeam", "teamName enterCode");
     }
 
     // Convert to plain object
