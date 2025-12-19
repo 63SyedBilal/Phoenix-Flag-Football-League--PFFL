@@ -118,3 +118,4 @@ echo "  2. Test your Flutter app (flutter run)"
 echo "  3. Commit if needed (git add . && git commit -m 'message')"
 echo "  4. Push to remote (git push origin $BRANCH_NAME)"
 echo ""
+

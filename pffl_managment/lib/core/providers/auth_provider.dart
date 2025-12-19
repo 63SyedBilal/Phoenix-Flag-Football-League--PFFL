@@ -18,10 +18,9 @@ class AuthProvider extends ChangeNotifier {
   bool _isSignupPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // Login error states
+  // Login error states (field-specific only)
   String? _loginEmailError;
   String? _loginPasswordError;
-  String? _loginGeneralError;
 
   bool get isLoggedIn => _isLoggedIn;
   String get userToken => _userToken;
@@ -40,7 +39,6 @@ class AuthProvider extends ChangeNotifier {
   // Login error getters
   String? get loginEmailError => _loginEmailError;
   String? get loginPasswordError => _loginPasswordError;
-  String? get loginGeneralError => _loginGeneralError;
 
   AuthProvider() {
     checkLoginStatus();
@@ -119,30 +117,76 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        // Handle unsuccessful response
-        _loginGeneralError = 'Login failed. Please check your credentials.';
+        // Handle unsuccessful response - show on password field
+        _loginPasswordError = 'Login failed. Please check your credentials.';
         notifyListeners();
         return false;
       }
     } on DioException catch (e) {
-      // Handle network errors
+      // Handle network errors with field-specific error messages
       print('Login API error: ${e.message}');
+      
       if (e.response?.statusCode == 401) {
-        _loginEmailError = 'Invalid email or password';
-        _loginPasswordError = 'Invalid email or password';
+        // Authentication error - check error message to determine field
+        final errorData = e.response?.data;
+        final errorMessage = errorData is Map 
+            ? (errorData['error'] ?? errorData['message'] ?? '').toString().toLowerCase()
+            : '';
+        
+        // Check if error mentions email specifically
+        if (errorMessage.contains('email') && !errorMessage.contains('password')) {
+          _loginEmailError = 'Invalid email address';
+        } 
+        // Check if error mentions password specifically
+        else if (errorMessage.contains('password') && !errorMessage.contains('email')) {
+          _loginPasswordError = 'Invalid password';
+        }
+        // Default to password error for auth failures (most common)
+        else {
+          _loginPasswordError = 'Invalid email or password';
+        }
       } else if (e.response?.statusCode == 404) {
-        _loginGeneralError = 'Login service not found. Please check your connection.';
+        // Service not found - show as email error (connection issue)
+        _loginEmailError = 'Login service not found. Please check your connection.';
+      } else if (e.response?.statusCode == 400) {
+        // Bad request - parse error to determine field
+        final errorData = e.response?.data;
+        final errorMessage = errorData is Map 
+            ? (errorData['error'] ?? errorData['message'] ?? '').toString().toLowerCase()
+            : '';
+        
+        if (errorMessage.contains('email')) {
+          _loginEmailError = errorData is Map 
+              ? (errorData['error'] ?? errorData['message'] ?? 'Invalid email address').toString()
+              : 'Invalid email address';
+        } else if (errorMessage.contains('password')) {
+          _loginPasswordError = errorData is Map 
+              ? (errorData['error'] ?? errorData['message'] ?? 'Invalid password').toString()
+              : 'Invalid password';
+        } else {
+          _loginPasswordError = 'Invalid credentials. Please check your email and password.';
+        }
       } else if (e.response?.statusCode == 500) {
-        _loginGeneralError = 'Server error. Please try again later.';
+        // Server error - show on password field (less intrusive)
+        _loginPasswordError = 'Server error. Please try again later.';
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+                 e.type == DioExceptionType.sendTimeout ||
+                 e.type == DioExceptionType.receiveTimeout) {
+        // Timeout - show on email field
+        _loginEmailError = 'Connection timeout. Please check your network connection.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        // Connection error - show on email field
+        _loginEmailError = 'Cannot connect to server. Please check your network connection.';
       } else {
-        _loginGeneralError = 'Network error. Please check your connection.';
+        // Other network errors - show on password field
+        _loginPasswordError = 'Network error. Please check your connection.';
       }
       notifyListeners();
       return false;
     } catch (e) {
-      // Handle general errors
+      // Handle general errors - show on password field
       print('Login general error: $e');
-      _loginGeneralError = 'Login failed. Please try again.';
+      _loginPasswordError = 'Login failed. Please try again.';
       notifyListeners();
       return false;
     }
@@ -208,11 +252,22 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Clear login errors
+  // Clear all login errors
   void clearLoginErrors() {
     _loginEmailError = null;
     _loginPasswordError = null;
-    _loginGeneralError = null;
+    notifyListeners();
+  }
+
+  // Clear email error only
+  void clearLoginEmailError() {
+    _loginEmailError = null;
+    notifyListeners();
+  }
+
+  // Clear password error only
+  void clearLoginPasswordError() {
+    _loginPasswordError = null;
     notifyListeners();
   }
 }

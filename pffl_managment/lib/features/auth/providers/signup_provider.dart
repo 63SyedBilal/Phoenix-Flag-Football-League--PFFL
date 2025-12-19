@@ -367,7 +367,7 @@ class SignupProvider extends ChangeNotifier {
               'Connection timeout. Please check:\n1. Backend server is running\n2. Both devices are on same WiFi\n3. Firewall allows port 3000';
         } else if (e.type == DioExceptionType.connectionError) {
           _generalError =
-              'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.18.26:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
+              'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
         } else {
           _generalError =
               'Network error. Please check your connection and try again.';
