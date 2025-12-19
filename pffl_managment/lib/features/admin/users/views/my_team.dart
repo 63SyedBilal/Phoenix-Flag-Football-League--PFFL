@@ -20,10 +20,8 @@ class UsersView extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Team info
                   Row(
                     children: [
-                      // Team logo with dotted border
                       Container(
                         width: 48,
                         height: 48,

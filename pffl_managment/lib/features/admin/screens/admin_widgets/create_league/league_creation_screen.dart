@@ -19,6 +19,7 @@ class LeagueCreationScreen extends StatelessWidget {
       create: (_) => CreateLeagueViewModel(),
       child: Scaffold(
         backgroundColor: const Color(0xFFF9FAFB),
+        resizeToAvoidBottomInset: true, // Allow content to resize but keep button fixed
         appBar: AppBar(
           backgroundColor: const Color(0xFFF9FAFB),
           elevation: 0,
@@ -38,6 +39,7 @@ class LeagueCreationScreen extends StatelessWidget {
                   },
                 ),
               ),
+              // Next button stays fixed at bottom
               const LeagueCreationActionButton(),
             ],
           ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/game_created_bottom_sheet.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/game_created_bottom_sheet.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/services/league_service.dart' show TeamModel;
 import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
@@ -126,8 +126,6 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                             hint: 'Select Venue',
                             onChanged: (val) => provider.updateVenue(val),
                           ),
-                          const SizedBox(height: 8),
-                          _buildRoundNameDropdownField(provider),
                           const SizedBox(height: 8),
                           _buildRefereeDropdownField(provider),
                           const SizedBox(height: 8),
@@ -552,58 +550,6 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
       ],
     );
   }
-
-  Widget _buildRoundNameDropdownField(UpcomingGamesProvider provider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Game Stage',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: provider.selectedRoundName,
-              hint: Text(
-                'Select Stage',
-                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-              ),
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.grey[400],
-                size: 20,
-              ),
-              isExpanded: true,
-              items: provider.availableStages.map((String stage) {
-                return DropdownMenuItem<String>(
-                  value: stage,
-                  child: Text(
-                    stage,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) => provider.updateRoundName(val),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildCreateButton(
     BuildContext context,
     UpcomingGamesProvider provider,

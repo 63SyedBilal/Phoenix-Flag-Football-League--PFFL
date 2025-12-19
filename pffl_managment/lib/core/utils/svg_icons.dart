@@ -309,4 +309,15 @@ class SvgIcons {
           : null,
     );
   }
+
+  static Widget emailAfterInvitation({double size = 22, Color? color}) {
+    return SvgPicture.asset(
+      'assets/icons/emailiconafterinvitationsand.svg',
+      height: size,
+      width: size,
+      colorFilter: color != null
+          ? ColorFilter.mode(color, BlendMode.srcIn)
+          : null,
+    );
+  }
 }

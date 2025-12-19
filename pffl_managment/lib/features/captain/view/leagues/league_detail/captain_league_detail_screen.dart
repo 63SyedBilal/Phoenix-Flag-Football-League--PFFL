@@ -58,7 +58,7 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
                               ] else if (tabIndex == 3) ...[
                                 const LeagueTeamList(),
                               ] else if (tabIndex == 4) ...[
-                                LeagueOfficialsList(),
+                                LeagueOfficialsList(leagueId: '',),
                               ],
                             ],
                           );

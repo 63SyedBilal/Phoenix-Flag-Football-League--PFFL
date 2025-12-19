@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/edit_upcoming_games_screen.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/edit_upcoming_games_screen.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/utils/date_formatter.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_details_screen.dart';
@@ -216,7 +216,7 @@ class AdminLeagueGameCard extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -224,6 +224,13 @@ class AdminLeagueGameCard extends StatelessWidget {
             color: const Color(0xFF000000).withValues(alpha: 0.12),
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,21 +239,23 @@ class AdminLeagueGameCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  gameNumber,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF374151),
-                    fontFamily: 'Lato',
+                Expanded(
+                  child: Text(
+                    gameNumber,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600, // Bold as per design
+                      color: Color(0xFF111827),
+                      fontFamily: 'Lato',
+                    ),
                   ),
                 ),
                 Text(
                   formattedDate,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF374151),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600, // Bold as per design
+                    color: Color(0xFF111827),
                     fontFamily: 'Lato',
                   ),
                 ),
@@ -338,12 +347,12 @@ class AdminLeagueGameCard extends StatelessWidget {
             ),
           ),
         ),
-        // Score
+        // Score (bold for completed games)
         Text(
           score?.toString() ?? '',
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w600, // Bold scores as per design
             color: scoreColor,
             fontFamily: 'Lato',
           ),
