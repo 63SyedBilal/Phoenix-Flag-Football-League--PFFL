@@ -163,16 +163,57 @@ class UpcomingGamesProvider extends ChangeNotifier {
     }
   }
 
-  /// Fetch referees (free agents can be referees)
+  /// Fetch referees assigned to the league
+  /// Only shows referees who were previously invited and assigned during league creation
   Future<void> fetchReferees() async {
     _isLoadingReferees = true;
     notifyListeners();
 
     try {
-      _referees = await UserService.getFreeAgents();
-    } catch (e) {
-      print('Error fetching referees: $e');
+      if (_leagueId == null || _leagueId!.isEmpty) {
+        // No league ID, use empty list
+        debugPrint('⚠️ Empty league ID provided, returning empty referees list');
+        _referees = [];
+        _isLoadingReferees = false;
+        notifyListeners();
+        return;
+      }
+
+      debugPrint('📡 Fetching referees for league ID: $_leagueId');
+      
+      // Fetch league details which includes populated referees (only those assigned to league)
+      final league = await LeagueService.getLeagueById(_leagueId!);
+      
+      if (league == null) {
+        debugPrint('❌ League not found for ID: $_leagueId');
+        _referees = [];
+        _errorMessage = 'League not found';
+        _isLoadingReferees = false;
+        notifyListeners();
+        return;
+      }
+      
+      debugPrint('✅ League fetched: ${league.leagueName}');
+      debugPrint('📊 Referees count in league: ${league.referees.length}');
+      
+      if (league.referees.isNotEmpty) {
+        // Use referees from the league (only referees invited and assigned during league creation)
+        _referees = league.referees;
+        debugPrint('✅ Loaded ${_referees.length} referees from league: ${league.leagueName}');
+        for (var referee in _referees) {
+          debugPrint('   - Referee: ${referee.displayName} (ID: ${referee.id})');
+        }
+      } else {
+        // League has no referees yet - this is not an error, just empty state
+        _referees = [];
+        debugPrint('ℹ️ League has no referees assigned yet');
+        debugPrint('   - Referees will appear when they accept invitation in Step 2 of league creation');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error fetching referees for league: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
       _referees = [];
+      _errorMessage = 'Failed to load referees for this league: ${e.toString()}';
     } finally {
       _isLoadingReferees = false;
       notifyListeners();

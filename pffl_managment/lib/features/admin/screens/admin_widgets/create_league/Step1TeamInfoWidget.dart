@@ -264,6 +264,19 @@ class Step1TeamInfoWidget extends StatelessWidget {
                             initialDate: viewModel.startDate ?? DateTime.now(),
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
+                                    primary: AppColors.primary,
+                                    onPrimary: Colors.white,
+                                    onSurface: AppColors.textPrimary,
+                                  ),
+                                  dialogBackgroundColor: Colors.white,
+                                ),
+                                child: child!,
+                              );
+                            },
                           );
                           if (picked != null) viewModel.setStartDate(picked);
                         },
@@ -324,6 +337,19 @@ class Step1TeamInfoWidget extends StatelessWidget {
                                 DateTime.now().add(const Duration(days: 7)),
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
+                                    primary: AppColors.primary,
+                                    onPrimary: Colors.white,
+                                    onSurface: AppColors.textPrimary,
+                                  ),
+                                  dialogBackgroundColor: Colors.white,
+                                ),
+                                child: child!,
+                              );
+                            },
                           );
                           if (picked != null) viewModel.setEndDate(picked);
                         },

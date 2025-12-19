@@ -58,7 +58,10 @@ class LoginScreen extends StatelessWidget {
                 controller: _emailController,
                 hintText: "e.g admin@gmail.com",
                 onChanged: (value) {
-                  authProvider.clearLoginErrors();
+                  // Clear email error when user types
+                  if (authProvider.loginEmailError != null) {
+                    authProvider.clearLoginEmailError();
+                  }
                 },
               ),
               if (authProvider.loginEmailError != null)
@@ -95,7 +98,10 @@ class LoginScreen extends StatelessWidget {
                 hintText: "Enter your password",
                 obscureText: !authProvider.isLoginPasswordVisible,
                 onChanged: (value) {
-                  authProvider.clearLoginErrors();
+                  // Clear password error when user types
+                  if (authProvider.loginPasswordError != null) {
+                    authProvider.clearLoginPasswordError();
+                  }
                 },
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -116,7 +122,6 @@ class LoginScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: Colors.red, width: 1.0),
                   ),
                   child: Row(
                     children: [
@@ -125,32 +130,6 @@ class LoginScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           authProvider.loginPasswordError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              if (authProvider.loginGeneralError != null)
-                Container(
-                  margin: const EdgeInsets.only(top: 16.0),
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: Colors.red, width: 1.0),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgIcons.infoFill(size: 16, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          authProvider.loginGeneralError!,
                           style: const TextStyle(
                             color: Colors.red,
                             fontSize: 14,

@@ -11,25 +11,30 @@ class LeagueCreationActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: CustomButton(
-              text: _getButtonText(viewModel.currentStep),
-              onPressed: _getButtonAction(context, viewModel) ?? () {},
-              backgroundColor: const Color(0xFF0F173E),
-              textColor: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              isLoading: viewModel.isLoading,
+    return Material(
+      color: const Color(0xFFF9FAFB), // Match scaffold background
+      elevation: 8, // Elevation to keep button above content when keyboard opens
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF9FAFB),
+          border: Border(top: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: CustomButton(
+                text: _getButtonText(viewModel.currentStep),
+                onPressed: _getButtonAction(context, viewModel) ?? () {},
+                backgroundColor: const Color(0xFF0F173E),
+                textColor: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                isLoading: viewModel.isLoading,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -68,7 +73,13 @@ class LeagueCreationActionButton extends StatelessWidget {
         break;
     }
 
-    if (!isCurrentStepValid && viewModel.currentStep < 4) {
+    // For steps 0-2, require step validity
+    if (!isCurrentStepValid && viewModel.currentStep < 3) {
+      return null;
+    }
+    
+    // For Step 4 (index 3), require Step 4 validation
+    if (viewModel.currentStep == 3 && !viewModel.isStep4Valid) {
       return null;
     }
 

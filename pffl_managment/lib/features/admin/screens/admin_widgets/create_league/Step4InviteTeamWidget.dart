@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
+import 'package:pffl_managment/core/utils/app_icons.dart';
+import 'package:pffl_managment/core/utils/svg_icons.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
@@ -206,58 +208,67 @@ class _TeamList extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Email icon
-                    IconButton(
-                      icon: Icon(
-                        team['emailSent'] ? Icons.email : Icons.email_outlined,
-                        color: team['emailSent']
-                            ? AppColors.iconEmailActive
-                            : AppColors.iconEmailInactive.withValues(
-                                alpha: 0.3,
-                              ),
-                      ),
-                      onPressed: (team['emailSent'] || 
-                                  viewModel.isTeamEmailSending(team['id']) ||
-                                  viewModel.leagueId.isEmpty)
-                          ? null
-                          : () async {
-                              final teamId = team['id'] as String;
-                              final leagueId = viewModel.leagueId;
-                              
-                              if (leagueId.isEmpty) {
-                                // League not created yet - show message
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('League is being created. Please wait...'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                                return;
-                              }
-                              
-                              // Send invitation - team will be automatically assigned to league
-                              final success = await viewModel.sendInvitationToTeam(leagueId, teamId);
-                              
-                              if (context.mounted) {
-                                if (success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('✅ Invitation sent! Team assigned to league.'),
-                                      duration: Duration(seconds: 2),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('❌ Failed to send invitation. Please try again.'),
-                                      duration: Duration(seconds: 2),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                            },
+                    // Email icon - check invitation status directly from viewModel
+                    Consumer<CreateLeagueViewModel>(
+                      builder: (context, vm, child) {
+                        // Check invitation status directly from viewModel to ensure latest state
+                        final bool isEmailSent = vm.isTeamEmailSent(team['id'] as String);
+                        
+                        // Icon color: grey initially, primary when invitation is sent
+                        final iconColor = isEmailSent ? AppColors.primary : AppColors.borderDefault;
+                        
+                        return IconButton(
+                          icon: isEmailSent
+                              ? SvgIcons.emailAfterInvitation(size: 22, color: iconColor)
+                              : Icon(
+                                  AppIcons.emailOutlined,
+                                  color: iconColor,
+                                  size: 22,
+                                ),
+                          onPressed: (isEmailSent || 
+                                      vm.isTeamEmailSending(team['id']) ||
+                                      vm.leagueId.isEmpty)
+                              ? null
+                              : () async {
+                                  final teamId = team['id'] as String;
+                                  final leagueId = vm.leagueId;
+                                  
+                                  if (leagueId.isEmpty) {
+                                    // League not created yet - show message
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('League is being created. Please wait...'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  
+                                  // Send invitation - team will be automatically assigned to league
+                                  final success = await vm.sendInvitationToTeam(leagueId, teamId);
+                                  
+                                  if (context.mounted) {
+                                    if (success) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('✅ Invitation sent! Team assigned to league.'),
+                                          duration: Duration(seconds: 2),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('❌ Failed to send invitation. Please try again.'),
+                                          duration: Duration(seconds: 2),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                        );
+                      },
                     ),
                   ],
                 ),

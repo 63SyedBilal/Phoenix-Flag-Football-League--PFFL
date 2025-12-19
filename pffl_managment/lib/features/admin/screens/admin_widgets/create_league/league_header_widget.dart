@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
+import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -9,23 +10,65 @@ class LeagueHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
-    
+
     String title = _getTitleForStep(viewModel.currentStep);
     String subtitle = _getSubtitleForStep(viewModel.currentStep);
     
-    return Container(
+    // Show Skip button only if not on the last step (step 3 is the last step)
+    final bool showSkipButton = viewModel.currentStep < 3;
+
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.headlineLarge),
-          const SizedBox(height: 4),
-          Text(subtitle, style: AppTextStyles.titleSmall),
+          // LEFT SIDE (Title + Subtitle)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.headlineLarge),
+                const SizedBox(height: 4),
+                Text(subtitle, style: AppTextStyles.titleSmall),
+              ],
+            ),
+          ),
+
+          // RIGHT SIDE (Skip Button)
+         if (showSkipButton)
+  GestureDetector(
+    onTap: () {
+      // Navigate to next step
+      viewModel.nextStep();
+    },
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6), // ✅ correct
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Skip',
+            style: AppTextStyles.titleSmall.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 12,
+            color: AppColors.primary,
+          ),
+        ],
+      ),
+    ),
+  ),
+
         ],
       ),
     );
   }
-  
+
   String _getTitleForStep(int step) {
     switch (step) {
       case 0:
@@ -40,7 +83,7 @@ class LeagueHeaderWidget extends StatelessWidget {
         return 'Create League';
     }
   }
-  
+
   String _getSubtitleForStep(int step) {
     switch (step) {
       case 0:
@@ -48,9 +91,9 @@ class LeagueHeaderWidget extends StatelessWidget {
       case 1:
         return 'Choose referees for this league. You can invite new referees or select from existing ones.';
       case 2:
-        return 'Choose Stat Keepeers for this league. You can invite new Stat Keepeers or select from existing ones.';
+        return 'Choose Stat Keepers for this league. You can invite new Stat Keepers or select from existing ones.';
       case 3:
-        return "Invite teams to join this league. You can search existing teams.";
+        return 'Invite teams to join this league. You can search existing teams.';
       default:
         return 'Enter league information below to create a new tournament.';
     }

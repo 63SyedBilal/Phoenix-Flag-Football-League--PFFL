@@ -5,7 +5,7 @@ import 'package:pffl_managment/core/utils/svg_icons.dart';
 // Assuming AppAdminIcons is here or exported
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/edit_upcoming_games_screen.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/edit_upcoming_games_screen.dart';
 
 class UpcommingMatchesCardWidget extends StatelessWidget {
   final MatchModel match;

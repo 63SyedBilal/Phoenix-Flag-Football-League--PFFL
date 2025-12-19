@@ -5,6 +5,9 @@ import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.d
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/referee/providers/referee_dashboard_provider.dart';
+import 'package:pffl_managment/core/services/match_service.dart';
+import 'package:pffl_managment/features/referee/screens/referee_game_detail/referee_game_detail_screen.dart';
+import 'package:pffl_managment/core/models/game_model.dart';
 
 class RefereeHomeScreen extends StatelessWidget {
   const RefereeHomeScreen({super.key});
@@ -86,6 +89,7 @@ class RefereeHomeScreen extends StatelessWidget {
                   SharedGameCard(
                     game: assignedGames[0],
                     showYourGameTag: true,
+                    onTap: () => _navigateToGameDetail(context, assignedGames[0]),
                   )
                 else
                   const Text('No games assigned to you yet.'),
@@ -114,5 +118,52 @@ class RefereeHomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Navigate to game detail screen by fetching match data
+  Future<void> _navigateToGameDetail(BuildContext context, GameModel game) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Fetch match details by ID
+      final match = await MatchService.getMatchById(game.id);
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Navigate to game detail screen
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RefereeGameDetailScreen(match: match),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load game details: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
 
 /// Service for league-related API calls
 class LeagueService {
@@ -566,7 +567,8 @@ class LeagueModel {
   }
 }
 
-/// League detail model with teams
+/// League detail model with teams, referees, and stat keepers
+/// Referees and stat keepers are users assigned to the league when they accept invitation
 class LeagueDetailModel {
   final String id;
   final String leagueName;
@@ -574,6 +576,8 @@ class LeagueDetailModel {
   final DateTime startDate;
   final DateTime endDate;
   final List<TeamModel> teams;
+  final List<UserModel> referees; // Referees assigned to the league (when they accept invitation)
+  final List<UserModel> statKeepers; // Stat keepers assigned to the league (when they accept invitation)
 
   LeagueDetailModel({
     required this.id,
@@ -582,6 +586,8 @@ class LeagueDetailModel {
     required this.startDate,
     required this.endDate,
     required this.teams,
+    required this.referees,
+    required this.statKeepers,
   });
 
   factory LeagueDetailModel.fromJson(Map<String, dynamic> json) {
@@ -629,6 +635,76 @@ class LeagueDetailModel {
       }
     }
     
+    // Parse referees array
+    // Referees are assigned to league when they accept invitation during league creation (Step 2)
+    List<UserModel> referees = [];
+    if (json['referees'] != null && json['referees'] is List) {
+      final refereesList = json['referees'] as List;
+      print('🔄 Parsing ${refereesList.length} referees from league...');
+      
+      if (refereesList.isEmpty) {
+        print('   - ℹ️ Referees array is EMPTY - no referees assigned to this league yet');
+        print('   - Referees should be assigned when they accept invitation in Step 2 of league creation');
+      } else {
+        referees = refereesList.map((refereeJson) {
+          try {
+            return UserModel.fromJson(refereeJson);
+          } catch (e) {
+            print('   ❌ Error parsing referee: $e');
+            print('   ❌ Referee JSON: $refereeJson');
+            // Return a default user model to avoid breaking the list
+            return UserModel(
+              id: refereeJson['_id']?.toString() ?? refereeJson['id']?.toString() ?? '',
+              firstName: refereeJson['firstName'],
+              lastName: refereeJson['lastName'],
+              email: refereeJson['email'] ?? '',
+              phone: refereeJson['phone'],
+              role: refereeJson['role'] ?? 'referee',
+            );
+          }
+        }).toList();
+        
+        print('✅ Successfully parsed ${referees.length} referees');
+      }
+    } else {
+      print('⚠️ Referees field is null or not a List. Type: ${json['referees']?.runtimeType}');
+    }
+    
+    // Parse stat keepers array
+    // Stat keepers are assigned to league when they accept invitation during league creation (Step 3)
+    List<UserModel> statKeepers = [];
+    if (json['statKeepers'] != null && json['statKeepers'] is List) {
+      final statKeepersList = json['statKeepers'] as List;
+      print('🔄 Parsing ${statKeepersList.length} stat keepers from league...');
+      
+      if (statKeepersList.isEmpty) {
+        print('   - ℹ️ Stat keepers array is EMPTY - no stat keepers assigned to this league yet');
+        print('   - Stat keepers should be assigned when they accept invitation in Step 3 of league creation');
+      } else {
+        statKeepers = statKeepersList.map((statKeeperJson) {
+          try {
+            return UserModel.fromJson(statKeeperJson);
+          } catch (e) {
+            print('   ❌ Error parsing stat keeper: $e');
+            print('   ❌ Stat keeper JSON: $statKeeperJson');
+            // Return a default user model to avoid breaking the list
+            return UserModel(
+              id: statKeeperJson['_id']?.toString() ?? statKeeperJson['id']?.toString() ?? '',
+              firstName: statKeeperJson['firstName'],
+              lastName: statKeeperJson['lastName'],
+              email: statKeeperJson['email'] ?? '',
+              phone: statKeeperJson['phone'],
+              role: statKeeperJson['role'] ?? 'stat-keeper',
+            );
+          }
+        }).toList();
+        
+        print('✅ Successfully parsed ${statKeepers.length} stat keepers');
+      }
+    } else {
+      print('⚠️ Stat keepers field is null or not a List. Type: ${json['statKeepers']?.runtimeType}');
+    }
+    
     return LeagueDetailModel(
       id: id,
       leagueName: json['leagueName'] ?? '',
@@ -636,6 +712,8 @@ class LeagueDetailModel {
       startDate: parseDate(json['startDate']),
       endDate: parseDate(json['endDate']),
       teams: teams,
+      referees: referees,
+      statKeepers: statKeepers,
     );
   }
 }

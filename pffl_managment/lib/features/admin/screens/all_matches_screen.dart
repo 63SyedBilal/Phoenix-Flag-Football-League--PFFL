@@ -3,7 +3,7 @@ import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/game_list_card.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/upcomming_matches_screens/create_upcoming_games_screen.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/create_games_screen.dart';
 
 class AllMatchesScreen extends StatelessWidget {
   final List<MatchModel> matches;

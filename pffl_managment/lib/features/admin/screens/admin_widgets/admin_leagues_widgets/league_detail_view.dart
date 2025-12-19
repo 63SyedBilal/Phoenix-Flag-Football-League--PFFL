@@ -43,12 +43,16 @@ class LeagueDetailView extends StatelessWidget {
           ),
           floatingActionButton: provider.selectedTabIndex == 1
               ? AnimatedFAB(
-                  onPressed: () {
-                    Navigator.pushNamed(
+                  onPressed: () async {
+                    await Navigator.pushNamed(
                       context,
                       AppRoutes.adminCreateMatch,
                       arguments: league,
                     );
+                    // Refresh games section when returning from create game
+                    if (context.mounted) {
+                      // The provider will refresh automatically when the widget rebuilds
+                    }
                   },
                 )
               : null,
@@ -89,7 +93,7 @@ class LeagueDetailView extends StatelessWidget {
                         ] else if (provider.selectedTabIndex == 3) ...[
                           const LeagueTeamList(),
                         ] else if (provider.selectedTabIndex == 4) ...[
-                          LeagueOfficialsList(),
+                          LeagueOfficialsList(leagueId: league.id),
                         ],
                       ],
                     ),

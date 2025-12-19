@@ -4,6 +4,7 @@ import 'package:pffl_managment/core/utils/validators.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/services/profile_service.dart';
 import 'package:pffl_managment/features/admin/leagues/providers/enhanced_leagues_provider.dart';
 import 'dart:io';
 
@@ -45,6 +46,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Referees list from API
   List<UserModel> _referees = [];
   bool _isLoadingReferees = false;
+  // Map to store profile image URLs for referees (userId -> imageUrl)
+  final Map<String, String?> _refereeProfileImages = {};
   
   // Free agents list from API
   List<UserModel> _freeAgents = [];
@@ -53,6 +56,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Stat keepers list from API
   List<UserModel> _statKeepers = [];
   bool _isLoadingStatKeepers = false;
+  // Map to store profile image URLs for stat keepers (userId -> imageUrl)
+  final Map<String, String?> _statKeeperProfileImages = {};
   
   // Referee invitation tracking (sent invites, not selection)
   final Map<String, bool> _refereeInviteSending = {}; // Currently sending
@@ -195,10 +200,28 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _minPlayersError == null;
   bool get isStep2Valid => true; // No selection required - invitations sent via icon only
   bool get isStep3Valid => true; // No selection required - invitations sent via icon only
-  bool get isStep4Valid =>
-      (_entryFeeType != EntryFeeType.perPlayer ||
-      (_perPlayerFee > 0 &&
-          _perPlayerFeeError == null)); // Fee setting step validation
+  
+  // Step 4 validation: User must be on Step 4 (currentStep == 3) to complete
+  // This ensures league is only created after Step 4 is reached
+  bool get isStep4Valid {
+    // User must be on Step 4 (0-indexed: step 3)
+    if (_currentStep != 3) {
+      return false;
+    }
+    
+    // Fee validation (if per player fee is selected)
+    if (_entryFeeType == EntryFeeType.perPlayer) {
+      if (_perPlayerFee <= 0 || _perPlayerFeeError != null) {
+        return false;
+      }
+    }
+    
+    // Step 4 is valid when user is on this step
+    return true;
+  }
+  
+  // Check if Step 4 has been completed (user has reached Step 4)
+  bool get isStep4Completed => _currentStep == 3;
 
   // Available team logos
   List<TeamLogoModel> get teamLogos => [
@@ -521,6 +544,9 @@ class CreateLeagueViewModel extends ChangeNotifier {
       debugPrint('🔄 Fetching referees...');
       _referees = await UserService.getReferees();
       debugPrint('✅ Fetched ${_referees.length} referees');
+      
+      // Fetch profile images for referees
+      await _fetchRefereeProfileImages();
     } catch (e) {
       debugPrint('❌ Error fetching referees: $e');
       _referees = [];
@@ -528,6 +554,38 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _isLoadingReferees = false;
       notifyListeners();
     }
+  }
+  
+  // Fetch profile images for referees
+  Future<void> _fetchRefereeProfileImages() async {
+    _refereeProfileImages.clear();
+    
+    // Fetch profiles for all referees in parallel
+    final futures = _referees.map((referee) async {
+      try {
+        final profile = await ProfileService.getProfile(referee.id);
+        if (profile != null && profile['image'] != null && profile['image'].toString().isNotEmpty) {
+          final img = profile['image'].toString();
+          // Only use valid http URLs
+          if (img.startsWith('http')) {
+            _refereeProfileImages[referee.id] = img;
+            return;
+          }
+        }
+        _refereeProfileImages[referee.id] = null;
+      } catch (e) {
+        debugPrint('⚠️ Error fetching profile for referee ${referee.id}: $e');
+        _refereeProfileImages[referee.id] = null;
+      }
+    });
+    
+    await Future.wait(futures);
+    notifyListeners();
+  }
+  
+  // Get profile image URL for a referee
+  String? getRefereeProfileImageUrl(String refereeId) {
+    return _refereeProfileImages[refereeId];
   }
 
   // Check if invitation is being sent to a referee
@@ -586,6 +644,9 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
     try {
       _statKeepers = await UserService.getStatKeepers();
+      
+      // Fetch profile images for stat keepers
+      await _fetchStatKeeperProfileImages();
     } catch (e) {
       debugPrint('Error fetching stat keepers: $e');
       _statKeepers = [];
@@ -593,6 +654,38 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _isLoadingStatKeepers = false;
       notifyListeners();
     }
+  }
+  
+  // Fetch profile images for stat keepers
+  Future<void> _fetchStatKeeperProfileImages() async {
+    _statKeeperProfileImages.clear();
+    
+    // Fetch profiles for all stat keepers in parallel
+    final futures = _statKeepers.map((statKeeper) async {
+      try {
+        final profile = await ProfileService.getProfile(statKeeper.id);
+        if (profile != null && profile['image'] != null && profile['image'].toString().isNotEmpty) {
+          final img = profile['image'].toString();
+          // Only use valid http URLs
+          if (img.startsWith('http')) {
+            _statKeeperProfileImages[statKeeper.id] = img;
+            return;
+          }
+        }
+        _statKeeperProfileImages[statKeeper.id] = null;
+      } catch (e) {
+        debugPrint('⚠️ Error fetching profile for stat keeper ${statKeeper.id}: $e');
+        _statKeeperProfileImages[statKeeper.id] = null;
+      }
+    });
+    
+    await Future.wait(futures);
+    notifyListeners();
+  }
+  
+  // Get profile image URL for a stat keeper
+  String? getStatKeeperProfileImageUrl(String statKeeperId) {
+    return _statKeeperProfileImages[statKeeperId];
   }
 
   // Check if invitation is being sent to a stat keeper
@@ -917,16 +1010,25 @@ class CreateLeagueViewModel extends ChangeNotifier {
   }
 
   /// Create league in background so invitation icons can work immediately
-  /// This is called when entering Step 2 (Referee) or Step 4 (Teams)
+  /// NOTE: This creates a temporary league for invitations, but final league creation
+  /// happens only when user completes Step 4 and clicks "Create League"
+  /// This is called when entering Step 2 (Referee), Step 3 (Stat Keepers), or Step 4 (Teams)
   Future<void> _createLeagueInBackground() async {
     if (_leagueId.isNotEmpty) {
-      // League already created
+      // League already created (temporary league for invitations)
       return;
     }
 
-    // Validate required fields
+    // Validate required fields for temporary league creation
     if (_leagueName.isEmpty || _startDate == null || _endDate == null) {
-      debugPrint('⚠️ Cannot create league: Missing required fields');
+      debugPrint('⚠️ Cannot create temporary league: Missing required fields');
+      return;
+    }
+    
+    // Don't create league if user hasn't reached Step 4 yet
+    // League will be created when Step 4 is completed
+    if (_currentStep > 3) {
+      debugPrint('⚠️ Cannot create temporary league: Step 4 already passed');
       return;
     }
 
@@ -999,6 +1101,36 @@ class CreateLeagueViewModel extends ChangeNotifier {
   }
 
   Future<void> createLeague(BuildContext context) async {
+    // Validate that user is on Step 4 before creating league
+    if (_currentStep != 3) {
+      debugPrint('❌ Cannot create league: User must complete Step 4 first (current step: $_currentStep)');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please complete Step 4 before creating the league'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Validate Step 4 is valid
+    if (!isStep4Valid) {
+      debugPrint('❌ Cannot create league: Step 4 validation failed');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please complete all required fields in Step 4'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    
     _isLoading = true;
     notifyListeners();
 
@@ -1054,43 +1186,38 @@ class CreateLeagueViewModel extends ChangeNotifier {
         return;
       }
 
-      // Step 2: Create league via API (only if not already created in Step 4)
-      // If league was already created when entering Step 4, use existing leagueId
-      String leagueId = _leagueId;
+      // Step 2: Create league via API
+      // League is created only after Step 4 is completed (when user clicks "Create League")
+      String leagueId;
       
-      if (leagueId.isEmpty) {
-        // League not created yet, create it now
-        final leagueData = {
-          'leagueName': _leagueName,
-          'format': formatString, // "5v5" or "7v7"
-          'startDate': _startDate!.toIso8601String(),
-          'endDate': _endDate!.toIso8601String(),
-          'minimumPlayers': _minPlayers,
-          'entryFeeType': 'stripe', // Backend expects this
-          'perPlayerLeagueFee': _perPlayerFee,
-          'logo': logoUrl, // logoUrl is guaranteed to be set at this point
-          'status': 'pending',
-        };
+      final leagueData = {
+        'leagueName': _leagueName,
+        'format': formatString, // "5v5" or "7v7"
+        'startDate': _startDate!.toIso8601String(),
+        'endDate': _endDate!.toIso8601String(),
+        'minimumPlayers': _minPlayers,
+        'entryFeeType': 'stripe', // Backend expects this
+        'perPlayerLeagueFee': _perPlayerFee,
+        'logo': logoUrl, // logoUrl is guaranteed to be set at this point
+        'status': 'pending',
+      };
 
-        final leagueResponse = await LeagueService.createLeague(leagueData);
-        
-        if (leagueResponse == null || leagueResponse.data.id.isEmpty) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to create league')),
-            );
-          }
-          _isLoading = false;
-          notifyListeners();
-          return;
+      final leagueResponse = await LeagueService.createLeague(leagueData);
+      
+      if (leagueResponse == null || leagueResponse.data.id.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to create league')),
+          );
         }
-
-        leagueId = leagueResponse.data.id;
-        _leagueId = leagueId; // Store leagueId
-        debugPrint('✅ League created successfully with ID: $leagueId');
-      } else {
-        debugPrint('✅ League already created with ID: $leagueId. Using existing league.');
+        _isLoading = false;
+        notifyListeners();
+        return;
       }
+
+      leagueId = leagueResponse.data.id;
+      _leagueId = leagueId; // Store leagueId
+      debugPrint('✅ League created successfully with ID: $leagueId (Step 4 completed)');
 
       // Step 3: Send invitations to free agents
       for (final freeAgentId in _selectedFreeAgentIds) {
@@ -1161,10 +1288,12 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _perPlayerFeeText = '250';
     _referees = [];
     _refereeSearchQuery = '';
+    _refereeProfileImages.clear(); // Clear referee profile images
     _freeAgents = [];
     _freeAgentSearchQuery = '';
     _statKeepers = [];
     _statKeeperSearchQuery = '';
+    _statKeeperProfileImages.clear(); // Clear stat keeper profile images
     _teams = [];
     _selectedTeamIds = [];
     _teamSearchQuery = '';
