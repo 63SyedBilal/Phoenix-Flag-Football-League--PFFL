@@ -583,6 +583,16 @@ export async function inviteTeam(req: NextRequest, { params }: { params: { leagu
       );
     }
 
+    // ✅ AUTO-ASSIGN: Add team to league immediately when invited
+    // This ensures team is available when creating games
+    console.log("📥 Adding team to league immediately...");
+    await League.findByIdAndUpdate(
+      leagueObjectId,
+      { $addToSet: { teams: teamObjectId } },
+      { new: true }
+    );
+    console.log("✅ Team added to league successfully");
+
     // Get team captain to send notification to
     const captainId = toObjectId(team.captain.toString());
 

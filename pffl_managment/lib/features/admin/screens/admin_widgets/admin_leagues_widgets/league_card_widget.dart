@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 
 class LeagueCardWidget extends StatelessWidget {
@@ -38,16 +39,49 @@ class LeagueCardWidget extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(50),
                         ),
-                        child: CustomPaint(
-                          size: const Size(30, 30),
-                          painter: DottedBorderPainter(),
-                          child: const Center(
-                            child: Icon(
-                              Icons.sports,
-                              size: 18,
-                              color: Colors.black,
-                            ),
-                          ),
+                        child: ClipOval(
+                          child: league.teamLogo.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: league.teamLogo,
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: const Color(0xFFE5E7EB),
+                                    child: const Center(
+                                      child: SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      CustomPaint(
+                                    size: const Size(30, 30),
+                                    painter: DottedBorderPainter(),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.sports,
+                                        size: 18,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : CustomPaint(
+                                  size: const Size(30, 30),
+                                  painter: DottedBorderPainter(),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.sports,
+                                      size: 18,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(width: 4),

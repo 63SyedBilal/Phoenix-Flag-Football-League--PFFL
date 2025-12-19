@@ -145,12 +145,12 @@ class UpcomingGamesProvider extends ChangeNotifier {
           debugPrint('   - Team: ${team.teamName} (ID: ${team.id})');
         }
       } else {
-        // League has no teams yet
+        // League has no teams yet - this is not an error, just empty state
         _teams = [];
-        debugPrint('⚠️ League has no teams assigned');
-        debugPrint('   - Make sure teams were invited in Step 4 of league creation');
-        debugPrint('   - Teams should be automatically assigned when email icon is clicked');
-        _errorMessage = 'No teams assigned to this league. Please invite teams in Step 4.';
+        debugPrint('ℹ️ League has no teams assigned yet');
+        debugPrint('   - Teams will appear when invited in Step 4 of league creation');
+        // Don't show error - just let the dropdown be empty
+        // User can still create the league and add teams later
       }
     } catch (e, stackTrace) {
       debugPrint('❌ Error fetching teams for league: $e');
@@ -386,7 +386,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
     
     // Check if teams are available before validating selection
     if (_teams.isEmpty) {
-      _errorMessage = 'No teams available. Please wait for teams to load.';
+      _errorMessage = 'No teams in this league yet. Please invite teams first from the League settings.';
       notifyListeners();
       return false;
     }
