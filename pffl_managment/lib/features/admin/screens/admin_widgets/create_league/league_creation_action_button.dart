@@ -57,36 +57,20 @@ class LeagueCreationActionButton extends StatelessWidget {
     CreateLeagueViewModel viewModel,
   ) {
     if (viewModel.isLoading) return null;
-    bool isCurrentStepValid = false;
-    switch (viewModel.currentStep) {
-      case 0:
-        isCurrentStepValid = viewModel.isStep1Valid;
-        break;
-      case 1:
-        isCurrentStepValid = viewModel.isStep2Valid;
-        break;
-      case 2:
-        isCurrentStepValid = viewModel.isStep3Valid;
-        break;
-      case 3:
-        isCurrentStepValid = viewModel.isStep4Valid;
-        break;
-    }
-
-    // For steps 0-2, require step validity
-    if (!isCurrentStepValid && viewModel.currentStep < 3) {
-      return null;
-    }
-    
-    // For Step 4 (index 3), require Step 4 validation
-    if (viewModel.currentStep == 3 && !viewModel.isStep4Valid) {
-      return null;
-    }
 
     switch (viewModel.currentStep) {
       case 0:
+        // Step 1: Validate on button press
+        return () {
+          if (viewModel.validateStep1()) {
+            viewModel.nextStep();
+          }
+        };
       case 1:
+        // Step 2: Always valid (invitations sent via icon)
+        return viewModel.nextStep;
       case 2:
+        // Step 3: Always valid (invitations sent via icon)
         return viewModel.nextStep;
       case 3:
         return () async {

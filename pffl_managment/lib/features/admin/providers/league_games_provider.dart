@@ -218,8 +218,8 @@ class LeagueGamesProvider extends ChangeNotifier {
     }
 
     // Determine winners (both games are guaranteed non-null at this point)
-    final semi1GameNonNull = semi1Game!;
-    final semi2GameNonNull = semi2Game!;
+    final semi1GameNonNull = semi1Game;
+    final semi2GameNonNull = semi2Game;
     
     final semi1Winner = (semi1GameNonNull.homeScore ?? 0) > (semi1GameNonNull.awayScore ?? 0)
         ? semi1GameNonNull.homeTeamId

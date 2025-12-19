@@ -248,6 +248,9 @@ class LeagueService {
   ) async {
     try {
       final dio = await _getAuthenticatedDio();
+      print('📤 Inviting team to league: leagueId=$leagueId, teamId=$teamId');
+      print('📤 Endpoint: /league/$leagueId/invite/team');
+      
       final response = await dio.post(
         '/league/$leagueId/invite/team',
         data: {
@@ -255,19 +258,45 @@ class LeagueService {
         },
       );
 
+      print('📤 Response status: ${response.statusCode}');
+      print('📤 Response data: ${response.data}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        // Check if response has success field
+        if (data is Map && data.containsKey('success')) {
+          final success = data['success'] == true;
+          if (success) {
+            print('✅ Team invitation sent successfully');
+            return true;
+          } else {
+            final error = data['error'] ?? 'Unknown error';
+            print('❌ Team invitation failed: $error');
+            throw Exception(error);
+          }
+        }
+        // If no success field, assume success based on status code
+        print('✅ Team invitation sent successfully (no success field in response)');
         return true;
       }
+      print('❌ Unexpected status code: ${response.statusCode}');
       return false;
     } on DioException catch (e) {
-      print('Error inviting team: ${e.message}');
+      print('❌ DioException inviting team: ${e.message}');
+      print('❌ DioException type: ${e.type}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
+        print('❌ Response status: ${e.response?.statusCode}');
+        print('❌ Response data: ${e.response?.data}');
+        final errorData = e.response?.data;
+        if (errorData is Map) {
+          final error = errorData['error'] ?? errorData['message'] ?? e.message;
+          throw Exception(error.toString());
+        }
       }
-      return false;
+      throw Exception(e.message ?? 'Failed to invite team');
     } catch (e) {
-      print('General error inviting team: $e');
-      return false;
+      print('❌ General error inviting team: $e');
+      rethrow;
     }
   }
 
@@ -432,6 +461,7 @@ class TeamModel {
   final String? enterCode;
   final String? location;
   final String? skillLevel;
+  final String? image; // Team logo/image URL
   final Map<String, dynamic>? captain;
   final List<dynamic>? squad5v5;
   final List<dynamic>? squad7v7;
@@ -443,6 +473,7 @@ class TeamModel {
     this.enterCode,
     this.location,
     this.skillLevel,
+    this.image,
     this.captain,
     this.squad5v5,
     this.squad7v7,
@@ -458,6 +489,7 @@ class TeamModel {
       enterCode: json['enterCode'],
       location: json['location'],
       skillLevel: json['skillLevel'],
+      image: json['image']?.toString(),
       captain: json['captain'] is Map ? json['captain'] : null,
       squad5v5: json['squad5v5'],
       squad7v7: json['squad7v7'],

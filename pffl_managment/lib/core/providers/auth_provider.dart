@@ -22,7 +22,11 @@ class AuthProvider extends ChangeNotifier {
   String? _loginEmailError;
   String? _loginPasswordError;
 
+  // Loading state
+  bool _isLoggingIn = false;
+
   bool get isLoggedIn => _isLoggedIn;
+  bool get isLoggingIn => _isLoggingIn;
   String get userToken => _userToken;
   String get userRole => _userRole;
   String get userId => _userId;
@@ -47,13 +51,13 @@ class AuthProvider extends ChangeNotifier {
   // Client-side validation helper methods
   bool _validateEmail(String email) {
     if (email.isEmpty) {
-      _loginEmailError = 'Email is required';
+      _loginEmailError = 'Please enter your email address';
       return false;
     }
     // Simple email validation
     final emailRegex = RegExp(r'^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(email)) {
-      _loginEmailError = 'Please enter a valid email address';
+      _loginEmailError = 'Please enter a valid email address (e.g. user@example.com)';
       return false;
     }
     return true;
@@ -61,11 +65,11 @@ class AuthProvider extends ChangeNotifier {
 
   bool _validatePassword(String password) {
     if (password.isEmpty) {
-      _loginPasswordError = 'Password is required';
+      _loginPasswordError = 'Please enter your password';
       return false;
     }
     if (password.length < 6) {
-      _loginPasswordError = 'Password must be at least 6 characters';
+      _loginPasswordError = 'Password must be at least 6 characters long';
       return false;
     }
     return true;
@@ -86,6 +90,10 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+    
+    // Set loading state
+    _isLoggingIn = true;
+    notifyListeners();
     
     try {
       // Use AuthService to make the API call
@@ -114,11 +122,13 @@ class AuthProvider extends ChangeNotifier {
         await prefs.setString('userEmail', _userEmail);
         await prefs.setString('userName', _userName);
         
+        _isLoggingIn = false;
         notifyListeners();
         return true;
       } else {
-        // Handle unsuccessful response - show on password field
-        _loginPasswordError = 'Login failed. Please check your credentials.';
+        // Handle unsuccessful response
+        _loginPasswordError = 'Unable to login. Please check your credentials.';
+        _isLoggingIn = false;
         notifyListeners();
         return false;
       }
@@ -127,66 +137,82 @@ class AuthProvider extends ChangeNotifier {
       print('Login API error: ${e.message}');
       
       if (e.response?.statusCode == 401) {
-        // Authentication error - check error message to determine field
+        // Authentication error - check errorType from backend
         final errorData = e.response?.data;
+        print('🔴 401 Error Data: $errorData');
+        
+        final errorType = errorData is Map 
+            ? (errorData['errorType'] ?? '').toString()
+            : '';
         final errorMessage = errorData is Map 
-            ? (errorData['error'] ?? errorData['message'] ?? '').toString().toLowerCase()
+            ? (errorData['error'] ?? '').toString()
             : '';
         
-        // Check if error mentions email specifically
-        if (errorMessage.contains('email') && !errorMessage.contains('password')) {
-          _loginEmailError = 'Invalid email address';
+        print('🔴 errorType: $errorType');
+        print('🔴 errorMessage: $errorMessage');
+        
+        // Handle specific error types from backend
+        if (errorType == 'email_not_found') {
+          _loginEmailError = 'Email does not exist.';
+          print('✅ Setting email error: Email does not exist.');
         } 
-        // Check if error mentions password specifically
-        else if (errorMessage.contains('password') && !errorMessage.contains('email')) {
-          _loginPasswordError = 'Invalid password';
+        else if (errorType == 'invalid_password') {
+          _loginPasswordError = 'Password is wrong';
+          print('✅ Setting password error: Password is wrong');
         }
-        // Default to password error for auth failures (most common)
+        else if (errorType == 'password_not_set') {
+          _loginPasswordError = 'Account setup incomplete. Please reset your password.';
+        }
+        // Fallback: parse error message for password
+        else if (errorMessage.toLowerCase().contains('password')) {
+          _loginPasswordError = 'Password is wrong';
+          print('✅ Fallback - Setting password error: Password is wrong');
+        }
+        // Fallback: parse error message for email
+        else if (errorMessage.toLowerCase().contains('email')) {
+          _loginEmailError = 'Email does not exist.';
+          print('✅ Fallback - Setting email error: Email does not exist.');
+        }
+        // Default - password error
         else {
-          _loginPasswordError = 'Invalid email or password';
+          _loginPasswordError = 'Password is wrong';
+          print('✅ Default - Setting password error: Password is wrong');
         }
       } else if (e.response?.statusCode == 404) {
-        // Service not found - show as email error (connection issue)
-        _loginEmailError = 'Login service not found. Please check your connection.';
+        // Service not found - no error shown (network issue)
       } else if (e.response?.statusCode == 400) {
         // Bad request - parse error to determine field
         final errorData = e.response?.data;
         final errorMessage = errorData is Map 
-            ? (errorData['error'] ?? errorData['message'] ?? '').toString().toLowerCase()
+            ? (errorData['error'] ?? errorData['message'] ?? '').toString()
             : '';
         
-        if (errorMessage.contains('email')) {
-          _loginEmailError = errorData is Map 
-              ? (errorData['error'] ?? errorData['message'] ?? 'Invalid email address').toString()
-              : 'Invalid email address';
-        } else if (errorMessage.contains('password')) {
-          _loginPasswordError = errorData is Map 
-              ? (errorData['error'] ?? errorData['message'] ?? 'Invalid password').toString()
-              : 'Invalid password';
-        } else {
-          _loginPasswordError = 'Invalid credentials. Please check your email and password.';
+        if (errorMessage.toLowerCase().contains('email') && 
+            !errorMessage.toLowerCase().contains('password')) {
+          _loginEmailError = 'Email does not exist.';
+        } else if (errorMessage.toLowerCase().contains('password') && 
+                   !errorMessage.toLowerCase().contains('email')) {
+          _loginPasswordError = 'Password is wrong';
         }
+        // No else - don't show generic errors
       } else if (e.response?.statusCode == 500) {
-        // Server error - show on password field (less intrusive)
-        _loginPasswordError = 'Server error. Please try again later.';
+        // Server error - no error shown (network issue)
       } else if (e.type == DioExceptionType.connectionTimeout ||
                  e.type == DioExceptionType.sendTimeout ||
                  e.type == DioExceptionType.receiveTimeout) {
-        // Timeout - show on email field
-        _loginEmailError = 'Connection timeout. Please check your network connection.';
+        // Timeout - no error shown (network issue)
       } else if (e.type == DioExceptionType.connectionError) {
-        // Connection error - show on email field
-        _loginEmailError = 'Cannot connect to server. Please check your network connection.';
+        // Connection error - no error shown (network issue)
       } else {
-        // Other network errors - show on password field
-        _loginPasswordError = 'Network error. Please check your connection.';
+        // Other network errors - no error shown
       }
+      _isLoggingIn = false;
       notifyListeners();
       return false;
     } catch (e) {
-      // Handle general errors - show on password field
+      // Handle general errors - no error shown
       print('Login general error: $e');
-      _loginPasswordError = 'Login failed. Please try again.';
+      _isLoggingIn = false;
       notifyListeners();
       return false;
     }

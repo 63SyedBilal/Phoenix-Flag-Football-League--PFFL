@@ -174,7 +174,11 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
           ),
           
           // Invitation icon - ONLY way to invite
-          _buildInviteButton(context, statKeeper.id, viewModel),
+          Consumer<CreateLeagueViewModel>(
+            builder: (context, vm, child) {
+              return _buildInviteButton(context, statKeeper.id, vm);
+            },
+          ),
         ],
       ),
     );
@@ -188,8 +192,8 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
     // Check invitation status directly from viewModel to ensure latest state
     final bool isInviteSent = viewModel.isStatKeeperInviteSent(statKeeperId);
     
-    // Icon color: grey initially, primary when invitation is sent
-    final iconColor = isInviteSent ? AppColors.primary : AppColors.borderDefault;
+    // Icon color: grey initially, red when invitation is sent
+    final iconColor = isInviteSent ? AppColors.buttonBackground : AppColors.borderDefault;
 
     return IconButton(
       icon: isInviteSent
@@ -199,15 +203,12 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
               color: iconColor,
               size: 22,
             ),
-      onPressed: () async {
-        // Check if league is created
-        if (viewModel.leagueId.isEmpty) {
-          return;
-        }
-
-        // Send invitation immediately (no loading state shown)
-        await viewModel.sendInvitationToStatKeeperIcon(statKeeperId);
-      },
+      onPressed: isInviteSent
+          ? null
+          : () {
+              // Send invitation - no validation, fire-and-forget
+              viewModel.sendInvitationToStatKeeperIcon(statKeeperId);
+            },
       tooltip: isInviteSent ? 'Invitation sent' : 'Send invitation to stat keeper',
     );
   }

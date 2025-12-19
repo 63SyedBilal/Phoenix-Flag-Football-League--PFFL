@@ -75,7 +75,7 @@ class NotificationModel {
       case 'LEAGUE_STATKEEPER_INVITE':
         return '$senderName invited you to be a stat keeper for $leagueName';
       case 'LEAGUE_TEAM_INVITE':
-        return '$senderName invited your team to join $leagueName';
+        return 'A new league "$leagueName" has been created and your team has been invited. Would you like to accept the invitation?';
       default:
         return 'You have a new notification';
     }
@@ -147,6 +147,29 @@ class NotificationProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       print('❌ Error accepting notification: $e');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Reject a notification
+  Future<bool> rejectNotification(String notificationId) async {
+    _errorMessage = null;
+    notifyListeners();
+    
+    try {
+      final success = await NotificationService.rejectNotification(notificationId);
+      if (success) {
+        // Reload notifications to get updated status
+        await loadNotifications();
+        return true;
+      }
+      _errorMessage = 'Failed to reject notification';
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      print('❌ Error rejecting notification: $e');
       notifyListeners();
       return false;
     }

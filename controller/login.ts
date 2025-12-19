@@ -32,7 +32,10 @@ export async function login(req: NextRequest) {
       
       if (!superAdmin.password) {
         console.log("❌ Password field is missing for superadmin:", superAdmin.email);
-        return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+        return NextResponse.json({ 
+          error: "Account setup incomplete. Please reset your password.",
+          errorType: "password_not_set"
+        }, { status: 401 });
       }
 
       const isPasswordValid = await verifyPassword(password, superAdmin.password);
@@ -40,7 +43,10 @@ export async function login(req: NextRequest) {
       
       if (!isPasswordValid) {
         console.log("❌ Password verification failed for superadmin:", superAdmin.email);
-        return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+        return NextResponse.json({ 
+          error: "Incorrect password. Please try again.",
+          errorType: "invalid_password"
+        }, { status: 401 });
       }
 
       const token = generateAccessToken({
@@ -75,7 +81,10 @@ export async function login(req: NextRequest) {
       // Check if any users exist
       const userCount = await User.countDocuments({});
       console.log("📊 Total users in database:", userCount);
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json({ 
+        error: "Email does not exist.",
+        errorType: "email_not_found"
+      }, { status: 401 });
     }
 
     console.log("✅ User found:", user.email);
@@ -85,7 +94,10 @@ export async function login(req: NextRequest) {
 
     if (!user.password) {
       console.log("❌ Password field is missing for user:", user.email);
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json({ 
+        error: "Account setup incomplete. Please reset your password.",
+        errorType: "password_not_set"
+      }, { status: 401 });
     }
 
     console.log("🔐 Verifying password...");
@@ -111,7 +123,10 @@ export async function login(req: NextRequest) {
         console.log("⚠️ This is a security issue. Password should be hashed.");
       }
       
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json({ 
+        error: "Password is wrong",
+        errorType: "invalid_password"
+      }, { status: 401 });
     }
 
     const token = generateAccessToken({
