@@ -32,19 +32,34 @@ class CaptainTeamProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      print('🔄 Loading team data for captain...');
       // Fetch team data from API
       final teamData = await TeamService.getTeamByCaptain();
       
       if (teamData == null) {
+        print('⚠️ No team data returned from API');
         _errorMessage = 'No team found. Please create a team first.';
         _isLoading = false;
         notifyListeners();
         return;
       }
 
+      print('✅ Team data received from API');
+      print('   Team ID: ${teamData['_id'] ?? teamData['id']}');
+      print('   Team Name: ${teamData['teamName'] ?? teamData['name']}');
+      
+      // Log squad data for debugging
+      final squad5v5Raw = teamData['squad5v5'] as List? ?? [];
+      final squad7v7Raw = teamData['squad7v7'] as List? ?? [];
+      print('   Raw squad5v5 count: ${squad5v5Raw.length}');
+      print('   Raw squad7v7 count: ${squad7v7Raw.length}');
+      
       // Create TeamModel for both formats
       final team5v5Base = TeamModel.fromJson(teamData, '5v5');
       final team7v7Base = TeamModel.fromJson(teamData, '7v7');
+      
+      print('   Parsed 5v5 players: ${team5v5Base.players.length}');
+      print('   Parsed 7v7 players: ${team7v7Base.players.length}');
 
       // Fetch profiles for all players to get jersey numbers and positions
       final enrichedPlayers5v5 = await _enrichPlayersWithProfiles(team5v5Base.players);

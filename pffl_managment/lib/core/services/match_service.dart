@@ -192,8 +192,12 @@ class MatchService {
     if (teamData == null) return null;
     if (teamData is String) return teamData;
     if (teamData is Map) {
-      return teamData['_id']?.toString() ?? 
-             teamData['id']?.toString() ?? 
+      // Check for teamId first (for teamA.teamId or teamB.teamId structure)
+      // Then check for _id (for populated team objects)
+      // Finally check for id
+      return teamData['teamId']?.toString() ??
+             teamData['_id']?.toString() ??
+             teamData['id']?.toString() ??
              null;
     }
     return null;
@@ -526,6 +530,177 @@ class MatchService {
       homeTeamId: homeTeamId,
       awayTeamId: awayTeamId,
     );
+  }
+
+  /// Switch to half time
+  /// POST /api/match/:id/halftime
+  static Future<MatchModel> switchHalfTime(String matchId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.post('/match/$matchId/halftime');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        return _parseMatchFromJson(data);
+      } else {
+        throw Exception('Failed to switch half time: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print('Error switching half time: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        throw Exception(
+          e.response?.data['error'] ?? 'Failed to switch half time',
+        );
+      }
+      rethrow;
+    } catch (e) {
+      print('General error switching half time: $e');
+      rethrow;
+    }
+  }
+
+  /// Switch to full time
+  /// POST /api/match/:id/fulltime
+  static Future<MatchModel> switchFullTime(String matchId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.post('/match/$matchId/fulltime');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        return _parseMatchFromJson(data);
+      } else {
+        throw Exception('Failed to switch full time: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print('Error switching full time: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        throw Exception(
+          e.response?.data['error'] ?? 'Failed to switch full time',
+        );
+      }
+      rethrow;
+    } catch (e) {
+      print('General error switching full time: $e');
+      rethrow;
+    }
+  }
+
+  /// Switch to overtime
+  /// POST /api/match/:id/overtime
+  static Future<MatchModel> switchOvertime(String matchId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.post('/match/$matchId/overtime');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        return _parseMatchFromJson(data);
+      } else {
+        throw Exception('Failed to switch overtime: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print('Error switching overtime: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        throw Exception(
+          e.response?.data['error'] ?? 'Failed to switch overtime',
+        );
+      }
+      rethrow;
+    } catch (e) {
+      print('General error switching overtime: $e');
+      rethrow;
+    }
+  }
+
+  /// Complete toss - set team sides and update status to continue
+  /// POST /api/match/:id/toss
+  /// Sets the winner team's side and opposite side for the other team
+  /// Updates status from "upcoming" to "continue"
+  static Future<MatchModel> completeToss({
+    required String matchId,
+    required String winnerTeamId,
+    required String winnerSide, // 'offense' or 'defense'
+  }) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      
+      // Prepare request body for toss endpoint
+      final requestData = {
+        'winnerTeamId': winnerTeamId,
+        'winnerSide': winnerSide,
+      };
+
+      final response = await dio.post('/match/$matchId/toss', data: requestData);
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        return _parseMatchFromJson(data);
+      } else {
+        throw Exception('Failed to complete toss: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print('Error completing toss: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        throw Exception(
+          e.response?.data['error'] ?? 'Failed to complete toss',
+        );
+      }
+      rethrow;
+    } catch (e) {
+      print('General error completing toss: $e');
+      rethrow;
+    }
+  }
+
+  /// Add game action (Touchdown, Extra Point, etc.)
+  /// POST /api/match/:id/action
+  /// Body: { teamId: string, playerId: string, actionType: string, quarter?: string }
+  static Future<MatchModel> addGameAction({
+    required String matchId,
+    required String teamId,
+    required String playerId,
+    required String actionType,
+    String? quarter,
+  }) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      
+      final requestData = {
+        'teamId': teamId,
+        'playerId': playerId,
+        'actionType': actionType,
+        if (quarter != null) 'quarter': quarter,
+      };
+
+      print('📤 Adding game action: $requestData');
+
+      final response = await dio.post('/match/$matchId/action', data: requestData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data['data'];
+        print('✅ Game action added successfully');
+        return _parseMatchFromJson(data);
+      } else {
+        throw Exception('Failed to add game action: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print('❌ Error adding game action: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        throw Exception(
+          e.response?.data['error'] ?? 'Failed to add game action',
+        );
+      }
+      rethrow;
+    } catch (e) {
+      print('❌ General error adding game action: $e');
+      rethrow;
+    }
   }
 }
 

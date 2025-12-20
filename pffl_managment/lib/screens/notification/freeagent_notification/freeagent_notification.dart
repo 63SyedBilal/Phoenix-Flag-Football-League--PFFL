@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_card.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
 
-class FreeAgentNotification extends StatelessWidget {
+class FreeAgentNotification extends StatefulWidget {
   const FreeAgentNotification({super.key});
 
+  @override
+  State<FreeAgentNotification> createState() => _FreeAgentNotificationState();
+}
+
+class _FreeAgentNotificationState extends State<FreeAgentNotification> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -92,9 +98,50 @@ class FreeAgentNotification extends StatelessWidget {
 
   Future<void> _handleAccept(BuildContext context, String notificationId) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
-    final success = await provider.acceptNotification(notificationId);
+    final result = await provider.acceptNotification(notificationId);
+    final success = result['success'] == true;
+    final roleChanged = result['roleChanged'] == true;
+    final newRole = result['newRole'];
 
     if (success && context.mounted) {
+      // If role was changed (free-agent to player), logout user
+      if (roleChanged) {
+        print('🔄 Role changed from free-agent to $newRole. Logging out user...');
+        
+        // Show message to user
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Your role has been updated to $newRole. Please log in again to continue.',
+              ),
+              backgroundColor: Colors.blue,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        
+        // Wait a bit for user to see the message
+        await Future.delayed(const Duration(seconds: 1));
+        
+        // Get auth provider and logout
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.logout(context);
+        
+        // Navigate to login screen
+        if (context.mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          );
+        }
+        
+        return; // Exit early since we've logged out
+      }
+      
+      // Refresh notifications to update status
+      await provider.refresh();
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invitation accepted successfully!'),

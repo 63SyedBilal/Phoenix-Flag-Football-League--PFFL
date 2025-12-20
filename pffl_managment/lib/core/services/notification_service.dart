@@ -61,8 +61,8 @@ class NotificationService {
 
   /// Accept a notification/invitation
   /// PUT /api/notification/accept/:notificationId
-  /// Returns true on success, throws exception on error
-  static Future<bool> acceptNotification(String notificationId) async {
+  /// Returns Map with success status and roleChanged flag, throws exception on error
+  static Future<Map<String, dynamic>> acceptNotification(String notificationId) async {
     try {
       print('📡 Accepting notification: $notificationId');
       final dio = await _getAuthenticatedDio();
@@ -79,7 +79,13 @@ class NotificationService {
 
       if (response.statusCode == 200) {
         print('✅ Notification accepted successfully');
-        return true;
+        final responseData = response.data;
+        return {
+          'success': true,
+          'roleChanged': responseData['roleChanged'] ?? false,
+          'newRole': responseData['newRole'],
+          'message': responseData['message'] ?? 'Invitation accepted successfully!'
+        };
       } else {
         final errorMsg = response.data?['error'] ?? response.statusMessage ?? 'Unknown error';
         print('❌ Failed to accept notification: $errorMsg');

@@ -189,13 +189,49 @@ class _PlayerNotificationState extends State<PlayerNotification> {
       print('🔄 Starting accept invitation process for: $notificationId');
       print('🔄 User ID: ${authProvider.userId}');
 
-      final success = await notificationProvider.acceptNotification(
+      final result = await notificationProvider.acceptNotification(
         notificationId,
       );
 
-      print('🔄 Accept result: $success');
+      print('🔄 Accept result: $result');
+      final success = result['success'] == true;
+      final roleChanged = result['roleChanged'] == true;
+      final newRole = result['newRole'];
 
       if (success && context.mounted) {
+        // If role was changed (free-agent to player), logout user
+        if (roleChanged) {
+          print('🔄 Role changed from free-agent to $newRole. Logging out user...');
+          
+          // Show message to user
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Your role has been updated to $newRole. Please log in again to continue.',
+                ),
+                backgroundColor: Colors.blue,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          
+          // Wait a bit for user to see the message
+          await Future.delayed(const Duration(seconds: 1));
+          
+          // Logout user
+          await authProvider.logout(context);
+          
+          // Navigate to login screen
+          if (context.mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/login',
+              (route) => false,
+            );
+          }
+          
+          return; // Exit early since we've logged out
+        }
         // Get PlayerTeamProvider from context if available
         try {
           final playerTeamProvider = Provider.of<PlayerTeamProvider>(

@@ -89,6 +89,10 @@ class NotificationModel {
         } else {
           return 'You\'ve been invited by $senderName to join the team $teamName.';
         }
+      case 'TEAM_INVITE_ACCEPTED':
+        // Format: "{Player Name} has accepted your invitation to join the {Format} squad"
+        final formatStr = format ?? 'team';
+        return '$senderName has accepted your invitation to join the $formatStr squad';
       case 'LEAGUE_REFEREE_INVITE':
         return '$senderName invited you to be a referee for $leagueName';
       case 'LEAGUE_STATKEEPER_INVITE':
@@ -169,25 +173,26 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   /// Accept a notification
-  Future<bool> acceptNotification(String notificationId) async {
+  /// Returns Map with success status and roleChanged flag
+  Future<Map<String, dynamic>> acceptNotification(String notificationId) async {
     _errorMessage = null;
     notifyListeners();
     
     try {
-      final success = await NotificationService.acceptNotification(notificationId);
-      if (success) {
+      final result = await NotificationService.acceptNotification(notificationId);
+      if (result['success'] == true) {
         // Reload notifications to get updated status
         await loadNotifications();
-        return true;
+        return result;
       }
       _errorMessage = 'Failed to accept notification';
       notifyListeners();
-      return false;
+      return {'success': false, 'roleChanged': false};
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       print('❌ Error accepting notification: $e');
       notifyListeners();
-      return false;
+      return {'success': false, 'roleChanged': false};
     }
   }
 

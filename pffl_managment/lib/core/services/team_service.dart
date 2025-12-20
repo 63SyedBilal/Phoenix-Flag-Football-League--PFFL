@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 
@@ -69,20 +70,55 @@ class TeamService {
   }
 
   /// Get team by captain ID
-  /// GET /api/team
+  /// GET /api/team?captainId=xxx
   static Future<Map<String, dynamic>?> getTeamByCaptain() async {
     try {
+      // Get captain ID from SharedPreferences (stored during login)
+      final prefs = await SharedPreferences.getInstance();
+      final captainId = prefs.getString('userId');
+      
+      if (captainId == null || captainId.isEmpty) {
+        print('⚠️ No userId found in SharedPreferences');
+        throw Exception('User ID not found. Please login again.');
+      }
+
       final dio = await _getAuthenticatedDio();
-      final response = await dio.get(AppConfig.teamEndpoint);
+      
+      // Pass captainId as query parameter to get the captain's team
+      final response = await dio.get(
+        AppConfig.teamEndpoint,
+        queryParameters: {'captainId': captainId},
+      );
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        if (data is List && data.isNotEmpty) {
-          // Return the first team (captain should only have one team)
-          return data[0] as Map<String, dynamic>;
-        } else if (data is Map) {
+        
+        // Backend returns single team object when captainId is provided
+        if (data == null) {
+          print('⚠️ No team data returned from API');
+          return null; // Team not found
+        }
+        
+        if (data is Map) {
+          print('✅ Team data retrieved successfully');
+          print('   Team ID: ${data['_id'] ?? data['id']}');
+          print('   Team Name: ${data['teamName'] ?? data['name']}');
+          
+          // Log squad sizes for debugging
+          final squad5v5 = data['squad5v5'] as List? ?? [];
+          final squad7v7 = data['squad7v7'] as List? ?? [];
+          print('   Squad 5v5 size: ${squad5v5.length}');
+          print('   Squad 7v7 size: ${squad7v7.length}');
+          
           return data as Map<String, dynamic>;
         }
+        
+        // Fallback: if data is a list, return first item
+        if (data is List && data.isNotEmpty) {
+          print('⚠️ Received list instead of single team, using first item');
+          return data[0] as Map<String, dynamic>;
+        }
+        
         return null;
       } else {
         throw Exception(
@@ -91,12 +127,15 @@ class TeamService {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
+        print('⚠️ Team not found (404)');
         return null; // Team not found
       }
       final errorMessage = e.response?.data['error'] ?? 
           'Failed to fetch team: ${e.message}';
+      print('❌ Error fetching team: $errorMessage');
       throw Exception(errorMessage);
     } catch (e) {
+      print('❌ General error fetching team: $e');
       throw Exception('Failed to fetch team: ${e.toString()}');
     }
   }

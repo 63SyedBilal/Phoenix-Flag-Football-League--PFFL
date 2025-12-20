@@ -16,6 +16,15 @@ class TeamManagementScreen extends StatelessWidget {
         body: SafeArea(
           child: Consumer<CaptainTeamProvider>(
             builder: (context, provider, child) {
+              // Refresh team data when screen is first built or when it becomes visible
+              // This ensures we always have the latest data including newly accepted players
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!provider.isLoading && provider.team == null && provider.errorMessage == null) {
+                  print('🔄 Refreshing team data on screen load...');
+                  provider.refresh();
+                }
+              });
+
               if (provider.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
