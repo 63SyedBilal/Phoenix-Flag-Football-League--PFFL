@@ -257,18 +257,23 @@ export async function getAllNotifications(req: NextRequest) {
       }
       
       // For league invites, league must exist
-<<<<<<< HEAD
+      // For league invites, league must exist (except GAME_ASSIGNED which needs match)
       if (n.type.includes("LEAGUE") && n.type !== "GAME_ASSIGNED" && !n.league) {
-        console.warn("Filtering out league notification with null league:", n._id);
+        console.warn("Filtering out league notification with null league:", {
+          id: n._id,
+          type: n.type
+        });
         return false;
       }
       // For GAME_ASSIGNED, match should exist (league is optional but recommended)
       if (n.type === "GAME_ASSIGNED" && !n.match) {
-        console.warn("Filtering out GAME_ASSIGNED notification with null match:", n._id);
+        console.warn("Filtering out GAME_ASSIGNED notification with null match:", {
+          id: n._id,
+          type: n.type
+        });
         return false;
       }
       // For team invites, team must exist
-=======
       if (n.type.includes("LEAGUE")) {
         if (!n.league) {
           console.warn("Filtering out league notification with null league:", {
@@ -291,7 +296,6 @@ export async function getAllNotifications(req: NextRequest) {
       }
       
       // For team invites, team must exist (only TEAM_INVITE, not LEAGUE_* types)
->>>>>>> b17c912e8d3f2d0eb90b6cf13e697566fd6ab98b
       if (n.type === "TEAM_INVITE" && !n.team) {
         console.warn("❌ Filtering out TEAM_INVITE notification with null team:", {
           id: n._id,

@@ -39,9 +39,7 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
 export async function createMatch(req: NextRequest) {
   try {
     await connectDB();
-<<<<<<< HEAD
     const decoded = await verifyUser(req);
-=======
     const user = await verifyUser(req);
 
     // Get user ID from token (superadmin who creates the match)
@@ -52,7 +50,6 @@ export async function createMatch(req: NextRequest) {
         { status: 401 }
       );
     }
->>>>>>> b17c912e8d3f2d0eb90b6cf13e697566fd6ab98b
 
     const {
       leagueId,
