@@ -764,6 +764,12 @@ export async function rejectInvite(req: NextRequest, { params }: { params: { not
       );
     }
 
+    // Handle LEAGUE_TEAM_INVITE rejection
+    // Note: Team is not added to league until accepted, so no need to remove on rejection
+    if (notification.type === "LEAGUE_TEAM_INVITE") {
+      console.log("🔴 League team invitation rejected - team was not added to league");
+    }
+
     // Update notification status
     notification.status = "rejected";
     await notification.save();

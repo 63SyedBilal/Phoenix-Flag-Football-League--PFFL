@@ -70,8 +70,15 @@ class CaptainNotification extends StatelessWidget {
                   final notification = provider.notifications[index];
                   return NotificationCard(
                     notification: notification,
-                    onAccept: notification.isPending
+                    onAccept: notification.isPending &&
+                            (notification.type == 'LEAGUE_TEAM_INVITE' ||
+                             notification.type == 'TEAM_INVITE')
                         ? () => _handleAccept(context, notification.id)
+                        : null,
+                    onReject: notification.isPending &&
+                            (notification.type == 'LEAGUE_TEAM_INVITE' ||
+                             notification.type == 'TEAM_INVITE')
+                        ? () => _handleReject(context, notification.id)
                         : null,
                   );
                 },
@@ -98,6 +105,27 @@ class CaptainNotification extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.errorMessage ?? 'Failed to accept invitation'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleReject(BuildContext context, String notificationId) async {
+    final provider = Provider.of<NotificationProvider>(context, listen: false);
+    final success = await provider.rejectNotification(notificationId);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invitation rejected successfully!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Failed to reject invitation'),
           backgroundColor: Colors.red,
         ),
       );

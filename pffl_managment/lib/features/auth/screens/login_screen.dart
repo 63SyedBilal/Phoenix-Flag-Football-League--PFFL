@@ -5,7 +5,6 @@ import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/left_alaign_button.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
-import 'package:pffl_managment/core/utils/svg_icons.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -57,6 +56,8 @@ class LoginScreen extends StatelessWidget {
               CustomTextField(
                 controller: _emailController,
                 hintText: "e.g admin@gmail.com",
+                keyboardType: TextInputType.emailAddress,
+                errorText: authProvider.loginEmailError,
                 onChanged: (value) {
                   // Clear email error when user types
                   if (authProvider.loginEmailError != null) {
@@ -64,30 +65,6 @@ class LoginScreen extends StatelessWidget {
                   }
                 },
               ),
-              if (authProvider.loginEmailError != null)
-                Container(
-                  margin: const EdgeInsets.only(top: 8.0),
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgIcons.infoFill(size: 16, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          authProvider.loginEmailError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
               const SizedBox(height: 16),
 
@@ -97,6 +74,7 @@ class LoginScreen extends StatelessWidget {
                 controller: _passwordController,
                 hintText: "Enter your password",
                 obscureText: !authProvider.isLoginPasswordVisible,
+                errorText: authProvider.loginPasswordError,
                 onChanged: (value) {
                   // Clear password error when user types
                   if (authProvider.loginPasswordError != null) {
@@ -115,30 +93,6 @@ class LoginScreen extends StatelessWidget {
                   onPressed: authProvider.toggleLoginPasswordVisibility,
                 ),
               ),
-              if (authProvider.loginPasswordError != null)
-                Container(
-                  margin: const EdgeInsets.only(top: 8.0),
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgIcons.infoFill(size: 16, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          authProvider.loginPasswordError!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
               const SizedBox(height: 30),
 
@@ -199,37 +153,6 @@ class LoginScreen extends StatelessWidget {
                     }
                   }
                 },
-              ),
-
-              const SizedBox(height: 20),
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.signup);
-                  },
-                  child: RichText(
-                    text: TextSpan(
-                      style: theme.textTheme.bodyMedium,
-                      children: [
-                        TextSpan(
-                          text: "Don't have an account? ",
-                          style: TextStyle(
-                            color: theme.brightness == Brightness.dark
-                                ? Colors.white70
-                                : Colors.black87,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "Create Account",
-                          style: TextStyle(
-                            color: theme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ),
             ],
           ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/core/utils/validators.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
@@ -27,14 +26,14 @@ class CreateLeagueViewModel extends ChangeNotifier {
       ''; // Keep for now to avoid breaking changes, but not used
   String _leagueId = ''; // Store leagueId after league is created
   double _registrationFee = 50.0;
-  DateTime? _startDate = DateTime(2025, 12, 10); // Default start date
-  DateTime? _endDate = DateTime(2026, 3, 20); // Default end date
-  int _minPlayers = 8;
+  DateTime? _startDate; // User must select start date
+  DateTime? _endDate; // User must select end date
+  int _minPlayers = 0; // User must select minimum players
   int _formatPlayers = 5;
 
   // Text editing controllers state
   String _leagueNameText = '';
-  String _perPlayerFeeText = '250';
+  String _perPlayerFeeText = ''; // User must enter fee
 
   // Map to track email sending status for each referee
   final Map<String, bool> _emailSendingStatus = {};
@@ -86,7 +85,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
   final Map<String, bool> _teamExpansionState = {};
 
   EntryFeeType _entryFeeType = EntryFeeType.captain;
-  double _perPlayerFee = 250.0;
+  double _perPlayerFee = 0.0; // User must enter fee
   bool _isLoading = false;
 
   int get currentStep => _currentStep;
@@ -177,26 +176,33 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Validation errors
   String? _leagueNameError;
   String? _perPlayerFeeError;
-  String? _dateRangeError;
+  String? _startDateError;
+  String? _endDateError;
   String? _minPlayersError;
+  String? _logoError;
 
   String? get leagueNameError => _leagueNameError;
   String? get perPlayerFeeError => _perPlayerFeeError;
-  String? get dateRangeError => _dateRangeError;
+  String? get startDateError => _startDateError;
+  String? get endDateError => _endDateError;
   String? get minPlayersError => _minPlayersError;
+  String? get logoError => _logoError;
 
   // Validation flags
   bool get isStep1Valid =>
       _leagueName.trim().isNotEmpty &&
       _leagueNameError == null &&
-      (_entryFeeType != EntryFeeType.perPlayer || 
-       (_perPlayerFee > 0 && _perPlayerFeeError == null)) &&
-      (_selectedLogoId.isNotEmpty || _uploadedLogoPath.isNotEmpty) &&
+      _perPlayerFeeText.isNotEmpty &&
+      _perPlayerFee > 0 &&
+      _perPlayerFeeError == null &&
+      _uploadedLogoPath.isNotEmpty &&
+      _logoError == null &&
       _startDate != null &&
+      _startDateError == null &&
       _endDate != null &&
-      _startDate!.isBefore(_endDate!) &&
-      _dateRangeError == null &&
+      _endDateError == null &&
       _minPlayers > 0 &&
+      _minPlayers <= 15 &&
       _minPlayersError == null;
   bool get isStep2Valid => true; // No selection required - invitations sent via icon only
   bool get isStep3Valid => true; // No selection required - invitations sent via icon only
@@ -412,13 +418,19 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   void setLeagueName(String name) {
     _leagueName = name;
-    // Validate the league name
-    _leagueNameError = Validators.validateLeagueName(name);
+    // Clear error when user types
+    if (name.trim().isNotEmpty) {
+      _leagueNameError = null;
+    }
     notifyListeners();
   }
 
   void setUploadedLogo(String path) {
     _uploadedLogoPath = path;
+    // Clear error when user uploads logo
+    if (path.isNotEmpty) {
+      _logoError = null;
+    }
     notifyListeners();
   }
 
@@ -434,12 +446,22 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   void setStartDate(DateTime date) {
     _startDate = date;
-    // Validate date range
-    if (_startDate != null && _endDate != null) {
-      if (!_startDate!.isBefore(_endDate!)) {
-        _dateRangeError = 'Start date must be before end date';
+    // Clear error when date is selected
+    _startDateError = null;
+    // Validate: Start date must be today or in the future
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final selectedDate = DateTime(date.year, date.month, date.day);
+    if (selectedDate.isBefore(todayDate)) {
+      _startDateError = 'Start date must be today or a future date';
+    }
+    // Validate: End date must be after start date
+    if (_endDate != null) {
+      final endDateOnly = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
+      if (!selectedDate.isBefore(endDateOnly)) {
+        _endDateError = 'End date must be after start date';
       } else {
-        _dateRangeError = null;
+        _endDateError = null;
       }
     }
     notifyListeners();
@@ -447,12 +469,14 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   void setEndDate(DateTime date) {
     _endDate = date;
-    // Validate date range
-    if (_startDate != null && _endDate != null) {
-      if (!_startDate!.isBefore(_endDate!)) {
-        _dateRangeError = 'Start date must be before end date';
-      } else {
-        _dateRangeError = null;
+    // Clear error when date is selected
+    _endDateError = null;
+    // Validate: End date must be after start date
+    if (_startDate != null) {
+      final startDateOnly = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+      final endDateOnly = DateTime(date.year, date.month, date.day);
+      if (!startDateOnly.isBefore(endDateOnly)) {
+        _endDateError = 'End date must be after start date';
       }
     }
     notifyListeners();
@@ -460,10 +484,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   void setMinPlayers(int value) {
     _minPlayers = value;
-    // Validate minimum players
-    if (_minPlayers <= 0) {
-      _minPlayersError = 'Minimum players must be greater than 0';
-    } else {
+    // Clear error when value is valid (1-15)
+    if (value >= 1 && value <= 15) {
       _minPlayersError = null;
     }
     notifyListeners();
@@ -471,21 +493,94 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   void setEntryFeeType(EntryFeeType type) {
     _entryFeeType = type;
-    // Re-validate the fee when entry fee type changes
-    if (type == EntryFeeType.perPlayer && _perPlayerFeeText.isNotEmpty) {
-      _perPlayerFeeError = Validators.validateNumeric(
-        _perPlayerFeeText,
-        'Per player fee',
-      );
-    } else {
-      _perPlayerFeeError = null;
-    }
     notifyListeners();
   }
 
   void setPerPlayerFee(double fee) {
     _perPlayerFee = fee;
+    // Clear error when fee is valid
+    if (fee > 0) {
+      _perPlayerFeeError = null;
+    }
     notifyListeners();
+  }
+  
+  /// Validate all Step 1 fields and show errors
+  /// Returns true if all fields are valid
+  bool validateStep1() {
+    bool isValid = true;
+    
+    // Validate League Name
+    if (_leagueName.trim().isEmpty) {
+      _leagueNameError = 'League name is required';
+      isValid = false;
+    } else {
+      _leagueNameError = null;
+    }
+    
+    // Validate Logo
+    if (_uploadedLogoPath.isEmpty) {
+      _logoError = 'Please upload a league logo';
+      isValid = false;
+    } else {
+      _logoError = null;
+    }
+    
+    // Validate Start Date
+    if (_startDate == null) {
+      _startDateError = 'Start date is required';
+      isValid = false;
+    } else {
+      final today = DateTime.now();
+      final todayDate = DateTime(today.year, today.month, today.day);
+      final selectedDate = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+      if (selectedDate.isBefore(todayDate)) {
+        _startDateError = 'Start date must be today or a future date';
+        isValid = false;
+      } else {
+        _startDateError = null;
+      }
+    }
+    
+    // Validate End Date
+    if (_endDate == null) {
+      _endDateError = 'End date is required';
+      isValid = false;
+    } else if (_startDate != null) {
+      final startDateOnly = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+      final endDateOnly = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
+      if (!startDateOnly.isBefore(endDateOnly)) {
+        _endDateError = 'End date must be after start date';
+        isValid = false;
+      } else {
+        _endDateError = null;
+      }
+    }
+    
+    // Validate Minimum Players (1-15)
+    if (_minPlayers == 0) {
+      _minPlayersError = 'Please select minimum players';
+      isValid = false;
+    } else if (_minPlayers < 1 || _minPlayers > 15) {
+      _minPlayersError = 'Minimum players must be between 1 and 15';
+      isValid = false;
+    } else {
+      _minPlayersError = null;
+    }
+    
+    // Validate Per Player Fee (must be > 0)
+    if (_perPlayerFeeText.isEmpty) {
+      _perPlayerFeeError = 'League fee is required';
+      isValid = false;
+    } else if (_perPlayerFee <= 0) {
+      _perPlayerFeeError = 'League fee must be greater than 0';
+      isValid = false;
+    } else {
+      _perPlayerFeeError = null;
+    }
+    
+    notifyListeners();
+    return isValid;
   }
 
   void togglePlayerSelection(String playerId) {
@@ -602,37 +697,29 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Referee will receive notification on their dashboard
   // When referee accepts, league is assigned to them
   Future<bool> sendInvitationToReferee(String refereeId) async {
-    // Need leagueId to send invitation
-    if (_leagueId.isEmpty) {
-      debugPrint('⚠️ Cannot send referee invitation: League not created yet');
+    // Prevent duplicate invitations
+    if (_refereeInviteSent[refereeId] == true) {
       return false;
     }
 
-    _refereeInviteSending[refereeId] = true;
+    // Immediately update UI - change color instantly
+    _refereeInviteSent[refereeId] = true;
     notifyListeners();
 
-    try {
-      debugPrint('📤 Sending invitation to referee: $refereeId for league: $_leagueId');
-      final success = await LeagueService.inviteRefereeToLeague(_leagueId, refereeId);
-      
-      _refereeInviteSending[refereeId] = false;
-      
-      if (success) {
-        _refereeInviteSent[refereeId] = true;
-        debugPrint('✅ Referee invitation sent successfully');
-        notifyListeners();
-        return true;
-      } else {
-        debugPrint('❌ Referee invitation failed');
-        notifyListeners();
-        return false;
-      }
-    } catch (e) {
-      debugPrint('❌ Error sending invitation to referee: $e');
-      _refereeInviteSending[refereeId] = false;
-      notifyListeners();
-      return false;
+    // Send invitation in background (fire-and-forget) - independent of league creation
+    if (_leagueId.isNotEmpty) {
+      LeagueService.inviteRefereeToLeague(_leagueId, refereeId).then((success) {
+        if (success) {
+          debugPrint('✅ Referee invitation sent successfully');
+        } else {
+          debugPrint('❌ Referee invitation failed');
+        }
+      }).catchError((e) {
+        debugPrint('❌ Error sending invitation to referee: $e');
+      });
     }
+
+    return true;
   }
 
   // Fetch stat keepers from API
@@ -702,37 +789,29 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Stat keeper will receive notification on their dashboard
   // When stat keeper accepts, league is assigned to them
   Future<bool> sendInvitationToStatKeeperIcon(String statKeeperId) async {
-    // Need leagueId to send invitation
-    if (_leagueId.isEmpty) {
-      debugPrint('⚠️ Cannot send stat keeper invitation: League not created yet');
+    // Prevent duplicate invitations
+    if (_statKeeperInviteSent[statKeeperId] == true) {
       return false;
     }
 
-    _statKeeperInviteSending[statKeeperId] = true;
+    // Immediately update UI - change color instantly
+    _statKeeperInviteSent[statKeeperId] = true;
     notifyListeners();
 
-    try {
-      debugPrint('📤 Sending invitation to stat keeper: $statKeeperId for league: $_leagueId');
-      final success = await LeagueService.inviteStatKeeperToLeague(_leagueId, statKeeperId);
-      
-      _statKeeperInviteSending[statKeeperId] = false;
-      
-      if (success) {
-        _statKeeperInviteSent[statKeeperId] = true;
-        debugPrint('✅ Stat keeper invitation sent successfully');
-        notifyListeners();
-        return true;
-      } else {
-        debugPrint('❌ Stat keeper invitation failed');
-        notifyListeners();
-        return false;
-      }
-    } catch (e) {
-      debugPrint('❌ Error sending invitation to stat keeper: $e');
-      _statKeeperInviteSending[statKeeperId] = false;
-      notifyListeners();
-      return false;
+    // Send invitation in background (fire-and-forget) - independent of league creation
+    if (_leagueId.isNotEmpty) {
+      LeagueService.inviteStatKeeperToLeague(_leagueId, statKeeperId).then((success) {
+        if (success) {
+          debugPrint('✅ Stat keeper invitation sent successfully');
+        } else {
+          debugPrint('❌ Stat keeper invitation failed');
+        }
+      }).catchError((e) {
+        debugPrint('❌ Error sending invitation to stat keeper: $e');
+      });
     }
+
+    return true;
   }
 
   // Legacy method - kept for backward compatibility with createLeague flow
@@ -781,14 +860,12 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   void setPerPlayerFeeText(String text) {
     _perPlayerFeeText = text;
-    // Validate the fee only if it's not empty and we're using per player fee type
-    if (_entryFeeType == EntryFeeType.perPlayer && text.isNotEmpty) {
-      _perPlayerFeeError = Validators.validateNumeric(text, 'Per player fee');
-    } else {
+    final fee = double.tryParse(text) ?? 0.0;
+    _perPlayerFee = fee;
+    // Clear error if fee is valid
+    if (fee > 0) {
       _perPlayerFeeError = null;
     }
-    final fee = double.tryParse(text) ?? 0.0;
-    setPerPlayerFee(fee);
     notifyListeners();
   }
 
@@ -930,30 +1007,31 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Send invitation to team
   // Teams are automatically assigned to the league when invited (Step 4 of league creation)
   Future<bool> sendInvitationToTeam(String leagueId, String teamId) async {
-    _teamEmailStatus[teamId] = true;
-    notifyListeners();
-
-    try {
-      debugPrint('📤 Sending invitation to team: leagueId=$leagueId, teamId=$teamId');
-      final success = await LeagueService.inviteTeamToLeague(leagueId, teamId);
-      _teamEmailStatus[teamId] = false;
-      if (success) {
-        _teamEmailSent[teamId] = true;
-        debugPrint('✅ Team invitation sent successfully. Team automatically assigned to league.');
-        notifyListeners();
-        return true;
-      } else {
-        debugPrint('❌ Team invitation failed: success=false');
-        notifyListeners();
-        return false;
-      }
-    } catch (e) {
-      debugPrint('❌ Error sending invitation to team: $e');
-      debugPrint('❌ Error type: ${e.runtimeType}');
-      _teamEmailStatus[teamId] = false;
-      notifyListeners();
+    // Prevent duplicate invitations
+    if (_teamEmailSent[teamId] == true) {
+      debugPrint('⚠️ Invitation already sent for team: $teamId');
       return false;
     }
+
+    // Immediately update UI - change color instantly
+    _teamEmailSent[teamId] = true;
+    notifyListeners();
+
+    // Send invitation in background (fire-and-forget) - independent of league creation
+    if (leagueId.isNotEmpty) {
+      LeagueService.inviteTeamToLeague(leagueId, teamId).then((success) {
+        if (success) {
+          debugPrint('✅ Team invitation sent successfully. Team will be assigned when captain accepts.');
+        } else {
+          debugPrint('❌ Team invitation failed: success=false');
+        }
+      }).catchError((e) {
+        debugPrint('❌ Error sending invitation to team: $e');
+        debugPrint('❌ Error type: ${e.runtimeType}');
+      });
+    }
+
+    return true;
   }
 
   void setTeamSearchQuery(String query) {
@@ -970,12 +1048,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
     if (_currentStep < 3) {  // Step 4 is at index 3 (0-indexed: 0,1,2,3)
       _currentStep++;
       
-      // When reaching Step 2 (Referee Invitation), fetch referees and create league
+      // When reaching Step 2 (Referee Invitation), fetch referees
       if (_currentStep == 1) {
-        // Create league if not already created (allows invitation icon to work immediately)
-        if (_leagueId.isEmpty && !_isLoading) {
-          _createLeagueInBackground();
-        }
         // Fetch referees for invitation
         if (_referees.isEmpty && !_isLoadingReferees) {
           fetchReferees();
@@ -984,104 +1058,19 @@ class CreateLeagueViewModel extends ChangeNotifier {
       
       // When reaching Step 3 (Stat Keeper Invitation), fetch stat keepers
       if (_currentStep == 2) {
-        // Create league if not already created (allows invitation icon to work immediately)
-        if (_leagueId.isEmpty && !_isLoading) {
-          _createLeagueInBackground();
-        }
         // Fetch stat keepers for invitation
         if (_statKeepers.isEmpty && !_isLoadingStatKeepers) {
           fetchStatKeepers();
         }
       }
       
-      // When reaching Step 4, create league in background so email icon works immediately
+      // When reaching Step 4, fetch teams
       if (_currentStep == 3) {
-        // Create league if not already created (allows email icon to work immediately)
-        if (_leagueId.isEmpty && !_isLoading) {
-          _createLeagueInBackground();
-        }
         // Fetch teams when reaching step 4
         if (_teams.isEmpty && !_isLoadingTeams) {
           fetchTeams();
         }
       }
-      notifyListeners();
-    }
-  }
-
-  /// Create league in background so invitation icons can work immediately
-  /// NOTE: This creates a temporary league for invitations, but final league creation
-  /// happens only when user completes Step 4 and clicks "Create League"
-  /// This is called when entering Step 2 (Referee), Step 3 (Stat Keepers), or Step 4 (Teams)
-  Future<void> _createLeagueInBackground() async {
-    if (_leagueId.isNotEmpty) {
-      // League already created (temporary league for invitations)
-      return;
-    }
-
-    // Validate required fields for temporary league creation
-    if (_leagueName.isEmpty || _startDate == null || _endDate == null) {
-      debugPrint('⚠️ Cannot create temporary league: Missing required fields');
-      return;
-    }
-    
-    // Don't create league if user hasn't reached Step 4 yet
-    // League will be created when Step 4 is completed
-    if (_currentStep > 3) {
-      debugPrint('⚠️ Cannot create temporary league: Step 4 already passed');
-      return;
-    }
-
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // Upload logo if provided
-      String? logoUrl;
-      if (_uploadedLogoPath.isNotEmpty) {
-        try {
-          final logoFile = File(_uploadedLogoPath);
-          if (await logoFile.exists()) {
-            logoUrl = await LeagueService.uploadLogo(logoFile);
-          }
-        } catch (e) {
-          debugPrint('⚠️ Logo upload failed: $e');
-          // Continue without logo
-        }
-      } else if (_selectedLogoId.isNotEmpty) {
-        final selectedLogo = teamLogos.firstWhere(
-          (logo) => logo.id == _selectedLogoId,
-          orElse: () => teamLogos.first,
-        );
-        logoUrl = selectedLogo.url;
-      }
-
-      // Create league
-      final leagueData = {
-        'leagueName': _leagueName,
-        'format': formatString,
-        'startDate': _startDate!.toIso8601String(),
-        'endDate': _endDate!.toIso8601String(),
-        'minimumPlayers': _minPlayers,
-        'entryFeeType': 'stripe',
-        'perPlayerLeagueFee': _perPlayerFee,
-        'logo': logoUrl ?? '',
-        'status': 'pending',
-      };
-
-      final leagueResponse = await LeagueService.createLeague(leagueData);
-      
-      if (leagueResponse != null && leagueResponse.data.id.isNotEmpty) {
-        _leagueId = leagueResponse.data.id;
-        debugPrint('✅ League created in background. ID: $_leagueId');
-        debugPrint('✅ Invitation icons are now enabled');
-      } else {
-        debugPrint('❌ Failed to create league in background');
-      }
-    } catch (e) {
-      debugPrint('❌ Error creating league: $e');
-    } finally {
-      _isLoading = false;
       notifyListeners();
     }
   }
@@ -1285,7 +1274,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _statKeeperInviteSending.clear(); // Clear stat keeper invite sending status
     _statKeeperInviteSent.clear(); // Clear stat keeper invite sent status
     _leagueNameText = '';
-    _perPlayerFeeText = '250';
+    _perPlayerFeeText = '';
     _referees = [];
     _refereeSearchQuery = '';
     _refereeProfileImages.clear(); // Clear referee profile images

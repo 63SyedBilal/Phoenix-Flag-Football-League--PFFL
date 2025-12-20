@@ -161,7 +161,11 @@ class Step2SelectRefereesWidget extends StatelessWidget {
           ),
           
           // Invitation icon - ONLY way to invite
-          _buildInviteButton(context, referee.id, viewModel),
+          Consumer<CreateLeagueViewModel>(
+            builder: (context, vm, child) {
+              return _buildInviteButton(context, referee.id, vm);
+            },
+          ),
         ],
       ),
     );
@@ -175,8 +179,8 @@ class Step2SelectRefereesWidget extends StatelessWidget {
     // Check invitation status directly from viewModel to ensure latest state
     final bool isInviteSent = viewModel.isRefereeInviteSent(refereeId);
     
-    // Icon color: grey initially, primary when invitation is sent
-    final iconColor = isInviteSent ? AppColors.primary : AppColors.borderDefault;
+    // Icon color: grey initially, red when invitation is sent
+    final iconColor = isInviteSent ? AppColors.buttonBackground : AppColors.borderDefault;
 
     return IconButton(
       icon: isInviteSent
@@ -189,13 +193,12 @@ class Step2SelectRefereesWidget extends StatelessWidget {
               color: iconColor,
               size: 22,
             ),
-      onPressed: () async {
-        // Prevent sending if league is not created
-        if (viewModel.leagueId.isEmpty) return;
-
-        // Send invitation
-        await viewModel.sendInvitationToReferee(refereeId);
-      },
+      onPressed: isInviteSent
+          ? null
+          : () {
+              // Send invitation - no validation, fire-and-forget
+              viewModel.sendInvitationToReferee(refereeId);
+            },
       tooltip: isInviteSent
           ? 'Invitation sent'
           : 'Send invitation to referee',

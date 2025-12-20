@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/captain/providers/captain_league_detail_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/features/captain/providers/captain_league_detail_provider.dart';
 
 class CaptainLeagueDetailTabBar extends StatelessWidget {
   const CaptainLeagueDetailTabBar({super.key});

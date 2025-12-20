@@ -90,4 +90,54 @@ class NotificationService {
       throw Exception('Failed to accept notification: ${e.toString()}');
     }
   }
+
+  /// Reject a notification/invitation
+  /// PUT /api/notification/reject/:notificationId
+  /// Returns true on success, throws exception on error
+  static Future<bool> rejectNotification(String notificationId) async {
+    try {
+      print('📡 Rejecting notification: $notificationId');
+      final dio = await _getAuthenticatedDio();
+      
+      // Use the endpoint format: /notification/reject/:notificationId
+      final endpoint = '/notification/reject/$notificationId';
+      print('📡 Endpoint: $endpoint');
+      print('📡 Full URL: ${dio.options.baseUrl}$endpoint');
+      
+      final response = await dio.put(endpoint);
+
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        print('✅ Notification rejected successfully');
+        return true;
+      } else {
+        final errorMsg = response.data?['error'] ?? response.statusMessage ?? 'Unknown error';
+        print('❌ Failed to reject notification: $errorMsg');
+        throw Exception('Failed to reject notification: $errorMsg');
+      }
+    } on DioException catch (e) {
+      print('❌ DioException type: ${e.type}');
+      print('❌ DioException message: ${e.message}');
+      
+      if (e.response != null) {
+        print('❌ Response status: ${e.response?.statusCode}');
+        print('❌ Response data: ${e.response?.data}');
+        
+        final errorMessage = e.response?.data?['error'] ?? 
+            e.response?.data?['message'] ??
+            'Failed to reject notification: ${e.message}';
+        print('❌ Error message: $errorMessage');
+        throw Exception(errorMessage);
+      } else {
+        final errorMessage = 'Network error: ${e.message}';
+        print('❌ Network error: $errorMessage');
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      print('❌ General error rejecting notification: $e');
+      throw Exception('Failed to reject notification: ${e.toString()}');
+    }
+  }
 }

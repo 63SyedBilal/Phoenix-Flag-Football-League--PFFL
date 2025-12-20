@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
-import 'package:pffl_managment/core/services/user_service.dart' as user_service;
 
 /// Provider for managing league officials (referees and statkeepers)
 /// Shows only officials assigned/accepted for the league

@@ -574,25 +574,6 @@ export async function inviteTeam(req: NextRequest, { params }: { params: { leagu
       );
     }
 
-    // Check if team is already in the league
-    const teams = (league as any).teams || [];
-    if (teams.some((t: any) => t.toString() === teamObjectId.toString())) {
-      return NextResponse.json(
-        { success: false, error: "Team already in league" },
-        { status: 409 }
-      );
-    }
-
-    // ✅ AUTO-ASSIGN: Add team to league immediately when invited
-    // This ensures team is available when creating games
-    console.log("📥 Adding team to league immediately...");
-    await League.findByIdAndUpdate(
-      leagueObjectId,
-      { $addToSet: { teams: teamObjectId } },
-      { new: true }
-    );
-    console.log("✅ Team added to league successfully");
-
     // Get team captain to send notification to
     const captainId = toObjectId(team.captain.toString());
 

@@ -153,21 +153,29 @@ class TeamWidget extends StatelessWidget {
                 border: Border.all(color: colorScheme.outline, width: 1),
               ),
               child: ClipOval(
-                child: Image.network(
-                  teamLogo,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons
-                            .sports_football, // Fallback icon if AppAdminIcons is missing
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
+                child: teamLogo.isNotEmpty
+                    ? Image.network(
+                        teamLogo,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: colorScheme.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.sports_football,
+                              size: 16,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: colorScheme.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.sports_football,
+                          size: 16,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    );
-                  },
-                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -189,20 +197,29 @@ class TeamWidget extends StatelessWidget {
                 border: Border.all(color: colorScheme.outline, width: 1),
               ),
               child: ClipOval(
-                child: Image.network(
-                  teamLogo,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.sports_football, // Fallback icon
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
+                child: teamLogo.isNotEmpty
+                    ? Image.network(
+                        teamLogo,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: colorScheme.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.sports_football,
+                              size: 16,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: colorScheme.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.sports_football,
+                          size: 16,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    );
-                  },
-                ),
               ),
             ),
           ],
