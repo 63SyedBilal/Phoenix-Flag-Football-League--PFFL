@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, MoreVertical, Plus, Check, Clock, Coins } from "lucide-react"
+import { ArrowLeft, MoreVertical, Plus, Check, Clock, Coins, Timer } from "lucide-react"
 import LoadingSpinner from "@/components/ui/loading-spinner"
 import TossModal from "@/components/modals/toss-modal"
 import AttendanceTab from "@/components/game/attendance-tab"
 import SelectPlayersTab from "@/components/game/select-players-tab"
 import AddGameActionModal from "@/components/modals/add-game-action-modal"
+import ActionsTimeline from "@/components/game/actions-timeline"
 
 interface Match {
   _id: string
@@ -23,13 +24,43 @@ interface Match {
       teamName: string
       enterCode?: string
     }
-    initialSide: "offense" | "defense"
+    side: "offense" | "defense"
     score: number
-    activePlayers?: Array<string | { _id: string; firstName?: string; lastName?: string; email?: string }>
-    attendance?: Array<{
-      playerId: string | { _id: string }
-      present: boolean
+    players?: Array<{
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      isActive: boolean
     }>
+    playerActions?: Array<{
+      _id?: string
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      actionType: string
+      timestamp: string | Date
+    }>
+    playerStats?: Array<{
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      catches?: number
+      catchYards?: number
+      rushes?: number
+      rushYards?: number
+      touchdowns?: number
+      extraPoints?: number
+      defensiveTDs?: number
+      safeties?: number
+      flags?: number
+      totalPoints?: number
+    }>
+    teamStats?: {
+      catches?: number
+      catchYards?: number
+      rushes?: number
+      rushYards?: number
+      touchdowns?: number
+      extraPoints?: number
+      defensiveTDs?: number
+      safeties?: number
+      flags?: number
+      totalPoints?: number
+    }
   }
   teamB: {
     teamId: {
@@ -37,18 +68,49 @@ interface Match {
       teamName: string
       enterCode?: string
     }
-    initialSide: "offense" | "defense"
+    side: "offense" | "defense"
     score: number
-    activePlayers?: Array<string | { _id: string; firstName?: string; lastName?: string; email?: string }>
-    attendance?: Array<{
-      playerId: string | { _id: string }
-      present: boolean
+    players?: Array<{
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      isActive: boolean
     }>
+    playerActions?: Array<{
+      _id?: string
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      actionType: string
+      timestamp: string | Date
+    }>
+    playerStats?: Array<{
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      catches?: number
+      catchYards?: number
+      rushes?: number
+      rushYards?: number
+      touchdowns?: number
+      extraPoints?: number
+      defensiveTDs?: number
+      safeties?: number
+      flags?: number
+      totalPoints?: number
+    }>
+    teamStats?: {
+      catches?: number
+      catchYards?: number
+      rushes?: number
+      rushYards?: number
+      touchdowns?: number
+      extraPoints?: number
+      defensiveTDs?: number
+      safeties?: number
+      flags?: number
+      totalPoints?: number
+    }
   }
   gameDate: string
   gameTime: string
   venue?: string
   status: string
+  timesSwitched?: string | null
   refereeId?: {
     _id: string
   } | string | null
@@ -160,10 +222,19 @@ export default function GameDetailPage() {
     )
   }
 
-  const teamAName = match.teamA.teamId.teamName || "Team A"
-  const teamBName = match.teamB.teamId.teamName || "Team B"
-  const teamAScore = match.teamA.score || 0
-  const teamBScore = match.teamB.score || 0
+  // Safely extract team names with fallback
+  const getTeamName = (team: any, fallback: string): string => {
+    if (!team || !team.teamId) return fallback
+    if (typeof team.teamId === "object" && team.teamId.teamName) {
+      return team.teamId.teamName
+    }
+    return fallback
+  }
+
+  const teamAName = getTeamName(match.teamA, "Team A")
+  const teamBName = getTeamName(match.teamB, "Team B")
+  const teamAScore = match.teamA?.score || 0
+  const teamBScore = match.teamB?.score || 0
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -282,7 +353,7 @@ export default function GameDetailPage() {
       <div className={`flex-1 flex gap-4 p-4 overflow-auto relative ${activeTab === "attendance" ? "flex-col" : ""}`}>
         {/* Main Content */}
         <div className={activeTab === "attendance" ? "flex-1 w-full" : "flex-1"}>
-          {activeTab === "actions" && (
+          {activeTab === "actions" && match && (
             <div className="bg-white rounded-xl p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Lato, sans-serif" }}>
@@ -295,7 +366,9 @@ export default function GameDetailPage() {
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              {/* Actions list will be displayed here */}
+              <div className="border-2 border-dashed border-blue-100 rounded-lg p-4">
+                <ActionsTimeline teamA={match.teamA} teamB={match.teamB} />
+              </div>
             </div>
           )}
           {activeTab === "attendance" && match && (
@@ -310,17 +383,22 @@ export default function GameDetailPage() {
                   }
 
                   // Determine which team (A or B)
-                  const teamAId = typeof match.teamA.teamId === "object" ? match.teamA.teamId._id : match.teamA.teamId
-                  const teamBId = typeof match.teamB.teamId === "object" ? match.teamB.teamId._id : match.teamB.teamId
+                  const teamAId = match.teamA?.teamId 
+                    ? (typeof match.teamA.teamId === "object" ? match.teamA.teamId._id : match.teamA.teamId)
+                    : null
+                  const teamBId = match.teamB?.teamId 
+                    ? (typeof match.teamB.teamId === "object" ? match.teamB.teamId._id : match.teamB.teamId)
+                    : null
                   const isTeamA = teamId === teamAId
 
-                  // Update match with attendance
+                  // Update match with players (attendance)
                   // attendanceArray format: [{ playerId: string, present: boolean }]
+                  // Convert to players array with isActive field
                   const requestBody = {
                     [isTeamA ? "teamA" : "teamB"]: {
-                      attendance: attendanceArray.map(att => ({
+                      players: attendanceArray.map(att => ({
                         playerId: att.playerId,
-                        present: att.present === true, // Ensure boolean
+                        isActive: att.present === true, // present maps to isActive
                       })),
                     },
                   }
@@ -364,15 +442,49 @@ export default function GameDetailPage() {
                   }
 
                   // Determine which team (A or B)
-                  const teamAId = typeof match.teamA.teamId === "object" ? match.teamA.teamId._id : match.teamA.teamId
-                  const teamBId = typeof match.teamB.teamId === "object" ? match.teamB.teamId._id : match.teamB.teamId
+                  const teamAId = match.teamA?.teamId 
+                    ? (typeof match.teamA.teamId === "object" ? match.teamA.teamId._id : match.teamA.teamId)
+                    : null
+                  const teamBId = match.teamB?.teamId 
+                    ? (typeof match.teamB.teamId === "object" ? match.teamB.teamId._id : match.teamB.teamId)
+                    : null
                   const isTeamA = teamId === teamAId
 
                   // Update match with active players
                   // activePlayerIds is an array of player ID strings
+                  // Convert to players array with isActive field
+                  const currentTeam = isTeamA ? match.teamA : match.teamB
+                  const existingPlayers = currentTeam.players || []
+                  
+                  // Create a map of existing players
+                  const playerMap = new Map()
+                  existingPlayers.forEach((p: any) => {
+                    const pid = typeof p.playerId === "object" ? p.playerId._id : p.playerId
+                    playerMap.set(pid, p)
+                  })
+                  
+                  // Update isActive for all players
+                  const updatedPlayers = existingPlayers.map((p: any) => {
+                    const pid = typeof p.playerId === "object" ? p.playerId._id : p.playerId
+                    return {
+                      playerId: pid,
+                      isActive: activePlayerIds.includes(pid)
+                    }
+                  })
+                  
+                  // Add any new players that weren't in the existing list
+                  activePlayerIds.forEach((pid: string) => {
+                    if (!playerMap.has(pid)) {
+                      updatedPlayers.push({
+                        playerId: pid,
+                        isActive: true
+                      })
+                    }
+                  })
+                  
                   const requestBody = {
                     [isTeamA ? "teamA" : "teamB"]: {
-                      activePlayers: activePlayerIds, // Array of player ID strings
+                      players: updatedPlayers,
                     },
                   }
                   
@@ -413,8 +525,38 @@ export default function GameDetailPage() {
                 <button
                   className="px-4 py-3 rounded-lg text-sm font-medium text-white flex items-center gap-2 shadow-md hover:shadow-lg transition-shadow min-w-[140px]"
                   style={{ backgroundColor: "#0F173E" }}
-                  onClick={() => {
-                    // Handle Game Complete
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem("token")
+                      if (!token) {
+                        alert("Please login to complete game")
+                        return
+                      }
+
+                      const response = await fetch(`/api/match/${match._id}`, {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                          status: "completed"
+                        }),
+                      })
+
+                      if (!response.ok) {
+                        const errorData = await response.json()
+                        throw new Error(errorData.error || "Failed to complete game")
+                      }
+
+                      const data = await response.json()
+                      setMatch(data.data)
+                      setShowStatusButtons(false)
+                      alert("Game marked as completed!")
+                    } catch (err: any) {
+                      console.error("Error completing game:", err)
+                      alert(err.message || "Failed to complete game")
+                    }
                   }}
                 >
                   <Check className="w-4 h-4" />
@@ -423,8 +565,35 @@ export default function GameDetailPage() {
                 <button
                   className="px-4 py-3 rounded-lg text-sm font-medium text-white flex items-center gap-2 shadow-md hover:shadow-lg transition-shadow min-w-[140px]"
                   style={{ backgroundColor: "#F97316" }}
-                  onClick={() => {
-                    // Handle Over Time
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem("token")
+                      if (!token) {
+                        alert("Please login to switch overtime")
+                        return
+                      }
+
+                      const response = await fetch(`/api/match/${match._id}/overtime`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                      })
+
+                      if (!response.ok) {
+                        const errorData = await response.json()
+                        throw new Error(errorData.error || "Failed to switch overtime")
+                      }
+
+                      const data = await response.json()
+                      setMatch(data.data)
+                      setShowStatusButtons(false)
+                      alert("Overtime switched successfully!")
+                    } catch (err: any) {
+                      console.error("Error switching overtime:", err)
+                      alert(err.message || "Failed to switch overtime")
+                    }
                   }}
                 >
                   <div className="relative">
@@ -435,9 +604,73 @@ export default function GameDetailPage() {
                 </button>
                 <button
                   className="px-4 py-3 rounded-lg text-sm font-medium text-white flex items-center gap-2 shadow-md hover:shadow-lg transition-shadow min-w-[140px]"
+                  style={{ backgroundColor: "#8B5CF6" }}
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem("token")
+                      if (!token) {
+                        alert("Please login to switch half time")
+                        return
+                      }
+
+                      const response = await fetch(`/api/match/${match._id}/halftime`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                      })
+
+                      if (!response.ok) {
+                        const errorData = await response.json()
+                        throw new Error(errorData.error || "Failed to switch half time")
+                      }
+
+                      const data = await response.json()
+                      setMatch(data.data)
+                      setShowStatusButtons(false)
+                      alert("Half time switched successfully! Sides have been swapped.")
+                    } catch (err: any) {
+                      console.error("Error switching half time:", err)
+                      alert(err.message || "Failed to switch half time")
+                    }
+                  }}
+                >
+                  <Timer className="w-4 h-4" />
+                  Half Time
+                </button>
+                <button
+                  className="px-4 py-3 rounded-lg text-sm font-medium text-white flex items-center gap-2 shadow-md hover:shadow-lg transition-shadow min-w-[140px]"
                   style={{ backgroundColor: "#0F173E" }}
-                  onClick={() => {
-                    // Handle Full Time Done
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem("token")
+                      if (!token) {
+                        alert("Please login to switch full time")
+                        return
+                      }
+
+                      const response = await fetch(`/api/match/${match._id}/fulltime`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                      })
+
+                      if (!response.ok) {
+                        const errorData = await response.json()
+                        throw new Error(errorData.error || "Failed to switch full time")
+                      }
+
+                      const data = await response.json()
+                      setMatch(data.data)
+                      setShowStatusButtons(false)
+                      alert("Full time switched successfully! Sides have been swapped again.")
+                    } catch (err: any) {
+                      console.error("Error switching full time:", err)
+                      alert(err.message || "Failed to switch full time")
+                    }
                   }}
                 >
                   <Check className="w-4 h-4" />
@@ -490,22 +723,44 @@ export default function GameDetailPage() {
                 return
               }
 
-              // TODO: Implement action saving logic
-              // This will depend on your backend structure for storing game actions
-              console.log("Adding action:", { teamId, actionType, playerId })
+              // Map UI action types to backend action types
+              const actionTypeMap: { [key: string]: string } = {
+                "Touchdown (TD)": "Touchdown",
+                "Extra Point from 5-yard line": "Extra Point from 5-yard line",
+                "Extra Point from 12-yard line": "Extra Point from 12-yard line",
+                "Extra Point from 20-yard line": "Extra Point from 20-yard line",
+                "Defensive Touchdown": "Defensive Touchdown",
+                "Extra Point Return only": "Extra Point Return only",
+                "Safety": "Safety"
+              }
+
+              const backendActionType = actionTypeMap[actionType] || actionType
+
+              console.log("Adding action:", { teamId, actionType: backendActionType, playerId })
               
-              // Refresh match data after adding action
-              const response = await fetch(`/api/match/${match._id}`, {
+              // Call the action API endpoint
+              const response = await fetch(`/api/match/${match._id}/action`, {
+                method: "POST",
                 headers: {
+                  "Content-Type": "application/json",
                   Authorization: `Bearer ${token}`,
                 },
+                body: JSON.stringify({
+                  teamId,
+                  playerId,
+                  actionType: backendActionType,
+                  quarter: "1" // TODO: Get current quarter from match state
+                }),
               })
 
-              if (response.ok) {
+              if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || "Failed to add action")
+              }
+
                 const data = await response.json()
                 setMatch(data.data)
                 alert("Action added successfully!")
-              }
             } catch (err: any) {
               console.error("Error adding action:", err)
               alert(err.message || "Failed to add action")
@@ -515,12 +770,12 @@ export default function GameDetailPage() {
       )}
 
       {/* Toss Modal */}
-      {match && (
+      {match && match.teamA?.teamId && match.teamB?.teamId && (
         <TossModal
           isOpen={showTossModal}
           onClose={() => setShowTossModal(false)}
-          teamA={match.teamA.teamId}
-          teamB={match.teamB.teamId}
+          teamA={typeof match.teamA.teamId === "object" ? match.teamA.teamId : { _id: match.teamA.teamId, teamName: "Team A" }}
+          teamB={typeof match.teamB.teamId === "object" ? match.teamB.teamId : { _id: match.teamB.teamId, teamName: "Team B" }}
           onStartMatch={async (tossWinner, decision) => {
             try {
               const token = localStorage.getItem("token")
@@ -541,12 +796,11 @@ export default function GameDetailPage() {
                 },
                 body: JSON.stringify({
                   gameWinnerTeam: tossWinner,
-                  status: "halfTime",
                   teamA: {
-                    initialSide: tossWinner === teamAId ? decision : (decision === "offense" ? "defense" : "offense")
+                    side: tossWinner === teamAId ? decision : (decision === "offense" ? "defense" : "offense")
                   },
                   teamB: {
-                    initialSide: tossWinner === teamBId ? decision : (decision === "offense" ? "defense" : "offense")
+                    side: tossWinner === teamBId ? decision : (decision === "offense" ? "defense" : "offense")
                   }
                 }),
               })

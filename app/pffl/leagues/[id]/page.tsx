@@ -6,6 +6,7 @@ import Image from "next/image"
 import PageHeader from "@/components/layout/page-header"
 import LoadingSpinner from "@/components/ui/loading-spinner"
 import { ArrowLeft } from "lucide-react"
+import LeagueActionsList from "@/components/league/league-actions-list"
 
 interface League {
   _id: string
@@ -280,6 +281,12 @@ export default function LeagueDetailPage() {
         ) : (
           <p className="text-muted-foreground">No teams joined yet</p>
         )}
+      </div>
+
+      {/* Recent Actions */}
+      <div className="bg-white border rounded-xl p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-foreground">Recent Actions</h2>
+        <LeagueActionsList leagueId={league._id} />
       </div>
     </div>
   )

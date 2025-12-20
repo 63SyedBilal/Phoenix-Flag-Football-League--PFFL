@@ -24,9 +24,9 @@ interface SelectPlayersTabProps {
         _id: string
         teamName: string
       }
-      attendance?: Array<{
+      players?: Array<{
         playerId: string | { _id: string }
-        present: boolean
+        isActive: boolean
       }>
     }
     teamB: {
@@ -34,9 +34,9 @@ interface SelectPlayersTabProps {
         _id: string
         teamName: string
       }
-      attendance?: Array<{
+      players?: Array<{
         playerId: string | { _id: string }
-        present: boolean
+        isActive: boolean
       }>
     }
     leagueId: {
@@ -79,16 +79,16 @@ export default function SelectPlayersTab({ match, onConfirm }: SelectPlayersTabP
           ? (typeof match.teamA.teamId === "object" ? match.teamA.teamId._id : match.teamA.teamId)
           : (typeof match.teamB.teamId === "object" ? match.teamB.teamId._id : match.teamB.teamId)
 
-        // Get attendance for the selected team
+        // Get players for the selected team
         const teamData = selectedTeam === "A" ? match.teamA : match.teamB
-        const attendance = teamData.attendance || []
+        const players = teamData.players || []
         
-        // Get player IDs that have present: true
-        const presentPlayerIds = new Set<string>()
-        attendance.forEach((att: any) => {
-          const playerId = typeof att.playerId === "object" ? att.playerId._id?.toString() : att.playerId?.toString()
-          if (playerId && att.present === true) {
-            presentPlayerIds.add(playerId)
+        // Get player IDs that have isActive: true (these are the players who marked attendance)
+        const activePlayerIds = new Set<string>()
+        players.forEach((p: any) => {
+          const playerId = typeof p.playerId === "object" ? p.playerId._id?.toString() : p.playerId?.toString()
+          if (playerId && p.isActive === true) {
+            activePlayerIds.add(playerId)
           }
         })
 
@@ -178,11 +178,11 @@ export default function SelectPlayersTab({ match, onConfirm }: SelectPlayersTabP
           }
         }
 
-        // Fetch profiles and filter to only show players with present: true
+        // Fetch profiles and filter to only show players with isActive: true
         const playersWithProfiles: Player[] = []
         for (const player of allPlayers) {
-          // Only include players who have present: true in attendance
-          if (!presentPlayerIds.has(player._id)) {
+          // Only include players who have isActive: true in players array
+          if (!activePlayerIds.has(player._id)) {
             continue
           }
 
@@ -354,7 +354,7 @@ export default function SelectPlayersTab({ match, onConfirm }: SelectPlayersTabP
               <div className="text-center py-8 text-gray-500">Loading players...</div>
             ) : players.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {selectedTeam ? "No players with present attendance found" : "Please select a team"}
+                {selectedTeam ? "No active players found" : "Please select a team"}
               </div>
             ) : (
               players.map((player) => {

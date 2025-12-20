@@ -79,9 +79,22 @@ export default function GameCard({ match, currentUserId, isAssigned = false }: G
     return teamName.substring(0, 2).toUpperCase()
   }
 
-  const leagueName = typeof match.leagueId === "object" ? match.leagueId.leagueName : ""
-  const teamAName = match.teamA.teamId.teamName || "Team A"
-  const teamBName = match.teamB.teamId.teamName || "Team B"
+  // Safely extract league name
+  const leagueName = typeof match.leagueId === "object" && match.leagueId 
+    ? (match.leagueId.leagueName || "") 
+    : ""
+
+  // Safely extract team names with fallback
+  const getTeamName = (team: any, fallback: string): string => {
+    if (!team || !team.teamId) return fallback
+    if (typeof team.teamId === "object" && team.teamId.teamName) {
+      return team.teamId.teamName
+    }
+    return fallback
+  }
+
+  const teamAName = getTeamName(match.teamA, "Team A")
+  const teamBName = getTeamName(match.teamB, "Team B")
 
   return (
     <div

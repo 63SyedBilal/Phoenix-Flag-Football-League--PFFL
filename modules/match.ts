@@ -1,5 +1,59 @@
 import mongoose from "mongoose";
 
+/* ================= PLAYER STATS ================= */
+
+const PlayerStatsSchema = new mongoose.Schema(
+  {
+    playerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+
+    catches: { type: Number, default: 0 },
+    catchYards: { type: Number, default: 0 },
+
+    rushes: { type: Number, default: 0 },
+    rushYards: { type: Number, default: 0 },
+
+    touchdowns: { type: Number, default: 0 },
+    extraPoints: { type: Number, default: 0 },
+
+    defensiveTDs: { type: Number, default: 0 },
+    safeties: { type: Number, default: 0 },
+
+    flags: { type: Number, default: 0 },
+
+    totalPoints: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+
+/* ================= TEAM STATS (GAME SUMMARY) ================= */
+
+const TeamStatsSchema = new mongoose.Schema(
+  {
+    catches: { type: Number, default: 0 },
+    catchYards: { type: Number, default: 0 },
+
+    rushes: { type: Number, default: 0 },
+    rushYards: { type: Number, default: 0 },
+
+    touchdowns: { type: Number, default: 0 },
+    extraPoints: { type: Number, default: 0 },
+
+    defensiveTDs: { type: Number, default: 0 },
+    safeties: { type: Number, default: 0 },
+
+    flags: { type: Number, default: 0 },
+
+    totalPoints: { type: Number, default: 0 }
+  },
+  { _id: false }
+);
+
+/* ================= TEAM MATCH ================= */
+
 const TeamMatchSchema = new mongoose.Schema(
   {
     teamId: {
@@ -8,65 +62,79 @@ const TeamMatchSchema = new mongoose.Schema(
       required: true
     },
 
-    initialSide: {
+    side: {
       type: String,
       enum: ["offense", "defense"],
       required: true
     },
 
-    attendance: [
+    players: [
       {
         playerId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true
         },
-        present: {
+        isActive: {
           type: Boolean,
           default: false
         }
       }
     ],
 
-    activePlayers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-      }
-    ],
-
-    score: {
-      type: Number,
-      default: 0
-    },
-
-    playerPoints: [
+    playerActions: [
       {
         playerId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true
         },
-        points: {
-          type: Number,
-          required: true,
-          default: 0
-        }
+        actionType: {
+          type: String,
+          enum: [
+            "Touchdown",
+            "Extra Point from 5-yard line",
+            "Extra Point from 12-yard line",
+            "Extra Point from 20-yard line",
+            "Defensive Touchdown",
+            "Extra Point Return only",
+            "Safety"
+          ],
+          required: true
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now
+        },
+      
       }
     ],
 
-    result: {
-      type: String,
-      enum: ["win", "loss", "draw"],
+    playerStats: [PlayerStatsSchema],
+
+    teamStats: {
+      type: TeamStatsSchema,
+      default: () => ({})
+    },
+
+    score: {
+      type: Number,
+      default: 0
+    },
+
+    win: {
+      type: Boolean,
       default: null
     }
   },
   { _id: false }
 );
 
+/* ================= MATCH ================= */
+
 const MatchSchema = new mongoose.Schema(
   {
-    /* ============ CORE REFERENCES ============ */
+    /* -------- REFERENCES -------- */
 
     leagueId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -92,7 +160,7 @@ const MatchSchema = new mongoose.Schema(
       default: null
     },
 
-    /* ============ MATCH INFO ============ */
+    /* -------- GAME INFO -------- */
 
     format: {
       type: String,
@@ -117,22 +185,23 @@ const MatchSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["upcoming", "halfTime", "completed", "cancelled"],
+      enum: ["upcoming", "continue", "completed"],
       default: "upcoming"
     },
-
+    
+    timesSwitched: {
+      type: String,
+      enum: ["halfTime", "fullTime", "overtime", null],
+      default: null
+    },
     gameWinnerTeam: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Team",
       default: null
     },
 
-    halfTimeSwitched: {
-      type: Boolean,
-      default: false
-    },
 
-    /* ============ TEAMS ============ */
+    /* -------- TEAMS (LEFT / RIGHT) -------- */
 
     teamA: {
       type: TeamMatchSchema,
@@ -144,7 +213,7 @@ const MatchSchema = new mongoose.Schema(
       required: true
     },
 
-    /* ============ ADDITIONAL FIELDS ============ */
+    /* -------- META -------- */
 
     roundName: {
       type: String,
@@ -164,7 +233,7 @@ const MatchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/* ============ SAFE EXPORT ============ */
+/* ================= SAFE EXPORT ================= */
 
 if (mongoose.models.Match) {
   delete mongoose.models.Match;
@@ -172,4 +241,5 @@ if (mongoose.models.Match) {
 
 const Match = mongoose.model("Match", MatchSchema);
 export default Match;
+
 

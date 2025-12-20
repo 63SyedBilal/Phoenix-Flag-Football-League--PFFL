@@ -22,22 +22,22 @@ interface Player {
 }
 
 interface Match {
+  _id?: string
+  timesSwitched?: string | null
   teamA: {
     teamId: Team
-    initialSide: "offense" | "defense"
-    activePlayers?: Array<string | { _id: string; firstName?: string; lastName?: string; email?: string }>
-    attendance?: Array<{
-      playerId: string | { _id: string }
-      present: boolean
+    side: "offense" | "defense"
+    players?: Array<{
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      isActive: boolean
     }>
   }
   teamB: {
     teamId: Team
-    initialSide: "offense" | "defense"
-    activePlayers?: Array<string | { _id: string; firstName?: string; lastName?: string; email?: string }>
-    attendance?: Array<{
-      playerId: string | { _id: string }
-      present: boolean
+    side: "offense" | "defense"
+    players?: Array<{
+      playerId: string | { _id: string; firstName?: string; lastName?: string; email?: string }
+      isActive: boolean
     }>
   }
 }
@@ -81,6 +81,14 @@ export default function AddGameActionModal({ isOpen, onClose, match, onAddAction
     }
   }, [isOpen])
 
+  // Reset action type when team or timesSwitched changes (to update dropdown)
+  useEffect(() => {
+    if (selectedTeam) {
+      setSelectedActionType(null)
+      setIsActionDropdownOpen(false)
+    }
+  }, [selectedTeam, match.timesSwitched])
+
   // Fetch active players when team is selected
   useEffect(() => {
     const fetchActivePlayers = async () => {
@@ -98,48 +106,85 @@ export default function AddGameActionModal({ isOpen, onClose, match, onAddAction
           return
         }
 
-        const team = selectedTeam === "A" ? match.teamA : match.teamB
-        const activePlayerIds = team.activePlayers || []
-
-        console.log("Fetching active players for team:", selectedTeam)
-        console.log("Active players count:", activePlayerIds.length)
-        console.log("Active players data:", activePlayerIds)
-
-        if (activePlayerIds.length === 0) {
-          console.warn(`No active players found for team ${selectedTeam}`)
-          setPlayers([])
-          setIsLoadingPlayers(false)
-          return
-        }
-
-        // Fetch player profiles for each active player
         const token = localStorage.getItem("token")
         if (!token) {
           setIsLoadingPlayers(false)
           return
         }
 
-        const playerPromises = activePlayerIds.map(async (playerIdOrObj) => {
+        // Fetch fresh match data to ensure we have the latest players array and halfTimeSwitched status
+        let currentMatch = match
+        const matchId = match._id || (match as any)._id
+        if (matchId) {
+          try {
+            const matchResponse = await fetch(`/api/match/${matchId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+
+            if (matchResponse.ok) {
+              const matchData = await matchResponse.json()
+              currentMatch = matchData.data
+              console.log("Fetched fresh match data:", currentMatch)
+              // Update the match prop if parent component supports it
+              // This ensures halfTimeSwitched is up to date
+            }
+          } catch (err) {
+            console.warn("Could not fetch fresh match data, using provided match:", err)
+          }
+        } else {
+          console.warn("No match ID found, using provided match data")
+        }
+
+        const team = selectedTeam === "A" ? currentMatch.teamA : currentMatch.teamB
+        const playersArray = team.players || []
+        
+        console.log("Team players array:", playersArray)
+        console.log("Team players array length:", playersArray.length)
+        
+        // Filter to only get players with isActive: true (use truthy check for safety)
+        const activePlayers = playersArray.filter((p: any) => {
+          const isActive = p.isActive === true || p.isActive === "true"
+          console.log("Player:", p, "isActive:", p.isActive, "filter result:", isActive)
+          return isActive
+        })
+
+        console.log("Fetching active players for team:", selectedTeam)
+        console.log("Active players count:", activePlayers.length)
+        console.log("Active players data:", activePlayers)
+
+        if (activePlayers.length === 0) {
+          console.warn(`No active players found for team ${selectedTeam}`)
+          console.warn("Full team data:", team)
+          setPlayers([])
+          setIsLoadingPlayers(false)
+          return
+        }
+
+        // Fetch player profiles for each active player
+        const playerPromises = activePlayers.map(async (playerObj: any) => {
           // Handle both string IDs and populated objects
           let playerId: string
           let firstName: string = ""
           let lastName: string = ""
           let email: string = ""
 
-          if (typeof playerIdOrObj === "string") {
-            playerId = playerIdOrObj
-          } else if (playerIdOrObj && typeof playerIdOrObj === "object") {
-            playerId = playerIdOrObj._id?.toString() || ""
-            firstName = playerIdOrObj.firstName || ""
-            lastName = playerIdOrObj.lastName || ""
-            email = playerIdOrObj.email || ""
+          const playerIdValue = playerObj.playerId
+          if (typeof playerIdValue === "string") {
+            playerId = playerIdValue
+          } else if (playerIdValue && typeof playerIdValue === "object") {
+            playerId = playerIdValue._id?.toString() || ""
+            firstName = playerIdValue.firstName || ""
+            lastName = playerIdValue.lastName || ""
+            email = playerIdValue.email || ""
           } else {
-            console.error("Invalid player data:", playerIdOrObj)
+            console.error("Invalid player data:", playerObj)
             return null
           }
 
           if (!playerId) {
-            console.error("No player ID found:", playerIdOrObj)
+            console.error("No player ID found:", playerObj)
             return null
           }
 
@@ -280,8 +325,16 @@ export default function AddGameActionModal({ isOpen, onClose, match, onAddAction
 
   const teamA = match.teamA
   const teamB = match.teamB
-  const teamASide = teamA.initialSide === "offense" ? "Offensive" : "Defensive"
-  const teamBSide = teamB.initialSide === "offense" ? "Offensive" : "Defensive"
+  // Get current side (considering timesSwitched)
+  const getCurrentSide = (side: "offense" | "defense", timesSwitched: string | null | undefined) => {
+    if (!timesSwitched || timesSwitched === null) return side
+    // If timesSwitched is "halfTime" or "fullTime", swap the side
+    return side === "offense" ? "defense" : "offense"
+  }
+  const teamACurrentSide = getCurrentSide(teamA.side, match.timesSwitched)
+  const teamBCurrentSide = getCurrentSide(teamB.side, match.timesSwitched)
+  const teamASide = teamACurrentSide === "offense" ? "Offensive" : "Defensive"
+  const teamBSide = teamBCurrentSide === "offense" ? "Offensive" : "Defensive"
 
   return (
     <div
@@ -405,26 +458,31 @@ export default function AddGameActionModal({ isOpen, onClose, match, onAddAction
                   >
                     {(() => {
                       const team = selectedTeam === "A" ? match.teamA : match.teamB
-                      const actionTypes = team.initialSide === "offense" ? OFFENSIVE_ACTION_TYPES : DEFENSIVE_ACTION_TYPES
+                      const currentSide = getCurrentSide(team.side, match.timesSwitched)
+                      const actionTypes = currentSide === "offense" ? OFFENSIVE_ACTION_TYPES : DEFENSIVE_ACTION_TYPES
                       
-                      return actionTypes.map((actionType) => (
-                        <button
-                          key={actionType}
-                          type="button"
-                          onClick={() => {
-                            setSelectedActionType(actionType)
-                            setIsActionDropdownOpen(false)
-                          }}
-                          className="w-full px-4 py-3 text-left text-sm transition-colors hover:bg-gray-100"
-                          style={{
-                            fontFamily: "Lato, sans-serif",
-                            backgroundColor: selectedActionType === actionType ? "#0F173E" : "transparent",
-                            color: selectedActionType === actionType ? "#FFFFFF" : "#000000",
-                          }}
-                        >
-                          {actionType}
-                        </button>
-                      ))
+                      return (
+                        <>
+                          {actionTypes.map((actionType) => (
+                            <button
+                              key={actionType}
+                              type="button"
+                              onClick={() => {
+                                setSelectedActionType(actionType)
+                                setIsActionDropdownOpen(false)
+                              }}
+                              className="w-full px-4 py-3 text-left text-sm transition-colors hover:bg-gray-100"
+                              style={{
+                                fontFamily: "Lato, sans-serif",
+                                backgroundColor: selectedActionType === actionType ? "#0F173E" : "transparent",
+                                color: selectedActionType === actionType ? "#FFFFFF" : "#000000",
+                              }}
+                            >
+                              {actionType}
+                            </button>
+                          ))}
+                        </>
+                      )
                     })()}
                   </div>
                 )}
