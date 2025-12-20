@@ -39,7 +39,7 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
 export async function createMatch(req: NextRequest) {
   try {
     await connectDB();
-    await verifyUser(req);
+    const decoded = await verifyUser(req);
 
     const {
       leagueId,
@@ -158,7 +158,6 @@ export async function createMatch(req: NextRequest) {
     await match.save();
 
     // Get sender ID from token (admin who created the match)
-    const decoded = await verifyUser(req);
     const senderId = toObjectId(decoded.userId);
     const matchObjectId = (match as any)._id;
 

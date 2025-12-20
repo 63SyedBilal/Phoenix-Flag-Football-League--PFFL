@@ -63,6 +63,22 @@ class NotificationModel {
   String get leagueName => league?['leagueName'] ?? 'Unknown League';
   String? get teamImage => team?['image']?.toString();
   String? get leagueLogo => league?['logo']?.toString();
+  
+  // Match information getters
+  String get matchTeamA => match?['teamAName']?.toString() ?? match?['teamA']?.toString() ?? 'Team A';
+  String get matchTeamB => match?['teamBName']?.toString() ?? match?['teamB']?.toString() ?? 'Team B';
+  String? get matchVenue => match?['venue']?.toString();
+  String? get matchGameTime => match?['gameTime']?.toString();
+  DateTime? get matchGameDate {
+    if (match?['gameDate'] != null) {
+      try {
+        return DateTime.parse(match!['gameDate'].toString());
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   String get displayMessage {
     switch (type) {

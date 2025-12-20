@@ -121,8 +121,13 @@ export async function getAllNotifications(req: NextRequest) {
         return false;
       }
       // For league invites, league must exist
-      if (n.type.includes("LEAGUE") && !n.league) {
+      if (n.type.includes("LEAGUE") && n.type !== "GAME_ASSIGNED" && !n.league) {
         console.warn("Filtering out league notification with null league:", n._id);
+        return false;
+      }
+      // For GAME_ASSIGNED, match should exist (league is optional but recommended)
+      if (n.type === "GAME_ASSIGNED" && !n.match) {
+        console.warn("Filtering out GAME_ASSIGNED notification with null match:", n._id);
         return false;
       }
       // For team invites, team must exist
