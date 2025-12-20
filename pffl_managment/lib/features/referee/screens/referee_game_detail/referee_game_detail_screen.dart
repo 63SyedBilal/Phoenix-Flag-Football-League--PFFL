@@ -5,7 +5,6 @@ import 'package:pffl_managment/features/referee/providers/referee_game_detail_pr
 import 'package:pffl_managment/features/referee/widgets/toss_dialog.dart';
 import 'package:pffl_managment/features/referee/widgets/start_game_dialog.dart';
 import 'package:pffl_managment/features/referee/widgets/team_selection_popup.dart';
-import 'package:pffl_managment/features/referee/widgets/add_game_action_dialog.dart';
 
 /// Referee Game Detail Screen
 /// Shows game details with tabs and FAB actions
@@ -58,20 +57,7 @@ class _RefereeGameDetailView extends StatelessWidget {
                 _buildFabOverlay(context, provider),
             ],
           ),
-          floatingActionButton: Stack(
-            children: [
-              // Center + button for Add Game Action
-              if (!provider.isFabExpanded)
-                Positioned(
-                  bottom: 16,
-                  left: MediaQuery.of(context).size.width / 2 - 28,
-                  child: _buildFab(context, provider),
-                ),
-              // FAB menu button (when expanded)
-              if (provider.isFabExpanded)
-                _buildFab(context, provider),
-            ],
-          ),
+          floatingActionButton: _buildFab(context, provider),
         );
       },
     );
@@ -722,70 +708,12 @@ class _RefereeGameDetailView extends StatelessWidget {
   }
 
   Widget _buildFab(BuildContext context, RefereeGameDetailProvider provider) {
-    // Show center + button when FAB is not expanded
-    // This opens the Add Game Action dialog
-    if (!provider.isFabExpanded) {
-      return Center(
-        child: FloatingActionButton(
-          onPressed: () => _showAddGameActionDialog(context, provider),
-          backgroundColor: const Color(0xFF1E3A5F),
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-    
-    // Show close button when FAB menu is expanded
     return FloatingActionButton(
       onPressed: provider.toggleFab,
       backgroundColor: const Color(0xFF1E3A5F),
-      child: const Icon(
-        Icons.close,
+      child: Icon(
+        provider.isFabExpanded ? Icons.close : Icons.add,
         color: Colors.white,
-      ),
-    );
-  }
-
-  void _showAddGameActionDialog(BuildContext context, RefereeGameDetailProvider provider) {
-    if (provider.match == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Match data not available'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => AddGameActionDialog(
-        match: provider.match!,
-        onAddAction: (teamId, playerId, actionType) async {
-          try {
-            await provider.addGameAction(
-              teamId: teamId,
-              playerId: playerId,
-              actionType: actionType,
-            );
-            
-            if (context.mounted) {
-              Navigator.of(context).pop();
-            }
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error: ${e.toString()}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        },
       ),
     );
   }
