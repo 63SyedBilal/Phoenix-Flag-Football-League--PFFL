@@ -75,30 +75,52 @@ class MatchService {
   static Future<List<MatchModel>> getAllMatches() async {
     try {
       final dio = await _getAuthenticatedDio();
+      print('🌐 Calling GET /match endpoint...');
       final response = await dio.get('/match');
+      print('✅ Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data;
+        print('📦 Response data keys: ${data.keys}');
         if (data['data'] != null) {
-          final matches = (data['data'] as List)
-              .map((json) => _parseMatchFromJson(json))
+          final matchesList = data['data'] as List;
+          print('📊 Matches count in response: ${matchesList.length}');
+          final matches = matchesList
+              .map((json) {
+                try {
+                  return _parseMatchFromJson(json);
+                } catch (parseError) {
+                  print('❌ Error parsing match: $parseError');
+                  print('   JSON: $json');
+                  return null;
+                }
+              })
+              .whereType<MatchModel>()
               .toList();
+          print('✅ Successfully parsed ${matches.length} matches');
           return matches;
         }
+        print('⚠️ No data field in response');
         return [];
       } else {
-        print('Failed to fetch all matches: ${response.statusMessage}');
+        print('❌ Failed to fetch all matches: ${response.statusMessage}');
+        print('   Response data: ${response.data}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching all matches: ${e.message}');
+      print('❌ DioException fetching all matches:');
+      print('   Type: ${e.type}');
+      print('   Message: ${e.message}');
+      print('   Status code: ${e.response?.statusCode}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
+        print('   Error response data: ${e.response?.data}');
+        print('   Error response headers: ${e.response?.headers}');
       }
-      return [];
+      rethrow; // Re-throw to let provider handle it
     } catch (e) {
-      print('General error fetching all matches: $e');
-      return [];
+      print('❌ General error fetching all matches: $e');
+      print('   Error type: ${e.runtimeType}');
+      rethrow; // Re-throw to let provider handle it
     }
   }
 

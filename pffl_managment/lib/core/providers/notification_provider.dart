@@ -11,6 +11,7 @@ class NotificationModel {
   final Map<String, dynamic>? receiver;
   final Map<String, dynamic>? team;
   final Map<String, dynamic>? league;
+  final Map<String, dynamic>? match;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -23,6 +24,7 @@ class NotificationModel {
     this.receiver,
     this.team,
     this.league,
+    this.match,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -37,6 +39,7 @@ class NotificationModel {
       receiver: json['receiver'] is Map ? Map<String, dynamic>.from(json['receiver']) : null,
       team: json['team'] is Map ? Map<String, dynamic>.from(json['team']) : null,
       league: json['league'] is Map ? Map<String, dynamic>.from(json['league']) : null,
+      match: json['match'] is Map ? Map<String, dynamic>.from(json['match']) : null,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'].toString())
           : DateTime.now(),
@@ -60,6 +63,22 @@ class NotificationModel {
   String get leagueName => league?['leagueName'] ?? 'Unknown League';
   String? get teamImage => team?['image']?.toString();
   String? get leagueLogo => league?['logo']?.toString();
+  
+  // Match information getters
+  String get matchTeamA => match?['teamAName']?.toString() ?? match?['teamA']?.toString() ?? 'Team A';
+  String get matchTeamB => match?['teamBName']?.toString() ?? match?['teamB']?.toString() ?? 'Team B';
+  String? get matchVenue => match?['venue']?.toString();
+  String? get matchGameTime => match?['gameTime']?.toString();
+  DateTime? get matchGameDate {
+    if (match?['gameDate'] != null) {
+      try {
+        return DateTime.parse(match!['gameDate'].toString());
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   String get displayMessage {
     switch (type) {
@@ -75,6 +94,23 @@ class NotificationModel {
       case 'LEAGUE_STATKEEPER_INVITE':
         return '$senderName invited you to be a stat keeper for $leagueName';
       case 'LEAGUE_TEAM_INVITE':
+
+        return 'A new league "$leagueName" has been created and your team has been invited. Would you like to accept the invitation?';
+      case 'GAME_ASSIGNED':
+        final matchTeamA = match?['teamAName']?.toString() ?? match?['teamA']?.toString() ?? 'Team A';
+        final matchTeamB = match?['teamBName']?.toString() ?? match?['teamB']?.toString() ?? 'Team B';
+        final gameDate = match?['gameDate'] != null 
+            ? DateTime.tryParse(match!['gameDate'].toString()) 
+            : null;
+        final dateStr = gameDate != null 
+            ? '${gameDate.day}/${gameDate.month}/${gameDate.year}'
+            : '';
+        if (dateStr.isNotEmpty) {
+          return 'Aapko ek game assign hua hai: $matchTeamA vs $matchTeamB on $dateStr';
+        } else {
+          return 'Aapko ek game assign hua hai: $matchTeamA vs $matchTeamB';
+        }
+
         return 'Your team "$teamName" has been invited to participate in the league "$leagueName". Would you like to accept the invitation?';
       case 'INVITE_ACCEPTED_REFEREE':
         return '$senderName has accepted your invitation to be a referee for $leagueName';
@@ -82,6 +118,7 @@ class NotificationModel {
         return '$senderName has accepted your invitation to be a stat keeper for $leagueName';
       case 'INVITE_ACCEPTED_TEAM':
         return '$senderName has accepted your invitation for team "$teamName" to participate in the league "$leagueName"';
+
       default:
         return 'You have a new notification';
     }

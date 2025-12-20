@@ -24,9 +24,18 @@ const NotificationSchema = new mongoose.Schema(
       ref: "League",
     },
 
+    match: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Match",
+    },
+
     type: {
       type: String,
+
+      enum: ["TEAM_INVITE", "LEAGUE_REFEREE_INVITE", "LEAGUE_STATKEEPER_INVITE", "LEAGUE_TEAM_INVITE", "GAME_ASSIGNED"],
+
       enum: ["TEAM_INVITE", "LEAGUE_REFEREE_INVITE", "LEAGUE_STATKEEPER_INVITE", "LEAGUE_TEAM_INVITE", "INVITE_ACCEPTED_REFEREE", "INVITE_ACCEPTED_STATKEEPER", "INVITE_ACCEPTED_TEAM"],
+
       default: "TEAM_INVITE"
     },
 
