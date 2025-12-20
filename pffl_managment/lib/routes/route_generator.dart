@@ -11,7 +11,7 @@ import 'package:pffl_managment/features/profile_screens/complet_profile_screen/c
 import 'package:pffl_managment/features/admin/users/views/my_team.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_receipt_screen.dart';
-import 'package:pffl_managment/features/captain/screens/captain_dashboard.dart';
+import 'package:pffl_managment/features/captain/captain_dashboard.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/captain_create_team.dart';
 import 'package:pffl_managment/features/captain/view/leagues/league_detail/captain_league_detail_screen.dart';
 import 'package:pffl_managment/features/captain/view/payments/captain_payment_history_view.dart';
@@ -58,8 +58,8 @@ class RouteGenerator {
       case AppRoutes.captainDashboard:
         return MaterialPageRoute(builder: (_) => const CaptainDashboard());
 
-      case AppRoutes.captainCreateTeam:
-        return MaterialPageRoute(builder: (_) => const CreateTeamScreen());
+      // case AppRoutes.captainCreateTeam:
+      //   return MaterialPageRoute(builder: (_) => const CreateTeamScreen());
 
       case AppRoutes.captainInvite:
         return MaterialPageRoute(builder: (_) => const CaptainInviteScreen());

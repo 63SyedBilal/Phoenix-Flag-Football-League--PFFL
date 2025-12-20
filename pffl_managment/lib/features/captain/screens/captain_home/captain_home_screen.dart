@@ -4,17 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/captain/widgets/league_payment_card.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/shared_upcoming_matches.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.dart';
-import 'package:pffl_managment/features/captain/providers/captain_dashboard_provider.dart';
+import 'package:pffl_managment/features/player/providers/player_dashboard_provider.dart';
 
-class CaptainDashboardScreen extends StatelessWidget {
-  const CaptainDashboardScreen({super.key});
+class CaptainHomeScreen extends StatelessWidget {
+  const CaptainHomeScreen ({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final dashboardProvider = Provider.of<CaptainDashboardProvider>(context);
-        final nextGame = dashboardProvider.nextGame;
-    
-    final upcomingGames = dashboardProvider.upcomingGames;
+    final dashboardProvider = Provider.of<PlayerDashboardProvider>(context);
+    final games = dashboardProvider.upcomingGames;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -38,15 +36,14 @@ class CaptainDashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 LeaguePaymentCard(
-                  title: dashboardProvider.leagueTitle,
-                  amount: dashboardProvider.paymentAmount,
-                  subtitle: dashboardProvider.paymentSubtitle,
-                  format: dashboardProvider.leagueFormat,
-                  leagueFee: dashboardProvider.paymentAmount,
-                  startDate: dashboardProvider.leagueStartDate,
-                  endDate: dashboardProvider.leagueEndDate,
+                  title: 'Player League', // Placeholder title
+                  amount: '\$200', // Placeholder amount
+                  subtitle: 'League Fee Due',
+                  format: '5v5',
+                  leagueFee: '\$200',
+                  startDate: '10 December 2025',
+                  endDate: '25 February 2026',
                   onPayNow: () {
-                    dashboardProvider.handlePayNow();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Processing payment...'),
@@ -56,29 +53,20 @@ class CaptainDashboardScreen extends StatelessWidget {
                   },
                 ),
 
-                const SizedBox(height: 16),
-
-                const Text(
-                  'Your Next Game',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
                 const SizedBox(height: 12),
-                // Show only the next game using the shared widget
-                if (nextGame != null)
+                // Show only the next game if available
+                if (games.isNotEmpty)
                   SharedUpcomingMatches(
-                    games: [nextGame],
+                    games: [games[0]], // Show only the next game
                     maxVisibleGames: 1, // Show only 1 game for "Next Game"
+                    title: 'Your Next Game',
                     onViewMore: () {
                       // Navigate to full matches list
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => AllMatchesScreen(
-                            matches: [nextGame],
+                            matches: [games[0]],
                             title: 'Next Game',
                           ),
                         ),
@@ -89,17 +77,17 @@ class CaptainDashboardScreen extends StatelessWidget {
 
                 const SizedBox(height: 8),
 
-                // Show upcoming games (limited to 3 in main view)
                 SharedUpcomingMatches(
-                  games: upcomingGames,
+                  games: games,
                   maxVisibleGames: 3, // Show only 3 games in main view
+                  title: 'Upcoming Games',
                   onViewMore: () {
                     // Navigate to full matches list
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => AllMatchesScreen(
-                          matches: upcomingGames,
+                          matches: games,
                           title: 'Upcoming Games',
                         ),
                       ),

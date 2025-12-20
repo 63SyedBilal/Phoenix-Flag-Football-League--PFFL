@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/screens/admin_leagues/leagues_screen.dart';
+import 'package:pffl_managment/features/captain/screens/captain_home/captain_home_screen.dart';
 import 'package:pffl_managment/screens/leagues/common/league_provider.dart';
 import 'package:pffl_managment/features/bottom_nevigation/captain_bottom_nevigation/captain_bottom_nevigation.dart';
-import 'package:pffl_managment/features/captain/screens/captain_home/captain_dashboard_screen.dart';
 import 'package:pffl_managment/features/captain/view/teams/team_management_screen.dart';
 import 'package:pffl_managment/features/header_widgets/captain_header_widget/captain_header_widget.dart';
 import 'package:provider/provider.dart';
@@ -39,7 +39,7 @@ class CaptainDashboard extends StatelessWidget {
   Widget _buildContent(int selectedIndex) {
     switch (selectedIndex) {
       case 0:
-        return const CaptainDashboardScreen();
+        return const CaptainHomeScreen();
       case 1:
         return ChangeNotifierProvider(
           create: (_) => LeagueProvider(userRole: 'captain'),
