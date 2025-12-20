@@ -145,6 +145,7 @@ class NotificationCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
+                // Cancel/Reject button
                 if (onReject != null)
                   Expanded(
                     child: OutlinedButton(
@@ -166,8 +167,10 @@ class NotificationCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                // Spacing between buttons
                 if (onAccept != null && onReject != null)
                   const SizedBox(width: 12),
+                // Accept button
                 if (onAccept != null)
                   Expanded(
                     child: ElevatedButton(
