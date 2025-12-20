@@ -264,17 +264,24 @@ export async function getAllMatches(req: NextRequest) {
     
     console.log("🔍 Query:", JSON.stringify(query));
 
-
     let matches;
     try {
       console.log("🔍 Fetching matches from database...");
-      // First try with populate, but catch errors gracefully
+      // Try with full populate, but catch errors gracefully
       matches = await Match.find(query)
         .populate("leagueId", "leagueName format startDate endDate logo")
-        .populate("teamA", "teamName enterCode image")
-        .populate("teamB", "teamName enterCode image")
+        .populate("createdBy", "firstName lastName email role")
+        .populate("teamA.teamId", "teamName enterCode image")
+        .populate("teamB.teamId", "teamName enterCode image")
+        .populate("teamA.attendance.playerId", "firstName lastName email")
+        .populate("teamB.attendance.playerId", "firstName lastName email")
+        .populate("teamA.activePlayers", "firstName lastName email")
+        .populate("teamB.activePlayers", "firstName lastName email")
+        .populate("teamA.playerPoints.playerId", "firstName lastName email")
+        .populate("teamB.playerPoints.playerId", "firstName lastName email")
         .populate("refereeId", "firstName lastName email role")
         .populate("statKeeperId", "firstName lastName email role")
+        .populate("gameWinnerTeam", "teamName enterCode")
         .sort({ gameDate: 1, gameTime: 1 })
         .lean()
         .exec();
@@ -285,7 +292,7 @@ export async function getAllMatches(req: NextRequest) {
       console.error("Error stack:", populateError.stack);
       // If populate fails, try without populate - this is safe for missing references
       try {
-        console.log("🔄 Retrying without populate (teams might not exist)...");
+        console.log("🔄 Retrying without populate (references might not exist)...");
         matches = await Match.find(query)
           .sort({ gameDate: 1, gameTime: 1 })
           .lean()
@@ -297,44 +304,6 @@ export async function getAllMatches(req: NextRequest) {
         throw findError;
       }
     }
-
-    // If team populate failed (team doesn't exist), include the original ObjectId
-    const matchesWithTeamIds = matches.map((match: any) => {
-      // Handle teamA
-      if (!match.teamA || (match.teamA && typeof match.teamA === 'object' && !match.teamA.teamName)) {
-        // Team populate failed, use original ObjectId
-        const teamAId = match.teamA?._id?.toString() || match.teamA?.toString() || match.teamA;
-        match.teamA = teamAId;
-      }
-      
-      // Handle teamB
-      if (!match.teamB || (match.teamB && typeof match.teamB === 'object' && !match.teamB.teamName)) {
-        // Team populate failed, use original ObjectId
-        const teamBId = match.teamB?._id?.toString() || match.teamB?.toString() || match.teamB;
-        match.teamB = teamBId;
-      }
-      
-      return match;
-    });
-
-
-    const matches = await Match.find(query)
-      .populate("leagueId", "leagueName format startDate endDate logo")
-      .populate("createdBy", "firstName lastName email role")
-      .populate("teamA.teamId", "teamName enterCode")
-      .populate("teamB.teamId", "teamName enterCode")
-      .populate("teamA.attendance.playerId", "firstName lastName email")
-      .populate("teamB.attendance.playerId", "firstName lastName email")
-      .populate("teamA.activePlayers", "firstName lastName email")
-      .populate("teamB.activePlayers", "firstName lastName email")
-      .populate("teamA.playerPoints.playerId", "firstName lastName email")
-      .populate("teamB.playerPoints.playerId", "firstName lastName email")
-      .populate("refereeId", "firstName lastName email role")
-      .populate("statKeeperId", "firstName lastName email role")
-      .populate("gameWinnerTeam", "teamName enterCode")
-      .sort({ gameDate: 1, gameTime: 1 })
-      .lean()
-      .exec();
 
     return NextResponse.json(
       {

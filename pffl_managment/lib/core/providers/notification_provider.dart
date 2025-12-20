@@ -75,7 +75,13 @@ class NotificationModel {
       case 'LEAGUE_STATKEEPER_INVITE':
         return '$senderName invited you to be a stat keeper for $leagueName';
       case 'LEAGUE_TEAM_INVITE':
-        return 'A new league "$leagueName" has been created and your team has been invited. Would you like to accept the invitation?';
+        return 'Your team "$teamName" has been invited to participate in the league "$leagueName". Would you like to accept the invitation?';
+      case 'INVITE_ACCEPTED_REFEREE':
+        return '$senderName has accepted your invitation to be a referee for $leagueName';
+      case 'INVITE_ACCEPTED_STATKEEPER':
+        return '$senderName has accepted your invitation to be a stat keeper for $leagueName';
+      case 'INVITE_ACCEPTED_TEAM':
+        return '$senderName has accepted your invitation for team "$teamName" to participate in the league "$leagueName"';
       default:
         return 'You have a new notification';
     }

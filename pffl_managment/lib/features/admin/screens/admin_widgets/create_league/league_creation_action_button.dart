@@ -61,9 +61,9 @@ class LeagueCreationActionButton extends StatelessWidget {
     switch (viewModel.currentStep) {
       case 0:
         // Step 1: Validate on button press
-        return () {
+        return () async {
           if (viewModel.validateStep1()) {
-            viewModel.nextStep();
+            await viewModel.nextStep(); // Now async - creates league
           }
         };
       case 1:

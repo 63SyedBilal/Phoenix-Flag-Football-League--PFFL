@@ -64,8 +64,8 @@ export default function LeagueInvitationCard({
         return `You've been invited by <span class="font-semibold text-[#111827]">${senderName}</span> to be a stat keeper for the league <span class="font-semibold text-[#111827]">${leagueName}</span>.`
       case "LEAGUE_TEAM_INVITE":
         return teamName
-          ? `You've been invited by <span class="font-semibold text-[#111827]">${senderName}</span> to join the league <span class="font-semibold text-[#111827]">${leagueName}</span> with your team <span class="font-semibold text-[#111827]">${teamName}</span>.`
-          : `You've been invited by <span class="font-semibold text-[#111827]">${senderName}</span> to join the league <span class="font-semibold text-[#111827]">${leagueName}</span> with your team.`
+          ? `Your team <span class="font-semibold text-[#111827]">${teamName}</span> has been invited by <span class="font-semibold text-[#111827]">${senderName}</span> to participate in the league <span class="font-semibold text-[#111827]">${leagueName}</span>.`
+          : `Your team has been invited by <span class="font-semibold text-[#111827]">${senderName}</span> to participate in the league <span class="font-semibold text-[#111827]">${leagueName}</span>.`
       default:
         return `You've been invited to join the league <span class="font-semibold text-[#111827]">${leagueName}</span>.`
     }

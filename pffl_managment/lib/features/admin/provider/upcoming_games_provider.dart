@@ -220,16 +220,57 @@ class UpcomingGamesProvider extends ChangeNotifier {
     }
   }
 
-  /// Fetch stat keepers
+  /// Fetch stat keepers assigned to the league
+  /// Only shows stat keepers who were previously invited and assigned during league creation
   Future<void> fetchStatKeepers() async {
     _isLoadingStatKeepers = true;
     notifyListeners();
 
     try {
-      _statKeepers = await UserService.getStatKeepers();
-    } catch (e) {
-      print('Error fetching stat keepers: $e');
+      if (_leagueId == null || _leagueId!.isEmpty) {
+        // No league ID, use empty list
+        debugPrint('⚠️ Empty league ID provided, returning empty stat keepers list');
+        _statKeepers = [];
+        _isLoadingStatKeepers = false;
+        notifyListeners();
+        return;
+      }
+
+      debugPrint('📡 Fetching stat keepers for league ID: $_leagueId');
+      
+      // Fetch league details which includes populated stat keepers (only those assigned to league)
+      final league = await LeagueService.getLeagueById(_leagueId!);
+      
+      if (league == null) {
+        debugPrint('❌ League not found for ID: $_leagueId');
+        _statKeepers = [];
+        _errorMessage = 'League not found';
+        _isLoadingStatKeepers = false;
+        notifyListeners();
+        return;
+      }
+      
+      debugPrint('✅ League fetched: ${league.leagueName}');
+      debugPrint('📊 Stat keepers count in league: ${league.statKeepers.length}');
+      
+      if (league.statKeepers.isNotEmpty) {
+        // Use stat keepers from the league (only stat keepers invited and assigned during league creation)
+        _statKeepers = league.statKeepers;
+        debugPrint('✅ Loaded ${_statKeepers.length} stat keepers from league: ${league.leagueName}');
+        for (var statKeeper in _statKeepers) {
+          debugPrint('   - Stat Keeper: ${statKeeper.displayName} (ID: ${statKeeper.id})');
+        }
+      } else {
+        // League has no stat keepers yet - this is not an error, just empty state
+        _statKeepers = [];
+        debugPrint('ℹ️ League has no stat keepers assigned yet');
+        debugPrint('   - Stat keepers will appear when they accept invitation in Step 3 of league creation');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error fetching stat keepers for league: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
       _statKeepers = [];
+      _errorMessage = 'Failed to load stat keepers for this league: ${e.toString()}';
     } finally {
       _isLoadingStatKeepers = false;
       notifyListeners();

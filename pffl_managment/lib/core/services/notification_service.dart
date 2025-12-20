@@ -13,30 +13,48 @@ class NotificationService {
   /// GET /api/notification/all
   static Future<List<Map<String, dynamic>>> getAllNotifications() async {
     try {
+      print('📡 [NotificationService] Fetching all notifications...');
       final dio = await _getAuthenticatedDio();
+      print('📡 [NotificationService] Calling endpoint: /notification/all');
       final response = await dio.get('/notification/all');
+
+      print('📡 [NotificationService] Response status: ${response.statusCode}');
+      print('📡 [NotificationService] Response data keys: ${response.data?.keys}');
 
       if (response.statusCode == 200) {
         final data = response.data;
+        print('📡 [NotificationService] Response success: ${data['success']}');
+        print('📡 [NotificationService] Response data type: ${data['data']?.runtimeType}');
+        print('📡 [NotificationService] Response data length: ${(data['data'] as List?)?.length ?? 0}');
+        
         if (data['success'] == true && data['data'] != null) {
-          return (data['data'] as List).cast<Map<String, dynamic>>();
+          final notifications = (data['data'] as List).cast<Map<String, dynamic>>();
+          print('✅ [NotificationService] Returning ${notifications.length} notifications');
+          notifications.forEach((n) {
+            print('  📋 Notification: ${n['type']} - ${n['_id']}');
+          });
+          return notifications;
         } else if (data['data'] != null) {
           // Handle case where success field might not be present
-          return (data['data'] as List).cast<Map<String, dynamic>>();
+          final notifications = (data['data'] as List).cast<Map<String, dynamic>>();
+          print('✅ [NotificationService] Returning ${notifications.length} notifications (no success field)');
+          return notifications;
         }
+        print('⚠️ [NotificationService] No notifications found in response');
         return [];
       } else {
-        print('Failed to fetch notifications: ${response.statusMessage}');
+        print('❌ [NotificationService] Failed to fetch notifications: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching notifications: ${e.message}');
+      print('❌ [NotificationService] DioException: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
+        print('❌ [NotificationService] Error response status: ${e.response?.statusCode}');
+        print('❌ [NotificationService] Error response data: ${e.response?.data}');
       }
       return [];
     } catch (e) {
-      print('General error fetching notifications: $e');
+      print('❌ [NotificationService] General error: $e');
       return [];
     }
   }

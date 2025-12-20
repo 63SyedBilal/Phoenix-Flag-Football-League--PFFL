@@ -180,7 +180,10 @@ class LeagueService {
     String refereeId,
   ) async {
     try {
+      print('📤 [inviteRefereeToLeague] Starting - leagueId=$leagueId, refereeId=$refereeId');
       final dio = await _getAuthenticatedDio();
+      print('📤 [inviteRefereeToLeague] Dio instance created, calling endpoint: /league/$leagueId/invite/referee');
+      
       final response = await dio.post(
         '/league/$leagueId/invite/referee',
         data: {
@@ -188,23 +191,42 @@ class LeagueService {
         },
       );
 
+      print('📤 [inviteRefereeToLeague] Response status: ${response.statusCode}');
+      print('📤 [inviteRefereeToLeague] Response data: ${response.data}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Referee invitation sent successfully');
+        final data = response.data;
+        if (data is Map && data.containsKey('success')) {
+          final success = data['success'] == true;
+          if (success) {
+            print('✅ [inviteRefereeToLeague] Referee invitation sent successfully');
+            return true;
+          } else {
+            final error = data['error'] ?? 'Unknown error';
+            print('❌ [inviteRefereeToLeague] Invitation failed: $error');
+            return false;
+          }
+        }
+        print('✅ [inviteRefereeToLeague] Referee invitation sent successfully (no success field)');
         return true;
       }
+      print('❌ [inviteRefereeToLeague] Unexpected status code: ${response.statusCode}');
       return false;
     } on DioException catch (e) {
-      print('Error inviting referee: ${e.message}');
+      print('❌ [inviteRefereeToLeague] DioException: ${e.message}');
+      print('❌ [inviteRefereeToLeague] DioException type: ${e.type}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
-        // Handle 409 - invite already sent
+        print('❌ [inviteRefereeToLeague] Response status: ${e.response?.statusCode}');
+        print('❌ [inviteRefereeToLeague] Response data: ${e.response?.data}');
+        // Handle 409 - invite already sent (this is actually success)
         if (e.response?.statusCode == 409) {
-          print('⚠️ Invite already sent to this referee');
+          print('⚠️ [inviteRefereeToLeague] Invite already sent to this referee (409) - treating as success');
+          return true;
         }
       }
       return false;
     } catch (e) {
-      print('General error inviting referee: $e');
+      print('❌ [inviteRefereeToLeague] General error: $e');
       return false;
     }
   }
@@ -216,7 +238,10 @@ class LeagueService {
     String statKeeperId,
   ) async {
     try {
+      print('📤 [inviteStatKeeperToLeague] Starting - leagueId=$leagueId, statKeeperId=$statKeeperId');
       final dio = await _getAuthenticatedDio();
+      print('📤 [inviteStatKeeperToLeague] Dio instance created, calling endpoint: /league/$leagueId/invite/statkeeper');
+      
       final response = await dio.post(
         '/league/$leagueId/invite/statkeeper',
         data: {
@@ -224,18 +249,42 @@ class LeagueService {
         },
       );
 
+      print('📤 [inviteStatKeeperToLeague] Response status: ${response.statusCode}');
+      print('📤 [inviteStatKeeperToLeague] Response data: ${response.data}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data is Map && data.containsKey('success')) {
+          final success = data['success'] == true;
+          if (success) {
+            print('✅ [inviteStatKeeperToLeague] Stat keeper invitation sent successfully');
+            return true;
+          } else {
+            final error = data['error'] ?? 'Unknown error';
+            print('❌ [inviteStatKeeperToLeague] Invitation failed: $error');
+            return false;
+          }
+        }
+        print('✅ [inviteStatKeeperToLeague] Stat keeper invitation sent successfully (no success field)');
         return true;
       }
+      print('❌ [inviteStatKeeperToLeague] Unexpected status code: ${response.statusCode}');
       return false;
     } on DioException catch (e) {
-      print('Error inviting stat keeper: ${e.message}');
+      print('❌ [inviteStatKeeperToLeague] DioException: ${e.message}');
+      print('❌ [inviteStatKeeperToLeague] DioException type: ${e.type}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
+        print('❌ [inviteStatKeeperToLeague] Response status: ${e.response?.statusCode}');
+        print('❌ [inviteStatKeeperToLeague] Response data: ${e.response?.data}');
+        // Handle 409 - invite already sent (this is actually success)
+        if (e.response?.statusCode == 409) {
+          print('⚠️ [inviteStatKeeperToLeague] Invite already sent to this stat keeper (409) - treating as success');
+          return true;
+        }
       }
       return false;
     } catch (e) {
-      print('General error inviting stat keeper: $e');
+      print('❌ [inviteStatKeeperToLeague] General error: $e');
       return false;
     }
   }
@@ -287,16 +336,18 @@ class LeagueService {
       if (e.response != null) {
         print('❌ Response status: ${e.response?.statusCode}');
         print('❌ Response data: ${e.response?.data}');
-        final errorData = e.response?.data;
-        if (errorData is Map) {
-          final error = errorData['error'] ?? errorData['message'] ?? e.message;
-          throw Exception(error.toString());
+        // Handle 409 - invite already sent (this is actually success)
+        if (e.response?.statusCode == 409) {
+          print('⚠️ Invite already sent to this team (409) - treating as success');
+          return true;
         }
       }
-      throw Exception(e.message ?? 'Failed to invite team');
+      // Return false instead of throwing - silent failure for fire-and-forget
+      return false;
     } catch (e) {
       print('❌ General error inviting team: $e');
-      rethrow;
+      // Return false instead of throwing - silent failure for fire-and-forget
+      return false;
     }
   }
 
