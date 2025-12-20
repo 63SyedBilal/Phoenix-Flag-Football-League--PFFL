@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/features/admin/screens/all_matches_screen.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:pffl_managment/core/utils/svg_icons.dart';
 
 // Helper function to build team widget
 Widget _buildTeamWidget(BuildContext context, String teamName, String teamLogo, bool isAway) {
@@ -100,7 +101,7 @@ Widget _buildTeamWidget(BuildContext context, String teamName, String teamLogo, 
   );
 }
 
-// Modified card widget that doesn't show league name
+// Card widget with league name display
 class UpcommingGamesCardWidget extends StatelessWidget {
   final MatchModel match;
 
@@ -122,7 +123,22 @@ class UpcommingGamesCardWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Removed league name display - only showing the teams and match details
+          // League name display
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                match.leagueName,
+                style: AppTextStyles.labelSmall.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(width: 6),
+              SvgIcons.icon1(size: 12, color: colorScheme.onSurface),
+            ],
+          ),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

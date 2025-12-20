@@ -37,8 +37,12 @@ async function verifyAdmin(req: NextRequest) {
  */
 export async function inviteReferee(req: NextRequest, { params }: { params: { leagueId: string } }) {
   try {
+    console.log("🔥 [inviteReferee] Function started");
+    console.log("🔥 [inviteReferee] Connecting to DB...");
     await connectDB();
+    console.log("🔥 [inviteReferee] DB connected, verifying admin...");
     const decoded = await verifyAdmin(req);
+    console.log("🔥 [inviteReferee] Admin verified");
 
     console.log("🔍 Decoded token in inviteReferee:", {
       userId: decoded.userId,
@@ -251,8 +255,12 @@ export async function inviteReferee(req: NextRequest, { params }: { params: { le
  */
 export async function inviteStatKeeper(req: NextRequest, { params }: { params: { leagueId: string } }) {
   try {
+    console.log("🔥 [inviteStatKeeper] Function started");
+    console.log("🔥 [inviteStatKeeper] Connecting to DB...");
     await connectDB();
+    console.log("🔥 [inviteStatKeeper] DB connected, verifying admin...");
     const decoded = await verifyAdmin(req);
+    console.log("🔥 [inviteStatKeeper] Admin verified");
 
     console.log("🔍 Decoded token in inviteStatKeeper:", {
       userId: decoded.userId,
@@ -465,8 +473,12 @@ export async function inviteStatKeeper(req: NextRequest, { params }: { params: {
  */
 export async function inviteTeam(req: NextRequest, { params }: { params: { leagueId: string } }) {
   try {
+    console.log("🔥 [inviteTeam] Function started");
+    console.log("🔥 [inviteTeam] Connecting to DB...");
     await connectDB();
+    console.log("🔥 [inviteTeam] DB connected, verifying admin...");
     const decoded = await verifyAdmin(req);
+    console.log("🔥 [inviteTeam] Admin verified");
 
     console.log("🔍 Decoded token in inviteTeam:", {
       userId: decoded.userId,

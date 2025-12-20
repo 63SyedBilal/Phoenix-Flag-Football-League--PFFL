@@ -14,3 +14,5 @@ export { default as NotificationCardPayment } from "./notification-card-payment"
 export { default as PaymentReminderCard } from "./payment-reminder-card"
 
 export { default as TeamUsersCard } from "./team-users-card"
+
+export { default as GameCard } from "./game-card"
