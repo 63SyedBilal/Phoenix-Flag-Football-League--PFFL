@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
 
@@ -150,6 +151,10 @@ class UnifiedGamesProvider extends ChangeNotifier {
   /// Filters to show only future matches
   /// Sorts by nearest date/time first
   Future<void> fetchAllMatches() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    
     try {
       debugPrint('🎮 Fetching all matches from backend...');
       
@@ -173,13 +178,23 @@ class UnifiedGamesProvider extends ChangeNotifier {
 
       _allGames = allMatches;
       _sortGames();
+      _errorMessage = null;
 
       debugPrint('✅ All matches loaded: ${_allGames.length}');
-      notifyListeners();
     } catch (e) {
       debugPrint('❌ Error fetching matches: $e');
-      _errorMessage = 'Failed to load matches';
+      debugPrint('   Error type: ${e.runtimeType}');
+      if (e is DioException) {
+        debugPrint('   DioException type: ${e.type}');
+        debugPrint('   Status code: ${e.response?.statusCode}');
+        debugPrint('   Error data: ${e.response?.data}');
+        _errorMessage = 'Failed to load matches: ${e.response?.data?['error'] ?? e.message ?? 'Unknown error'}';
+      } else {
+        _errorMessage = 'Failed to load matches: ${e.toString()}';
+      }
       _allGames = [];
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }

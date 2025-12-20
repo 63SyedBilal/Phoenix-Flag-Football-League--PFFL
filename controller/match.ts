@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import Match from "@/modules/match";
 import League from "@/modules/league";
 import Team from "@/modules/team";
+import Notification from "@/modules/notification";
 import { verifyAccessToken } from "@/lib/jwt";
 
 // Helper to get token from request
@@ -155,6 +156,62 @@ export async function createMatch(req: NextRequest) {
 
     const match = new Match(matchData);
     await match.save();
+
+    // Get sender ID from token (admin who created the match)
+    const decoded = await verifyUser(req);
+    const senderId = toObjectId(decoded.userId);
+    const matchObjectId = (match as any)._id;
+
+    // Create notifications for assigned referee and stat keeper
+    const notifications = [];
+
+    // Create notification for referee if assigned
+    if (refereeId) {
+      try {
+        const refereeObjectId = toObjectId(refereeId);
+        const refereeNotification = await Notification.create({
+          sender: senderId,
+          receiver: refereeObjectId,
+          league: leagueObjectId,
+          match: matchObjectId,
+          type: "GAME_ASSIGNED",
+          status: "pending"
+        });
+        notifications.push(refereeNotification);
+        console.log("✅ Notification created for referee:", {
+          notificationId: refereeNotification._id.toString(),
+          refereeId: refereeId,
+          matchId: matchObjectId.toString()
+        });
+      } catch (error: any) {
+        console.error("❌ Error creating notification for referee:", error);
+        // Don't fail match creation if notification fails
+      }
+    }
+
+    // Create notification for stat keeper if assigned
+    if (statKeeperId) {
+      try {
+        const statKeeperObjectId = toObjectId(statKeeperId);
+        const statKeeperNotification = await Notification.create({
+          sender: senderId,
+          receiver: statKeeperObjectId,
+          league: leagueObjectId,
+          match: matchObjectId,
+          type: "GAME_ASSIGNED",
+          status: "pending"
+        });
+        notifications.push(statKeeperNotification);
+        console.log("✅ Notification created for stat keeper:", {
+          notificationId: statKeeperNotification._id.toString(),
+          statKeeperId: statKeeperId,
+          matchId: matchObjectId.toString()
+        });
+      } catch (error: any) {
+        console.error("❌ Error creating notification for stat keeper:", error);
+        // Don't fail match creation if notification fails
+      }
+    }
 
     // Populate references
     await match.populate("leagueId", "leagueName format startDate endDate");

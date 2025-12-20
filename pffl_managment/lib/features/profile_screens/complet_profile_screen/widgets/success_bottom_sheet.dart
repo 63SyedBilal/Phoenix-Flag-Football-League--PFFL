@@ -91,16 +91,31 @@ class SuccessBottomSheet extends StatelessWidget {
                               final prefs = await SharedPreferences.getInstance();
                               final role = prefs.getString('role') ?? authProvider.userRole;
                               
+                              // Determine route based on user role
                               String route;
-                              if (role == 'captain') {
-                                // For captain, check if team needs to be created
-                                if (authProvider.needsTeamForm) {
-                                  route = AppRoutes.captainCreateTeam;
-                                } else {
-                                  route = AppRoutes.captainDashboard;
-                                }
-                              } else {
-                                route = AppRoutes.playerDashboard;
+                              switch (role.toLowerCase()) {
+                                case 'captain':
+                                  // For captain, check if team needs to be created
+                                  if (authProvider.needsTeamForm) {
+                                    route = AppRoutes.captainCreateTeam;
+                                  } else {
+                                    route = AppRoutes.captainDashboard;
+                                  }
+                                  break;
+                                case 'player':
+                                  route = AppRoutes.playerDashboard;
+                                  break;
+                                case 'freeagent':
+                                  route = AppRoutes.freeAgentDashboard;
+                                  break;
+                                case 'referee':
+                                  route = AppRoutes.refereeDashboard;
+                                  break;
+                                case 'statkeeper':
+                                  route = AppRoutes.statKeeperDashboard;
+                                  break;
+                                default:
+                                  route = AppRoutes.playerDashboard; // Default fallback
                               }
                               
                               Navigator.pushNamedAndRemoveUntil(

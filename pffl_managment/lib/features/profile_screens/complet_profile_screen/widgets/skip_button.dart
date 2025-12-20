@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
-/// Skip button widget for navigating to dashboard
+/// Skip button widget for navigating to dashboard based on user role
 class SkipButton extends StatelessWidget {
   const SkipButton({super.key});
 
@@ -10,9 +12,34 @@ class SkipButton extends StatelessWidget {
     return Center(
       child: GestureDetector(
         onTap: () {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final userRole = authProvider.userRole;
+          
+          // Determine route based on user role
+          String route;
+          switch (userRole.toLowerCase()) {
+            case 'captain':
+              route = AppRoutes.captainDashboard;
+              break;
+            case 'player':
+              route = AppRoutes.playerDashboard;
+              break;
+            case 'freeagent':
+              route = AppRoutes.freeAgentDashboard;
+              break;
+            case 'referee':
+              route = AppRoutes.refereeDashboard;
+              break;
+            case 'statkeeper':
+              route = AppRoutes.statKeeperDashboard;
+              break;
+            default:
+              route = AppRoutes.playerDashboard; // Default fallback
+          }
+          
           Navigator.pushNamedAndRemoveUntil(
             context,
-            AppRoutes.playerDashboard,
+            route,
             (route) => false,
           );
         },

@@ -65,6 +65,11 @@ export async function getAllNotifications(req: NextRequest) {
         model: "League"
       })
       .populate({
+        path: "match",
+        select: "teamAName teamBName gameDate gameTime venue status",
+        model: "Match"
+      })
+      .populate({
         path: "receiver",
         select: "firstName lastName email",
         model: "User"

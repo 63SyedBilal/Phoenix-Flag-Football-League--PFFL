@@ -11,6 +11,7 @@ class NotificationModel {
   final Map<String, dynamic>? receiver;
   final Map<String, dynamic>? team;
   final Map<String, dynamic>? league;
+  final Map<String, dynamic>? match;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -23,6 +24,7 @@ class NotificationModel {
     this.receiver,
     this.team,
     this.league,
+    this.match,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -37,6 +39,7 @@ class NotificationModel {
       receiver: json['receiver'] is Map ? Map<String, dynamic>.from(json['receiver']) : null,
       team: json['team'] is Map ? Map<String, dynamic>.from(json['team']) : null,
       league: json['league'] is Map ? Map<String, dynamic>.from(json['league']) : null,
+      match: json['match'] is Map ? Map<String, dynamic>.from(json['match']) : null,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'].toString())
           : DateTime.now(),
@@ -76,6 +79,20 @@ class NotificationModel {
         return '$senderName invited you to be a stat keeper for $leagueName';
       case 'LEAGUE_TEAM_INVITE':
         return 'A new league "$leagueName" has been created and your team has been invited. Would you like to accept the invitation?';
+      case 'GAME_ASSIGNED':
+        final matchTeamA = match?['teamAName']?.toString() ?? match?['teamA']?.toString() ?? 'Team A';
+        final matchTeamB = match?['teamBName']?.toString() ?? match?['teamB']?.toString() ?? 'Team B';
+        final gameDate = match?['gameDate'] != null 
+            ? DateTime.tryParse(match!['gameDate'].toString()) 
+            : null;
+        final dateStr = gameDate != null 
+            ? '${gameDate.day}/${gameDate.month}/${gameDate.year}'
+            : '';
+        if (dateStr.isNotEmpty) {
+          return 'Aapko ek game assign hua hai: $matchTeamA vs $matchTeamB on $dateStr';
+        } else {
+          return 'Aapko ek game assign hua hai: $matchTeamA vs $matchTeamB';
+        }
       default:
         return 'You have a new notification';
     }
