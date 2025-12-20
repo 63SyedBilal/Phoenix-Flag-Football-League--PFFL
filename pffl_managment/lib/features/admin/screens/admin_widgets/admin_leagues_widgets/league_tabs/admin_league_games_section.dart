@@ -240,41 +240,6 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
     return 12;
   }
 
-  Widget _buildPlaceholderCard(String title, String message) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF000000).withValues(alpha: 0.12),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Extract total number from gameNumber string like "Game 8 of 12"
   int _extractTotalFromGameNumber(String gameNumber, int defaultTotal) {

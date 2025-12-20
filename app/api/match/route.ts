@@ -40,7 +40,9 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    console.log("🔵 GET /api/match called");
     const response = await getAllMatches(req);
+    console.log("✅ getAllMatches response status:", response.status);
     // Add CORS headers
     const headers = new Headers(response.headers);
     headers.set("Access-Control-Allow-Origin", "*");
@@ -51,8 +53,14 @@ export async function GET(req: NextRequest) {
       headers,
     });
   } catch (error: any) {
+    console.error("❌ Route handler error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { 
+        error: error.message || "Internal server error",
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       {
         status: 500,
         headers: {

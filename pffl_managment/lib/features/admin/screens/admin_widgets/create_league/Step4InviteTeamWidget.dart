@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/core/utils/app_icons.dart';
@@ -97,6 +98,7 @@ class _TeamList extends StatelessWidget {
     return {
       'id': team.id,
       'name': team.teamName,
+      'image': team.image, // Team logo URL
       'players': playerCount,
       'total': maxPlayers,
       'emailSent': viewModel.isTeamEmailSent(team.id),
@@ -171,6 +173,7 @@ class _TeamList extends StatelessWidget {
               Container(
                 child: Row(
                   children: [
+                    // Team Logo Circle
                     Container(
                       width: 40,
                       height: 40,
@@ -181,15 +184,42 @@ class _TeamList extends StatelessWidget {
                           width: 0.5,
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          team['name'],
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
+                      child: ClipOval(
+                        child: (team['image'] != null && team['image'].toString().isNotEmpty)
+                            ? CachedNetworkImage(
+                                imageUrl: team['image'].toString(),
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  color: const Color(0xFFE5E7EB),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  color: AppColors.backgroundWhite,
+                                  child: const Icon(
+                                    Icons.shield,
+                                    size: 20,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                color: AppColors.backgroundWhite,
+                                child: const Icon(
+                                  Icons.shield,
+                                  size: 20,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -208,65 +238,32 @@ class _TeamList extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Email icon - check invitation status directly from viewModel
+                    // Email icon - simple color change on tap
                     Consumer<CreateLeagueViewModel>(
                       builder: (context, vm, child) {
-                        // Check invitation status directly from viewModel to ensure latest state
-                        final bool isEmailSent = vm.isTeamEmailSent(team['id'] as String);
+                        final teamId = team['id'] as String;
+                        final bool isEmailSent = vm.isTeamEmailSent(teamId);
                         
-                        // Icon color: grey initially, primary when invitation is sent
-                        final iconColor = isEmailSent ? AppColors.primary : AppColors.borderDefault;
+                        // Icon color: Red when sent, Grey when not sent
+                        final iconColor = isEmailSent ? AppColors.buttonBackground : AppColors.borderDefault;
                         
-                        return IconButton(
-                          icon: isEmailSent
-                              ? SvgIcons.emailAfterInvitation(size: 22, color: iconColor)
-                              : Icon(
-                                  AppIcons.emailOutlined,
-                                  color: iconColor,
-                                  size: 22,
-                                ),
-                          onPressed: (isEmailSent || 
-                                      vm.isTeamEmailSending(team['id']) ||
-                                      vm.leagueId.isEmpty)
+                        return GestureDetector(
+                          onTap: isEmailSent
                               ? null
-                              : () async {
-                                  final teamId = team['id'] as String;
-                                  final leagueId = vm.leagueId;
-                                  
-                                  if (leagueId.isEmpty) {
-                                    // League not created yet - show message
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('League is being created. Please wait...'),
-                                        duration: Duration(seconds: 2),
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  
-                                  // Send invitation - team will be automatically assigned to league
-                                  final success = await vm.sendInvitationToTeam(leagueId, teamId);
-                                  
-                                  if (context.mounted) {
-                                    if (success) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('✅ Invitation sent! Team assigned to league.'),
-                                          duration: Duration(seconds: 2),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('❌ Failed to send invitation. Please try again.'),
-                                          duration: Duration(seconds: 2),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
-                                  }
+                              : () {
+                                  // Send invitation - no validation, fire-and-forget
+                                  vm.sendInvitationToTeam(vm.leagueId, teamId);
                                 },
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            child: isEmailSent
+                                ? SvgIcons.emailAfterInvitation(size: 22, color: iconColor)
+                                : Icon(
+                                    AppIcons.emailOutlined,
+                                    color: iconColor,
+                                    size: 22,
+                                  ),
+                          ),
                         );
                       },
                     ),

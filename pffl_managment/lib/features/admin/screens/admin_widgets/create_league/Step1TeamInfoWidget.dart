@@ -4,6 +4,7 @@ import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/core/utils/app_icons.dart';
 import 'package:pffl_managment/core/utils/date_formatter.dart';
+import 'package:pffl_managment/core/utils/svg_icons.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/simple_dropdown_list.dart';
 import 'package:pffl_managment/core/widgets/dotted_border_widget.dart';
@@ -99,22 +100,12 @@ class Step1TeamInfoWidget extends StatelessWidget {
           CustomTextField(
             controller: viewModel.leagueNameController,
             hintText: 'Enter League Name',
+            errorText: viewModel.leagueNameError,
             onChanged: (text) {
               viewModel.setLeagueName(text);
               viewModel.setLeagueNameText(text);
             },
           ),
-          if (viewModel.leagueNameError != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text(
-                viewModel.leagueNameError!,
-                style: const TextStyle(
-                  color: AppColors.textDisabled,
-                  fontSize: 12,
-                ),
-              ),
-            ),
           const SizedBox(height: 18),
           const Text('Upload Logo', style: AppTextStyles.labelLarge),
           const SizedBox(height: 4),
@@ -122,7 +113,7 @@ class Step1TeamInfoWidget extends StatelessWidget {
             strokeWidth: 1.5,
             dashWidth: 5.0,
             dashSpace: 3.0,
-            color: AppColors.borderDefault,
+            color: viewModel.logoError != null ? Colors.red : AppColors.borderDefault,
             borderRadius: BorderRadius.circular(6),
             child: Container(
               width: double.infinity,
@@ -242,6 +233,27 @@ class Step1TeamInfoWidget extends StatelessWidget {
                     ),
             ),
           ),
+          // Logo error message
+          if (viewModel.logoError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Row(
+                children: [
+                  SvgIcons.infoFill(size: 14, color: Colors.red),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      viewModel.logoError!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 18),
           Row(
             children: [
@@ -255,14 +267,18 @@ class Step1TeamInfoWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.backgroundWhite,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.borderDefault),
+                        border: Border.all(
+                          color: viewModel.startDateError != null 
+                              ? Colors.red 
+                              : AppColors.borderDefault,
+                        ),
                       ),
                       child: GestureDetector(
                         onTap: () async {
                           final picked = await showDatePicker(
                             context: context,
                             initialDate: viewModel.startDate ?? DateTime.now(),
-                            firstDate: DateTime(2000),
+                            firstDate: DateTime.now(),
                             lastDate: DateTime(2100),
                             builder: (context, child) {
                               return Theme(
@@ -292,15 +308,25 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (viewModel.dateRangeError != null)
+                    // Start Date error below container
+                    if (viewModel.startDateError != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          viewModel.dateRangeError!,
-                          style: const TextStyle(
-                            color: AppColors.textDisabled,
-                            fontSize: 12,
-                          ),
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Row(
+                          children: [
+                            SvgIcons.infoFill(size: 14, color: Colors.red),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                viewModel.startDateError!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 11.0,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
@@ -317,7 +343,11 @@ class Step1TeamInfoWidget extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.backgroundWhite,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.borderDefault),
+                        border: Border.all(
+                          color: viewModel.endDateError != null 
+                              ? Colors.red 
+                              : AppColors.borderDefault,
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.shadowDefault.withValues(
@@ -335,7 +365,7 @@ class Step1TeamInfoWidget extends StatelessWidget {
                             initialDate:
                                 viewModel.endDate ??
                                 DateTime.now().add(const Duration(days: 7)),
-                            firstDate: DateTime(2000),
+                            firstDate: DateTime.now(),
                             lastDate: DateTime(2100),
                             builder: (context, child) {
                               return Theme(
@@ -367,15 +397,25 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (viewModel.dateRangeError != null)
+                    // End Date error below container
+                    if (viewModel.endDateError != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          viewModel.dateRangeError!,
-                          style: const TextStyle(
-                            color: AppColors.textDisabled,
-                            fontSize: 12,
-                          ),
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Row(
+                          children: [
+                            SvgIcons.infoFill(size: 14, color: Colors.red),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                viewModel.endDateError!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 11.0,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
@@ -387,53 +427,53 @@ class Step1TeamInfoWidget extends StatelessWidget {
           const Text('Minimum Players Required', style: AppTextStyles.labelLarge),
           const SizedBox(height: 4),
           SimpleDropdownList(
-            selectedValue: viewModel.minPlayers.toString(),
-            items: ['5', '6', '7', '8', '9', '10', '11', '12'],
+            selectedValue: viewModel.minPlayers > 0 ? viewModel.minPlayers.toString() : null,
+            items: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'],
             onSelected: (value) {
               final intValue = int.tryParse(value);
               if (intValue != null) viewModel.setMinPlayers(intValue);
             },
-            hintText: 'Select players',
-            maxHeight: 150.0,
+            hintText: 'Select minimum players',
+            maxHeight: 200.0,
           ),
+          // Min players error message
           if (viewModel.minPlayersError != null)
             Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text(
-                viewModel.minPlayersError!,
-                style: const TextStyle(
-                  color: AppColors.textDisabled,
-                  fontSize: 12,
-                ),
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Row(
+                children: [
+                  SvgIcons.infoFill(size: 14, color: Colors.red),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      viewModel.minPlayersError!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           const SizedBox(height: 18),
          
           const Text(
-            'Per Player league Fee',
+            'Per Player League Fee',
             style: AppTextStyles.labelLarge,
           ),
           const SizedBox(height: 4),
           CustomTextField(
             controller: viewModel.perPlayerFeeController,
             keyboardType: TextInputType.number,
-            hintText: '\$${250}',
+            hintText: '\$250',
+            errorText: viewModel.perPlayerFeeError,
             onChanged: (text) {
               viewModel.setPerPlayerFeeText(text);
             },
           ),
-          if (viewModel.perPlayerFeeError != null &&
-              viewModel.entryFeeType == EntryFeeType.perPlayer)
-            Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text(
-                viewModel.perPlayerFeeError!,
-                style: const TextStyle(
-                  color: AppColors.textDisabled,
-                  fontSize: 12,
-                ),
-              ),
-            ),
+          const SizedBox(height: 20),
         ],
       ),
     );

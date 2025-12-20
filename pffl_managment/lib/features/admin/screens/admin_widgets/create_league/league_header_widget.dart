@@ -14,8 +14,9 @@ class LeagueHeaderWidget extends StatelessWidget {
     String title = _getTitleForStep(viewModel.currentStep);
     String subtitle = _getSubtitleForStep(viewModel.currentStep);
     
-    // Show Skip button only if not on the last step (step 3 is the last step)
-    final bool showSkipButton = viewModel.currentStep < 3;
+    // Show Skip button from Step 2 onwards (not on Step 1)
+    // Step 0 = Step 1 (no skip), Step 1 = Step 2 (show skip), Step 2 = Step 3 (show skip), Step 3 = Step 4 (no skip - last step)
+    final bool showSkipButton = viewModel.currentStep > 0 && viewModel.currentStep < 3;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),

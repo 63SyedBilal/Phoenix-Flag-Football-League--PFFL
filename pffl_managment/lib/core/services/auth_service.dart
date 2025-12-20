@@ -198,9 +198,18 @@ class AuthService {
         print('❌ Failed with URL: $url');
         print('Error: ${e.message}');
         print('Error type: ${e.type}');
+        print('Response status: ${e.response?.statusCode}');
+        print('Response data: ${e.response?.data}');
         lastError = e;
 
-        // If this is not the last URL, continue to next
+        // If we got a 401 (Unauthorized), don't try other URLs - this is a valid auth error
+        // Rethrow immediately so the auth_provider can handle it
+        if (e.response?.statusCode == 401) {
+          print('🔴 401 Unauthorized - rethrowing immediately');
+          rethrow;
+        }
+
+        // If this is not the last URL and it's a connection error, continue to next
         if (url != urlsToTry.last) {
           print('Trying next URL...');
           continue;

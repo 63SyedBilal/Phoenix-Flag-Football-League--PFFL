@@ -6,7 +6,7 @@ import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_league
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
+import 'package:pffl_managment/features/captain/providers/captain_league_detail_provider.dart';
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_detail_header.dart';
 import 'package:pffl_managment/features/key_players/league_key_players_section.dart';
@@ -19,9 +19,9 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<LeagueDetailProvider>(
-      create: (_) => LeagueDetailProvider(),
-      child: Consumer<LeagueDetailProvider>(
+    return ChangeNotifierProvider<CaptainLeagueDetailProvider>(
+      create: (_) => CaptainLeagueDetailProvider(),
+      child: Consumer<CaptainLeagueDetailProvider>(
         builder: (context, provider, child) {
           return Scaffold(
             backgroundColor: const Color(0xFFF9FAFB),
@@ -40,7 +40,7 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Selector<LeagueDetailProvider, int>(
+                      child: Selector<CaptainLeagueDetailProvider, int>(
                         selector: (_, provider) => provider.selectedTabIndex,
                         builder: (context, tabIndex, _) {
                           return Column(

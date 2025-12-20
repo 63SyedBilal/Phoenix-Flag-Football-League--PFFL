@@ -17,33 +17,58 @@ class LeagueCreationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => CreateLeagueViewModel(),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF9FAFB),
-        resizeToAvoidBottomInset: true, // Allow content to resize but keep button fixed
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF9FAFB),
-          elevation: 0,
-          leading: ArrowBackButton(onPressed: () => Navigator.of(context).pop()),
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              const LeagueHeaderWidget(),
-              const SizedBox(height: 24),
-              const StepIndicatorWidget(),
-              const SizedBox(height: 24),
-              Expanded(
-                child: Consumer<CreateLeagueViewModel>(
-                  builder: (context, viewModel, child) {
-                    return _buildStep(viewModel.currentStep);
+      child: Consumer<CreateLeagueViewModel>(
+        builder: (context, viewModel, child) {
+          return PopScope(
+            canPop: viewModel.currentStep == 0,
+            onPopInvoked: (didPop) {
+              if (!didPop) {
+                // Handle back button press
+                if (viewModel.currentStep > 0) {
+                  // Go to previous step
+                  viewModel.previousStep();
+                } else {
+                  // Exit Create League screen
+                  Navigator.of(context).pop();
+                }
+              }
+            },
+            child: Scaffold(
+              backgroundColor: const Color(0xFFF9FAFB),
+              resizeToAvoidBottomInset: true, // Allow content to resize but keep button fixed
+              appBar: AppBar(
+                backgroundColor: const Color(0xFFF9FAFB),
+                elevation: 0,
+                leading: ArrowBackButton(
+                  onPressed: () {
+                    if (viewModel.currentStep > 0) {
+                      // Go to previous step
+                      viewModel.previousStep();
+                    } else {
+                      // Exit Create League screen
+                      Navigator.of(context).pop();
+                    }
                   },
                 ),
               ),
-              // Next button stays fixed at bottom
-              const LeagueCreationActionButton(),
-            ],
-          ),
-        ),
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    const LeagueHeaderWidget(),
+                    const SizedBox(height: 24),
+                    const StepIndicatorWidget(),
+                    const SizedBox(height: 24),
+                    Expanded(
+                      child: _buildStep(viewModel.currentStep),
+                    ),
+                    // Next button stays fixed at bottom
+                    const LeagueCreationActionButton(),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
