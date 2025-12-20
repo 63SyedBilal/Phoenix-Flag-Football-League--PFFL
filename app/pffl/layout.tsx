@@ -11,6 +11,7 @@ const allNavigation = [
   { name: "Home", href: "/pffl/home", icon: "/assets/image/home.svg" },
   { name: "Games", href: "/pffl/games", icon: "/assets/image/games.svg", showForRoles: ["referee", "stat-keeper"] },
   { name: "Leagues", href: "/pffl/leagues", icon: "/assets/image/leagues.svg" },
+  { name: "Stats", href: "/pffl/stats", icon: "/assets/image/games.svg", showForRoles: ["stat-keeper"] },
   { name: "Team", href: "/pffl/team", icon: "/assets/image/users.svg", hideForRoles: ["stat-keeper", "referee"] },
   { name: "Settings", href: "/pffl/settings", icon: "/assets/image/setting.svg" },
 ]

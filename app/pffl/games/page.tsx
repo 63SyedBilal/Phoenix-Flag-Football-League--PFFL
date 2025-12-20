@@ -46,14 +46,16 @@ export default function GamesPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [availableDates, setAvailableDates] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
 
-  // Get current user ID on mount
+  // Get current user ID and role on mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser)
         setCurrentUserId(userData._id || userData.id)
+        setUserRole(userData.role || null)
       } catch (e) {
         console.error("Error parsing user data:", e)
       }
@@ -62,7 +64,8 @@ export default function GamesPage() {
 
   useEffect(() => {
     const fetchMatches = async () => {
-      if (!currentUserId) return // Wait for user ID to be set
+      // For statkeeper, we don't need to wait for user ID. For others, wait for user ID.
+      if (userRole !== "stat-keeper" && !currentUserId) return
 
       try {
         setIsLoading(true)
@@ -90,17 +93,24 @@ export default function GamesPage() {
         const data = await response.json()
         const allMatches: Match[] = data.data || []
 
-        // Filter matches where current user is assigned as referee
-        const refereeMatches = allMatches.filter((match) => {
-          const refereeId = typeof match.refereeId === "object" ? match.refereeId?._id : match.refereeId
-          return refereeId === currentUserId
-        })
+        // If user is stat-keeper, show all matches. Otherwise, filter by referee assignment
+        let displayedMatches: Match[] = []
+        if (userRole === "stat-keeper") {
+          // Statkeeper sees all matches
+          displayedMatches = allMatches
+        } else {
+          // Filter matches where current user is assigned as referee
+          displayedMatches = allMatches.filter((match) => {
+            const refereeId = typeof match.refereeId === "object" ? match.refereeId?._id : match.refereeId
+            return refereeId === currentUserId
+          })
+        }
 
-        setMatches(refereeMatches)
+        setMatches(displayedMatches)
 
         // Extract unique dates from matches
         const dates = new Set<string>()
-        refereeMatches.forEach((match) => {
+        displayedMatches.forEach((match) => {
           try {
             const date = new Date(match.gameDate)
             const dateStr = date.toISOString().split("T")[0] // YYYY-MM-DD format
@@ -132,7 +142,7 @@ export default function GamesPage() {
     }
 
     fetchMatches()
-  }, [currentUserId])
+  }, [currentUserId, userRole])
 
   useEffect(() => {
     if (selectedDate) {
@@ -160,9 +170,9 @@ export default function GamesPage() {
     }
   }
 
-  // Check if match is assigned to current user
+  // Check if match is assigned to current user (for non-statkeeper users)
   const isAssignedToUser = (match: Match) => {
-    if (!currentUserId) return false
+    if (!currentUserId || userRole === "stat-keeper") return false
     const refereeId = typeof match.refereeId === "object" ? match.refereeId?._id : match.refereeId
     return refereeId === currentUserId
   }
