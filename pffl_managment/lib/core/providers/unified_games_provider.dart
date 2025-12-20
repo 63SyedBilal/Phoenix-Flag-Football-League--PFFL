@@ -8,13 +8,69 @@ class UnifiedGamesProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  UnifiedGamesProvider() {
+    _initializeData();
+  }
+
   // Getters
   List<MatchModel> get allGames => List.unmodifiable(_allGames);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  List<MatchModel> get upcomingGames =>
-      _allGames.where((game) => game.status == MatchStatus.upcoming).toList();
+  /// Get upcoming games - future matches only, sorted by nearest date/time
+  List<MatchModel> get upcomingGames {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    debugPrint('🔍 upcomingGames getter: Total games: ${_allGames.length}, Current time: $now, Today: $today');
+    
+    // Filter for upcoming matches (not completed or cancelled)
+    final futureMatches = _allGames.where((game) {
+      // Skip if match is completed or cancelled
+      if (game.status == MatchStatus.completed ||
+          game.status == MatchStatus.cancelled) {
+        debugPrint('⚠️ Game ${game.id} skipped: status is ${game.status}');
+        return false;
+      }
+
+      // If matchDateTime is null, still include if status is upcoming
+      if (game.matchDateTime == null) {
+        debugPrint('⚠️ Game ${game.id} has null matchDateTime, but status is ${game.status} - including it');
+        return game.status == MatchStatus.upcoming;
+      }
+
+      // Get match date (without time for date comparison)
+      final matchDate = DateTime(
+        game.matchDateTime!.year,
+        game.matchDateTime!.month,
+        game.matchDateTime!.day,
+      );
+
+      // Include if match is today or in the future, OR if status is upcoming (to catch games with date issues)
+      final isTodayOrFuture = !matchDate.isBefore(today);
+      final isFuture = game.matchDateTime!.isAfter(now);
+      
+      debugPrint('${isTodayOrFuture ? "✅" : "❌"} Game ${game.id}: ${game.homeTeam} vs ${game.awayTeam}');
+      debugPrint('   Date: ${game.matchDateTime}, matchDate: $matchDate, today: $today');
+      debugPrint('   isTodayOrFuture: $isTodayOrFuture, isFuture: $isFuture, status: ${game.status}');
+      
+      // Include if status is upcoming (regardless of date for now, to debug)
+      if (game.status == MatchStatus.upcoming) {
+        return true;
+      }
+      
+      return isTodayOrFuture;
+    }).toList();
+
+    // Sort by nearest date/time first
+    futureMatches.sort((a, b) {
+      final dateA = a.matchDateTime ?? DateTime(2099);
+      final dateB = b.matchDateTime ?? DateTime(2099);
+      return dateA.compareTo(dateB);
+    });
+
+    debugPrint('✅ upcomingGames: Returning ${futureMatches.length} future matches');
+    return futureMatches;
+  }
 
   List<MatchModel> get liveGames =>
       _allGames.where((game) => game.status == MatchStatus.live).toList();
@@ -85,6 +141,49 @@ class UnifiedGamesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Initialize data by fetching real upcoming games from backend
+  Future<void> _initializeData() async {
+    await fetchAllMatches();
+  }
+
+  /// Fetch all matches from backend API
+  /// Filters to show only future matches
+  /// Sorts by nearest date/time first
+  Future<void> fetchAllMatches() async {
+    try {
+      debugPrint('🎮 Fetching all matches from backend...');
+      
+      // Fetch all matches from backend
+      final allMatches = await MatchService.getAllMatches();
+      debugPrint('📊 Total matches fetched: ${allMatches.length}');
+      
+      // Debug: Print first few matches to verify data
+      if (allMatches.isNotEmpty) {
+        debugPrint('📋 First match details:');
+        final firstMatch = allMatches.first;
+        debugPrint('  - ID: ${firstMatch.id}');
+        debugPrint('  - League: ${firstMatch.leagueName}');
+        debugPrint('  - Teams: ${firstMatch.homeTeam} vs ${firstMatch.awayTeam}');
+        debugPrint('  - Date: ${firstMatch.date}');
+        debugPrint('  - Time: ${firstMatch.time}');
+        debugPrint('  - matchDateTime: ${firstMatch.matchDateTime}');
+        debugPrint('  - Status: ${firstMatch.status}');
+        debugPrint('  - Is future: ${firstMatch.matchDateTime?.isAfter(DateTime.now())}');
+      }
+
+      _allGames = allMatches;
+      _sortGames();
+
+      debugPrint('✅ All matches loaded: ${_allGames.length}');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error fetching matches: $e');
+      _errorMessage = 'Failed to load matches';
+      _allGames = [];
+      notifyListeners();
+    }
+  }
+
   // Sort games by creation order (using id as proxy for creation time)
   // In MongoDB, ObjectIds contain timestamp, so sorting by id gives creation order
   void _sortGames() {
@@ -109,7 +208,7 @@ class UnifiedGamesProvider extends ChangeNotifier {
     });
   }
 
-  // Initialize with mock data
+  // Initialize with mock data (deprecated - use fetchAllMatches instead)
   void loadMockGames() {
     _allGames = [
       MatchModel(

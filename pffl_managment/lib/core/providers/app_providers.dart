@@ -45,7 +45,7 @@ class AppProviders extends StatelessWidget {
       providers: [
         // SINGLE SOURCE OF TRUTH for all games data
         ChangeNotifierProvider(
-          create: (_) => UnifiedGamesProvider()..loadMockGames(),
+          create: (_) => UnifiedGamesProvider(),
         ),
         ChangeNotifierProvider(create: (_) => BaseProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),

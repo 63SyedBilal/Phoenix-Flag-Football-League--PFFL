@@ -256,6 +256,11 @@ class MatchService {
   /// Parse match JSON from backend to MatchModel
   static MatchModel _parseMatchFromJson(Map<String, dynamic> json) {
     final id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
+    
+    print('🔍 Parsing match: $id');
+    print('   Raw gameDate: ${json['gameDate']}, type: ${json['gameDate']?.runtimeType}');
+    print('   Raw gameTime: ${json['gameTime']}');
+    print('   Raw status: ${json['status']}');
 
     // Parse league data
     final leagueData = json['leagueId'];
@@ -361,10 +366,84 @@ class MatchService {
     }
 
     // Parse date and time
-    final gameDate = json['gameDate'] != null
-        ? DateTime.parse(json['gameDate'])
-        : DateTime.now();
+    DateTime gameDate;
+    if (json['gameDate'] != null) {
+      try {
+        final dateValue = json['gameDate'];
+        
+        // Handle different date formats from MongoDB
+        if (dateValue is String) {
+          // ISO string format
+          gameDate = DateTime.parse(dateValue);
+        } else if (dateValue is Map) {
+          // MongoDB extended JSON format with $date
+          if (dateValue['\$date'] != null) {
+            final dateStr = dateValue['\$date'].toString();
+            gameDate = DateTime.parse(dateStr);
+          } else {
+            // Try to parse as ISO string
+            gameDate = DateTime.parse(dateValue.toString());
+          }
+        } else {
+          // Try direct parsing (might be a Date object serialized)
+          gameDate = DateTime.parse(dateValue.toString());
+        }
+      } catch (e) {
+        print('❌ Error parsing gameDate: $e, value: ${json['gameDate']}, type: ${json['gameDate'].runtimeType}');
+        // Fallback: use current date + 1 day to ensure it's in the future
+        gameDate = DateTime.now().add(const Duration(days: 1));
+      }
+    } else {
+      // Fallback: use current date + 1 day to ensure it's in the future
+      gameDate = DateTime.now().add(const Duration(days: 1));
+    }
+    
+    print('📅 Parsed gameDate: $gameDate for match ${json['_id'] ?? json['id']}');
+    
     final gameTime = json['gameTime'] ?? '';
+
+    // Combine date and time for matchDateTime
+    DateTime? matchDateTime;
+    if (gameTime.isNotEmpty) {
+      try {
+        // Parse time string (format: "HH:mm" or "HH:mm AM/PM" or "10:00")
+        final timeParts = gameTime.trim().split(':');
+        if (timeParts.length >= 2) {
+          int hour = int.parse(timeParts[0].trim());
+          final minutePart = timeParts[1].trim().split(RegExp(r'[\s]'))[0];
+          int minute = int.parse(minutePart);
+          
+          // Check for AM/PM (case insensitive)
+          final timeUpper = gameTime.toUpperCase();
+          if (timeUpper.contains('PM') && hour != 12) {
+            hour += 12;
+          } else if (timeUpper.contains('AM') && hour == 12) {
+            hour = 0;
+          }
+          
+          // Ensure hour is in valid range
+          if (hour < 0 || hour > 23) hour = 0;
+          if (minute < 0 || minute > 59) minute = 0;
+          
+          matchDateTime = DateTime(
+            gameDate.year,
+            gameDate.month,
+            gameDate.day,
+            hour,
+            minute,
+          );
+        } else {
+          matchDateTime = gameDate;
+        }
+      } catch (e) {
+        print('Error parsing gameTime: $e, value: $gameTime');
+        matchDateTime = gameDate;
+      }
+    } else {
+      matchDateTime = gameDate;
+    }
+    
+    print('🕐 matchDateTime set to: $matchDateTime for match ${json['_id'] ?? json['id']}');
 
     // Format date as dd/MM
     final dateStr = '${gameDate.day.toString().padLeft(2, '0')}/${gameDate.month.toString().padLeft(2, '0')}';
@@ -413,7 +492,7 @@ class MatchService {
       date: dateStr,
       time: timeStr,
       status: status,
-      matchDateTime: gameDate,
+      matchDateTime: matchDateTime,
       venue: json['venue'] ?? '',
       refereeId: refereeId,
       statKeeperId: statKeeperId,

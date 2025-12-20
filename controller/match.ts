@@ -203,8 +203,17 @@ export async function createMatch(req: NextRequest) {
  */
 export async function getAllMatches(req: NextRequest) {
   try {
+    console.log("🔵 getAllMatches called");
     await connectDB();
-    await verifyUser(req);
+    console.log("✅ Database connected");
+    
+    try {
+      await verifyUser(req);
+      console.log("✅ User verified");
+    } catch (authError: any) {
+      console.error("❌ Auth error:", authError);
+      return NextResponse.json({ error: authError.message || "Authentication failed" }, { status: 401 });
+    }
 
     const { searchParams } = new URL(req.url);
     const leagueId = searchParams.get("leagueId");
@@ -213,7 +222,12 @@ export async function getAllMatches(req: NextRequest) {
     let query: any = {};
 
     if (leagueId) {
-      query.leagueId = toObjectId(leagueId);
+      try {
+        query.leagueId = toObjectId(leagueId);
+      } catch (e: any) {
+        console.error("❌ Invalid leagueId:", e);
+        return NextResponse.json({ error: "Invalid league ID format" }, { status: 400 });
+      }
     }
 
     if (status) {
@@ -222,27 +236,58 @@ export async function getAllMatches(req: NextRequest) {
       }
       query.status = status;
     }
+    
+    console.log("🔍 Query:", JSON.stringify(query));
 
-    const matches = await Match.find(query)
-      .populate("leagueId", "leagueName format startDate endDate logo")
-      .populate("teamA", "teamName enterCode")
-      .populate("teamB", "teamName enterCode")
-      .populate("refereeId", "firstName lastName email role")
-      .populate("statKeeperId", "firstName lastName email role")
-      .sort({ gameDate: 1, gameTime: 1 })
-      .lean()
-      .exec();
+    let matches;
+    try {
+      console.log("🔍 Fetching matches from database...");
+      // First try with populate, but catch errors gracefully
+      matches = await Match.find(query)
+        .populate("leagueId", "leagueName format startDate endDate logo")
+        .populate("teamA", "teamName enterCode image")
+        .populate("teamB", "teamName enterCode image")
+        .populate("refereeId", "firstName lastName email role")
+        .populate("statKeeperId", "firstName lastName email role")
+        .sort({ gameDate: 1, gameTime: 1 })
+        .lean()
+        .exec();
+      console.log(`✅ Found ${matches.length} matches`);
+    } catch (populateError: any) {
+      console.error("❌ Error in populate:", populateError);
+      console.error("Error message:", populateError.message);
+      console.error("Error stack:", populateError.stack);
+      // If populate fails, try without populate - this is safe for missing references
+      try {
+        console.log("🔄 Retrying without populate (teams might not exist)...");
+        matches = await Match.find(query)
+          .sort({ gameDate: 1, gameTime: 1 })
+          .lean()
+          .exec();
+        console.log(`✅ Found ${matches.length} matches (without populate)`);
+      } catch (findError: any) {
+        console.error("❌ Error in find:", findError);
+        console.error("Find error stack:", findError.stack);
+        throw findError;
+      }
+    }
 
     // If team populate failed (team doesn't exist), include the original ObjectId
     const matchesWithTeamIds = matches.map((match: any) => {
-      if (!match.teamA || (match.teamA && !match.teamA.teamName)) {
+      // Handle teamA
+      if (!match.teamA || (match.teamA && typeof match.teamA === 'object' && !match.teamA.teamName)) {
         // Team populate failed, use original ObjectId
-        match.teamA = match.teamA?._id?.toString() || match.teamA?.toString() || match.teamA;
+        const teamAId = match.teamA?._id?.toString() || match.teamA?.toString() || match.teamA;
+        match.teamA = teamAId;
       }
-      if (!match.teamB || (match.teamB && !match.teamB.teamName)) {
+      
+      // Handle teamB
+      if (!match.teamB || (match.teamB && typeof match.teamB === 'object' && !match.teamB.teamName)) {
         // Team populate failed, use original ObjectId
-        match.teamB = match.teamB?._id?.toString() || match.teamB?.toString() || match.teamB;
+        const teamBId = match.teamB?._id?.toString() || match.teamB?.toString() || match.teamB;
+        match.teamB = teamBId;
       }
+      
       return match;
     });
 
@@ -254,12 +299,19 @@ export async function getAllMatches(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Get matches error:", error);
+    console.error("❌ Get matches error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    
     if (error.message === "No token provided" || error.message === "Invalid token") {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
+    
     return NextResponse.json(
-      { error: error.message || "Failed to get matches" },
+      { 
+        error: error.message || "Failed to get matches",
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
