@@ -151,6 +151,59 @@ class TeamService {
     }
   }
 
+  /// Get team by ID with players populated
+  /// GET /api/team/:id
+  /// Returns team data with squad5v5 and squad7v7 populated
+  static Future<Map<String, dynamic>?> getTeamById(String teamId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      print('📡 Fetching team by ID: $teamId');
+      
+      final response = await dio.get('${AppConfig.teamEndpoint}/$teamId');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        
+        if (data == null) {
+          print('⚠️ No team data returned from API');
+          return null;
+        }
+        
+        if (data is Map) {
+          print('✅ Team data retrieved successfully');
+          print('   Team ID: ${data['_id'] ?? data['id']}');
+          print('   Team Name: ${data['teamName'] ?? data['name']}');
+          
+          // Log squad sizes for debugging
+          final squad5v5 = data['squad5v5'] as List? ?? [];
+          final squad7v7 = data['squad7v7'] as List? ?? [];
+          print('   Squad 5v5 size: ${squad5v5.length}');
+          print('   Squad 7v7 size: ${squad7v7.length}');
+          
+          return data as Map<String, dynamic>;
+        }
+        
+        return null;
+      } else {
+        throw Exception(
+          'Failed to fetch team: ${response.statusMessage}',
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        print('⚠️ Team not found (404)');
+        return null;
+      }
+      final errorMessage = e.response?.data['error'] ?? 
+          'Failed to fetch team: ${e.message}';
+      print('❌ Error fetching team: $errorMessage');
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ General error fetching team: $e');
+      throw Exception('Failed to fetch team: ${e.toString()}');
+    }
+  }
+
   /// Get team by player ID (where player is in squad5v5 or squad7v7)
   /// GET /api/team?playerId=xxx
   /// Returns team data or null if player is not in any team

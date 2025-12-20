@@ -187,16 +187,27 @@ class MatchService {
   }
 
   /// Helper to extract team ID from various formats
-  /// Handles: String, Map with _id, Map with id, null
+  /// Handles: String, Map with _id, Map with id, nested teamId structure, null
   static String? _extractTeamId(dynamic teamData) {
     if (teamData == null) return null;
     if (teamData is String) return teamData;
     if (teamData is Map) {
       // Check for teamId first (for teamA.teamId or teamB.teamId structure)
+      if (teamData['teamId'] != null) {
+        final teamId = teamData['teamId'];
+        // If teamId is a Map (nested structure), extract _id from it
+        if (teamId is Map) {
+          return teamId['_id']?.toString() ?? teamId['id']?.toString();
+        }
+        // If teamId is a String, return it directly
+        if (teamId is String) {
+          return teamId;
+        }
+      }
+      
       // Then check for _id (for populated team objects)
       // Finally check for id
-      return teamData['teamId']?.toString() ??
-             teamData['_id']?.toString() ??
+      return teamData['_id']?.toString() ??
              teamData['id']?.toString() ??
              null;
     }

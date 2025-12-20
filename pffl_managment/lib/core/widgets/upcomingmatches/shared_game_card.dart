@@ -82,19 +82,51 @@ class SharedGameCard extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  width: 100,
+                // Team 1 - Flexible
+                Flexible(
+                  flex: 2,
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildTeamLogo(game.team1Logo),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          game.team1Name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Lato',
+                            color: Color(0xFF111827),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Date/Time - Fixed but flexible
+                Flexible(
+                  flex: 1,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        game.team1Name,
+                        DateFormat('MM/dd').format(game.date),
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Lato',
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      Text(
+                        game.time,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                           fontFamily: 'Lato',
                           color: Color(0xFF111827),
                         ),
@@ -102,44 +134,28 @@ class SharedGameCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      DateFormat('MM/dd').format(game.date),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Lato',
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                    Text(
-                      game.time,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Lato',
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  width: 100,
+                // Team 2 - Flexible
+                Flexible(
+                  flex: 2,
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(
-                        game.team2Name,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Lato',
-                          color: Color(0xFF111827),
+                      Flexible(
+                        child: Text(
+                          game.team2Name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Lato',
+                            color: Color(0xFF111827),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          textAlign: TextAlign.right,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       _buildTeamLogo(game.team2Logo),
                     ],
                   ),
