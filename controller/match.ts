@@ -38,14 +38,22 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
 export async function createMatch(req: NextRequest) {
   try {
     await connectDB();
-    await verifyUser(req);
+    const user = await verifyUser(req);
+
+    // Get user ID from token (superadmin who creates the match)
+    const userId = (user as any).id || (user as any)._id || (user as any).userId;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID not found in token" },
+        { status: 401 }
+      );
+    }
 
     const {
       leagueId,
       teamA,
       teamB,
-      teamAName,
-      teamBName,
+      format,
       gameDate,
       gameTime,
       venue,
@@ -54,12 +62,22 @@ export async function createMatch(req: NextRequest) {
       roundName,
       gameNumber,
       status,
+      teamAInitialSide,
+      teamBInitialSide,
     } = await req.json();
 
     // Validate required fields
-    if (!leagueId || !teamA || !teamB || !gameDate || !gameTime) {
+    if (!leagueId || !teamA || !teamB || !gameDate || !gameTime || !format) {
       return NextResponse.json(
-        { error: "League ID, Team A, Team B, Game Date, and Game Time are required" },
+        { error: "League ID, Team A, Team B, Game Date, Game Time, and Format are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate format
+    if (!["5v5", "7v7"].includes(format)) {
+      return NextResponse.json(
+        { error: "Format must be either '5v5' or '7v7'" },
         { status: 400 }
       );
     }
@@ -68,11 +86,13 @@ export async function createMatch(req: NextRequest) {
     let leagueObjectId: mongoose.Types.ObjectId;
     let teamAObjectId: mongoose.Types.ObjectId;
     let teamBObjectId: mongoose.Types.ObjectId;
+    let createdByObjectId: mongoose.Types.ObjectId;
 
     try {
       leagueObjectId = toObjectId(leagueId);
       teamAObjectId = toObjectId(teamA);
       teamBObjectId = toObjectId(teamB);
+      createdByObjectId = toObjectId(userId);
     } catch (error: any) {
       return NextResponse.json(
         { error: `Invalid ID format: ${error.message}` },
@@ -85,31 +105,6 @@ export async function createMatch(req: NextRequest) {
     if (!league) {
       return NextResponse.json({ error: "League not found" }, { status: 404 });
     }
-
-    // TODO: TEMPORARY - Team existence check disabled for development
-    // In the future, teams will be created by captains and fetched from backend
-    // For now, allowing matches to be created even if teams don't exist in database
-    // This allows the flow to continue with dummy teams
-    // Once real teams are implemented, uncomment the validation below
-    /*
-    // Verify teams exist
-    const teamAExists = await Team.findById(teamAObjectId);
-    const teamBExists = await Team.findById(teamBObjectId);
-    
-    if (!teamAExists) {
-      return NextResponse.json(
-        { error: `Team A not found. Team ID: ${teamA}` },
-        { status: 404 }
-      );
-    }
-    
-    if (!teamBExists) {
-      return NextResponse.json(
-        { error: `Team B not found. Team ID: ${teamB}` },
-        { status: 404 }
-      );
-    }
-    */
 
     // Validate game date is within league date range
     const gameDateObj = new Date(gameDate);
@@ -124,27 +119,61 @@ export async function createMatch(req: NextRequest) {
     }
 
     // Validate status enum
-    if (status && !["upcoming", "live", "completed", "cancelled"].includes(status)) {
+    if (status && !["upcoming", "live", "halfTime", "completed", "cancelled"].includes(status)) {
       return NextResponse.json(
-        { error: "Invalid status. Must be: upcoming, live, completed, or cancelled" },
+        { error: "Invalid status. Must be: upcoming, live, halfTime, completed, or cancelled" },
         { status: 400 }
       );
     }
 
+    // Validate initial sides
+    const validSides = ["offense", "defense"];
+    const teamASide = teamAInitialSide || "offense";
+    const teamBSide = teamBInitialSide || "defense";
+
+    if (!validSides.includes(teamASide) || !validSides.includes(teamBSide)) {
+      return NextResponse.json(
+        { error: "Initial side must be either 'offense' or 'defense'" },
+        { status: 400 }
+      );
+    }
+
+    // Build team match data
+    const teamAData: any = {
+      teamId: teamAObjectId,
+      initialSide: teamASide,
+      attendance: [],
+      activePlayers: [],
+      score: 0,
+      playerPoints: [],
+      result: null
+    };
+
+    const teamBData: any = {
+      teamId: teamBObjectId,
+      initialSide: teamBSide,
+      attendance: [],
+      activePlayers: [],
+      score: 0,
+      playerPoints: [],
+      result: null
+    };
+
     const matchData: any = {
       leagueId: leagueObjectId,
-      teamA: teamAObjectId,
-      teamAName: teamAName || "",
-      teamB: teamBObjectId,
-      teamBName: teamBName || "",
+      createdBy: createdByObjectId,
+      format: format,
       gameDate: gameDateObj,
       gameTime: gameTime.trim(),
       venue: venue || "",
       roundName: roundName || "Group Stage",
       gameNumber: gameNumber || "",
       status: status || "upcoming",
+      teamA: teamAData,
+      teamB: teamBData,
     };
 
+    // Add optional referee and stat keeper
     if (refereeId) {
       matchData.refereeId = toObjectId(refereeId);
     }
@@ -158,25 +187,21 @@ export async function createMatch(req: NextRequest) {
 
     // Populate references
     await match.populate("leagueId", "leagueName format startDate endDate");
-    await match.populate("teamA", "teamName enterCode");
-    await match.populate("teamB", "teamName enterCode");
+    await match.populate("createdBy", "firstName lastName email role");
+    await match.populate("teamA.teamId", "teamName enterCode");
+    await match.populate("teamB.teamId", "teamName enterCode");
     if (match.refereeId) {
       await match.populate("refereeId", "firstName lastName email");
     }
     if (match.statKeeperId) {
       await match.populate("statKeeperId", "firstName lastName email");
     }
+    if (match.gameWinnerTeam) {
+      await match.populate("gameWinnerTeam", "teamName enterCode");
+    }
 
-    // Convert to plain object and handle failed populates
+    // Convert to plain object
     const matchObj = match.toObject();
-    if (!matchObj.teamA || (matchObj.teamA && !matchObj.teamA.teamName)) {
-      // Team populate failed, use original ObjectId
-      matchObj.teamA = matchObj.teamA?._id?.toString() || matchObj.teamA?.toString() || teamA;
-    }
-    if (!matchObj.teamB || (matchObj.teamB && !matchObj.teamB.teamName)) {
-      // Team populate failed, use original ObjectId
-      matchObj.teamB = matchObj.teamB?._id?.toString() || matchObj.teamB?.toString() || teamB;
-    }
 
     return NextResponse.json(
       {
@@ -231,13 +256,14 @@ export async function getAllMatches(req: NextRequest) {
     }
 
     if (status) {
-      if (!["upcoming", "live", "completed", "cancelled"].includes(status)) {
+      if (!["upcoming", "live", "halfTime", "completed", "cancelled"].includes(status)) {
         return NextResponse.json({ error: "Invalid status filter" }, { status: 400 });
       }
       query.status = status;
     }
     
     console.log("🔍 Query:", JSON.stringify(query));
+
 
     let matches;
     try {
@@ -291,10 +317,29 @@ export async function getAllMatches(req: NextRequest) {
       return match;
     });
 
+
+    const matches = await Match.find(query)
+      .populate("leagueId", "leagueName format startDate endDate logo")
+      .populate("createdBy", "firstName lastName email role")
+      .populate("teamA.teamId", "teamName enterCode")
+      .populate("teamB.teamId", "teamName enterCode")
+      .populate("teamA.attendance.playerId", "firstName lastName email")
+      .populate("teamB.attendance.playerId", "firstName lastName email")
+      .populate("teamA.activePlayers", "firstName lastName email")
+      .populate("teamB.activePlayers", "firstName lastName email")
+      .populate("teamA.playerPoints.playerId", "firstName lastName email")
+      .populate("teamB.playerPoints.playerId", "firstName lastName email")
+      .populate("refereeId", "firstName lastName email role")
+      .populate("statKeeperId", "firstName lastName email role")
+      .populate("gameWinnerTeam", "teamName enterCode")
+      .sort({ gameDate: 1, gameTime: 1 })
+      .lean()
+      .exec();
+
     return NextResponse.json(
       {
         message: "Matches retrieved successfully",
-        data: matchesWithTeamIds,
+        data: matches,
       },
       { status: 200 }
     );
@@ -331,10 +376,18 @@ export async function getMatch(req: NextRequest, { params }: { params: { id: str
 
     const match = await Match.findById(matchId)
       .populate("leagueId", "leagueName format startDate endDate logo")
-      .populate("teamA", "teamName enterCode")
-      .populate("teamB", "teamName enterCode")
+      .populate("createdBy", "firstName lastName email role")
+      .populate("teamA.teamId", "teamName enterCode")
+      .populate("teamB.teamId", "teamName enterCode")
+      .populate("teamA.attendance.playerId", "firstName lastName email")
+      .populate("teamB.attendance.playerId", "firstName lastName email")
+      .populate("teamA.activePlayers", "firstName lastName email")
+      .populate("teamB.activePlayers", "firstName lastName email")
+      .populate("teamA.playerPoints.playerId", "firstName lastName email")
+      .populate("teamB.playerPoints.playerId", "firstName lastName email")
       .populate("refereeId", "firstName lastName email role")
       .populate("statKeeperId", "firstName lastName email role")
+      .populate("gameWinnerTeam", "teamName enterCode")
       .lean()
       .exec();
 
@@ -342,21 +395,10 @@ export async function getMatch(req: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
-    // If team populate failed (team doesn't exist), include the original ObjectId
-    const matchObj: any = match;
-    if (!matchObj.teamA || (matchObj.teamA && !matchObj.teamA.teamName)) {
-      // Team populate failed, use original ObjectId
-      matchObj.teamA = matchObj.teamA?._id?.toString() || matchObj.teamA?.toString() || matchObj.teamA;
-    }
-    if (!matchObj.teamB || (matchObj.teamB && !matchObj.teamB.teamName)) {
-      // Team populate failed, use original ObjectId
-      matchObj.teamB = matchObj.teamB?._id?.toString() || matchObj.teamB?.toString() || matchObj.teamB;
-    }
-
     return NextResponse.json(
       {
         message: "Match retrieved successfully",
-        data: matchObj,
+        data: match,
       },
       { status: 200 }
     );
@@ -390,10 +432,7 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
     }
 
     const {
-      teamA,
-      teamB,
-      teamAName,
-      teamBName,
+      format,
       gameDate,
       gameTime,
       venue,
@@ -402,8 +441,11 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
       roundName,
       gameNumber,
       status,
-      homeScore,
-      awayScore,
+      teamA,
+      teamB,
+      gameWinnerTeam,
+      halfTimeSwitched,
+      completedAt,
     } = await req.json();
 
     // Get league to validate date range
@@ -413,20 +455,14 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
     }
 
     // Update fields
-    if (teamA !== undefined) {
-      (match as any).teamA = toObjectId(teamA);
-    }
-
-    if (teamAName !== undefined) {
-      (match as any).teamAName = teamAName || "";
-    }
-
-    if (teamB !== undefined) {
-      (match as any).teamB = toObjectId(teamB);
-    }
-
-    if (teamBName !== undefined) {
-      (match as any).teamBName = teamBName || "";
+    if (format !== undefined) {
+      if (!["5v5", "7v7"].includes(format)) {
+        return NextResponse.json(
+          { error: "Format must be either '5v5' or '7v7'" },
+          { status: 400 }
+        );
+      }
+      (match as any).format = format;
     }
 
     if (gameDate !== undefined) {
@@ -468,50 +504,148 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
     }
 
     if (status !== undefined) {
-      if (!["upcoming", "live", "completed", "cancelled"].includes(status)) {
+      if (!["upcoming", "live", "halfTime", "completed", "cancelled"].includes(status)) {
         return NextResponse.json(
-          { error: "Invalid status. Must be: upcoming, live, completed, or cancelled" },
+          { error: "Invalid status. Must be: upcoming, live, halfTime, completed, or cancelled" },
           { status: 400 }
         );
       }
       (match as any).status = status;
+      
+      // Set completedAt when status is completed
+      if (status === "completed" && !(match as any).completedAt) {
+        (match as any).completedAt = new Date();
+      }
     }
 
-    if (homeScore !== undefined) {
-      (match as any).homeScore = homeScore;
+    if (gameWinnerTeam !== undefined) {
+      (match as any).gameWinnerTeam = gameWinnerTeam ? toObjectId(gameWinnerTeam) : null;
     }
 
-    if (awayScore !== undefined) {
-      (match as any).awayScore = awayScore;
+    if (halfTimeSwitched !== undefined) {
+      (match as any).halfTimeSwitched = halfTimeSwitched;
+    }
+
+    if (completedAt !== undefined) {
+      (match as any).completedAt = completedAt ? new Date(completedAt) : null;
+    }
+
+    // Update team data if provided
+    if (teamA !== undefined) {
+      if (typeof teamA === 'object') {
+        // Update teamA fields
+        if (teamA.teamId !== undefined) {
+          (match as any).teamA.teamId = toObjectId(teamA.teamId);
+        }
+        if (teamA.initialSide !== undefined) {
+          if (!["offense", "defense"].includes(teamA.initialSide)) {
+            return NextResponse.json(
+              { error: "Initial side must be either 'offense' or 'defense'" },
+              { status: 400 }
+            );
+          }
+          (match as any).teamA.initialSide = teamA.initialSide;
+        }
+        if (teamA.attendance !== undefined) {
+          (match as any).teamA.attendance = teamA.attendance.map((att: any) => ({
+            playerId: toObjectId(att.playerId),
+            present: att.present !== undefined ? att.present : false
+          }));
+        }
+        if (teamA.activePlayers !== undefined) {
+          (match as any).teamA.activePlayers = teamA.activePlayers.map((id: string) => toObjectId(id));
+        }
+        if (teamA.score !== undefined) {
+          (match as any).teamA.score = teamA.score;
+        }
+        if (teamA.playerPoints !== undefined) {
+          (match as any).teamA.playerPoints = teamA.playerPoints.map((pp: any) => ({
+            playerId: toObjectId(pp.playerId),
+            points: pp.points || 0
+          }));
+        }
+        if (teamA.result !== undefined) {
+          if (teamA.result !== null && !["win", "loss", "draw"].includes(teamA.result)) {
+            return NextResponse.json(
+              { error: "Result must be 'win', 'loss', 'draw', or null" },
+              { status: 400 }
+            );
+          }
+          (match as any).teamA.result = teamA.result;
+        }
+      }
+    }
+
+    if (teamB !== undefined) {
+      if (typeof teamB === 'object') {
+        // Update teamB fields
+        if (teamB.teamId !== undefined) {
+          (match as any).teamB.teamId = toObjectId(teamB.teamId);
+        }
+        if (teamB.initialSide !== undefined) {
+          if (!["offense", "defense"].includes(teamB.initialSide)) {
+            return NextResponse.json(
+              { error: "Initial side must be either 'offense' or 'defense'" },
+              { status: 400 }
+            );
+          }
+          (match as any).teamB.initialSide = teamB.initialSide;
+        }
+        if (teamB.attendance !== undefined) {
+          (match as any).teamB.attendance = teamB.attendance.map((att: any) => ({
+            playerId: toObjectId(att.playerId),
+            present: att.present !== undefined ? att.present : false
+          }));
+        }
+        if (teamB.activePlayers !== undefined) {
+          (match as any).teamB.activePlayers = teamB.activePlayers.map((id: string) => toObjectId(id));
+        }
+        if (teamB.score !== undefined) {
+          (match as any).teamB.score = teamB.score;
+        }
+        if (teamB.playerPoints !== undefined) {
+          (match as any).teamB.playerPoints = teamB.playerPoints.map((pp: any) => ({
+            playerId: toObjectId(pp.playerId),
+            points: pp.points || 0
+          }));
+        }
+        if (teamB.result !== undefined) {
+          if (teamB.result !== null && !["win", "loss", "draw"].includes(teamB.result)) {
+            return NextResponse.json(
+              { error: "Result must be 'win', 'loss', 'draw', or null" },
+              { status: 400 }
+            );
+          }
+          (match as any).teamB.result = teamB.result;
+        }
+      }
     }
 
     await match.save();
 
     // Populate references
     await match.populate("leagueId", "leagueName format startDate endDate logo");
-    await match.populate("teamA", "teamName enterCode");
-    await match.populate("teamB", "teamName enterCode");
+    await match.populate("createdBy", "firstName lastName email role");
+    await match.populate("teamA.teamId", "teamName enterCode");
+    await match.populate("teamB.teamId", "teamName enterCode");
+    await match.populate("teamA.attendance.playerId", "firstName lastName email");
+    await match.populate("teamB.attendance.playerId", "firstName lastName email");
+    await match.populate("teamA.activePlayers", "firstName lastName email");
+    await match.populate("teamB.activePlayers", "firstName lastName email");
+    await match.populate("teamA.playerPoints.playerId", "firstName lastName email");
+    await match.populate("teamB.playerPoints.playerId", "firstName lastName email");
     if ((match as any).refereeId) {
       await match.populate("refereeId", "firstName lastName email role");
     }
     if ((match as any).statKeeperId) {
       await match.populate("statKeeperId", "firstName lastName email role");
     }
+    if ((match as any).gameWinnerTeam) {
+      await match.populate("gameWinnerTeam", "teamName enterCode");
+    }
 
-    // Convert to plain object and handle failed populates
+    // Convert to plain object
     const matchObj = match.toObject();
-    // Get original team IDs before populate
-    const originalTeamA = (match as any).teamA?.toString();
-    const originalTeamB = (match as any).teamB?.toString();
-    
-    if (!matchObj.teamA || (matchObj.teamA && !matchObj.teamA.teamName)) {
-      // Team populate failed, use original ObjectId
-      matchObj.teamA = matchObj.teamA?._id?.toString() || matchObj.teamA?.toString() || originalTeamA || teamA;
-    }
-    if (!matchObj.teamB || (matchObj.teamB && !matchObj.teamB.teamName)) {
-      // Team populate failed, use original ObjectId
-      matchObj.teamB = matchObj.teamB?._id?.toString() || matchObj.teamB?.toString() || originalTeamB || teamB;
-    }
 
     return NextResponse.json(
       {

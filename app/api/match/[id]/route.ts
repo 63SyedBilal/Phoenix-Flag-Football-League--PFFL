@@ -15,10 +15,11 @@ export async function OPTIONS() {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const response = await getMatch(req, { params });
+    const resolvedParams = await Promise.resolve(params);
+    const response = await getMatch(req, { params: resolvedParams });
     // Add CORS headers
     const headers = new Headers(response.headers);
     headers.set("Access-Control-Allow-Origin", "*");
@@ -43,10 +44,11 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const response = await updateMatch(req, { params });
+    const resolvedParams = await Promise.resolve(params);
+    const response = await updateMatch(req, { params: resolvedParams });
     // Add CORS headers
     const headers = new Headers(response.headers);
     headers.set("Access-Control-Allow-Origin", "*");
