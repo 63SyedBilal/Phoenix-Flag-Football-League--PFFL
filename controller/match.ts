@@ -972,15 +972,34 @@ export async function switchHalfTime(req: NextRequest, { params }: { params: { i
     const { id } = params;
     const matchId = toObjectId(id);
 
-    // Get match
-    const existingMatch = await Match.findById(matchId);
+    // Get match - use lean() to check structure
+    const existingMatch = await Match.findById(matchId).lean();
     if (!existingMatch) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
-    // Swap sides and update timesSwitched
-    const teamASide = (existingMatch as any).teamA.side;
-    const teamBSide = (existingMatch as any).teamB.side;
+    const teamA = (existingMatch as any).teamA;
+    const teamB = (existingMatch as any).teamB;
+    
+    // Check if teamA/teamB are ObjectIds (old format) or objects (new format)
+    const isTeamAObjectId = teamA && (teamA.buffer !== undefined || (typeof teamA === 'object' && !teamA.teamId && !teamA.teamName && !teamA.side));
+    const isTeamBObjectId = teamB && (teamB.buffer !== undefined || (typeof teamB === 'object' && !teamB.teamId && !teamB.teamName && !teamB.side));
+    
+    let teamASide: string;
+    let teamBSide: string;
+    
+    if (isTeamAObjectId || isTeamBObjectId) {
+      // Old format - can't swap sides, need to restructure first
+      return NextResponse.json(
+        { error: "Match structure is invalid. Please complete the toss first to initialize team sides." },
+        { status: 400 }
+      );
+    } else {
+      // New format - get current sides
+      teamASide = teamA?.side || "offense";
+      teamBSide = teamB?.side || "defense";
+    }
+    
     const newTeamASide = teamASide === "offense" ? "defense" : "offense";
     const newTeamBSide = teamBSide === "offense" ? "defense" : "offense";
 
@@ -1051,15 +1070,34 @@ export async function switchFullTime(req: NextRequest, { params }: { params: { i
     const { id } = params;
     const matchId = toObjectId(id);
 
-    // Get match
-    const existingMatch = await Match.findById(matchId);
+    // Get match - use lean() to check structure
+    const existingMatch = await Match.findById(matchId).lean();
     if (!existingMatch) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
-    // Swap sides again (second swap) and update timesSwitched
-    const teamASide = (existingMatch as any).teamA.side;
-    const teamBSide = (existingMatch as any).teamB.side;
+    const teamA = (existingMatch as any).teamA;
+    const teamB = (existingMatch as any).teamB;
+    
+    // Check if teamA/teamB are ObjectIds (old format) or objects (new format)
+    const isTeamAObjectId = teamA && (teamA.buffer !== undefined || (typeof teamA === 'object' && !teamA.teamId && !teamA.teamName && !teamA.side));
+    const isTeamBObjectId = teamB && (teamB.buffer !== undefined || (typeof teamB === 'object' && !teamB.teamId && !teamB.teamName && !teamB.side));
+    
+    let teamASide: string;
+    let teamBSide: string;
+    
+    if (isTeamAObjectId || isTeamBObjectId) {
+      // Old format - can't swap sides, need to restructure first
+      return NextResponse.json(
+        { error: "Match structure is invalid. Please complete the toss first to initialize team sides." },
+        { status: 400 }
+      );
+    } else {
+      // New format - get current sides
+      teamASide = teamA?.side || "offense";
+      teamBSide = teamB?.side || "defense";
+    }
+    
     const newTeamASide = teamASide === "offense" ? "defense" : "offense";
     const newTeamBSide = teamBSide === "offense" ? "defense" : "offense";
 
@@ -1111,6 +1149,230 @@ export async function switchFullTime(req: NextRequest, { params }: { params: { i
     }
     return NextResponse.json(
       { error: error.message || "Failed to switch full time" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Complete toss - set team sides based on toss winner and decision
+ * POST /api/match/:id/toss
+ * Body: { winnerTeamId: string, winnerSide: "offense" | "defense" }
+ * Sets the winner team's side and opposite side for the other team
+ * Updates status from "upcoming" to "continue"
+ */
+export async function completeToss(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+    await verifyUser(req);
+
+    const { id } = params;
+    const matchId = toObjectId(id);
+
+    // Get request body
+    const { winnerTeamId, winnerSide } = await req.json();
+
+    // Validate required fields
+    if (!winnerTeamId || !winnerSide) {
+      return NextResponse.json(
+        { error: "winnerTeamId and winnerSide are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate winnerSide
+    if (!["offense", "defense"].includes(winnerSide)) {
+      return NextResponse.json(
+        { error: "winnerSide must be either 'offense' or 'defense'" },
+        { status: 400 }
+      );
+    }
+
+    // Get match - use lean() to get plain object with raw ObjectIds (not populated)
+    const existingMatch = await Match.findById(matchId).lean();
+    
+    if (!existingMatch) {
+      return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    }
+
+    // Use the lean object directly
+    const matchObj = existingMatch;
+
+    // Safely get team IDs - handle both ObjectId and object formats
+    const teamA = (matchObj as any).teamA;
+    const teamB = (matchObj as any).teamB;
+    
+    if (!teamA || !teamB) {
+      console.error("❌ Match team data missing:", { 
+        hasTeamA: !!teamA, 
+        hasTeamB: !!teamB,
+        matchId: matchId.toString(),
+        matchKeys: Object.keys(matchObj)
+      });
+      return NextResponse.json(
+        { error: "Match team data is missing" },
+        { status: 400 }
+      );
+    }
+
+    // Check if teamA/teamB are ObjectIds (old format) or objects (new format)
+    const isTeamAObjectId = teamA.buffer !== undefined || (typeof teamA === 'object' && !teamA.teamId && !teamA.teamName);
+    const isTeamBObjectId = teamB.buffer !== undefined || (typeof teamB === 'object' && !teamB.teamId && !teamB.teamName);
+    
+    let teamAIdValue: any;
+    let teamBIdValue: any;
+    
+    if (isTeamAObjectId) {
+      // Old format: teamA is directly an ObjectId
+      teamAIdValue = teamA;
+    } else {
+      // New format: teamA is an object with teamId
+      teamAIdValue = teamA.teamId;
+      // If teamId is a populated object, extract the _id
+      if (teamAIdValue && typeof teamAIdValue === 'object' && teamAIdValue._id) {
+        teamAIdValue = teamAIdValue._id;
+      }
+    }
+    
+    if (isTeamBObjectId) {
+      // Old format: teamB is directly an ObjectId
+      teamBIdValue = teamB;
+    } else {
+      // New format: teamB is an object with teamId
+      teamBIdValue = teamB.teamId;
+      // If teamId is a populated object, extract the _id
+      if (teamBIdValue && typeof teamBIdValue === 'object' && teamBIdValue._id) {
+        teamBIdValue = teamBIdValue._id;
+      }
+    }
+    
+    if (!teamAIdValue || !teamBIdValue) {
+      console.error("❌ Match team IDs missing:", { 
+        teamAIdValue: teamAIdValue,
+        teamBIdValue: teamBIdValue,
+        teamAKeys: Object.keys(teamA),
+        teamBKeys: Object.keys(teamB),
+        isTeamAObjectId,
+        isTeamBObjectId,
+        matchId: matchId.toString() 
+      });
+      return NextResponse.json(
+        { error: "Match team IDs are missing. The match may not have been created properly. Please recreate the match." },
+        { status: 400 }
+      );
+    }
+
+    // Convert to string - handle both ObjectId and string
+    const teamAId = teamAIdValue.toString ? teamAIdValue.toString() : String(teamAIdValue);
+    const teamBId = teamBIdValue.toString ? teamBIdValue.toString() : String(teamBIdValue);
+    const isTeamAWinner = winnerTeamId === teamAId;
+
+    if (!isTeamAWinner && winnerTeamId !== teamBId) {
+      return NextResponse.json(
+        { error: "winnerTeamId does not match either team in the match" },
+        { status: 400 }
+      );
+    }
+
+    // Determine sides: winner gets selected side, loser gets opposite
+    const loserSide = winnerSide === "offense" ? "defense" : "offense";
+    const teamASide = isTeamAWinner ? winnerSide : loserSide;
+    const teamBSide = isTeamAWinner ? loserSide : winnerSide;
+
+    // Check if teamA/teamB are ObjectIds (old format) - need to restructure
+    const needsRestructure = isTeamAObjectId || isTeamBObjectId;
+    
+    if (needsRestructure) {
+      // Old format: teamA/teamB are ObjectIds, need to convert to proper structure
+      const updateData: any = {
+        status: "continue",
+      };
+      
+      if (isTeamAObjectId) {
+        // Restructure teamA from ObjectId to proper object
+        updateData.teamA = {
+          teamId: teamAIdValue,
+          side: teamASide,
+          players: [],
+          playerStats: [],
+          teamStats: {},
+          score: 0,
+          win: null
+        };
+      } else {
+        // Just update the side
+        updateData["teamA.side"] = teamASide;
+      }
+      
+      if (isTeamBObjectId) {
+        // Restructure teamB from ObjectId to proper object
+        updateData.teamB = {
+          teamId: teamBIdValue,
+          side: teamBSide,
+          players: [],
+          playerStats: [],
+          teamStats: {},
+          score: 0,
+          win: null
+        };
+      } else {
+        // Just update the side
+        updateData["teamB.side"] = teamBSide;
+      }
+      
+      await Match.updateOne(
+        { _id: matchId },
+        { $set: updateData }
+      );
+    } else {
+      // New format: teamA/teamB are already objects, just update sides
+      await Match.updateOne(
+        { _id: matchId },
+        {
+          $set: {
+            "teamA.side": teamASide,
+            "teamB.side": teamBSide,
+            status: "continue", // Update status from upcoming to continue
+          }
+        }
+      );
+    }
+
+    // Reload the match to get updated data
+    const updatedMatch = await Match.findById(matchId);
+    if (!updatedMatch) {
+      return NextResponse.json({ error: "Match not found after update" }, { status: 404 });
+    }
+
+    // Populate and return
+    await updatedMatch.populate("leagueId", "leagueName format startDate endDate logo");
+    await updatedMatch.populate("createdBy", "firstName lastName email role");
+    await updatedMatch.populate("teamA.teamId", "teamName enterCode");
+    await updatedMatch.populate("teamB.teamId", "teamName enterCode");
+    await updatedMatch.populate("teamA.players.playerId", "firstName lastName email");
+    await updatedMatch.populate("teamB.players.playerId", "firstName lastName email");
+    await updatedMatch.populate("teamA.playerStats.playerId", "firstName lastName email");
+    await updatedMatch.populate("teamB.playerStats.playerId", "firstName lastName email");
+    await updatedMatch.populate("teamA.playerActions.playerId", "firstName lastName email");
+    await updatedMatch.populate("teamB.playerActions.playerId", "firstName lastName email");
+    await updatedMatch.populate("refereeId", "firstName lastName email role");
+    await updatedMatch.populate("statKeeperId", "firstName lastName email role");
+    await updatedMatch.populate("gameWinnerTeam", "teamName enterCode");
+
+    return NextResponse.json(
+      {
+        message: "Toss completed successfully",
+        data: updatedMatch,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Complete toss error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to complete toss" },
       { status: 500 }
     );
   }
