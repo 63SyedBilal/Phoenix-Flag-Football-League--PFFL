@@ -94,6 +94,7 @@ class NotificationModel {
       case 'LEAGUE_STATKEEPER_INVITE':
         return '$senderName invited you to be a stat keeper for $leagueName';
       case 'LEAGUE_TEAM_INVITE':
+<<<<<<< HEAD
         return 'A new league "$leagueName" has been created and your team has been invited. Would you like to accept the invitation?';
       case 'GAME_ASSIGNED':
         final matchTeamA = match?['teamAName']?.toString() ?? match?['teamA']?.toString() ?? 'Team A';
@@ -109,6 +110,15 @@ class NotificationModel {
         } else {
           return 'Aapko ek game assign hua hai: $matchTeamA vs $matchTeamB';
         }
+=======
+        return 'Your team "$teamName" has been invited to participate in the league "$leagueName". Would you like to accept the invitation?';
+      case 'INVITE_ACCEPTED_REFEREE':
+        return '$senderName has accepted your invitation to be a referee for $leagueName';
+      case 'INVITE_ACCEPTED_STATKEEPER':
+        return '$senderName has accepted your invitation to be a stat keeper for $leagueName';
+      case 'INVITE_ACCEPTED_TEAM':
+        return '$senderName has accepted your invitation for team "$teamName" to participate in the league "$leagueName"';
+>>>>>>> b17c912e8d3f2d0eb90b6cf13e697566fd6ab98b
       default:
         return 'You have a new notification';
     }

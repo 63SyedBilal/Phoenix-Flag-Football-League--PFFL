@@ -31,7 +31,6 @@ class AdminInviteScreen extends StatelessWidget {
                 provider.initialize();
               });
             }
-
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SingleChildScrollView(

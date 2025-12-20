@@ -1,101 +1,115 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { User } from "@/modules";
-import { hashPassword } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
     
-    // Check if these specific test users already exist
-    const testEmails = [
-      "freeagent@gmail.com",
-      "statkeeper@gmail.com", 
-      "referee@gmail.com",
-      "captain@gmail.com"
-    ];
+    // Common password for all users
+    const password = "123123";
     
-    const existingUsers = await User.find({
-      email: { $in: testEmails.map(email => email.toLowerCase()) }
-    });
-    
-    if (existingUsers.length > 0) {
-      return NextResponse.json(
-        { 
-          message: "Some test users already exist",
-          existingUsers: existingUsers.map(user => ({
-            email: user.email,
-            role: user.role
-          }))
-        },
-        { status: 409 }
-      );
-    }
-    
-    // Hash the common password
-    const password = "123456";
-    const hashedPassword = await hashPassword(password);
-    
-    // Create users for all roles with the specified emails
+    // Define all users to create with their roles
     const usersToCreate = [
-      {
-        firstName: "Free",
-        lastName: "Agent",
-        email: "freeagent@gmail.com",
-        password: hashedPassword,
-        role: "free-agent",
-      },
-      {
-        firstName: "Stat",
-        lastName: "Keeper",
-        email: "statkeeper@gmail.com",
-        password: hashedPassword,
-        role: "stat-keeper",
-      },
       {
         firstName: "Referee",
         lastName: "User",
         email: "referee@gmail.com",
-        password: hashedPassword,
+        password: password,
         role: "referee",
       },
       {
         firstName: "Captain",
         lastName: "User",
         email: "captain@gmail.com",
-        password: hashedPassword,
+        password: password,
         role: "captain",
+      },
+      {
+        firstName: "Free",
+        lastName: "Agent",
+        email: "freeagent@gmail.com",
+        password: password,
+        role: "free-agent",
+      },
+      {
+        firstName: "Stat",
+        lastName: "Keeper",
+        email: "statkeeper@gmail.com",
+        password: password,
+        role: "stat-keeper",
+      },
+      {
+        firstName: "Player",
+        lastName: "User",
+        email: "player@gmail.com",
+        password: password,
+        role: "player",
       }
     ];
     
     const createdUsers = [];
+    const skippedUsers = [];
     
     for (const userData of usersToCreate) {
-      const user = await User.create({
-        ...userData,
-        email: userData.email.toLowerCase()
-      });
+      const emailLower = userData.email.toLowerCase();
       
-      createdUsers.push({
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-      });
+      // Check if user already exists
+      const existingUser = await User.findOne({ email: emailLower });
+      
+      if (existingUser) {
+        skippedUsers.push({
+          email: existingUser.email,
+          role: existingUser.role,
+          message: "User already exists"
+        });
+        continue;
+      }
+      
+      // Create user (password will be hashed by pre-save hook in User model)
+      try {
+        const user = await User.create({
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: emailLower,
+          password: password, // Plain password - will be hashed by pre-save hook
+          role: userData.role,
+        });
+        
+        createdUsers.push({
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+        });
+      } catch (error: any) {
+        console.error(`Error creating user ${emailLower}:`, error);
+        skippedUsers.push({
+          email: emailLower,
+          role: userData.role,
+          message: error.message || "Failed to create"
+        });
+      }
     }
     
     return NextResponse.json(
       {
-        message: "Test users created successfully",
-        users: createdUsers
+        message: "Users processed successfully",
+        created: createdUsers,
+        skipped: skippedUsers.length > 0 ? skippedUsers : undefined,
+        summary: {
+          total: usersToCreate.length,
+          created: createdUsers.length,
+          skipped: skippedUsers.length
+        }
       },
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Error creating test users:", error);
+    console.error("Error processing users:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create test users" }, 
+      { error: error.message || "Failed to create users" }, 
       { status: 500 }
     );
   }

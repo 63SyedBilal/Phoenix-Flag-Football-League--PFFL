@@ -31,7 +31,11 @@ const NotificationSchema = new mongoose.Schema(
 
     type: {
       type: String,
+<<<<<<< HEAD
       enum: ["TEAM_INVITE", "LEAGUE_REFEREE_INVITE", "LEAGUE_STATKEEPER_INVITE", "LEAGUE_TEAM_INVITE", "GAME_ASSIGNED"],
+=======
+      enum: ["TEAM_INVITE", "LEAGUE_REFEREE_INVITE", "LEAGUE_STATKEEPER_INVITE", "LEAGUE_TEAM_INVITE", "INVITE_ACCEPTED_REFEREE", "INVITE_ACCEPTED_STATKEEPER", "INVITE_ACCEPTED_TEAM"],
+>>>>>>> b17c912e8d3f2d0eb90b6cf13e697566fd6ab98b
       default: "TEAM_INVITE"
     },
 

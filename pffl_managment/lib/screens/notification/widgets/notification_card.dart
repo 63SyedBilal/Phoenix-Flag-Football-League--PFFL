@@ -144,40 +144,64 @@ class NotificationCard extends StatelessWidget {
           if (notification.isPending && (onAccept != null || onReject != null)) ...[
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                // Cancel/Reject button
                 if (onReject != null)
-                  TextButton(
-                    onPressed: isLoading ? null : onReject,
-                    child: Text(
-                      'Reject',
-                      style: TextStyle(color: Colors.red.shade700),
-                    ),
-                  ),
-                if (onAccept != null) ...[
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: isLoading ? null : onAccept,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: isLoading ? null : onReject,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        side: BorderSide(color: Colors.red.shade700),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text('Accept'),
                   ),
-                ],
+                // Spacing between buttons
+                if (onAccept != null && onReject != null)
+                  const SizedBox(width: 12),
+                // Accept button
+                if (onAccept != null)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : onAccept,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Accept',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
               ],
             ),
           ],

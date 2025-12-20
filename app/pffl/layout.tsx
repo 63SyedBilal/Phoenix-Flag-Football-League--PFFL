@@ -9,7 +9,9 @@ import { usePathname } from "next/navigation"
 
 const allNavigation = [
   { name: "Home", href: "/pffl/home", icon: "/assets/image/home.svg" },
+  { name: "Games", href: "/pffl/games", icon: "/assets/image/games.svg", showForRoles: ["referee", "stat-keeper"] },
   { name: "Leagues", href: "/pffl/leagues", icon: "/assets/image/leagues.svg" },
+  { name: "Stats", href: "/pffl/stats", icon: "/assets/image/games.svg", showForRoles: ["stat-keeper"] },
   { name: "Team", href: "/pffl/team", icon: "/assets/image/users.svg", hideForRoles: ["stat-keeper", "referee"] },
   { name: "Settings", href: "/pffl/settings", icon: "/assets/image/setting.svg" },
 ]
@@ -62,9 +64,17 @@ export default function PfflLayout({
         
         // Filter navigation based on user role
         const filteredNav = allNavigation.filter(item => {
+          // Hide if role is in hideForRoles
           if (item.hideForRoles && userData.role) {
-            return !item.hideForRoles.includes(userData.role)
+            if (item.hideForRoles.includes(userData.role)) {
+              return false
+            }
           }
+          // Show only if role is in showForRoles (if specified)
+          if (item.showForRoles && userData.role) {
+            return item.showForRoles.includes(userData.role)
+          }
+          // Show if no showForRoles specified (default behavior)
           return true
         })
         setNavigation(filteredNav)

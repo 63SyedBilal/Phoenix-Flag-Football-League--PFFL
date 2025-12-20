@@ -34,15 +34,15 @@ class CaptainHeaderWidget extends StatelessWidget {
         title = 'Welcome $firstName';
         subtitle = 'Phoenix Flag Football League';
         break;
-      case 1: // My Team
+      case 1: // Leagues
         title = 'Leagues';
-        subtitle = 'Manage your account and app.';
+        subtitle = 'All the leagues are listed below';
         break;
       case 2: // Games
         title = 'Games';
         subtitle = 'Phoenix Flag Football League';
         break;
-      case 3: // Leagues
+      case 3: // My Team
         title = 'My Team';
         subtitle = 'All the leagues are listed below';
         break;
