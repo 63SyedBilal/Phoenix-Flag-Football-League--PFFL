@@ -40,10 +40,9 @@ export async function createMatch(req: NextRequest) {
   try {
     await connectDB();
     const decoded = await verifyUser(req);
-    const user = await verifyUser(req);
 
     // Get user ID from token (superadmin who creates the match)
-    const userId = (user as any).id || (user as any)._id || (user as any).userId;
+    const userId = (decoded as any).id || (decoded as any)._id || (decoded as any).userId;
     if (!userId) {
       return NextResponse.json(
         { error: "User ID not found in token" },
@@ -188,7 +187,7 @@ export async function createMatch(req: NextRequest) {
     await match.save();
 
     // Get sender ID from token (admin who created the match)
-    const senderId = toObjectId(decoded.userId);
+    const senderId = toObjectId(userId);
     const matchObjectId = (match as any)._id;
 
     // Create notifications for assigned referee and stat keeper
@@ -381,29 +380,10 @@ export async function getAllMatches(req: NextRequest) {
       return match;
     });
 
-
-    const matches = await Match.find(query)
-      .populate("leagueId", "leagueName format startDate endDate logo")
-      .populate("createdBy", "firstName lastName email role")
-      .populate("teamA.teamId", "teamName enterCode")
-      .populate("teamB.teamId", "teamName enterCode")
-      .populate("teamA.players.playerId", "firstName lastName email profileImage position")
-      .populate("teamB.players.playerId", "firstName lastName email profileImage position")
-      .populate("teamA.playerStats.playerId", "firstName lastName email profileImage position")
-      .populate("teamB.playerStats.playerId", "firstName lastName email profileImage position")
-      .populate("teamA.playerActions.playerId", "firstName lastName email")
-      .populate("teamB.playerActions.playerId", "firstName lastName email")
-      .populate("refereeId", "firstName lastName email role")
-      .populate("statKeeperId", "firstName lastName email role")
-      .populate("gameWinnerTeam", "teamName enterCode")
-      .sort({ gameDate: 1, gameTime: 1 })
-      .lean()
-      .exec();
-
     return NextResponse.json(
       {
         message: "Matches retrieved successfully",
-        data: matches,
+        data: matchesWithTeamIds,
       },
       { status: 200 }
     );

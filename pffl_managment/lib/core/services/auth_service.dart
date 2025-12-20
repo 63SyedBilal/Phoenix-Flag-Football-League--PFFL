@@ -132,10 +132,10 @@ class AuthService {
           BaseOptions(
             baseUrl: url,
             connectTimeout: const Duration(
-              seconds: 30,
-            ), // Increased timeout for network connections
-            receiveTimeout: const Duration(seconds: 15),
-            sendTimeout: const Duration(seconds: 15),
+              seconds: 10,
+            ), // Reduced timeout to fail faster and try next URL
+            receiveTimeout: const Duration(seconds: 10),
+            sendTimeout: const Duration(seconds: 10),
             headers: {'Content-Type': 'application/json'},
             // Additional options for better connectivity
             followRedirects: true,

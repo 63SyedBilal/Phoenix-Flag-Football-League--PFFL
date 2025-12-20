@@ -20,6 +20,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
   String? _selectedStatKeeperId;
   String? _selectedRoundName;
   String? _leagueId;
+  String? _leagueFormat;
   DateTime? _leagueStartDate;
   DateTime? _leagueEndDate;
 
@@ -78,6 +79,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
   /// Initialize provider with league information
   Future<void> initializeWithLeague(LeagueCreationModel league) async {
     _leagueId = league.id;
+    _leagueFormat = league.format;
     _leagueStartDate = league.startDate;
     _leagueEndDate = league.endDate;
     
@@ -543,12 +545,15 @@ class UpcomingGamesProvider extends ChangeNotifier {
         'teamAName': _selectedTeamA ?? '',
         'teamB': _selectedTeamBId,
         'teamBName': _selectedTeamB ?? '',
+        'format': _leagueFormat ?? '5v5',
         'gameDate': gameDateTime.toIso8601String(),
         'gameTime': timeStr,
         'venue': _selectedVenue ?? '',
         'roundName': _selectedRoundName ?? 'Group Stage',
         'gameNumber': '',
         'status': 'upcoming',
+        'teamAInitialSide': 'offense',
+        'teamBInitialSide': 'defense',
         if (_selectedRefereeId != null) 'refereeId': _selectedRefereeId,
         if (_selectedStatKeeperId != null) 'statKeeperId': _selectedStatKeeperId,
       };
