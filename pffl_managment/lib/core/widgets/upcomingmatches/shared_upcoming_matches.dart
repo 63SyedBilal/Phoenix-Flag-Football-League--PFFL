@@ -7,6 +7,7 @@ class SharedUpcomingMatches extends StatelessWidget {
   final VoidCallback? onViewMore;
   final int maxVisibleGames;
   final String title; // New parameter for custom title
+  final Function(GameModel)? onGameTap; // Handler for game card tap
 
   const SharedUpcomingMatches({
     super.key,
@@ -14,6 +15,7 @@ class SharedUpcomingMatches extends StatelessWidget {
     this.onViewMore,
     this.maxVisibleGames = 4, // Default to 4 games
     this.title = 'Your Next Game', // Default title
+    this.onGameTap, // Optional game tap handler
   });
 
   @override
@@ -63,6 +65,7 @@ class SharedUpcomingMatches extends StatelessWidget {
           (game) => SharedGameCard(
             game: game,
             showYourGameTag: title == 'Your Next Game', // Only show tag for "Your Next Game"
+            onTap: onGameTap != null ? () => onGameTap!(game) : null,
           ),
         ),
       ],

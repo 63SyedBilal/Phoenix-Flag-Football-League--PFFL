@@ -23,6 +23,57 @@ async function verifyUserToken(req: NextRequest) {
 }
 
 /**
+ * Helper function to check if a player is already on another team
+ * @param playerId - The player's user ID
+ * @param currentTeamId - The team ID to exclude from check (allows same team different format)
+ * @returns Object with isOnTeam flag, teamId, and teamName if found
+ */
+async function checkPlayerTeamMembership(
+  playerId: string | mongoose.Types.ObjectId,
+  currentTeamId: string | mongoose.Types.ObjectId
+): Promise<{ isOnTeam: boolean; teamId: string | null; teamName: string | null }> {
+  try {
+    const playerObjectId = typeof playerId === 'string' 
+      ? new mongoose.Types.ObjectId(playerId) 
+      : playerId;
+    const currentTeamObjectId = typeof currentTeamId === 'string'
+      ? new mongoose.Types.ObjectId(currentTeamId)
+      : currentTeamId;
+
+    // Find any team where player is in squad5v5 or squad7v7, excluding current team
+    const existingTeam = await Team.findOne({
+      $or: [
+        { squad5v5: playerObjectId },
+        { squad7v7: playerObjectId }
+      ],
+      _id: { $ne: currentTeamObjectId } // Exclude current team (allows same team different format)
+    }).lean();
+
+    if (existingTeam) {
+      return {
+        isOnTeam: true,
+        teamId: (existingTeam as any)._id.toString(),
+        teamName: (existingTeam as any).teamName || null
+      };
+    }
+
+    return {
+      isOnTeam: false,
+      teamId: null,
+      teamName: null
+    };
+  } catch (error: any) {
+    console.error("Error checking player team membership:", error);
+    // On error, assume player is not on team to avoid blocking valid invites
+    return {
+      isOnTeam: false,
+      teamId: null,
+      teamName: null
+    };
+  }
+}
+
+/**
  * Captain sends invite to player
  * POST /api/team/invite-player
  */
@@ -97,6 +148,18 @@ export async function invitePlayer(req: NextRequest) {
       return NextResponse.json(
         { error: `Player is already in the ${format} squad for this team` },
         { status: 400 }
+      );
+    }
+
+    // Check if player is already on another team (strict team locking)
+    // This prevents sending invites that will be rejected
+    const teamMembershipCheck = await checkPlayerTeamMembership(playerId, teamId);
+    if (teamMembershipCheck.isOnTeam) {
+      return NextResponse.json(
+        { 
+          error: `Player is already on another team (${teamMembershipCheck.teamName || 'Unknown'}). They must be removed from their current team before you can invite them.` 
+        },
+        { status: 409 }
       );
     }
 
@@ -322,7 +385,18 @@ export async function acceptInvite(req: NextRequest, { params }: { params: { not
         );
       }
 
-      // Get the user to check if they're a free-agent
+      // Check if player is already on another team (strict team locking)
+      const teamMembershipCheck = await checkPlayerTeamMembership(decoded.userId, teamId);
+      if (teamMembershipCheck.isOnTeam) {
+        return NextResponse.json(
+          { 
+            error: `You are already on another team (${teamMembershipCheck.teamName || 'Unknown'}). You must be removed from your current team before joining a new team.` 
+          },
+          { status: 409 }
+        );
+      }
+
+      // Get the user to check and update role
       const user = await User.findById(decoded.userId);
       if (!user) {
         return NextResponse.json(
@@ -333,18 +407,16 @@ export async function acceptInvite(req: NextRequest, { params }: { params: { not
 
       // Track if role was changed
       const wasFreeAgent = user.role === "free-agent";
+      const previousRole = user.role;
 
-      // If user is a free-agent, change their role to player
-      if (wasFreeAgent) {
-        console.log(`🔄 Changing user role from free-agent to player for user: ${user.email}`);
+      // Ensure user role is "player" (not just for free-agents)
+      // Only update if role is not already "player" or "captain"
+      if (user.role !== "player" && user.role !== "captain") {
+        console.log(`🔄 Changing user role from ${user.role} to player for user: ${user.email}`);
         user.role = "player";
         await user.save();
         console.log(`✅ User role updated to player`);
       }
-
-      // Update notification status
-      notification.status = "accepted";
-      await notification.save();
 
       // Add player to the correct squad using $addToSet to prevent duplicates
       const updateQuery: any = {};
@@ -366,19 +438,58 @@ export async function acceptInvite(req: NextRequest, { params }: { params: { not
 
       console.log(`${format} squad after:`, (updatedTeam as any)[squadField].map((p: any) => p.toString()));
 
+      // Update notification status
+      notification.status = "accepted";
+      await notification.save();
+
+      // Create notification to Captain that invite was accepted
+      try {
+        const captainId = (team as any).captain;
+        const playerObjectId = new mongoose.Types.ObjectId(decoded.userId);
+        const teamObjectId = new mongoose.Types.ObjectId(teamId);
+
+        const captainNotification = await Notification.create({
+          sender: playerObjectId, // Player who accepted
+          receiver: captainId, // Captain
+          team: teamObjectId,
+          type: "TEAM_INVITE_ACCEPTED",
+          status: "pending",
+          format: format
+        });
+
+        console.log(`✅ Captain notification created: ${captainNotification._id.toString()}`);
+        console.log(`   Player: ${user.firstName} ${user.lastName} (${user.email})`);
+        console.log(`   Team: ${(team as any).teamName}`);
+        console.log(`   Format: ${format}`);
+      } catch (notifError: any) {
+        console.error("❌ Error creating captain notification:", notifError);
+        // Don't fail the invite acceptance if notification creation fails
+        // This is a non-critical operation
+      }
+
       // Populate for response
       await notification.populate("sender", "firstName lastName email");
       await notification.populate("team", "teamName image");
       await notification.populate("receiver", "firstName lastName email");
 
-      const roleChangeMessage = wasFreeAgent 
-        ? " Your role has been updated from free-agent to player." 
+      // Populate updated team for response
+      await updatedTeam.populate("captain", "firstName lastName email role");
+      await (updatedTeam as any).populate("squad5v5", "firstName lastName email role");
+      await (updatedTeam as any).populate("squad7v7", "firstName lastName email role");
+      await (updatedTeam as any).populate("players", "firstName lastName email role");
+
+      const roleChanged = previousRole !== user.role;
+      const roleChangeMessage = roleChanged 
+        ? ` Your role has been updated from ${previousRole} to player.` 
         : "";
 
       return NextResponse.json(
         {
-          message: `Invite accepted successfully. You have been added to the team.${roleChangeMessage}`,
-          data: notification
+          message: `Invite accepted successfully. You have been added to the ${format} squad.${roleChangeMessage}`,
+          data: notification,
+          team: updatedTeam, // Include updated team data for frontend refresh
+          roleChanged: roleChanged,
+          newRole: user.role
         },
         { status: 200 }
       );

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/referee/providers/referee_game_detail_provider.dart';
+import 'package:pffl_managment/features/referee/widgets/toss_dialog.dart';
+import 'package:pffl_managment/features/referee/widgets/start_game_dialog.dart';
+import 'package:pffl_managment/features/referee/widgets/add_game_action_dialog.dart';
+import 'package:pffl_managment/features/referee/widgets/mark_attendance_screen.dart';
+import 'package:pffl_managment/features/referee/widgets/select_players_screen.dart';
 
 /// Referee Game Detail Screen
 /// Shows game details with tabs and FAB actions
@@ -44,7 +49,7 @@ class _RefereeGameDetailView extends StatelessWidget {
                   
                   // Tab Content
                   Expanded(
-                    child: _buildTabContent(provider),
+                    child: _buildTabContent(context, provider),
                   ),
                 ],
               ),
@@ -54,7 +59,10 @@ class _RefereeGameDetailView extends StatelessWidget {
                 _buildFabOverlay(context, provider),
             ],
           ),
-          floatingActionButton: _buildFab(context, provider),
+          // Show FAB only on Game Actions tab (index 0)
+          floatingActionButton: provider.selectedTabIndex == 0 
+              ? _buildFab(context, provider)
+              : null,
         );
       },
     );
@@ -265,20 +273,28 @@ class _RefereeGameDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildTabContent(RefereeGameDetailProvider provider) {
+  Widget _buildTabContent(BuildContext context, RefereeGameDetailProvider provider) {
+    final match = provider.match;
+    
+    if (match == null) {
+      return const Center(
+        child: Text('Match data not available'),
+      );
+    }
+    
     switch (provider.selectedTabIndex) {
       case 0:
-        return _buildGameActionsTab(provider);
+        return _buildGameActionsTab(context, provider);
       case 1:
-        return _buildMarkAttendanceTab(provider);
+        return MarkAttendanceScreen(match: match);
       case 2:
-        return _buildSelectPlayersTab(provider);
+        return SelectPlayersScreen(match: match);
       default:
-        return _buildGameActionsTab(provider);
+        return _buildGameActionsTab(context, provider);
     }
   }
 
-  Widget _buildGameActionsTab(RefereeGameDetailProvider provider) {
+  Widget _buildGameActionsTab(BuildContext context, RefereeGameDetailProvider provider) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -295,18 +311,21 @@ class _RefereeGameDetailView extends StatelessWidget {
         
         // Add action button
         Center(
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: const Icon(
-              Icons.add,
-              color: Colors.black54,
-              size: 20,
+          child: GestureDetector(
+            onTap: () => _showAddGameActionDialog(context, provider),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: const Icon(
+                Icons.add,
+                color: Colors.black54,
+                size: 20,
+              ),
             ),
           ),
         ),
@@ -382,70 +401,6 @@ class _RefereeGameDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildMarkAttendanceTab(RefereeGameDetailProvider provider) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const Text(
-          'Mark Attendance',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              children: [
-                Icon(Icons.people_outline, size: 48, color: Colors.grey[300]),
-                const SizedBox(height: 8),
-                Text(
-                  'No players to mark attendance',
-                  style: TextStyle(color: Colors.grey[500]),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSelectPlayersTab(RefereeGameDetailProvider provider) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const Text(
-          'Select Players',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              children: [
-                Icon(Icons.person_add_outlined, size: 48, color: Colors.grey[300]),
-                const SizedBox(height: 8),
-                Text(
-                  'No players to select',
-                  style: TextStyle(color: Colors.grey[500]),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFabOverlay(BuildContext context, RefereeGameDetailProvider provider) {
     return GestureDetector(
       onTap: provider.closeFab,
@@ -499,13 +454,15 @@ class _RefereeGameDetailView extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 
-                // Toss
+                // Toss - Disabled if already completed or game has started
                 _buildFabOption(
                   label: 'Toss',
                   icon: Icons.sports_football,
                   color: const Color(0xFF1E3A5F),
-                  isCompleted: provider.isTossCompleted,
-                  onTap: () => provider.executeAction(GameAction.toss),
+                  isCompleted: provider.isTossCompleted || 
+                               provider.match?.status == MatchStatus.live ||
+                               provider.match?.status == MatchStatus.completed,
+                  onTap: () => _showTossDialog(context, provider),
                 ),
               ],
             ),
@@ -560,6 +517,152 @@ class _RefereeGameDetailView extends StatelessWidget {
       child: Icon(
         provider.isFabExpanded ? Icons.close : Icons.add,
         color: Colors.white,
+      ),
+    );
+  }
+
+  void _showTossDialog(BuildContext context, RefereeGameDetailProvider provider) {
+    if (provider.match == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Match data not available'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => TossDialog(
+        match: provider.match!,
+        onConfirm: (winnerTeamId, winnerSide) async {
+          try {
+            // Complete the toss
+            await provider.completeToss(winnerTeamId, winnerSide);
+            
+            // Close the toss dialog
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
+            
+            // Show the Start Game dialog after toss is completed
+            if (context.mounted) {
+              _showStartGameDialog(context);
+            }
+          } catch (e) {
+            // Error is already handled in provider, just show snackbar
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${e.toString()}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  void _showStartGameDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const StartGameDialog(),
+    );
+  }
+
+  void _showAddGameActionDialog(BuildContext context, RefereeGameDetailProvider provider) {
+    if (provider.match == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Match data not available'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Prepare selected players data for the dialog
+    // Convert PlayerModel list to Map format expected by dialog
+    final selectedPlayersByTeam = <String, List<Map<String, dynamic>>>{};
+    
+    // Helper function to extract team ID
+    String? extractTeamId(dynamic teamIdData) {
+      if (teamIdData == null) return null;
+      if (teamIdData is String) return teamIdData;
+      if (teamIdData is Map) {
+        return teamIdData['_id']?.toString() ?? 
+               teamIdData['id']?.toString();
+      }
+      return teamIdData.toString();
+    }
+    
+    // Get team IDs
+    final teamAId = extractTeamId(provider.match!.homeTeamId);
+    final teamBId = extractTeamId(provider.match!.awayTeamId);
+    
+    if (teamAId != null && teamAId.isNotEmpty) {
+      final selectedPlayers = provider.getSelectedPlayersForTeam(teamAId);
+      selectedPlayersByTeam[teamAId] = selectedPlayers.map((player) => {
+        'id': player.id,
+        'name': player.name,
+        'jerseyNumber': player.number,
+        'position': player.position,
+        'image': player.imageUrl,
+        'email': player.email,
+      }).toList();
+    }
+    
+    if (teamBId != null && teamBId.isNotEmpty) {
+      final selectedPlayers = provider.getSelectedPlayersForTeam(teamBId);
+      selectedPlayersByTeam[teamBId] = selectedPlayers.map((player) => {
+        'id': player.id,
+        'name': player.name,
+        'jerseyNumber': player.number,
+        'position': player.position,
+        'image': player.imageUrl,
+        'email': player.email,
+      }).toList();
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AddGameActionDialog(
+        match: provider.match!,
+        selectedPlayersByTeam: selectedPlayersByTeam,
+        onAddAction: (teamId, playerId, actionType) async {
+          try {
+            await provider.addGameAction(
+              teamId: teamId,
+              playerId: playerId,
+              actionType: actionType,
+            );
+            
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Game action added successfully'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${e.toString()}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
       ),
     );
   }

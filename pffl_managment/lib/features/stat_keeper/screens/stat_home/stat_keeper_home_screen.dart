@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/shared_upcoming_matches.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.dart';
+import 'package:pffl_managment/core/utils/game_navigation_helper.dart';
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_keeper_dashboard_provider.dart';
@@ -87,6 +88,10 @@ class StatKeeperHomeScreen extends StatelessWidget {
                     maxVisibleGames: 1, // Show only 1 assigned game
                     title: '',
                     onViewMore: null,
+                    onGameTap: (game) => GameNavigationHelper.navigateToGameDetail(
+                      context,
+                      game,
+                    ),
                   )
                 else
                   const Text('No games assigned to you yet.'),
@@ -95,6 +100,10 @@ class StatKeeperHomeScreen extends StatelessWidget {
                   games: games,
                   maxVisibleGames: 3, // Show only 3 games in main view
                   title: 'Upcoming Games',
+                  onGameTap: (game) => GameNavigationHelper.navigateToGameDetail(
+                    context,
+                    game,
+                  ),
                   onViewMore: () {
                     // Navigate to full matches list
                     Navigator.push(

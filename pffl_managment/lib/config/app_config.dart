@@ -7,8 +7,8 @@ class AppConfig {
   // Network IP for physical devices and network access
   // For Android emulator, use: 'http://10.0.2.2:3000/api'
   // For iOS simulator, use: 'http://localhost:3000/api'
-  // For physical device, use your local network IP: 'http://192.168.1.13:3000/api'
-  // Current IP: 192.168.1.13 (updated automatically)
+  // For physical device, use your local network IP: 'http://192.168.18.32:3000/api'
+  // Current IP: 192.168.18.32 (updated automatically)
 
   // Server Configuration
   static const String serverHost = '0.0.0.0'; // Listen on all interfaces

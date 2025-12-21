@@ -702,11 +702,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
     
     // Prevent duplicate invitations
     if (_refereeInviteSent[refereeId] == true) {
-
-      debugPrint('⚠️ Invitation already sent for referee: $refereeId');
-
       debugPrint('⚠️ [sendInvitationToReferee] Invitation already sent for referee: $refereeId');
-
       return false;
     }
 
@@ -739,8 +735,6 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _refereeInviteSent[refereeId] = true;
     notifyListeners();
     debugPrint('✅ [sendInvitationToReferee] UI updated - icon color changed');
-
-
     // Send invitation in background (fire-and-forget) - no loading state
     LeagueService.inviteRefereeToLeague(effectiveLeagueId, refereeId).then((success) {
       if (success) {
@@ -754,36 +748,15 @@ class CreateLeagueViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }).catchError((e) {
-      debugPrint('❌ Error sending invitation to referee: $e');
-      debugPrint('❌ Error type: ${e.runtimeType}');
-      debugPrint('❌ League ID: $effectiveLeagueId, Referee ID: $refereeId');
-      // Revert UI state on error - icon color goes back to original
-      _refereeInviteSent[refereeId] = false;
-      notifyListeners();
-    });
-
-    // Check if leagueId is empty
-    if (_leagueId.isEmpty) {
-      debugPrint('❌ [sendInvitationToReferee] ERROR: _leagueId is EMPTY! Cannot send invitation.');
-      return false;
-    }
-
-
-    // Send invitation in background (fire-and-forget) - independent of league creation
-    debugPrint('📤 [sendInvitationToReferee] Calling LeagueService.inviteRefereeToLeague...');
-    LeagueService.inviteRefereeToLeague(_leagueId, refereeId).then((success) {
-      debugPrint('📥 [sendInvitationToReferee] Response received: success=$success');
-      if (success) {
-        debugPrint('✅ [sendInvitationToReferee] Referee invitation sent successfully');
-      } else {
-        debugPrint('❌ [sendInvitationToReferee] Referee invitation failed: success=false');
-      }
-    }).catchError((e) {
       debugPrint('❌ [sendInvitationToReferee] Error sending invitation: $e');
       debugPrint('❌ [sendInvitationToReferee] Error type: ${e.runtimeType}');
+      debugPrint('❌ League ID: $effectiveLeagueId, Referee ID: $refereeId');
       if (e is Error) {
         debugPrint('❌ [sendInvitationToReferee] Stack trace: ${e.stackTrace}');
       }
+      // Revert UI state on error - icon color goes back to original
+      _refereeInviteSent[refereeId] = false;
+      notifyListeners();
     });
 
     return true;
@@ -861,11 +834,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
     
     // Prevent duplicate invitations
     if (_statKeeperInviteSent[statKeeperId] == true) {
-
-      debugPrint('⚠️ Invitation already sent for stat keeper: $statKeeperId');
-
       debugPrint('⚠️ [sendInvitationToStatKeeperIcon] Invitation already sent for stat keeper: $statKeeperId');
-
       return false;
     }
 
@@ -899,49 +868,30 @@ class CreateLeagueViewModel extends ChangeNotifier {
     notifyListeners();
     debugPrint('✅ [sendInvitationToStatKeeperIcon] UI updated - icon color changed');
 
-
     // Send invitation in background (fire-and-forget) - no loading state
+    debugPrint('📤 [sendInvitationToStatKeeperIcon] Calling LeagueService.inviteStatKeeperToLeague...');
     LeagueService.inviteStatKeeperToLeague(effectiveLeagueId, statKeeperId).then((success) {
+      debugPrint('📥 [sendInvitationToStatKeeperIcon] Response received: success=$success');
       if (success) {
         debugPrint('✅ Stat keeper invitation sent successfully. Notification will appear in stat keeper dashboard.');
         debugPrint('✅ League ID: $effectiveLeagueId, Stat Keeper ID: $statKeeperId');
         // Keep icon color changed (success)
       } else {
-        debugPrint('❌ Stat keeper invitation failed: success=false');
+        debugPrint('❌ [sendInvitationToStatKeeperIcon] Stat keeper invitation failed: success=false');
         // Revert UI state on failure - icon color goes back to original
         _statKeeperInviteSent[statKeeperId] = false;
         notifyListeners();
       }
     }).catchError((e) {
-      debugPrint('❌ Error sending invitation to stat keeper: $e');
-      debugPrint('❌ Error type: ${e.runtimeType}');
-      debugPrint('❌ League ID: $effectiveLeagueId, Stat Keeper ID: $statKeeperId');
-      // Revert UI state on error - icon color goes back to original
-      _statKeeperInviteSent[statKeeperId] = false;
-      notifyListeners();
-    });
-
-    // Check if leagueId is empty
-    if (_leagueId.isEmpty) {
-      debugPrint('❌ [sendInvitationToStatKeeperIcon] ERROR: _leagueId is EMPTY! Cannot send invitation.');
-      return false;
-    }
-
-    // Send invitation in background (fire-and-forget) - independent of league creation
-    debugPrint('📤 [sendInvitationToStatKeeperIcon] Calling LeagueService.inviteStatKeeperToLeague...');
-    LeagueService.inviteStatKeeperToLeague(_leagueId, statKeeperId).then((success) {
-      debugPrint('📥 [sendInvitationToStatKeeperIcon] Response received: success=$success');
-      if (success) {
-        debugPrint('✅ [sendInvitationToStatKeeperIcon] Stat keeper invitation sent successfully');
-      } else {
-        debugPrint('❌ [sendInvitationToStatKeeperIcon] Stat keeper invitation failed: success=false');
-      }
-    }).catchError((e) {
       debugPrint('❌ [sendInvitationToStatKeeperIcon] Error sending invitation: $e');
       debugPrint('❌ [sendInvitationToStatKeeperIcon] Error type: ${e.runtimeType}');
+      debugPrint('❌ League ID: $effectiveLeagueId, Stat Keeper ID: $statKeeperId');
       if (e is Error) {
         debugPrint('❌ [sendInvitationToStatKeeperIcon] Stack trace: ${e.stackTrace}');
       }
+      // Revert UI state on error - icon color goes back to original
+      _statKeeperInviteSent[statKeeperId] = false;
+      notifyListeners();
     });
 
     return true;
@@ -1181,8 +1131,6 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _teamEmailSent[teamId] = true;
     notifyListeners();
     debugPrint('✅ [sendInvitationToTeam] UI updated - icon color changed');
-
-
     // Send invitation in background (fire-and-forget) - no loading state
     LeagueService.inviteTeamToLeague(effectiveLeagueId, teamId).then((success) {
       if (success) {
@@ -1203,16 +1151,6 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _teamEmailSent[teamId] = false;
       notifyListeners();
     });
-
-    // Check if leagueId is empty
-    if (leagueId.isEmpty) {
-      debugPrint('❌ [sendInvitationToTeam] ERROR: leagueId is EMPTY! Cannot send invitation.');
-      debugPrint('❌ [sendInvitationToTeam] Current _leagueId value: "$_leagueId"');
-      return false;
-    }
-
-
-    // Send invitation in background (fire-and-forget) - independent of league creation
     debugPrint('📤 [sendInvitationToTeam] Calling LeagueService.inviteTeamToLeague...');
     LeagueService.inviteTeamToLeague(leagueId, teamId).then((success) {
       debugPrint('📥 [sendInvitationToTeam] Response received: success=$success');
@@ -1227,6 +1165,9 @@ class CreateLeagueViewModel extends ChangeNotifier {
       if (e is Error) {
         debugPrint('❌ [sendInvitationToTeam] Stack trace: ${e.stackTrace}');
       }
+      // Revert UI state on error - icon color goes back to original
+      _teamEmailSent[teamId] = false;
+      notifyListeners();
     });
 
     return true;
@@ -1309,10 +1250,11 @@ class CreateLeagueViewModel extends ChangeNotifier {
         debugPrint('📋 [nextStep] Moving from Step 1 to Step 2 - Creating league first...');
         // Create league automatically before moving to step 2
         final leagueCreated = await _createLeagueSilently();
-        if (!leagueCreated) {
+        if (leagueCreated.isEmpty) {
           debugPrint('❌ [nextStep] League creation failed - cannot proceed to Step 2');
           return; // Don't move to next step if league creation failed
         }
+        _leagueId = leagueCreated;
         debugPrint('✅ [nextStep] League created successfully, leagueId: $_leagueId');
       }
       
@@ -1386,229 +1328,6 @@ class CreateLeagueViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
-
-  void previousStep() {
-    if (_currentStep > 0) {
-      _currentStep--;
-      notifyListeners();
-    }
-  }
-
-  void goToStep(int step) {
-    if (step >= 0 && step <= 4) {
-      _currentStep = step;
-      notifyListeners();
-    }
-  }
-
-  Future<void> createLeague(BuildContext context) async {
-    // Validate that user is on Step 4 before creating league
-    if (_currentStep != 3) {
-      debugPrint('❌ Cannot create league: User must complete Step 4 first (current step: $_currentStep)');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please complete Step 4 before creating the league'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-      return;
-    }
-    
-    // Validate Step 4 is valid
-    if (!isStep4Valid) {
-      debugPrint('❌ Cannot create league: Step 4 validation failed');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please complete all required fields in Step 4'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-      return;
-    }
-    
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // Check if league was already created (for early invites)
-      String leagueId;
-      if (_leagueId.isNotEmpty) {
-        // League already created during Step 4 navigation
-        leagueId = _leagueId;
-        debugPrint('✅ Using existing league ID: $leagueId');
-      } else {
-        // Step 1: Upload logo if provided (REQUIRED)
-        String? logoUrl;
-        if (_uploadedLogoPath.isNotEmpty) {
-          try {
-            final logoFile = File(_uploadedLogoPath);
-            if (!await logoFile.exists()) {
-              throw Exception('Logo file does not exist. Please select a valid image file.');
-            }
-            
-            logoUrl = await LeagueService.uploadLogo(logoFile);
-            if (logoUrl == null || logoUrl.isEmpty) {
-              throw Exception('Logo upload failed: Server returned empty URL');
-            }
-          } catch (e) {
-            // Logo is required, so stop league creation
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Logo upload failed: ${e.toString()}'),
-                  duration: Duration(seconds: 5),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-            _isLoading = false;
-            notifyListeners();
-            return; // Stop league creation
-          }
-        } else if (_selectedLogoId.isNotEmpty) {
-          // Use selected logo URL from team logos
-          final selectedLogo = teamLogos.firstWhere(
-            (logo) => logo.id == _selectedLogoId,
-            orElse: () => teamLogos.first,
-          );
-          logoUrl = selectedLogo.url;
-        } else {
-          // No logo selected or uploaded - show error
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please upload a logo or select a default logo'),
-                duration: Duration(seconds: 3),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          _isLoading = false;
-          notifyListeners();
-          return;
-        }
-
-        // Step 2: Create league via API
-        final leagueData = {
-          'leagueName': _leagueName,
-          'format': formatString, // "5v5" or "7v7"
-          'startDate': _startDate!.toIso8601String(),
-          'endDate': _endDate!.toIso8601String(),
-          'minimumPlayers': _minPlayers,
-          'entryFeeType': 'stripe', // Backend expects this
-          'perPlayerLeagueFee': _perPlayerFee,
-          'logo': logoUrl, // logoUrl is guaranteed to be set at this point
-          'status': 'pending',
-        };
-
-        final leagueResponse = await LeagueService.createLeague(leagueData);
-        
-        if (leagueResponse == null || leagueResponse.data.id.isEmpty) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to create league')),
-            );
-          }
-          _isLoading = false;
-          notifyListeners();
-          return;
-        }
-
-        leagueId = leagueResponse.data.id;
-        _leagueId = leagueId; // Store leagueId
-        debugPrint('✅ League created successfully with ID: $leagueId (Step 4 completed)');
-      }
-
-      // Step 3: Send invitations to free agents
-      for (final freeAgentId in _selectedFreeAgentIds) {
-        await sendInvitationToFreeAgent(leagueId, freeAgentId);
-      }
-
-      // Step 4: Send invitations to stat keepers
-      for (final statKeeperId in _selectedStatKeeperIds) {
-        await sendInvitationToStatKeeper(leagueId, statKeeperId);
-      }
-
-      // Step 5: Send invitations to teams
-      for (final teamId in _selectedTeamIds) {
-        await sendInvitationToTeam(leagueId, teamId);
-      }
-
-  // Create league silently (without UI feedback) - used when moving from Step 1 to Step 2
-  Future<bool> _createLeagueSilently() async {
-    try {
-      debugPrint('📋 [_createLeagueSilently] Starting league creation...');
-      
-      // Upload logo if provided
-      String? logoUrl;
-      if (_uploadedLogoPath.isNotEmpty) {
-        try {
-          final logoFile = File(_uploadedLogoPath);
-          if (!await logoFile.exists()) {
-            debugPrint('❌ [_createLeagueSilently] Logo file does not exist');
-            return false;
-          }
-          
-          logoUrl = await LeagueService.uploadLogo(logoFile);
-          if (logoUrl == null || logoUrl.isEmpty) {
-            debugPrint('❌ [_createLeagueSilently] Logo upload failed');
-            return false;
-          }
-        } catch (e) {
-          debugPrint('❌ [_createLeagueSilently] Logo upload error: $e');
-          return false;
-        }
-      } else if (_selectedLogoId.isNotEmpty) {
-        // Use selected logo URL from team logos
-        final selectedLogo = teamLogos.firstWhere(
-          (logo) => logo.id == _selectedLogoId,
-          orElse: () => teamLogos.first,
-        );
-        logoUrl = selectedLogo.url;
-      } else {
-        debugPrint('❌ [_createLeagueSilently] No logo selected or uploaded');
-        return false;
-      }
-
-      // Determine format string
-      final formatString = _formatPlayers == 5 ? '5v5' : '7v7';
-      
-      // Create league data
-      final leagueData = {
-        'leagueName': _leagueName,
-        'format': formatString,
-        'startDate': _startDate!.toIso8601String(),
-        'endDate': _endDate!.toIso8601String(),
-        'minimumPlayers': _minPlayers,
-        'entryFeeType': 'stripe',
-        'perPlayerLeagueFee': _perPlayerFee,
-        'logo': logoUrl,
-        'status': 'pending',
-      };
-
-      debugPrint('📋 [_createLeagueSilently] Calling LeagueService.createLeague...');
-      final leagueResponse = await LeagueService.createLeague(leagueData);
-      
-      if (leagueResponse == null || leagueResponse.data.id.isEmpty) {
-        debugPrint('❌ [_createLeagueSilently] League creation failed - no ID returned');
-        return false;
-      }
-
-      _leagueId = leagueResponse.data.id;
-      debugPrint('✅ [_createLeagueSilently] League created successfully with ID: $_leagueId');
-      return true;
-    } catch (e) {
-      debugPrint('❌ [_createLeagueSilently] Error creating league: $e');
-      return false;
-    }
-  }
 
   void previousStep() {
     if (_currentStep > 0) {
@@ -1644,8 +1363,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
     // Check if league was already created
     if (_leagueId.isEmpty) {
       debugPrint('❌ Cannot finalize league: League ID is missing. Creating league now...');
-      final created = await _createLeagueSilently();
-      if (!created) {
+      final leagueIdResult = await _createLeagueSilently();
+      if (leagueIdResult.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1655,8 +1374,11 @@ class CreateLeagueViewModel extends ChangeNotifier {
             ),
           );
         }
+        _isLoading = false;
+        notifyListeners();
         return;
       }
+      _leagueId = leagueIdResult;
     }
     
     _isLoading = true;
@@ -1670,7 +1392,6 @@ class CreateLeagueViewModel extends ChangeNotifier {
       // Invitations are sent via email icons in steps 2, 3, 4
       // No need to send bulk invitations here - they're sent individually when icons are pressed
       debugPrint('✅ [createLeague] All invitations should have been sent via email icons in steps 2, 3, 4');
-
 
       // Step 6: Refresh leagues list
       if (context.mounted) {

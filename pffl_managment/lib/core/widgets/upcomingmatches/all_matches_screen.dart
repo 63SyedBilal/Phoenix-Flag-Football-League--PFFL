@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/models/game_model.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/shared_game_card.dart';
+import 'package:pffl_managment/core/utils/game_navigation_helper.dart';
 
 class AllMatchesScreen extends StatelessWidget {
   final List<GameModel> matches;
@@ -43,6 +44,10 @@ class AllMatchesScreen extends StatelessWidget {
                 return SharedGameCard(
                   game: matches[index],
                   showYourGameTag: true,
+                  onTap: () => GameNavigationHelper.navigateToGameDetail(
+                    context,
+                    matches[index],
+                  ),
                 );
               },
             ),

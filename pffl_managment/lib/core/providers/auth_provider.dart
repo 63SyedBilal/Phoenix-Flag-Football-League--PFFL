@@ -179,7 +179,8 @@ class AuthProvider extends ChangeNotifier {
           print('✅ Default - Setting password error: Password is wrong');
         }
       } else if (e.response?.statusCode == 404) {
-        // Service not found - no error shown (network issue)
+        // Service not found - show connection error
+        _loginPasswordError = 'Cannot connect to server. Please check:\n1. Backend server is running\n2. Both devices are on same WiFi\n3. Firewall allows port 3000';
       } else if (e.response?.statusCode == 400) {
         // Bad request - parse error to determine field
         final errorData = e.response?.data;
@@ -193,25 +194,31 @@ class AuthProvider extends ChangeNotifier {
         } else if (errorMessage.toLowerCase().contains('password') && 
                    !errorMessage.toLowerCase().contains('email')) {
           _loginPasswordError = 'Password is wrong';
+        } else {
+          _loginPasswordError = errorMessage.isNotEmpty ? errorMessage : 'Invalid request. Please check your input.';
         }
-        // No else - don't show generic errors
       } else if (e.response?.statusCode == 500) {
-        // Server error - no error shown (network issue)
+        // Server error - show error message
+        _loginPasswordError = 'Server error. Please try again later.';
       } else if (e.type == DioExceptionType.connectionTimeout ||
                  e.type == DioExceptionType.sendTimeout ||
                  e.type == DioExceptionType.receiveTimeout) {
-        // Timeout - no error shown (network issue)
+        // Timeout - show error message
+        _loginPasswordError = 'Connection timeout. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
       } else if (e.type == DioExceptionType.connectionError) {
-        // Connection error - no error shown (network issue)
+        // Connection error - show error message
+        _loginPasswordError = 'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Firewall allows port 3000';
       } else {
-        // Other network errors - no error shown
+        // Other network errors - show generic error
+        _loginPasswordError = 'Network error. Please check your connection and try again.';
       }
       _isLoggingIn = false;
       notifyListeners();
       return false;
     } catch (e) {
-      // Handle general errors - no error shown
+      // Handle general errors - show error message
       print('Login general error: $e');
+      _loginPasswordError = 'An unexpected error occurred. Please try again.';
       _isLoggingIn = false;
       notifyListeners();
       return false;

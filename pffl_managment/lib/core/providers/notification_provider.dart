@@ -89,13 +89,16 @@ class NotificationModel {
         } else {
           return 'You\'ve been invited by $senderName to join the team $teamName.';
         }
+      case 'TEAM_INVITE_ACCEPTED':
+        // Format: "{Player Name} has accepted your invitation to join the {Format} squad"
+        final formatStr = format ?? 'team';
+        return '$senderName has accepted your invitation to join the $formatStr squad';
       case 'LEAGUE_REFEREE_INVITE':
         return '$senderName invited you to be a referee for $leagueName';
       case 'LEAGUE_STATKEEPER_INVITE':
         return '$senderName invited you to be a stat keeper for $leagueName';
       case 'LEAGUE_TEAM_INVITE':
-
-        return 'A new league "$leagueName" has been created and your team has been invited. Would you like to accept the invitation?';
+        return 'Your team "$teamName" has been invited to participate in the league "$leagueName". Would you like to accept the invitation?';
       case 'GAME_ASSIGNED':
         final matchTeamA = match?['teamAName']?.toString() ?? match?['teamA']?.toString() ?? 'Team A';
         final matchTeamB = match?['teamBName']?.toString() ?? match?['teamB']?.toString() ?? 'Team B';
@@ -110,15 +113,12 @@ class NotificationModel {
         } else {
           return 'Aapko ek game assign hua hai: $matchTeamA vs $matchTeamB';
         }
-
-        return 'Your team "$teamName" has been invited to participate in the league "$leagueName". Would you like to accept the invitation?';
       case 'INVITE_ACCEPTED_REFEREE':
         return '$senderName has accepted your invitation to be a referee for $leagueName';
       case 'INVITE_ACCEPTED_STATKEEPER':
         return '$senderName has accepted your invitation to be a stat keeper for $leagueName';
       case 'INVITE_ACCEPTED_TEAM':
         return '$senderName has accepted your invitation for team "$teamName" to participate in the league "$leagueName"';
-
       default:
         return 'You have a new notification';
     }
@@ -173,25 +173,26 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   /// Accept a notification
-  Future<bool> acceptNotification(String notificationId) async {
+  /// Returns Map with success status and roleChanged flag
+  Future<Map<String, dynamic>> acceptNotification(String notificationId) async {
     _errorMessage = null;
     notifyListeners();
     
     try {
-      final success = await NotificationService.acceptNotification(notificationId);
-      if (success) {
+      final result = await NotificationService.acceptNotification(notificationId);
+      if (result['success'] == true) {
         // Reload notifications to get updated status
         await loadNotifications();
-        return true;
+        return result;
       }
       _errorMessage = 'Failed to accept notification';
       notifyListeners();
-      return false;
+      return {'success': false, 'roleChanged': false};
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       print('❌ Error accepting notification: $e');
       notifyListeners();
-      return false;
+      return {'success': false, 'roleChanged': false};
     }
   }
 

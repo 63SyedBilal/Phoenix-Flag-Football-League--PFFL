@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/features/captain/providers/captain_team_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
 
 class CaptainNotification extends StatefulWidget {
@@ -133,10 +134,28 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                               _processingNotificationId == notification.id;
                           
                           // Show buttons for LEAGUE_TEAM_INVITE and TEAM_INVITE when pending
+                          // TEAM_INVITE_ACCEPTED is informational only (no buttons needed)
                           final isPending = notification.isPending;
                           final isInviteType = notification.type == 'LEAGUE_TEAM_INVITE' ||
                               notification.type == 'TEAM_INVITE';
                           final shouldShowButtons = isPending && isInviteType;
+                          
+                          // If TEAM_INVITE_ACCEPTED, refresh team data when notification is viewed
+                          if (notification.type == 'TEAM_INVITE_ACCEPTED' && !isProcessing) {
+                            // Refresh team data in background when notification is displayed
+                            WidgetsBinding.instance.addPostFrameCallback((_) async {
+                              try {
+                                final captainTeamProvider = Provider.of<CaptainTeamProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                                await captainTeamProvider.refresh();
+                                print('✅ Team data refreshed after viewing TEAM_INVITE_ACCEPTED');
+                              } catch (e) {
+                                print('⚠️ Could not refresh team data: $e');
+                              }
+                            });
+                          }
 
                           return _buildNotificationCard(
                             notification: notification,
@@ -405,9 +424,34 @@ class _CaptainNotificationState extends State<CaptainNotification> {
 
     try {
       final provider = Provider.of<NotificationProvider>(context, listen: false);
-      final success = await provider.acceptNotification(notificationId);
+      final result = await provider.acceptNotification(notificationId);
+      final success = result['success'] == true;
 
       if (success && context.mounted) {
+        // Refresh notifications to update status
+        await provider.refresh();
+        
+        // If this is a TEAM_INVITE_ACCEPTED notification, refresh team data
+        final notification = provider.notifications.firstWhere(
+          (n) => n.id == notificationId,
+          orElse: () => provider.notifications.first,
+        );
+        
+        if (notification.type == 'TEAM_INVITE_ACCEPTED') {
+          // Refresh captain team data to show new player
+          try {
+            final captainTeamProvider = Provider.of<CaptainTeamProvider>(
+              context,
+              listen: false,
+            );
+            await captainTeamProvider.refresh();
+            print('✅ Captain team data refreshed after player acceptance');
+          } catch (e) {
+            // Provider not available in context, that's okay
+            print('⚠️ CaptainTeamProvider not available in context: $e');
+          }
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invitation accepted successfully!'),

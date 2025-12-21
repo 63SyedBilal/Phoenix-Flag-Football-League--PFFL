@@ -54,12 +54,6 @@ const TeamSchema = new mongoose.Schema(
       }
     ],
 
-    players: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-      }
-    ]
   },
   { timestamps: true }
 );
@@ -70,33 +64,6 @@ TeamSchema.virtual("allPlayers").get(function() {
   const squad7v7Ids = (this.squad7v7 || []).map((id: any) => id.toString())
   const allIds = [...new Set([...squad5v5Ids, ...squad7v7Ids])]
   return allIds
-})
-
-// Middleware to automatically update players array when squads change
-TeamSchema.pre("save", async function() {
-  try {
-    const squad5v5Ids = (this.squad5v5 || []).map((id: any) => {
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        return id.toString()
-      }
-      return id
-    })
-    const squad7v7Ids = (this.squad7v7 || []).map((id: any) => {
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        return id.toString()
-      }
-      return id
-    })
-    const allUniqueIds = [...new Set([...squad5v5Ids, ...squad7v7Ids])]
-    
-    // Convert back to ObjectIds
-    this.players = allUniqueIds
-      .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
-      .map((id: string) => new mongoose.Types.ObjectId(id))
-  } catch (error) {
-    // If error, just set empty array
-    this.players = []
-  }
 })
 
 // Prevent model overwrite error in Next.js development

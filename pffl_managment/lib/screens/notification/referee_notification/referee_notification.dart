@@ -90,9 +90,13 @@ class RefereeNotification extends StatelessWidget {
 
   Future<void> _handleAccept(BuildContext context, String notificationId) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
-    final success = await provider.acceptNotification(notificationId);
+    final result = await provider.acceptNotification(notificationId);
+    final success = result['success'] == true;
 
     if (success && context.mounted) {
+      // Refresh notifications to update status
+      await provider.refresh();
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invitation accepted successfully!'),
