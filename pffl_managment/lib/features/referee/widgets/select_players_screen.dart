@@ -51,12 +51,12 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
                   const Text(
                     'Select Team',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   
                   // Team selection buttons
                   Row(
@@ -87,7 +87,7 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
                     ],
                   ),
                   
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   
                   // Player selection section
                   if (provider.selectedPlayersTeamId != null) ...[
@@ -97,26 +97,36 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
                         const Text(
                           'Select Players',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
                           ),
                         ),
-                        Text(
-                          '${provider.selectedPlayerIds.length}/5 selected',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E3A5F).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${provider.selectedPlayerIds.length}/5',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1E3A5F),
+                            ),
                           ),
                         ),
                       ],
                     ),
                     
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     
-                    // Present players list
-                    _buildPresentPlayersList(context, provider),
+                    // Present players list - with fixed height and scroll
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      child: _buildPresentPlayersList(context, provider),
+                    ),
                   ] else
                     Center(
                       child: Padding(
@@ -388,7 +398,7 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
     if (provider.isLoadingPlayers) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.all(32.0),
+          padding: EdgeInsets.all(24.0),
           child: CircularProgressIndicator(),
         ),
       );
@@ -406,20 +416,21 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
     if (presentPlayers.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.people_outline, size: 48, color: Colors.grey[300]),
+              Icon(Icons.people_outline, size: 40, color: Colors.grey[300]),
               const SizedBox(height: 8),
               Text(
                 'No players marked as present',
-                style: TextStyle(color: Colors.grey[500]),
+                style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 'Please mark attendance first',
-                style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                style: TextStyle(color: Colors.grey[400], fontSize: 11),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -428,110 +439,124 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
       );
     }
     
-    return Column(
-      children: presentPlayers.map((player) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: presentPlayers.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final player = presentPlayers[index];
         final playerId = player.id;
         final isSelected = provider.isPlayerSelected(playerId);
         
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Row(
-            children: [
-              // Player avatar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: player.imageUrl != null && player.imageUrl!.isNotEmpty
-                    ? Image.network(
-                        player.imageUrl!,
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildDefaultAvatar();
-                        },
-                      )
-                    : _buildDefaultAvatar(),
+        return GestureDetector(
+          onTap: () => provider.togglePlayerSelection(playerId),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF1E3A5F).withOpacity(0.05) : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected 
+                    ? const Color(0xFF1E3A5F) 
+                    : const Color(0xFFE5E7EB),
+                width: isSelected ? 1.5 : 1,
               ),
-              
-              const SizedBox(width: 12),
-              
-              // Player info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '#${player.number} ${player.name}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      'Position: ${player.position}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+            ),
+            child: Row(
+              children: [
+                // Player avatar - smaller
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: player.imageUrl != null && player.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          player.imageUrl!,
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildDefaultAvatar(32);
+                          },
+                        )
+                      : _buildDefaultAvatar(32),
                 ),
-              ),
-              
-              // Selection radio button
-              GestureDetector(
-                onTap: () => provider.togglePlayerSelection(playerId),
-                child: Container(
-                  width: 24,
-                  height: 24,
+                
+                const SizedBox(width: 10),
+                
+                // Player info - compact
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '#${player.number} ${player.name}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: isSelected ? const Color(0xFF1E3A5F) : Colors.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        player.position,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(width: 8),
+                
+                // Selection checkbox - smaller
+                Container(
+                  width: 20,
+                  height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected 
-                          ? const Color(0xFF3B82F6) 
+                          ? const Color(0xFF1E3A5F) 
                           : const Color(0xFFE5E7EB),
                       width: 2,
                     ),
+                    color: isSelected ? const Color(0xFF1E3A5F) : Colors.transparent,
                   ),
                   child: isSelected
-                      ? Center(
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF3B82F6),
-                            ),
-                          ),
+                      ? const Icon(
+                          Icons.check,
+                          size: 12,
+                          color: Colors.white,
                         )
                       : null,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
-      }).toList(),
+      },
     );
   }
 
-  Widget _buildDefaultAvatar() {
+  Widget _buildDefaultAvatar([double size = 40]) {
     return Container(
-      width: 40,
-      height: 40,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(size / 2),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.person,
         color: Colors.grey,
-        size: 24,
+        size: size * 0.6,
       ),
     );
   }

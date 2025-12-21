@@ -83,6 +83,16 @@ class RefereeGameDetailProvider extends ChangeNotifier {
     return _teamPlayers[teamId] ?? [];
   }
   
+  /// Get selected players for a specific team (for Add Game Action)
+  /// Returns only players that were selected in Select Players screen
+  List<PlayerModel> getSelectedPlayersForTeam(String teamId) {
+    final selectedPlayerIds = _selectedPlayersByTeam[teamId] ?? {};
+    final allTeamPlayers = _teamPlayers[teamId] ?? [];
+    
+    // Filter to only include selected players
+    return allTeamPlayers.where((player) => selectedPlayerIds.contains(player.id)).toList();
+  }
+  
   /// Get present players for a specific team
   List<String> getPresentPlayerIds(String teamId) {
     return _playerAttendance.entries

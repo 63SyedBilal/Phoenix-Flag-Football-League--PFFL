@@ -139,25 +139,27 @@ export async function createMatch(req: NextRequest) {
       );
     }
 
-    // Build team match data
+    // Build team match data - following exact schema structure from modules/match.ts
     const teamAData: any = {
       teamId: teamAObjectId,
       side: teamASide,
-      players: [],
-      playerStats: [],
-      teamStats: {},
+      players: [], // Array of { playerId: ObjectId, isActive: Boolean }
+      playerActions: [], // Array of { playerId: ObjectId, actionType: String, timestamp: Date }
+      playerStats: [], // Array of PlayerStatsSchema
+      teamStats: {}, // TeamStatsSchema object with default values
       score: 0,
-      result: null
+      win: null // Boolean, default: null (matches schema)
     };
 
     const teamBData: any = {
       teamId: teamBObjectId,
       side: teamBSide,
-      players: [],
-      playerStats: [],
-      teamStats: {},
+      players: [], // Array of { playerId: ObjectId, isActive: Boolean }
+      playerActions: [], // Array of { playerId: ObjectId, actionType: String, timestamp: Date }
+      playerStats: [], // Array of PlayerStatsSchema
+      teamStats: {}, // TeamStatsSchema object with default values
       score: 0,
-      result: null
+      win: null // Boolean, default: null (matches schema)
     };
 
     const matchData: any = {
@@ -1297,6 +1299,7 @@ export async function completeToss(
           teamId: teamAIdValue,
           side: teamASide,
           players: [],
+          playerActions: [],
           playerStats: [],
           teamStats: {},
           score: 0,
@@ -1313,6 +1316,7 @@ export async function completeToss(
           teamId: teamBIdValue,
           side: teamBSide,
           players: [],
+          playerActions: [],
           playerStats: [],
           teamStats: {},
           score: 0,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
 /// Success bottom sheet widget shown after profile completion
@@ -95,11 +96,21 @@ class SuccessBottomSheet extends StatelessWidget {
                               String route;
                               switch (role.toLowerCase()) {
                                 case 'captain':
-                                  // For captain, check if team needs to be created
-                                  if (authProvider.needsTeamForm) {
+                                  // For captain, check if team exists (fresh check after profile completion)
+                                  // Don't rely on stale authProvider.needsTeamForm value
+                                  try {
+                                    final hasTeam = await TeamService.hasTeam();
+                                    if (!hasTeam) {
+                                      // Team doesn't exist, navigate to create team screen
+                                      route = AppRoutes.captainCreateTeam;
+                                    } else {
+                                      // Team exists, go to dashboard
+                                      route = AppRoutes.captainDashboard;
+                                    }
+                                  } catch (e) {
+                                    // If check fails, default to create team screen
+                                    debugPrint('⚠️ Error checking team existence: $e');
                                     route = AppRoutes.captainCreateTeam;
-                                  } else {
-                                    route = AppRoutes.captainDashboard;
                                   }
                                   break;
                                 case 'player':

@@ -586,11 +586,55 @@ class _RefereeGameDetailView extends StatelessWidget {
       return;
     }
 
+    // Prepare selected players data for the dialog
+    // Convert PlayerModel list to Map format expected by dialog
+    final selectedPlayersByTeam = <String, List<Map<String, dynamic>>>{};
+    
+    // Helper function to extract team ID
+    String? extractTeamId(dynamic teamIdData) {
+      if (teamIdData == null) return null;
+      if (teamIdData is String) return teamIdData;
+      if (teamIdData is Map) {
+        return teamIdData['_id']?.toString() ?? 
+               teamIdData['id']?.toString();
+      }
+      return teamIdData.toString();
+    }
+    
+    // Get team IDs
+    final teamAId = extractTeamId(provider.match!.homeTeamId);
+    final teamBId = extractTeamId(provider.match!.awayTeamId);
+    
+    if (teamAId != null && teamAId.isNotEmpty) {
+      final selectedPlayers = provider.getSelectedPlayersForTeam(teamAId);
+      selectedPlayersByTeam[teamAId] = selectedPlayers.map((player) => {
+        'id': player.id,
+        'name': player.name,
+        'jerseyNumber': player.number,
+        'position': player.position,
+        'image': player.imageUrl,
+        'email': player.email,
+      }).toList();
+    }
+    
+    if (teamBId != null && teamBId.isNotEmpty) {
+      final selectedPlayers = provider.getSelectedPlayersForTeam(teamBId);
+      selectedPlayersByTeam[teamBId] = selectedPlayers.map((player) => {
+        'id': player.id,
+        'name': player.name,
+        'jerseyNumber': player.number,
+        'position': player.position,
+        'image': player.imageUrl,
+        'email': player.email,
+      }).toList();
+    }
+
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => AddGameActionDialog(
         match: provider.match!,
+        selectedPlayersByTeam: selectedPlayersByTeam,
         onAddAction: (teamId, playerId, actionType) async {
           try {
             await provider.addGameAction(

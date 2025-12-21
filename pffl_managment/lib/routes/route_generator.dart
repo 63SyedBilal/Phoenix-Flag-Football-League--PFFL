@@ -59,8 +59,8 @@ class RouteGenerator {
       case AppRoutes.captainDashboard:
         return MaterialPageRoute(builder: (_) => const CaptainDashboard());
 
-      // case AppRoutes.captainCreateTeam:
-      //   return MaterialPageRoute(builder: (_) => const CreateTeamScreen());
+      case AppRoutes.captainCreateTeam:
+        return MaterialPageRoute(builder: (_) => const CaptainCreateTeam());
 
       case AppRoutes.captainInvite:
         return MaterialPageRoute(builder: (_) => const CaptainInviteScreen());
