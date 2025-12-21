@@ -287,8 +287,7 @@ class Step1TeamInfoWidget extends StatelessWidget {
                                     primary: AppColors.primary,
                                     onPrimary: Colors.white,
                                     onSurface: AppColors.textPrimary,
-                                  ),
-                                  dialogBackgroundColor: Colors.white,
+                                  ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
                                 ),
                                 child: child!,
                               );
@@ -374,8 +373,7 @@ class Step1TeamInfoWidget extends StatelessWidget {
                                     primary: AppColors.primary,
                                     onPrimary: Colors.white,
                                     onSurface: AppColors.textPrimary,
-                                  ),
-                                  dialogBackgroundColor: Colors.white,
+                                  ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
                                 ),
                                 child: child!,
                               );

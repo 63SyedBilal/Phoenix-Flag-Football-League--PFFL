@@ -5,6 +5,7 @@ import 'package:pffl_managment/core/utils/game_navigation_helper.dart';
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_keeper_dashboard_provider.dart';
+import 'package:pffl_managment/features/stat_keeper/screens/stat_add/stat_add_screen.dart';
 
 class StatKeeperHomeScreen extends StatelessWidget {
   const StatKeeperHomeScreen({super.key});
@@ -88,10 +89,9 @@ class StatKeeperHomeScreen extends StatelessWidget {
                     maxVisibleGames: 1, // Show only 1 assigned game
                     title: '',
                     onViewMore: null,
-                    onGameTap: (game) => GameNavigationHelper.navigateToGameDetail(
-                      context,
-                      game,
-                    ),
+                    onGameTap: (game) {
+                      StatAddScreen.showAsDialog(context, matchId: game.id);
+                    },
                   )
                 else
                   const Text('No games assigned to you yet.'),

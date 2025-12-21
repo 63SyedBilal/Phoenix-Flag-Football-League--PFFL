@@ -128,7 +128,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: provider.isLoading 
+                  onPressed: provider.isLoading || provider.isAttendanceLocked
                       ? null 
                       : () => _confirmAttendance(context, provider),
                   style: ElevatedButton.styleFrom(
@@ -149,9 +149,11 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'Confirm Attendance',
-                          style: TextStyle(
+                      : Text(
+                          provider.isAttendanceLocked
+                              ? 'Attendance Locked'
+                              : 'Confirm Attendance',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -166,28 +168,27 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
   }
   
   Future<void> _confirmAttendance(BuildContext context, RefereeGameDetailProvider provider) async {
-    // Get attendance count
-    final presentCount = provider.playerAttendance.values.where((v) => v == true).length;
-    
-    if (presentCount == 0) {
+    final success = await provider.confirmAttendance();
+
+    if (!context.mounted) return;
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please mark at least one player as present'),
-          backgroundColor: Colors.orange,
+          content: Text('Attendance locked for this game'),
+          backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
       );
-      return;
+    } else if (provider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.error!),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
-    
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Attendance marked for $presentCount player(s)'),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   Widget _buildTeamButton(
@@ -199,11 +200,14 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
     String? teamColor,
     required bool isSelected,
   }) {
+    final bool isLocked = provider.isAttendanceLocked;
+
     return GestureDetector(
-      onTap: () async {
-        // Fetch players for the selected team
-        await provider.setAttendanceTeam(teamId);
-      },
+      onTap: isLocked
+          ? null
+          : () async {
+              await provider.setAttendanceTeam(teamId);
+            },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -336,124 +340,121 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
               ),
             ),
             IconButton(
-              onPressed: () {
-                // Mark all as present
-                for (var player in players) {
-                  provider.markAttendance(player.id, true);
-                }
-              },
+              onPressed: provider.isAttendanceLocked
+                  ? null
+                  : () {
+                      for (final player in players) {
+                        provider.markAttendance(player.id, true);
+                      }
+                    },
               tooltip: 'Mark all as present',
               icon: const Icon(Icons.done_all),
               color: Colors.green,
             ),
           ],
         ),
-        
         const SizedBox(height: 8),
-        
-        // Player list
         ...players.map((player) {
           final playerId = player.id;
           final isPresent = provider.isPlayerPresent(playerId);
-          
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: Row(
-              children: [
-                // Player avatar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: player.imageUrl != null && player.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          player.imageUrl!,
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildDefaultAvatar();
-                          },
-                        )
-                      : _buildDefaultAvatar(),
-                ),
-                
-                const SizedBox(width: 12),
-                
-                // Player info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+
+          return Opacity(
+            opacity: provider.isAttendanceLocked ? 0.6 : 1,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: player.imageUrl != null && player.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            player.imageUrl!,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildDefaultAvatar();
+                            },
+                          )
+                        : _buildDefaultAvatar(),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '#${player.number} ${player.name}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          'Position: ${player.position}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
                     children: [
-                      Text(
-                        '#${player.number} ${player.name}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                      GestureDetector(
+                        onTap: provider.isAttendanceLocked
+                            ? null
+                            : () => provider.markAttendance(playerId, false),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: !isPresent ? Colors.red[50] : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: !isPresent ? Colors.red : Colors.grey[300]!,
+                              width: !isPresent ? 2 : 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            color: !isPresent ? Colors.red : Colors.grey[400],
+                            size: 20,
+                          ),
                         ),
                       ),
-                      Text(
-                        'Position: ${player.position}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: provider.isAttendanceLocked
+                            ? null
+                            : () => provider.markAttendance(playerId, true),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isPresent ? Colors.green[50] : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isPresent ? Colors.green : Colors.grey[300]!,
+                              width: isPresent ? 2 : 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.check,
+                            color: isPresent ? Colors.green : Colors.grey[400],
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                
-                // Attendance buttons
-                Row(
-                  children: [
-                    // Absent button
-                    GestureDetector(
-                      onTap: () => provider.markAttendance(playerId, false),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: !isPresent ? Colors.red[50] : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: !isPresent ? Colors.red : Colors.grey[300]!,
-                            width: !isPresent ? 2 : 1,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.close,
-                          color: !isPresent ? Colors.red : Colors.grey[400],
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Present button
-                    GestureDetector(
-                      onTap: () => provider.markAttendance(playerId, true),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isPresent ? Colors.green[50] : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isPresent ? Colors.green : Colors.grey[300]!,
-                            width: isPresent ? 2 : 1,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          color: isPresent ? Colors.green : Colors.grey[400],
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),
