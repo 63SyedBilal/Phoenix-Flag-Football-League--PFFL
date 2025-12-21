@@ -1,48 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
-import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/features/captain/model/player_model.dart';
 import 'package:pffl_managment/features/referee/models/game_timeline_entry.dart';
-/// Game action types for referee
-enum GameAction {
-  toss,
-  halfTimeDone,
-  fullTimeDone,
-  overTime,
-  gameComplete,
-}
+import 'package:pffl_managment/features/referee/models/referee_game_action.dart';
+import 'package:pffl_managment/features/referee/models/referee_player_score_entry.dart';
+import 'package:pffl_managment/features/referee/services/referee_game_detail_service.dart';
 
-/// Local representation of a player's scoring summary during the game.
-class PlayerScoreEntry {
-  const PlayerScoreEntry({
-    required this.playerId,
-    required this.playerName,
-    required this.teamId,
-    required this.points,
-  });
-
-  final String playerId;
-  final String playerName;
-  final String teamId;
-  final int points;
-
-  PlayerScoreEntry copyWith({
-    String? playerName,
-    String? teamId,
-    int? points,
-  }) {
-    return PlayerScoreEntry(
-      playerId: playerId,
-      playerName: playerName ?? this.playerName,
-      teamId: teamId ?? this.teamId,
-      points: points ?? this.points,
-    );
-  }
-}
+part 'referee_game_detail_actions_mixin.dart';
+part 'referee_game_detail_attendance_extension.dart';
+part 'referee_game_detail_players_extension.dart';
+part 'referee_game_detail_helpers_extension.dart';
 
 /// Provider for Referee Game Detail screen
 class RefereeGameDetailProvider extends ChangeNotifier {
+  RefereeGameDetailProvider({
+    RefereeGameDetailService refereeGameDetailService =
+        const RefereeGameDetailService(),
+  }) : _refereeGameDetailService = refereeGameDetailService;
+
   // Current match data
   MatchModel? _match;
   
@@ -51,7 +27,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   int _awayScore = 0;
 
   // Player score board
-  final Map<String, PlayerScoreEntry> _playerScoreEntries = {};
+  final Map<String, RefereePlayerScoreEntry> _playerScoreEntries = {};
   
   // Selected tab index (0: Game actions, 1: Mark Attendance, 2: Select Players)
   int _selectedTabIndex = 0;
@@ -88,6 +64,8 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   final Map<String, List<PlayerModel>> _teamPlayers = {}; // teamId -> List<PlayerModel>
   bool _isLoadingPlayers = false;
   
+  final RefereeGameDetailService _refereeGameDetailService;
+
   // Getters
   MatchModel? get match => _match;
   int get selectedTabIndex => _selectedTabIndex;
@@ -103,7 +81,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   String? get error => _error;
   int get homeScore => _homeScore;
   int get awayScore => _awayScore;
-  List<PlayerScoreEntry> get playerScoreBoard {
+  List<RefereePlayerScoreEntry> get playerScoreBoard {
     final entries = _playerScoreEntries.values.toList()
       ..sort((a, b) => b.points.compareTo(a.points));
     return entries;
@@ -192,839 +170,48 @@ class RefereeGameDetailProvider extends ChangeNotifier {
     _isFabExpanded = false;
     notifyListeners();
   }
-  
-  /// Execute game action
-  Future<void> executeAction(GameAction action) async {
-    if (_match == null || _match!.id == null) {
-      _error = 'Match not initialized';
-      notifyListeners();
-      return;
-    }
 
-    // Toss is handled via a separate dialog, so we don't execute it here
-    if (action == GameAction.toss) {
-      return; // Toss dialog will be shown from the UI
-    }
-
-    // Convert GameAction to actionType string
-    String actionType = '';
-    switch (action) {
-      case GameAction.halfTimeDone:
-        actionType = 'Half Time Done';
-        break;
-      case GameAction.fullTimeDone:
-        actionType = 'Full Time Done';
-        break;
-      case GameAction.overTime:
-        actionType = 'Over Time';
-        break;
-      case GameAction.gameComplete:
-        actionType = 'Game Complete';
-        break;
-      default:
-        actionType = 'Unknown Action';
-    }
-    
-    final pointsEarned = _getPointsForAction(actionType);
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-    
-    try {
-      switch (action) {
-        case GameAction.toss:
-          // Toss is handled via a separate dialog, should not reach here
-          // This case is included for exhaustiveness
-          return;
-        case GameAction.halfTimeDone:
-          // Call API to switch to half time
-          final updatedMatch = await MatchService.switchHalfTime(_match!.id!);
-          _match = updatedMatch;
-          _syncScoresFromMatch(updatedMatch);
-          _isHalfTimeDone = true;
-          _addAction(
-        'Half Time',
-        'Half time completed',
-        type: GameTimelineEntryType.milestone,
-        icon: Icons.circle,
-        iconColor: const Color(0xFF1E293B),
-      );
-          break;
-        case GameAction.fullTimeDone:
-          // Call API to switch to full time
-          final updatedMatch = await MatchService.switchFullTime(_match!.id!);
-          _match = updatedMatch;
-          _syncScoresFromMatch(updatedMatch);
-          _isFullTimeDone = true;
-          _addAction(
-        'Full Time',
-        'Full time completed',
-        type: GameTimelineEntryType.milestone,
-        icon: Icons.circle,
-        iconColor: const Color(0xFF1E293B),
-      );
-          break;
-        case GameAction.overTime:
-          // Call API to switch to overtime
-          final updatedMatch = await MatchService.switchOvertime(_match!.id!);
-          _match = updatedMatch;
-          _syncScoresFromMatch(updatedMatch);
-          _isOverTime = true;
-          _addAction(
-        'Over Time',
-        'Over time started',
-        type: GameTimelineEntryType.milestone,
-        icon: Icons.circle,
-        iconColor: const Color(0xFF1E293B),
-        showAddBadge: true,
-      );
-          break;
-        case GameAction.gameComplete:
-          // Update match status to completed
-          final updatedMatch = await MatchService.updateMatch(
-            _match!.id!,
-            {'status': 'completed'},
-          );
-          _match = updatedMatch;
-          _isGameComplete = true;
-          _addAction(
-        'Game Complete',
-        'Game has been completed',
-        type: GameTimelineEntryType.milestone,
-        icon: Icons.circle,
-        iconColor: const Color(0xFF1E293B),
-      );
-          break;
-      }
-      
-      _isFabExpanded = false;
-    } catch (e) {
-      _error = 'Failed to execute action: ${e.toString()}';
-      debugPrint('❌ Error executing action: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-  
-  /// Add action to history
-  void _addAction(
-    String title,
-    String description, {
-    GameTimelineEntryType type = GameTimelineEntryType.milestone,
-    bool isStart = false,
-    bool showAddBadge = false,
-    IconData? icon,
-    Color? iconColor,
-    String? playerName,
-    String? position,
-    bool isLeft = true,
-  }) {
-    _gameActions.insert(0, {
-      'title': title,
-      'description': description,
-      'timestamp': DateTime.now(),
-      'type': type,
-      'isStart': isStart,
-      'showAddBadge': showAddBadge,
-      'icon': icon,
-      'iconColor': iconColor,
-      'playerName': playerName,
-      'position': position,
-      'isLeft': isLeft,
-    });
-  }
-  
-  /// Add custom action
-  void addCustomAction(String title, String description) {
-    _addAction(title, description);
-    notifyListeners();
-  }
-  
-  /// Forfeit game
-  Future<bool> forfeitGame() async {
-    if (_isPlayersLocked) {
-      return true;
-    }
-
-    _isLoading = true;
-    notifyListeners();
-    
-    try {
-      // TODO: Call API to forfeit game
-      _isGameComplete = true;
-      _addAction('Game Forfeited', 'Game has been forfeited');
-      return true;
-    } catch (e) {
-      _error = 'Failed to forfeit game: $e';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-  
-  /// Clear error
   void clearError() {
     _error = null;
     notifyListeners();
   }
 
-  /// Complete toss - called from toss dialog
-  Future<void> completeToss(String winnerTeamId, String winnerSide) async {
-    if (_match == null || _match!.id == null) {
-      _error = 'Match not initialized';
-      notifyListeners();
-      throw Exception('Match not initialized');
-    }
-
-    _isLoading = true;
-    _error = null;
+  /// Emits a change notification for state updates performed in extensions.
+  void _emitStateChange() {
     notifyListeners();
-
-    try {
-      // Call API to complete toss
-      final updatedMatch = await MatchService.completeToss(
-        matchId: _match!.id!,
-        winnerTeamId: winnerTeamId,
-        winnerSide: winnerSide,
-      );
-      
-      _match = updatedMatch;
-      _syncScoresFromMatch(updatedMatch);
-      _isTossCompleted = true;
-      _addAction(
-        'Toss',
-        'Toss completed - ${winnerSide == 'offense' ? 'Offensive' : 'Defensive'} selected',
-        type: GameTimelineEntryType.milestone,
-        icon: Icons.circle,
-        iconColor: const Color(0xFF1E293B),
-      );
-    } catch (e) {
-      _error = 'Failed to complete toss: ${e.toString()}';
-      debugPrint('❌ Error completing toss: $e');
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
   }
 
-  /// Add game action (Touchdown, Extra Point, etc.)
+  /// Delegates to the actions extension to execute a high-level game event.
+  Future<void> executeAction(RefereeGameAction action) {
+    return RefereeGameDetailActionsExtension(this).executeAction(action);
+  }
+
+  /// Delegates to the actions extension to record toss completion.
+  Future<void> completeToss(String winnerTeamId, String winnerSide) {
+    return RefereeGameDetailActionsExtension(this)
+        .completeToss(winnerTeamId, winnerSide);
+  }
+
+  /// Delegates to the actions extension to add a specific game action entry.
   Future<void> addGameAction({
     required String teamId,
     required String playerId,
     required String actionType,
-  }) async {
-    if (_match == null || _match!.id == null) {
-      _error = 'Match not initialized';
-      notifyListeners();
-      throw Exception('Match not initialized');
-    }
-
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      // Calculate points earned for this action
-      final pointsEarned = _getPointsForAction(actionType);
-      
-      // Call API to add game action
-      final updatedMatch = await MatchService.addGameAction(
-        matchId: _match!.id!,
-        teamId: teamId,
-        playerId: playerId,
-        actionType: actionType,
-      );
-      
-      _match = updatedMatch;
-      _applyTeamScoreUpdate(
-        updatedMatch: updatedMatch,
-        teamId: teamId,
-        fallbackPoints: pointsEarned,
-      );
-      _recordPlayerScore(
-        playerId: playerId,
-        teamId: teamId,
-        points: pointsEarned,
-      );
-      
-      final teamLabel = _getTeamDisplayName(teamId);
-      final playerName = _getPlayerDisplayName(playerId);
-      final description = pointsEarned > 0
-          ? '$playerName scored +$pointsEarned pts'
-          : '$playerName recorded $actionType';
-      
-      _addAction(
-        '$actionType · $teamLabel',
-        description,
-        type: GameTimelineEntryType.player,
-        playerName: playerName,
-        position: _getPlayerPosition(playerId),
-        icon: _getIconForAction(actionType),
-        iconColor: _getColorForAction(actionType),
-        isLeft: _isHomeTeam(teamId),
-      );
-      
-      debugPrint('✅ Game action added successfully');
-    } catch (e) {
-      _error = 'Failed to add game action: ${e.toString()}';
-      debugPrint('❌ Error adding game action: $e');
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-  
-  // ============== Team Players Methods ==============
-  
-  /// Fetch players for a specific team
-  Future<void> fetchTeamPlayers(String teamId) async {
-    // Return if players already loaded for this team
-    if (_teamPlayers.containsKey(teamId) && _teamPlayers[teamId]!.isNotEmpty) {
-      debugPrint('✅ Players already loaded for team: $teamId (${_teamPlayers[teamId]!.length} players)');
-      return;
-    }
-    
-    debugPrint('📡 Starting to fetch players for team: $teamId');
-    _isLoadingPlayers = true;
-    notifyListeners();
-    
-    try {
-      debugPrint('📡 Fetching players for team: $teamId');
-      final teamData = await TeamService.getTeamById(teamId);
-      
-      if (teamData == null) {
-        debugPrint('⚠️ No team data found for teamId: $teamId');
-        _teamPlayers[teamId] = [];
-        return;
-      }
-      
-      // Parse players from squad5v5 and squad7v7
-      final List<PlayerModel> players = [];
-      
-      // Parse squad5v5
-      final squad5v5 = teamData['squad5v5'] as List? ?? [];
-      for (var playerData in squad5v5) {
-        if (playerData is Map<String, dynamic>) {
-          try {
-            final player = _parsePlayerFromTeamData(playerData);
-            if (player != null) players.add(player);
-          } catch (e) {
-            debugPrint('⚠️ Error parsing player: $e');
-          }
-        }
-      }
-      
-      // Parse squad7v7
-      final squad7v7 = teamData['squad7v7'] as List? ?? [];
-      for (var playerData in squad7v7) {
-        if (playerData is Map<String, dynamic>) {
-          try {
-            final player = _parsePlayerFromTeamData(playerData);
-            // Avoid duplicates
-            if (player != null && !players.any((p) => p.id == player.id)) {
-              players.add(player);
-            }
-          } catch (e) {
-            debugPrint('⚠️ Error parsing player: $e');
-          }
-        }
-      }
-      
-      _teamPlayers[teamId] = players;
-      for (final player in players) {
-        _playerTeamMap[player.id] = teamId;
-      }
-      debugPrint('✅ Loaded ${players.length} players for team: $teamId');
-      
-      // Log player details for debugging
-      for (var player in players) {
-        debugPrint('   - Player: ${player.name} (#${player.number}) - ${player.position}');
-      }
-    } catch (e) {
-      debugPrint('❌ Error fetching team players: $e');
-      _teamPlayers[teamId] = [];
-      _error = 'Failed to fetch team players: ${e.toString()}';
-    } finally {
-      _isLoadingPlayers = false;
-      debugPrint('🔔 Calling notifyListeners from fetchTeamPlayers');
-      notifyListeners();
-    }
-  }
-  
-  /// Parse player from team data
-  PlayerModel? _parsePlayerFromTeamData(Map<String, dynamic> data) {
-    try {
-      // Handle both populated player objects and bare ObjectIds
-      final playerId = data['_id'] ?? data['id'];
-      if (playerId == null) return null;
-      
-      // If player data is populated
-      if (data['name'] != null || data['email'] != null) {
-        return PlayerModel(
-          id: playerId.toString(),
-          name: data['name'] ?? 'Unknown',
-          number: data['number']?.toString() ?? data['jerseyNumber']?.toString() ?? '00',
-          email: data['email'] ?? '',
-          position: data['position'] ?? 'Unknown',
-          imageUrl: data['profilePictureUrl'] ?? data['avatar'],
-          isCaptain: data['isCaptain'] ?? false,
-          isVerified: data['isVerified'] ?? false,
-          isPaid: data['isPaid'] ?? false,
-        );
-      }
-      
-      // If only player ID is available (not populated)
-      return PlayerModel(
-        id: playerId.toString(),
-        name: 'Player ${playerId.toString().substring(playerId.toString().length - 4)}',
-        number: '00',
-        email: '',
-        position: 'Unknown',
-      );
-    } catch (e) {
-      debugPrint('⚠️ Error parsing player data: $e');
-      return null;
-    }
-  }
-  
-  // ============== Attendance Methods ==============
-  
-  /// Set selected attendance team and fetch players
-  Future<void> setAttendanceTeam(String? teamId) async {
-    debugPrint('🔄 Setting attendance team to: $teamId');
-    _selectedAttendanceTeamId = teamId;
-    notifyListeners(); // Update UI to show selected team
-    
-    // Fetch players for the selected team
-    if (teamId != null && teamId.isNotEmpty) {
-      await fetchTeamPlayers(teamId);
-      debugPrint('✅ Attendance team set to: $teamId, Players loaded: ${_teamPlayers[teamId]?.length ?? 0}');
-      notifyListeners(); // Update UI again after players are loaded
-    }
-  }
-  
-  /// Mark player attendance
-  void markAttendance(String playerId, bool isPresent) {
-    if (_isAttendanceLocked) {
-      return;
-    }
-    _playerAttendance[playerId] = isPresent;
-    
-    // If marking as absent, remove from selected players in all teams
-    if (!isPresent) {
-      _selectedPlayersByTeam.forEach((teamId, players) {
-        players.remove(playerId);
-      });
-    }
-    
-    notifyListeners();
-  }
-  
-  /// Toggle player attendance
-  void toggleAttendance(String playerId) {
-    if (_isAttendanceLocked) {
-      return;
-    }
-    final currentStatus = _playerAttendance[playerId] ?? false;
-    markAttendance(playerId, !currentStatus);
-  }
-  
-  /// Clear attendance for all players
-  void clearAttendance() {
-    if (_isAttendanceLocked) {
-      return;
-    }
-    _playerAttendance.clear();
-    notifyListeners();
-  }
-
-  /// Confirm attendance and lock further edits
-  Future<bool> confirmAttendance() async {
-    if (_isAttendanceLocked) {
-      return true;
-    }
-
-    final presentCount = _playerAttendance.values.where((v) => v == true).length;
-    if (presentCount == 0) {
-      _error = 'Please mark at least one player as present';
-      notifyListeners();
-      return false;
-    }
-
-    final requiredPlayers = _requiredPlayersPerTeam();
-    final homeTeamId = _match?.homeTeamId;
-    final awayTeamId = _match?.awayTeamId;
-    if (requiredPlayers > 0 &&
-        homeTeamId != null &&
-        homeTeamId.isNotEmpty &&
-        awayTeamId != null &&
-        awayTeamId.isNotEmpty) {
-      final homePresent = _countPresentPlayersForTeam(homeTeamId);
-      final awayPresent = _countPresentPlayersForTeam(awayTeamId);
-      if (homePresent < requiredPlayers || awayPresent < requiredPlayers) {
-        _error =
-            'Format ${_match?.format ?? ''} requires $requiredPlayers players per team. '
-            '${_match?.homeTeam ?? 'Home'}: $homePresent/$requiredPlayers, '
-            '${_match?.awayTeam ?? 'Away'}: $awayPresent/$requiredPlayers.';
-        notifyListeners();
-        return false;
-      }
-    }
-
-    _isAttendanceLocked = true;
-    _addAction(
-      'Attendance Locked',
-      '$presentCount player(s) marked present',
-      type: GameTimelineEntryType.milestone,
-      icon: Icons.lock,
-      iconColor: const Color(0xFF1E293B),
-    );
-    notifyListeners();
-    return true;
-  }
-  
-  // ============== Player Selection Methods ==============
-  
-  /// Set selected players team and fetch players
-  Future<void> setPlayersTeam(String? teamId) async {
-    debugPrint('🔄 Setting players team to: $teamId');
-    _selectedPlayersTeamId = teamId;
-    notifyListeners(); // Update UI to show selected team
-    
-    // Fetch players for the selected team
-    if (teamId != null && teamId.isNotEmpty) {
-      await fetchTeamPlayers(teamId);
-      debugPrint('✅ Players team set to: $teamId, Players loaded: ${_teamPlayers[teamId]?.length ?? 0}');
-      notifyListeners(); // Update UI again after players are loaded
-    }
-  }
-  
-  /// Select player for current team
-  void selectPlayer(String playerId) {
-    if (_isPlayersLocked) {
-      return;
-    }
-    if (_selectedPlayersTeamId == null) return;
-    
-    // Only allow selection if player is present
-    if (isPlayerPresent(playerId)) {
-      _selectedPlayersByTeam[_selectedPlayersTeamId!] ??= {};
-      _selectedPlayersByTeam[_selectedPlayersTeamId!]!.add(playerId);
-      notifyListeners();
-    }
-  }
-  
-  /// Deselect player from current team
-  void deselectPlayer(String playerId) {
-    if (_isPlayersLocked) {
-      return;
-    }
-    if (_selectedPlayersTeamId == null) return;
-    
-    _selectedPlayersByTeam[_selectedPlayersTeamId]?.remove(playerId);
-    notifyListeners();
-  }
-  
-  /// Toggle player selection
-  void togglePlayerSelection(String playerId) {
-    if (_isPlayersLocked) {
-      return;
-    }
-    if (_selectedPlayersTeamId == null) return;
-    
-    _selectedPlayersByTeam[_selectedPlayersTeamId!] ??= {};
-    final isSelected = _selectedPlayersByTeam[_selectedPlayersTeamId!]!.contains(playerId);
-    
-    if (isSelected) {
-      deselectPlayer(playerId);
-    } else {
-      selectPlayer(playerId);
-    }
-  }
-  
-  /// Clear all player selections
-  void clearPlayerSelection() {
-    if (_isPlayersLocked) {
-      return;
-    }
-    _selectedPlayersByTeam.clear();
-    notifyListeners();
-  }
-  
-  /// Confirm player selection - save to backend
-  Future<bool> confirmPlayerSelection() async {
-    // Calculate total selected players
-    int totalSelected = 0;
-    _selectedPlayersByTeam.forEach((teamId, players) {
-      totalSelected += players.length;
-    });
-    
-    if (totalSelected == 0) {
-      _error = 'No players selected';
-      notifyListeners();
-      return false;
-    }
-    
-    _isLoading = true;
-    notifyListeners();
-    
-    try {
-      // TODO: Call API to save selected players
-      debugPrint('✅ Selected players confirmed:');
-      _selectedPlayersByTeam.forEach((teamId, players) {
-        debugPrint('   Team $teamId: ${players.length} players - $players');
-      });
-      
-      _addAction(
-        'Players Selected',
-        '$totalSelected players confirmed',
-        type: GameTimelineEntryType.milestone,
-        icon: Icons.group,
-        iconColor: const Color(0xFF1E293B),
-      );
-      _isPlayersLocked = true;
-      return true;
-    } catch (e) {
-      _error = 'Failed to confirm players: $e';
-      debugPrint('❌ Error confirming players: $e');
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // ============== Scoreboard Helpers ==============
-
-  void _resetScoreTracking() {
-    _playerScoreEntries.clear();
-    _homeScore = 0;
-    _awayScore = 0;
-  }
-
-  void _resetAttendanceAndSelection() {
-    _selectedAttendanceTeamId = null;
-    _playerAttendance.clear();
-    _isAttendanceLocked = false;
-    _playerTeamMap.clear();
-    _selectedPlayersTeamId = null;
-    _selectedPlayersByTeam.clear();
-    _isPlayersLocked = false;
-  }
-
-  int _requiredPlayersPerTeam() {
-    final format = _match?.format?.toLowerCase();
-    if (format == '5v5') {
-      return 5;
-    }
-    if (format == '7v7') {
-      return 7;
-    }
-    return 0;
-  }
-
-  int _countPresentPlayersForTeam(String teamId) {
-    int count = 0;
-    _playerAttendance.forEach((playerId, isPresent) {
-      if (isPresent && _playerTeamMap[playerId] == teamId) {
-        count++;
-      }
-    });
-    return count;
-  }
-
-  void _syncScoresFromMatch(MatchModel? match) {
-    if (match == null) return;
-    if (match.homeScore != null) {
-      _homeScore = match.homeScore!;
-    }
-    if (match.awayScore != null) {
-      _awayScore = match.awayScore!;
-    }
-  }
-
-  int _getPointsForAction(String actionType) {
-    switch (actionType) {
-      case 'Touchdown':
-        return 6;
-      case 'Extra Point from 5-yard line':
-        return 1;
-      case 'Extra Point from 12-yard line':
-        return 2;
-      case 'Extra Point from 20-yard line':
-        return 3;
-      default:
-        return 0;
-    }
-  }
-
-  void _applyTeamScoreUpdate({
-    required MatchModel updatedMatch,
-    required String teamId,
-    required int fallbackPoints,
   }) {
-    final hadBackendScores =
-        (updatedMatch.homeScore != null || updatedMatch.awayScore != null);
-    _syncScoresFromMatch(updatedMatch);
-    if (hadBackendScores || fallbackPoints == 0) {
-      return;
-    }
-
-    if (_isHomeTeam(teamId)) {
-      _homeScore += fallbackPoints;
-    } else {
-      _awayScore += fallbackPoints;
-    }
-  }
-
-  void _recordPlayerScore({
-    required String playerId,
-    required String teamId,
-    required int points,
-  }) {
-    if (points == 0) return;
-    final existing = _playerScoreEntries[playerId];
-    final playerName = existing?.playerName ?? _getPlayerDisplayName(playerId);
-
-    if (existing == null) {
-      _playerScoreEntries[playerId] = PlayerScoreEntry(
-        playerId: playerId,
-        playerName: playerName,
-        teamId: teamId,
-        points: points,
-      );
-    } else {
-      _playerScoreEntries[playerId] = existing.copyWith(
-        points: existing.points + points,
-        teamId: teamId,
-        playerName: playerName,
-      );
-    }
-  }
-
-  String getTeamLabel(String teamId) => _getTeamDisplayName(teamId);
-
-  String _getTeamDisplayName(String teamId) {
-    if (_match == null) return 'Team';
-    if (_match!.homeTeamId == teamId) {
-      return _match!.homeTeam;
-    }
-    if (_match!.awayTeamId == teamId) {
-      return _match!.awayTeam;
-    }
-    return 'Team';
-  }
-
-  String _getPlayerDisplayName(String playerId) {
-    final player = _findPlayerById(playerId);
-    if (player != null) {
-      if (player.number.isNotEmpty && player.number != '00') {
-        return '#${player.number} ${player.name}';
-      }
-      return player.name;
-    }
-    if (playerId.length <= 4) return 'Player $playerId';
-    return 'Player ${playerId.substring(playerId.length - 4)}';
-  }
-
-  PlayerModel? _findPlayerById(String playerId) {
-    for (final players in _teamPlayers.values) {
-      for (final player in players) {
-        if (player.id == playerId) {
-          return player;
-        }
-      }
-    }
-    return null;
-  }
-
-  bool _isHomeTeam(String teamId) {
-    final homeTeamId = _match?.homeTeamId;
-    if (homeTeamId != null && homeTeamId.isNotEmpty) {
-      return homeTeamId == teamId;
-    }
-    return false;
-  }
-
-  List<GameTimelineEntry> _buildTimelineEntries() {
-    final entries = <GameTimelineEntry>[
-      const GameTimelineEntry.milestone(
-        label: 'Over Time',
-        showAddBadge: true,
-      ),
-      const GameTimelineEntry.milestone(label: 'Full Time'),
-      const GameTimelineEntry.milestone(label: 'Half Time'),
-    ];
-
-    for (final action in _gameActions) {
-      final type = action['type'] as GameTimelineEntryType?;
-      if (type == GameTimelineEntryType.player) {
-        entries.add(
-          GameTimelineEntry.player(
-            playerName: action['playerName'] as String? ?? action['title'] as String? ?? '',
-            position: action['position'] as String? ?? action['description'] as String? ?? '',
-            icon: action['icon'] as IconData? ?? Icons.sports_football,
-            iconColor: action['iconColor'] as Color? ?? const Color(0xFF1E293B),
-            isLeft: action['isLeft'] as bool? ?? true,
-          ),
-        );
-      } else {
-        entries.add(
-          GameTimelineEntry.milestone(
-            label: action['title'] as String? ?? '',
-            icon: action['icon'] as IconData? ?? Icons.circle,
-            iconColor: action['iconColor'] as Color? ?? const Color(0xFF1E293B),
-            showAddBadge: action['showAddBadge'] as bool? ?? false,
-            isStart: action['isStart'] as bool? ?? false,
-          ),
-        );
-      }
-    }
-
-    entries.add(
-      const GameTimelineEntry.milestone(
-        label: 'Start',
-        icon: Icons.play_circle,
-        isStart: true,
-      ),
+    return RefereeGameDetailActionsExtension(this).addGameAction(
+      teamId: teamId,
+      playerId: playerId,
+      actionType: actionType,
     );
-
-    return entries;
   }
 
-  IconData _getIconForAction(String actionType) {
-    switch (actionType) {
-      case 'Touchdown':
-        return Icons.sports_football;
-      case 'Extra Point from 5-yard line':
-      case 'Extra Point from 12-yard line':
-      case 'Extra Point from 20-yard line':
-        return Icons.sports;
-      default:
-        return Icons.flag;
-    }
+  /// Delegates to the actions extension to forfeit the current game.
+  Future<bool> forfeitGame() {
+    return RefereeGameDetailActionsExtension(this).forfeitGame();
   }
 
-  Color _getColorForAction(String actionType) {
-    switch (actionType) {
-      case 'Touchdown':
-        return const Color(0xFF1E293B);
-      case 'Extra Point from 5-yard line':
-      case 'Extra Point from 12-yard line':
-      case 'Extra Point from 20-yard line':
-        return const Color(0xFF1E293B);
-      default:
-        return const Color(0xFFFBBF24);
-    }
-  }
-
-  String _getPlayerPosition(String playerId) {
-    final player = _findPlayerById(playerId);
-    return player?.position ?? 'Player';
+  /// Delegates to the actions extension to insert a custom timeline entry.
+  void addCustomAction(String title, String description) {
+    RefereeGameDetailActionsExtension(this).addCustomAction(title, description);
   }
 }
-

@@ -161,8 +161,8 @@ class MatchService {
                 final Map<String, String> map = {};
                 if (league != null) {
                   for (final t in league.teams) {
-                    if (t.id != null && t.id!.isNotEmpty) {
-                      map[t.id!] = t.teamName;
+                    if (t.id.isNotEmpty) {
+                      map[t.id] = t.teamName;
                     }
                   }
                 }
@@ -251,8 +251,8 @@ class MatchService {
           final Map<String, String> teamNameById = {};
           if (league != null) {
             for (final t in league.teams) {
-              if (t.id != null && t.id!.isNotEmpty) {
-                teamNameById[t.id!] = t.teamName;
+              if (t.id.isNotEmpty) {
+                teamNameById[t.id] = t.teamName;
               }
             }
           }
@@ -297,8 +297,8 @@ class MatchService {
             final Map<String, String> teamNameById = {};
             if (league != null) {
               for (final t in league.teams) {
-                if (t.id != null && t.id!.isNotEmpty) {
-                  teamNameById[t.id!] = t.teamName;
+                if (t.id.isNotEmpty) {
+                  teamNameById[t.id] = t.teamName;
                 }
               }
             }
