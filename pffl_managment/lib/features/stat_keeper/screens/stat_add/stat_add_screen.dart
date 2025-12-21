@@ -12,8 +12,9 @@ import 'package:pffl_managment/features/stat_keeper/providers/stat_add_provider.
 
 class _ActionButtons extends StatelessWidget {
   final StatAddProvider provider;
+  final bool isDialog;
 
-  const _ActionButtons({required this.provider});
+  const _ActionButtons({required this.provider, this.isDialog = false});
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +30,15 @@ class _ActionButtons extends StatelessWidget {
               text: 'Cancel',
               onPressed: () {
                 provider.clearForm();
-                // Navigate back to Home (index 0) or Stats (index 3)
-                Provider.of<StatKeeperNavigationProvider>(
-                  context,
-                  listen: false,
-                ).setIndex(0);
+                if (isDialog) {
+                  Navigator.of(context).pop();
+                } else {
+                  // Navigate back to Home (index 0) or Stats (index 3)
+                  Provider.of<StatKeeperNavigationProvider>(
+                    context,
+                    listen: false,
+                  ).setIndex(0);
+                }
               },
               height: 48,
             ),
@@ -44,6 +49,9 @@ class _ActionButtons extends StatelessWidget {
               text: 'Save as Draft',
               onPressed: () async {
                 await provider.saveAsDraft(context);
+                if (isDialog && context.mounted) {
+                  Navigator.of(context).pop();
+                }
                 // Navigation is handled in provider
               },
               height: 48,
@@ -66,138 +74,165 @@ class StatAddScreen extends StatelessWidget {
       child: const _StatAddScreenContent(),
     );
   }
+
+  static void showAsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
+          child: ChangeNotifierProvider(
+            create: (_) => StatAddProvider(),
+            child: const _StatAddScreenContent(isDialog: true),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _StatAddScreenContent extends StatelessWidget {
-  const _StatAddScreenContent();
+  const _StatAddScreenContent({this.isDialog = false});
+
+  final bool isDialog;
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<StatAddProvider>();
 
+    final content = Container(
+      constraints: const BoxConstraints(maxWidth: 400),
+      margin: isDialog ? EdgeInsets.zero : const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          const _HeaderSection(),
+
+          // Scrollable content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+
+                  // Team Selection
+                  _buildLabel('Select Team'),
+                  const SizedBox(height: 8),
+                  SimpleDropdownList(
+                    selectedValue: provider.selectedTeam,
+                    items: provider.teams,
+                    onSelected: provider.setSelectedTeam,
+                    hintText: 'Select Team',
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Player Selection
+                  _buildLabel('Select Player'),
+                  const SizedBox(height: 8),
+                  SimpleDropdownList(
+                    selectedValue: provider.selectedPlayer,
+                    items: provider.players,
+                    onSelected: provider.setSelectedPlayer,
+                    hintText: 'Select Player',
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Stat Fields
+                  _buildStatRow(
+                    'Catches',
+                    'Catches Yards',
+                    provider.catchesController,
+                    provider.catchesYardsController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildStatRow(
+                    'Rushes',
+                    'Rushes Yards',
+                    provider.rushesController,
+                    provider.rushesYardsController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildStatRow(
+                    'Pass Attempts',
+                    'Pass Yards',
+                    provider.passAttemptsController,
+                    provider.passYardsController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildStatRow(
+                    'Completions',
+                    'TD\'s',
+                    provider.completionsController,
+                    provider.tdsController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildStatRow(
+                    'Flag Pull',
+                    'Sack',
+                    provider.flagPullController,
+                    provider.sackController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildStatRow(
+                    'INT',
+                    'Safety',
+                    provider.intController,
+                    provider.safetyController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Conversion Points (full width)
+                  _buildLabel('Conversion Points'),
+                  const SizedBox(height: 8),
+                  CustomTextField(
+                    controller: provider.conversionPointsController,
+                    hintText: 'Enter here',
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+
+          // Action Buttons
+          _ActionButtons(provider: provider, isDialog: isDialog),
+        ],
+      ),
+    );
+
+    if (isDialog) {
+      return content;
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                const _HeaderSection(),
-
-                // Scrollable content
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 24),
-
-                        // Team Selection
-                        _buildLabel('Select Team'),
-                        const SizedBox(height: 8),
-                        SimpleDropdownList(
-                          selectedValue: provider.selectedTeam,
-                          items: provider.teams,
-                          onSelected: provider.setSelectedTeam,
-                          hintText: 'Select Team',
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Player Selection
-                        _buildLabel('Select Player'),
-                        const SizedBox(height: 8),
-                        SimpleDropdownList(
-                          selectedValue: provider.selectedPlayer,
-                          items: provider.players,
-                          onSelected: provider.setSelectedPlayer,
-                          hintText: 'Select Player',
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Stat Fields
-                        _buildStatRow(
-                          'Catches',
-                          'Catches Yards',
-                          provider.catchesController,
-                          provider.catchesYardsController,
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildStatRow(
-                          'Rushes',
-                          'Rushes Yards',
-                          provider.rushesController,
-                          provider.rushesYardsController,
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildStatRow(
-                          'Pass Attempts',
-                          'Pass Yards',
-                          provider.passAttemptsController,
-                          provider.passYardsController,
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildStatRow(
-                          'Completions',
-                          'TD\'s',
-                          provider.completionsController,
-                          provider.tdsController,
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildStatRow(
-                          'Flag Pull',
-                          'Sack',
-                          provider.flagPullController,
-                          provider.sackController,
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildStatRow(
-                          'INT',
-                          'Safety',
-                          provider.intController,
-                          provider.safetyController,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Conversion Points (full width)
-                        _buildLabel('Conversion Points'),
-                        const SizedBox(height: 8),
-                        CustomTextField(
-                          controller: provider.conversionPointsController,
-                          hintText: 'Enter here',
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Action Buttons
-                _ActionButtons(provider: provider),
-              ],
-            ),
-          ),
+          child: content,
         ),
       ),
     );
