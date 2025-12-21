@@ -18,6 +18,7 @@ class RefereeGameActionsTab extends StatelessWidget {
 
     return ListView(
       padding: const EdgeInsets.all(16),
+      shrinkWrap: false,
       children: [
         const Text(
           'Actions',
@@ -28,45 +29,52 @@ class RefereeGameActionsTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Center(
-          child: GestureDetector(
-            onTap: onAddActionTap,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: const Icon(
-                Icons.add,
-                color: Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
         if (timelineEntries.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                children: [
-                  Icon(Icons.sports_score_outlined,
-                      size: 48, color: Colors.grey[300]),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No actions recorded yet',
-                    style: TextStyle(color: Colors.grey[500]),
+          Column(
+            children: [
+              Center(
+                child: GestureDetector(
+                  onTap: onAddActionTap,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.black54,
+                      size: 20,
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 24),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.sports_score_outlined,
+                          size: 48, color: Colors.grey[300]),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No actions recorded yet',
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           )
         else
-          GameTimelineWidget(entries: timelineEntries),
+          GameTimelineWidget(
+            entries: timelineEntries,
+            onAddActionTap: onAddActionTap,
+          ),
       ],
     );
   }

@@ -151,7 +151,7 @@ extension RefereeGameDetailHelpersExtension on RefereeGameDetailProvider {
     final entries = <GameTimelineEntry>[
       const GameTimelineEntry.milestone(
         label: 'Over Time',
-        showAddBadge: true,
+        showAddBadge: false,
       ),
       const GameTimelineEntry.milestone(label: 'Full Time'),
       const GameTimelineEntry.milestone(label: 'Half Time'),

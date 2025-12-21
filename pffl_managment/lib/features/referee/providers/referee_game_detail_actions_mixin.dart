@@ -70,7 +70,7 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
             type: GameTimelineEntryType.milestone,
             icon: Icons.circle,
             iconColor: const Color(0xFF1E293B),
-            showAddBadge: true,
+            showAddBadge: false,
           );
           break;
         case RefereeGameAction.gameComplete:

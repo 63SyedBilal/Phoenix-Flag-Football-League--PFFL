@@ -12,10 +12,7 @@ import 'package:pffl_managment/features/referee/widgets/start_game_dialog.dart';
 import 'package:pffl_managment/features/referee/widgets/add_game_action_dialog.dart';
 import 'package:pffl_managment/features/referee/widgets/mark_attendance_screen.dart';
 import 'package:pffl_managment/features/referee/widgets/select_players_screen.dart';
-import 'package:pffl_managment/features/referee/widgets/game_timeline_widget.dart';
 
-/// Referee Game Detail Screen
-/// Shows game details with tabs and FAB actions
 class RefereeGameDetailScreen extends StatelessWidget {
   final MatchModel match;
 
