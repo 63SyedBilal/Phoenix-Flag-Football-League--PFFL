@@ -3,7 +3,7 @@ import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/features/captain/model/player_model.dart';
-
+import 'package:pffl_managment/features/referee/models/game_timeline_entry.dart';
 /// Game action types for referee
 enum GameAction {
   toss,
@@ -97,6 +97,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   bool get isOverTime => _isOverTime;
   bool get isGameComplete => _isGameComplete;
   List<Map<String, dynamic>> get gameActions => List.unmodifiable(_gameActions);
+  List<GameTimelineEntry> get timelineEntries => _buildTimelineEntries();
   bool get isFabExpanded => _isFabExpanded;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -241,7 +242,13 @@ class RefereeGameDetailProvider extends ChangeNotifier {
           _match = updatedMatch;
           _syncScoresFromMatch(updatedMatch);
           _isHalfTimeDone = true;
-          _addAction('Half Time', 'Half time completed');
+          _addAction(
+        'Half Time',
+        'Half time completed',
+        type: GameTimelineEntryType.milestone,
+        icon: Icons.circle,
+        iconColor: const Color(0xFF1E293B),
+      );
           break;
         case GameAction.fullTimeDone:
           // Call API to switch to full time
@@ -249,7 +256,13 @@ class RefereeGameDetailProvider extends ChangeNotifier {
           _match = updatedMatch;
           _syncScoresFromMatch(updatedMatch);
           _isFullTimeDone = true;
-          _addAction('Full Time', 'Full time completed');
+          _addAction(
+        'Full Time',
+        'Full time completed',
+        type: GameTimelineEntryType.milestone,
+        icon: Icons.circle,
+        iconColor: const Color(0xFF1E293B),
+      );
           break;
         case GameAction.overTime:
           // Call API to switch to overtime
@@ -257,7 +270,14 @@ class RefereeGameDetailProvider extends ChangeNotifier {
           _match = updatedMatch;
           _syncScoresFromMatch(updatedMatch);
           _isOverTime = true;
-          _addAction('Over Time', 'Over time started');
+          _addAction(
+        'Over Time',
+        'Over time started',
+        type: GameTimelineEntryType.milestone,
+        icon: Icons.circle,
+        iconColor: const Color(0xFF1E293B),
+        showAddBadge: true,
+      );
           break;
         case GameAction.gameComplete:
           // Update match status to completed
@@ -267,7 +287,13 @@ class RefereeGameDetailProvider extends ChangeNotifier {
           );
           _match = updatedMatch;
           _isGameComplete = true;
-          _addAction('Game Complete', 'Game has been completed');
+          _addAction(
+        'Game Complete',
+        'Game has been completed',
+        type: GameTimelineEntryType.milestone,
+        icon: Icons.circle,
+        iconColor: const Color(0xFF1E293B),
+      );
           break;
       }
       
@@ -282,11 +308,30 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   }
   
   /// Add action to history
-  void _addAction(String title, String description) {
+  void _addAction(
+    String title,
+    String description, {
+    GameTimelineEntryType type = GameTimelineEntryType.milestone,
+    bool isStart = false,
+    bool showAddBadge = false,
+    IconData? icon,
+    Color? iconColor,
+    String? playerName,
+    String? position,
+    bool isLeft = true,
+  }) {
     _gameActions.insert(0, {
       'title': title,
       'description': description,
       'timestamp': DateTime.now(),
+      'type': type,
+      'isStart': isStart,
+      'showAddBadge': showAddBadge,
+      'icon': icon,
+      'iconColor': iconColor,
+      'playerName': playerName,
+      'position': position,
+      'isLeft': isLeft,
     });
   }
   
@@ -348,7 +393,13 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       _match = updatedMatch;
       _syncScoresFromMatch(updatedMatch);
       _isTossCompleted = true;
-      _addAction('Toss', 'Toss completed - ${winnerSide == 'offense' ? 'Offensive' : 'Defensive'} selected');
+      _addAction(
+        'Toss',
+        'Toss completed - ${winnerSide == 'offense' ? 'Offensive' : 'Defensive'} selected',
+        type: GameTimelineEntryType.milestone,
+        icon: Icons.circle,
+        iconColor: const Color(0xFF1E293B),
+      );
     } catch (e) {
       _error = 'Failed to complete toss: ${e.toString()}';
       debugPrint('❌ Error completing toss: $e');
@@ -408,6 +459,12 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       _addAction(
         '$actionType · $teamLabel',
         description,
+        type: GameTimelineEntryType.player,
+        playerName: playerName,
+        position: _getPlayerPosition(playerId),
+        icon: _getIconForAction(actionType),
+        iconColor: _getColorForAction(actionType),
+        isLeft: _isHomeTeam(teamId),
       );
       
       debugPrint('✅ Game action added successfully');
@@ -619,7 +676,13 @@ class RefereeGameDetailProvider extends ChangeNotifier {
     }
 
     _isAttendanceLocked = true;
-    _addAction('Attendance Locked', '$presentCount player(s) marked present');
+    _addAction(
+      'Attendance Locked',
+      '$presentCount player(s) marked present',
+      type: GameTimelineEntryType.milestone,
+      icon: Icons.lock,
+      iconColor: const Color(0xFF1E293B),
+    );
     notifyListeners();
     return true;
   }
@@ -716,7 +779,13 @@ class RefereeGameDetailProvider extends ChangeNotifier {
         debugPrint('   Team $teamId: ${players.length} players - $players');
       });
       
-      _addAction('Players Selected', '$totalSelected players confirmed');
+      _addAction(
+        'Players Selected',
+        '$totalSelected players confirmed',
+        type: GameTimelineEntryType.milestone,
+        icon: Icons.group,
+        iconColor: const Color(0xFF1E293B),
+      );
       _isPlayersLocked = true;
       return true;
     } catch (e) {
@@ -879,6 +948,83 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       return homeTeamId == teamId;
     }
     return false;
+  }
+
+  List<GameTimelineEntry> _buildTimelineEntries() {
+    final entries = <GameTimelineEntry>[
+      const GameTimelineEntry.milestone(
+        label: 'Over Time',
+        showAddBadge: true,
+      ),
+      const GameTimelineEntry.milestone(label: 'Full Time'),
+      const GameTimelineEntry.milestone(label: 'Half Time'),
+    ];
+
+    for (final action in _gameActions) {
+      final type = action['type'] as GameTimelineEntryType?;
+      if (type == GameTimelineEntryType.player) {
+        entries.add(
+          GameTimelineEntry.player(
+            playerName: action['playerName'] as String? ?? action['title'] as String? ?? '',
+            position: action['position'] as String? ?? action['description'] as String? ?? '',
+            icon: action['icon'] as IconData? ?? Icons.sports_football,
+            iconColor: action['iconColor'] as Color? ?? const Color(0xFF1E293B),
+            isLeft: action['isLeft'] as bool? ?? true,
+          ),
+        );
+      } else {
+        entries.add(
+          GameTimelineEntry.milestone(
+            label: action['title'] as String? ?? '',
+            icon: action['icon'] as IconData? ?? Icons.circle,
+            iconColor: action['iconColor'] as Color? ?? const Color(0xFF1E293B),
+            showAddBadge: action['showAddBadge'] as bool? ?? false,
+            isStart: action['isStart'] as bool? ?? false,
+          ),
+        );
+      }
+    }
+
+    entries.add(
+      const GameTimelineEntry.milestone(
+        label: 'Start',
+        icon: Icons.play_circle,
+        isStart: true,
+      ),
+    );
+
+    return entries;
+  }
+
+  IconData _getIconForAction(String actionType) {
+    switch (actionType) {
+      case 'Touchdown':
+        return Icons.sports_football;
+      case 'Extra Point from 5-yard line':
+      case 'Extra Point from 12-yard line':
+      case 'Extra Point from 20-yard line':
+        return Icons.sports;
+      default:
+        return Icons.flag;
+    }
+  }
+
+  Color _getColorForAction(String actionType) {
+    switch (actionType) {
+      case 'Touchdown':
+        return const Color(0xFF1E293B);
+      case 'Extra Point from 5-yard line':
+      case 'Extra Point from 12-yard line':
+      case 'Extra Point from 20-yard line':
+        return const Color(0xFF1E293B);
+      default:
+        return const Color(0xFFFBBF24);
+    }
+  }
+
+  String _getPlayerPosition(String playerId) {
+    final player = _findPlayerById(playerId);
+    return player?.position ?? 'Player';
   }
 }
 

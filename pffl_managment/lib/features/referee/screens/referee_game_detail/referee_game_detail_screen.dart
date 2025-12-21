@@ -7,6 +7,7 @@ import 'package:pffl_managment/features/referee/widgets/start_game_dialog.dart';
 import 'package:pffl_managment/features/referee/widgets/add_game_action_dialog.dart';
 import 'package:pffl_managment/features/referee/widgets/mark_attendance_screen.dart';
 import 'package:pffl_managment/features/referee/widgets/select_players_screen.dart';
+import 'package:pffl_managment/features/referee/widgets/game_timeline_widget.dart';
 
 /// Referee Game Detail Screen
 /// Shows game details with tabs and FAB actions
@@ -295,10 +296,11 @@ class _RefereeGameDetailView extends StatelessWidget {
   }
 
   Widget _buildGameActionsTab(BuildContext context, RefereeGameDetailProvider provider) {
+    final timelineEntries = provider.timelineEntries;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Actions header
         const Text(
           'Actions',
           style: TextStyle(
@@ -308,8 +310,6 @@ class _RefereeGameDetailView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        
-        // Add action button
         Center(
           child: GestureDetector(
             onTap: () => _showAddGameActionDialog(context, provider),
@@ -329,11 +329,8 @@ class _RefereeGameDetailView extends StatelessWidget {
             ),
           ),
         ),
-        
         const SizedBox(height: 24),
-        
-        // Action history list
-        if (provider.gameActions.isEmpty)
+        if (timelineEntries.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.all(32.0),
@@ -350,54 +347,8 @@ class _RefereeGameDetailView extends StatelessWidget {
             ),
           )
         else
-          ...provider.gameActions.map((action) => _buildActionItem(action)),
+          GameTimelineWidget(entries: timelineEntries),
       ],
-    );
-  }
-
-  Widget _buildActionItem(Map<String, dynamic> action) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E3A5F),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  action['title'] ?? '',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  action['description'] ?? '',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
