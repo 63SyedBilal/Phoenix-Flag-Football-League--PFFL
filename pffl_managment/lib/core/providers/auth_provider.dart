@@ -204,10 +204,10 @@ class AuthProvider extends ChangeNotifier {
                  e.type == DioExceptionType.sendTimeout ||
                  e.type == DioExceptionType.receiveTimeout) {
         // Timeout - show error message
-        _loginPasswordError = 'Connection timeout. Please check:\n1. Backend server is running at http://192.168.18.26:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
+        _loginPasswordError = 'Connection timeout. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
       } else if (e.type == DioExceptionType.connectionError) {
         // Connection error - show error message
-        _loginPasswordError = 'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.18.26:3000\n2. Both devices are on same WiFi network\n3. Firewall allows port 3000';
+        _loginPasswordError = 'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Firewall allows port 3000';
       } else {
         // Other network errors - show generic error
         _loginPasswordError = 'Network error. Please check your connection and try again.';

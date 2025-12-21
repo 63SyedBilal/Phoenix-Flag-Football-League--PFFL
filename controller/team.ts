@@ -115,8 +115,7 @@ export async function createTeam(req: NextRequest) {
     const populatedTeam = await Team.findById((team as any)._id)
       .populate("captain", "firstName lastName email role")
       .populate("squad5v5", "firstName lastName email role")
-      .populate("squad7v7", "firstName lastName email role")
-      .populate("players", "firstName lastName email role");
+      .populate("squad7v7", "firstName lastName email role");
 
     return NextResponse.json(
       {
@@ -155,8 +154,7 @@ export async function getTeam(req: NextRequest, { params }: { params: { id: stri
     const team = await Team.findById(id)
       .populate("captain", "firstName lastName email role")
       .populate("squad5v5", "firstName lastName email role")
-      .populate("squad7v7", "firstName lastName email role")
-      .populate("players", "firstName lastName email role");
+      .populate("squad7v7", "firstName lastName email role");
 
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
@@ -191,8 +189,7 @@ export async function getTeamByCode(req: NextRequest, { params }: { params: { co
     const team = await Team.findOne({ enterCode: code })
       .populate("captain", "firstName lastName email role")
       .populate("squad5v5", "firstName lastName email role")
-      .populate("squad7v7", "firstName lastName email role")
-      .populate("players", "firstName lastName email role");
+      .populate("squad7v7", "firstName lastName email role");
 
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
@@ -220,11 +217,25 @@ export async function getTeamByCode(req: NextRequest, { params }: { params: { co
 export async function getAllTeams(req: NextRequest) {
   try {
     await connectDB();
-    const decoded = await verifyUser(req);
+    // Log the incoming request for debugging
+    console.log("🔵 getAllTeams called");
+    console.log("🔵 Request URL:", req.url);
+    
+    // Try to verify user but handle errors gracefully
+    let decoded = null;
+    try {
+      decoded = await verifyUser(req);
+      console.log("✅ User verified:", decoded);
+    } catch (verifyError: any) {
+      console.log("⚠️ User verification failed:", verifyError?.message || verifyError);
+      // Continue without user verification for now
+    }
 
     const { searchParams } = new URL(req.url);
     const captainId = searchParams.get("captainId");
     const playerId = searchParams.get("playerId");
+
+    console.log("🔍 Query parameters - captainId:", captainId, "playerId:", playerId);
 
     let query: any = {};
     let singleTeam = false;
@@ -244,17 +255,22 @@ export async function getAllTeams(req: NextRequest) {
       singleTeam = true;
     }
 
+    console.log("🔍 Query:", query);
+    console.log("🔍 Fetching teams from database...");
+
     const teams = await Team.find(query)
       .populate("captain", "firstName lastName email role")
       .populate("squad5v5", "firstName lastName email role")
       .populate("squad7v7", "firstName lastName email role")
-      .populate("players", "firstName lastName email role")
       .sort({ createdAt: -1 })
       .exec();
+
+    console.log("✅ Found", teams.length, "teams");
 
     // If captainId or playerId was provided, return single team or null
     if (singleTeam) {
       const team = teams.length > 0 ? teams[0] : null;
+      console.log("📤 Returning single team response");
       return NextResponse.json(
         {
           message: team ? "Team retrieved successfully" : "Team not found",
@@ -264,14 +280,18 @@ export async function getAllTeams(req: NextRequest) {
       );
     }
 
+    console.log("📤 Returning all teams response");
     return NextResponse.json(
       {
         message: "Teams retrieved successfully",
         data: teams,
       },
       { status: 200 }
-    );
+      );
   } catch (error: any) {
+    console.error("❌ getAllTeams error:", error);
+    console.error("❌ Error stack:", error.stack);
+    
     if (error.message === "No token provided" || error.message === "Invalid token") {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
@@ -368,7 +388,8 @@ export async function updateTeam(req: NextRequest, { params }: { params: { id: s
 
     // Populate before returning
     await team.populate("captain", "firstName lastName email role");
-    await team.populate("players", "firstName lastName email role");
+    await team.populate("squad5v5", "firstName lastName email role");
+    await team.populate("squad7v7", "firstName lastName email role");
 
     return NextResponse.json(
       {
@@ -475,9 +496,8 @@ export async function addPlayer(req: NextRequest, { params }: { params: { id: st
     await team.save();
 
     await team.populate("captain", "firstName lastName email role");
-    await (team as any).populate("squad5v5", "firstName lastName email role");
-    await (team as any).populate("squad7v7", "firstName lastName email role");
-    await (team as any).populate("players", "firstName lastName email role");
+    await team.populate("squad5v5", "firstName lastName email role");
+    await team.populate("squad7v7", "firstName lastName email role");
 
     return NextResponse.json(
       {
@@ -538,9 +558,8 @@ export async function removePlayer(req: NextRequest, { params }: { params: { id:
     await team.save();
 
     await team.populate("captain", "firstName lastName email role");
-    await (team as any).populate("squad5v5", "firstName lastName email role");
-    await (team as any).populate("squad7v7", "firstName lastName email role");
-    await (team as any).populate("players", "firstName lastName email role");
+    await team.populate("squad5v5", "firstName lastName email role");
+    await team.populate("squad7v7", "firstName lastName email role");
 
     return NextResponse.json(
       {

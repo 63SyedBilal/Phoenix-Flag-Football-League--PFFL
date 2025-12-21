@@ -4,7 +4,7 @@ import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart'
     show TeamModel, LeagueService;
 import 'package:pffl_managment/core/services/user_service.dart'
-    show UserService, UserModel;
+    show UserModel;
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 
 class UpcomingGamesProvider extends ChangeNotifier {
