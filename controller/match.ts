@@ -32,6 +32,80 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
   return new mongoose.Types.ObjectId(id);
 }
 
+function toPlainStringId(value: any): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (value instanceof mongoose.Types.ObjectId) return value.toString();
+  if (typeof value === "object" && value._id) {
+    return value._id.toString();
+  }
+  if (typeof value === "object" && value.toString) {
+    return value.toString();
+  }
+  return null;
+}
+
+function toMatchDTO(match: any) {
+  if (!match) return match;
+
+  const dto: any = { ...match };
+
+  const teamAData = match.teamA ?? {};
+  const teamBData = match.teamB ?? {};
+  const teamARef = teamAData.teamId ?? null;
+  const teamBRef = teamBData.teamId ?? null;
+
+  const homeTeamId = toPlainStringId(teamARef);
+  const awayTeamId = toPlainStringId(teamBRef);
+
+  const resolvedHomeName =
+    match.teamAName ??
+    (typeof teamARef === "object"
+      ? teamARef.teamName ?? teamARef.enterCode
+      : null);
+  const resolvedAwayName =
+    match.teamBName ??
+    (typeof teamBRef === "object"
+      ? teamBRef.teamName ?? teamBRef.enterCode
+      : null);
+
+  const homeTeam = resolvedHomeName && resolvedHomeName.length > 0
+    ? resolvedHomeName
+    : "Unknown Team";
+  const awayTeam = resolvedAwayName && resolvedAwayName.length > 0
+    ? resolvedAwayName
+    : "Unknown Team";
+
+  const homeTeamLogo =
+    (typeof teamARef === "object" && teamARef?.image) ? teamARef.image : "";
+  const awayTeamLogo =
+    (typeof teamBRef === "object" && teamBRef?.image) ? teamBRef.image : "";
+
+  dto._id = toPlainStringId(match._id) ?? match._id;
+  dto.id = dto._id;
+  dto.leagueId =
+    toPlainStringId(match.leagueId?._id ?? match.leagueId) ?? match.leagueId;
+  dto.leagueName =
+    match.leagueId?.leagueName ?? match.leagueName ?? "";
+
+  dto.homeTeamId = homeTeamId;
+  dto.awayTeamId = awayTeamId;
+  dto.homeTeam = homeTeam;
+  dto.awayTeam = awayTeam;
+  dto.homeTeamLogo = homeTeamLogo;
+  dto.awayTeamLogo = awayTeamLogo;
+  dto.teamAName = homeTeam;
+  dto.teamBName = awayTeam;
+
+  // Ensure scores exist at root for frontend parsing
+  dto.homeScore =
+    match.teamA?.score ?? match.homeScore ?? 0;
+  dto.awayScore =
+    match.teamB?.score ?? match.awayScore ?? 0;
+
+  return dto;
+}
+
 /**
  * Create a new match
  * POST /api/match
@@ -322,64 +396,26 @@ export async function getAllMatches(req: NextRequest) {
     
     console.log("🔍 Query:", JSON.stringify(query));
 
-    let matches;
-    try {
-      console.log("🔍 Fetching matches from database...");
-      // Try with full populate, but catch errors gracefully
-      matches = await Match.find(query)
-        .populate("leagueId", "leagueName format startDate endDate logo")
-        .populate("createdBy", "firstName lastName email role")
-        .populate("teamA.teamId", "teamName enterCode image")
-        .populate("teamB.teamId", "teamName enterCode image")
-        .populate("teamA.attendance.playerId", "firstName lastName email")
-        .populate("teamB.attendance.playerId", "firstName lastName email")
-        .populate("teamA.activePlayers", "firstName lastName email")
-        .populate("teamB.activePlayers", "firstName lastName email")
-        .populate("teamA.playerPoints.playerId", "firstName lastName email")
-        .populate("teamB.playerPoints.playerId", "firstName lastName email")
-        .populate("refereeId", "firstName lastName email role")
-        .populate("statKeeperId", "firstName lastName email role")
-        .populate("gameWinnerTeam", "teamName enterCode")
-        .sort({ gameDate: 1, gameTime: 1 })
-        .lean()
-        .exec();
-      console.log(`✅ Found ${matches.length} matches`);
-    } catch (populateError: any) {
-      console.error("❌ Error in populate:", populateError);
-      console.error("Error message:", populateError.message);
-      console.error("Error stack:", populateError.stack);
-      // If populate fails, try without populate - this is safe for missing references
-      try {
-        console.log("🔄 Retrying without populate (references might not exist)...");
-        matches = await Match.find(query)
-          .sort({ gameDate: 1, gameTime: 1 })
-          .lean()
-          .exec();
-        console.log(`✅ Found ${matches.length} matches (without populate)`);
-      } catch (findError: any) {
-        console.error("❌ Error in find:", findError);
-        console.error("Find error stack:", findError.stack);
-        throw findError;
-      }
-    }
+    const matches = await Match.find(query)
+      .populate("leagueId", "leagueName format startDate endDate logo")
+      .populate("teamA.teamId", "teamName enterCode image")
+      .populate("teamB.teamId", "teamName enterCode image")
+      .populate("refereeId", "_id")
+      .populate("statKeeperId", "_id")
+      .sort({ gameDate: 1, gameTime: 1 })
+      .lean()
+      .exec();
+    console.log(`✅ Found ${matches.length} matches`);
 
-    // If team populate failed (team doesn't exist), include the original ObjectId
     const matchesWithTeamIds = matches.map((match: any) => {
-      // Handle teamA
-      if (!match.teamA || (match.teamA && typeof match.teamA === 'object' && !match.teamA.teamName)) {
-        // Team populate failed, use original ObjectId
-        const teamAId = match.teamA?._id?.toString() || match.teamA?.toString() || match.teamA;
-        match.teamA = teamAId;
+      const dto = toMatchDTO(match);
+      if (match.refereeId) {
+        dto.refereeIdRaw = toPlainStringId(match.refereeId);
       }
-      
-      // Handle teamB
-      if (!match.teamB || (match.teamB && typeof match.teamB === 'object' && !match.teamB.teamName)) {
-        // Team populate failed, use original ObjectId
-        const teamBId = match.teamB?._id?.toString() || match.teamB?.toString() || match.teamB;
-        match.teamB = teamBId;
+      if (match.statKeeperId) {
+        dto.statKeeperIdRaw = toPlainStringId(match.statKeeperId);
       }
-      
-      return match;
+      return dto;
     });
 
     return NextResponse.json(
@@ -422,17 +458,16 @@ export async function getMatch(req: NextRequest, { params }: { params: { id: str
 
     const match = await Match.findById(matchId)
       .populate("leagueId", "leagueName format startDate endDate logo")
-      .populate("createdBy", "firstName lastName email role")
-      .populate("teamA.teamId", "teamName enterCode")
-      .populate("teamB.teamId", "teamName enterCode")
+      .populate("teamA.teamId", "teamName enterCode image")
+      .populate("teamB.teamId", "teamName enterCode image")
       .populate("teamA.players.playerId", "firstName lastName email profileImage position")
       .populate("teamB.players.playerId", "firstName lastName email profileImage position")
       .populate("teamA.playerStats.playerId", "firstName lastName email profileImage position")
       .populate("teamB.playerStats.playerId", "firstName lastName email profileImage position")
       .populate("teamA.playerActions.playerId", "firstName lastName email")
       .populate("teamB.playerActions.playerId", "firstName lastName email")
-      .populate("refereeId", "firstName lastName email role")
-      .populate("statKeeperId", "firstName lastName email role")
+      .populate("refereeId", "_id")
+      .populate("statKeeperId", "_id")
       .populate("gameWinnerTeam", "teamName enterCode")
       .lean()
       .exec();
@@ -444,7 +479,7 @@ export async function getMatch(req: NextRequest, { params }: { params: { id: str
     return NextResponse.json(
       {
         message: "Match retrieved successfully",
-        data: match,
+        data: toMatchDTO(match),
       },
       { status: 200 }
     );

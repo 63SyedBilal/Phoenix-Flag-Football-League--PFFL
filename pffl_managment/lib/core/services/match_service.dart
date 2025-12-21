@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 
 /// Service for match/game-related API calls
@@ -20,7 +21,32 @@ class MatchService {
 
       if (response.statusCode == 201) {
         final data = response.data['data'];
-        return _parseMatchFromJson(data);
+        final parsed = _parseMatchFromJson(data);
+        final fallbackHomeName = matchData['teamAName']?.toString();
+        final fallbackAwayName = matchData['teamBName']?.toString();
+        final fallbackHomeId = matchData['teamA']?.toString();
+        final fallbackAwayId = matchData['teamB']?.toString();
+
+        MatchModel fixed = parsed;
+        final needsHomeNameFix = (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
+            (fallbackHomeName != null && fallbackHomeName.isNotEmpty);
+        final needsAwayNameFix = (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
+            (fallbackAwayName != null && fallbackAwayName.isNotEmpty);
+        final needsHomeIdFix = (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
+            (fallbackHomeId != null && fallbackHomeId.isNotEmpty);
+        final needsAwayIdFix = (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
+            (fallbackAwayId != null && fallbackAwayId.isNotEmpty);
+
+        if (needsHomeNameFix || needsAwayNameFix || needsHomeIdFix || needsAwayIdFix) {
+          fixed = parsed.copyWith(
+            homeTeam: needsHomeNameFix ? fallbackHomeName : null,
+            awayTeam: needsAwayNameFix ? fallbackAwayName : null,
+            homeTeamId: needsHomeIdFix ? fallbackHomeId : null,
+            awayTeamId: needsAwayIdFix ? fallbackAwayId : null,
+          );
+        }
+
+        return fixed;
       } else {
         throw Exception('Failed to create match: ${response.statusMessage}');
       }
@@ -51,7 +77,32 @@ class MatchService {
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        return _parseMatchFromJson(data);
+        final parsed = _parseMatchFromJson(data);
+        final fallbackHomeName = matchData['teamAName']?.toString();
+        final fallbackAwayName = matchData['teamBName']?.toString();
+        final fallbackHomeId = matchData['teamA']?.toString();
+        final fallbackAwayId = matchData['teamB']?.toString();
+
+        MatchModel fixed = parsed;
+        final needsHomeNameFix = (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
+            (fallbackHomeName != null && fallbackHomeName.isNotEmpty);
+        final needsAwayNameFix = (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
+            (fallbackAwayName != null && fallbackAwayName.isNotEmpty);
+        final needsHomeIdFix = (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
+            (fallbackHomeId != null && fallbackHomeId.isNotEmpty);
+        final needsAwayIdFix = (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
+            (fallbackAwayId != null && fallbackAwayId.isNotEmpty);
+
+        if (needsHomeNameFix || needsAwayNameFix || needsHomeIdFix || needsAwayIdFix) {
+          fixed = parsed.copyWith(
+            homeTeam: needsHomeNameFix ? fallbackHomeName : null,
+            awayTeam: needsAwayNameFix ? fallbackAwayName : null,
+            homeTeamId: needsHomeIdFix ? fallbackHomeId : null,
+            awayTeamId: needsAwayIdFix ? fallbackAwayId : null,
+          );
+        }
+
+        return fixed;
       } else {
         throw Exception('Failed to update match: ${response.statusMessage}');
       }
@@ -85,7 +136,9 @@ class MatchService {
         if (data['data'] != null) {
           final matchesList = data['data'] as List;
           print('📊 Matches count in response: ${matchesList.length}');
-          final matches = matchesList
+
+          // First parse to models
+          final parsed = matchesList
               .map((json) {
                 try {
                   return _parseMatchFromJson(json);
@@ -97,8 +150,65 @@ class MatchService {
               })
               .whereType<MatchModel>()
               .toList();
-          print('✅ Successfully parsed ${matches.length} matches');
-          return matches;
+
+          // Build a cache of league teams to resolve team names
+          final Map<String, Map<String, String>> leagueTeamNameCache = {};
+          for (final m in parsed) {
+            final lid = m.leagueId;
+            if (lid != null && lid.isNotEmpty && !leagueTeamNameCache.containsKey(lid)) {
+              try {
+                final league = await LeagueService.getLeagueById(lid);
+                final Map<String, String> map = {};
+                if (league != null) {
+                  for (final t in league.teams) {
+                    if (t.id != null && t.id!.isNotEmpty) {
+                      map[t.id!] = t.teamName;
+                    }
+                  }
+                }
+                leagueTeamNameCache[lid] = map;
+              } catch (e) {
+                leagueTeamNameCache[lid] = {};
+              }
+            }
+          }
+
+          // Fill names from cache if missing
+          List<MatchModel> fixed = parsed.map((m) {
+            final lid = m.leagueId;
+            if (lid != null && leagueTeamNameCache.containsKey(lid)) {
+              return _fillTeamNamesFromLeague(m, leagueTeamNameCache[lid]!);
+            }
+            return m;
+          }).toList();
+
+          // Final fallback: resolve names directly via TeamService by ID if still unknown
+          for (int i = 0; i < fixed.length; i++) {
+            final m = fixed[i];
+            bool needHome = (m.homeTeam.isEmpty || m.homeTeam == 'Unknown Team') && (m.homeTeamId != null && m.homeTeamId!.isNotEmpty);
+            bool needAway = (m.awayTeam.isEmpty || m.awayTeam == 'Unknown Team') && (m.awayTeamId != null && m.awayTeamId!.isNotEmpty);
+            if (needHome) {
+              try {
+                final team = await TeamService.getTeamById(m.homeTeamId!);
+                final String? name = (team?['teamName']?.toString() ?? team?['enterCode']?.toString());
+                if (name != null && name.isNotEmpty) {
+                  fixed[i] = fixed[i].copyWith(homeTeam: name);
+                }
+              } catch (_) {}
+            }
+            if (needAway) {
+              try {
+                final team = await TeamService.getTeamById(m.awayTeamId!);
+                final String? name = (team?['teamName']?.toString() ?? team?['enterCode']?.toString());
+                if (name != null && name.isNotEmpty) {
+                  fixed[i] = fixed[i].copyWith(awayTeam: name);
+                }
+              } catch (_) {}
+            }
+          }
+
+          print('✅ Successfully parsed ${fixed.length} matches (names resolved)');
+          return fixed;
         }
         print('⚠️ No data field in response');
         return [];
@@ -136,8 +246,20 @@ class MatchService {
       if (response.statusCode == 200) {
         final data = response.data;
         if (data['data'] != null) {
+          // Build a map of league teams for reliable name lookup
+          final league = await LeagueService.getLeagueById(leagueId);
+          final Map<String, String> teamNameById = {};
+          if (league != null) {
+            for (final t in league.teams) {
+              if (t.id != null && t.id!.isNotEmpty) {
+                teamNameById[t.id!] = t.teamName;
+              }
+            }
+          }
+
           final matches = (data['data'] as List)
               .map((json) => _parseMatchFromJson(json))
+              .map((m) => _fillTeamNamesFromLeague(m, teamNameById))
               .toList();
           return matches;
         }
@@ -167,7 +289,25 @@ class MatchService {
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        return _parseMatchFromJson(data);
+        final parsed = _parseMatchFromJson(data);
+        // Try to resolve names from league teams if missing
+        if (parsed.leagueId != null && parsed.leagueId!.isNotEmpty) {
+          try {
+            final league = await LeagueService.getLeagueById(parsed.leagueId!);
+            final Map<String, String> teamNameById = {};
+            if (league != null) {
+              for (final t in league.teams) {
+                if (t.id != null && t.id!.isNotEmpty) {
+                  teamNameById[t.id!] = t.teamName;
+                }
+              }
+            }
+            return _fillTeamNamesFromLeague(parsed, teamNameById);
+          } catch (_) {
+            return parsed;
+          }
+        }
+        return parsed;
       } else {
         throw Exception('Failed to get match: ${response.statusMessage}');
       }
@@ -498,6 +638,9 @@ class MatchService {
       case 'live':
         status = MatchStatus.live;
         break;
+      case 'continue':
+        status = MatchStatus.live;
+        break;
       case 'completed':
         status = MatchStatus.completed;
         break;
@@ -510,14 +653,18 @@ class MatchService {
 
     // Parse referee and stat keeper IDs
     final refereeData = json['refereeId'];
-    final refereeId = refereeData is Map
-        ? (refereeData['_id']?.toString() ?? refereeData['id']?.toString())
-        : (json['refereeId']?.toString());
-
     final statKeeperData = json['statKeeperId'];
-    final statKeeperId = statKeeperData is Map
-        ? (statKeeperData['_id']?.toString() ?? statKeeperData['id']?.toString())
-        : (json['statKeeperId']?.toString());
+    
+    // Try to get raw IDs first (from backend fix), fallback to populated data extraction
+    final refereeId = json['refereeIdRaw']?.toString() ?? 
+                     (refereeData is Map
+                         ? (refereeData['_id']?.toString() ?? refereeData['id']?.toString())
+                         : (json['refereeId']?.toString()));
+
+    final statKeeperId = json['statKeeperIdRaw']?.toString() ?? 
+                        (statKeeperData is Map
+                            ? (statKeeperData['_id']?.toString() ?? statKeeperData['id']?.toString())
+                            : (json['statKeeperId']?.toString()));
 
     return MatchModel(
       id: id,
@@ -540,6 +687,36 @@ class MatchService {
       leagueId: leagueId,
       homeTeamId: homeTeamId,
       awayTeamId: awayTeamId,
+      format: json['format']?.toString(),
+    );
+  }
+
+  /// Fallback fill: if names are missing/Unknown, use league team map
+  static MatchModel _fillTeamNamesFromLeague(
+    MatchModel match,
+    Map<String, String> teamNameById,
+  ) {
+    String resolvedHome = match.homeTeam;
+    String resolvedAway = match.awayTeam;
+
+    if ((resolvedHome.isEmpty || resolvedHome == 'Unknown Team') &&
+        match.homeTeamId != null &&
+        teamNameById.containsKey(match.homeTeamId)) {
+      resolvedHome = teamNameById[match.homeTeamId] ?? resolvedHome;
+    }
+    if ((resolvedAway.isEmpty || resolvedAway == 'Unknown Team') &&
+        match.awayTeamId != null &&
+        teamNameById.containsKey(match.awayTeamId)) {
+      resolvedAway = teamNameById[match.awayTeamId] ?? resolvedAway;
+    }
+
+    if (resolvedHome == match.homeTeam && resolvedAway == match.awayTeam) {
+      return match;
+    }
+
+    return match.copyWith(
+      homeTeam: resolvedHome,
+      awayTeam: resolvedAway,
     );
   }
 

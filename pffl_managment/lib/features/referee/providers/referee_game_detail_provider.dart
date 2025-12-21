@@ -13,10 +13,45 @@ enum GameAction {
   gameComplete,
 }
 
+/// Local representation of a player's scoring summary during the game.
+class PlayerScoreEntry {
+  const PlayerScoreEntry({
+    required this.playerId,
+    required this.playerName,
+    required this.teamId,
+    required this.points,
+  });
+
+  final String playerId;
+  final String playerName;
+  final String teamId;
+  final int points;
+
+  PlayerScoreEntry copyWith({
+    String? playerName,
+    String? teamId,
+    int? points,
+  }) {
+    return PlayerScoreEntry(
+      playerId: playerId,
+      playerName: playerName ?? this.playerName,
+      teamId: teamId ?? this.teamId,
+      points: points ?? this.points,
+    );
+  }
+}
+
 /// Provider for Referee Game Detail screen
 class RefereeGameDetailProvider extends ChangeNotifier {
   // Current match data
   MatchModel? _match;
+  
+  // Team scores for live updates
+  int _homeScore = 0;
+  int _awayScore = 0;
+
+  // Player score board
+  final Map<String, PlayerScoreEntry> _playerScoreEntries = {};
   
   // Selected tab index (0: Game actions, 1: Mark Attendance, 2: Select Players)
   int _selectedTabIndex = 0;
@@ -41,10 +76,13 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   // Attendance tracking
   String? _selectedAttendanceTeamId;
   final Map<String, bool> _playerAttendance = {}; // playerId -> isPresent
-  
+  bool _isAttendanceLocked = false;
+  final Map<String, String> _playerTeamMap = {}; // playerId -> teamId
+
   // Player selection tracking
   String? _selectedPlayersTeamId;
   final Map<String, Set<String>> _selectedPlayersByTeam = {}; // teamId -> Set<playerId>
+  bool _isPlayersLocked = false;
   
   // Team players data
   final Map<String, List<PlayerModel>> _teamPlayers = {}; // teamId -> List<PlayerModel>
@@ -62,16 +100,25 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   bool get isFabExpanded => _isFabExpanded;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get homeScore => _homeScore;
+  int get awayScore => _awayScore;
+  List<PlayerScoreEntry> get playerScoreBoard {
+    final entries = _playerScoreEntries.values.toList()
+      ..sort((a, b) => b.points.compareTo(a.points));
+    return entries;
+  }
   
   // Attendance getters
   String? get selectedAttendanceTeamId => _selectedAttendanceTeamId;
   Map<String, bool> get playerAttendance => Map.unmodifiable(_playerAttendance);
+  bool get isAttendanceLocked => _isAttendanceLocked;
   
   // Player selection getters
   String? get selectedPlayersTeamId => _selectedPlayersTeamId;
   Set<String> get selectedPlayerIds => _selectedPlayersByTeam[_selectedPlayersTeamId] ?? {};
   Map<String, Set<String>> get selectedPlayersByTeam => Map.unmodifiable(_selectedPlayersByTeam);
   bool get isLoadingPlayers => _isLoadingPlayers;
+  bool get isPlayersLocked => _isPlayersLocked;
   
   /// Get selected player count for a specific team
   int getSelectedPlayerCount(String teamId) {
@@ -114,6 +161,10 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   /// Initialize with match data
   void initializeWithMatch(MatchModel match) {
     _match = match;
+    _resetScoreTracking();
+    _resetAttendanceAndSelection();
+    _homeScore = match.homeScore ?? 0;
+    _awayScore = match.awayScore ?? 0;
     
     // Set toss completion status based on match status
     if (match.status == MatchStatus.live || match.status == MatchStatus.completed) {
@@ -154,6 +205,26 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       return; // Toss dialog will be shown from the UI
     }
 
+    // Convert GameAction to actionType string
+    String actionType = '';
+    switch (action) {
+      case GameAction.halfTimeDone:
+        actionType = 'Half Time Done';
+        break;
+      case GameAction.fullTimeDone:
+        actionType = 'Full Time Done';
+        break;
+      case GameAction.overTime:
+        actionType = 'Over Time';
+        break;
+      case GameAction.gameComplete:
+        actionType = 'Game Complete';
+        break;
+      default:
+        actionType = 'Unknown Action';
+    }
+    
+    final pointsEarned = _getPointsForAction(actionType);
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -168,6 +239,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
           // Call API to switch to half time
           final updatedMatch = await MatchService.switchHalfTime(_match!.id!);
           _match = updatedMatch;
+          _syncScoresFromMatch(updatedMatch);
           _isHalfTimeDone = true;
           _addAction('Half Time', 'Half time completed');
           break;
@@ -175,6 +247,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
           // Call API to switch to full time
           final updatedMatch = await MatchService.switchFullTime(_match!.id!);
           _match = updatedMatch;
+          _syncScoresFromMatch(updatedMatch);
           _isFullTimeDone = true;
           _addAction('Full Time', 'Full time completed');
           break;
@@ -182,6 +255,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
           // Call API to switch to overtime
           final updatedMatch = await MatchService.switchOvertime(_match!.id!);
           _match = updatedMatch;
+          _syncScoresFromMatch(updatedMatch);
           _isOverTime = true;
           _addAction('Over Time', 'Over time started');
           break;
@@ -224,6 +298,10 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   
   /// Forfeit game
   Future<bool> forfeitGame() async {
+    if (_isPlayersLocked) {
+      return true;
+    }
+
     _isLoading = true;
     notifyListeners();
     
@@ -268,6 +346,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       );
       
       _match = updatedMatch;
+      _syncScoresFromMatch(updatedMatch);
       _isTossCompleted = true;
       _addAction('Toss', 'Toss completed - ${winnerSide == 'offense' ? 'Offensive' : 'Defensive'} selected');
     } catch (e) {
@@ -297,6 +376,9 @@ class RefereeGameDetailProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Calculate points earned for this action
+      final pointsEarned = _getPointsForAction(actionType);
+      
       // Call API to add game action
       final updatedMatch = await MatchService.addGameAction(
         matchId: _match!.id!,
@@ -306,11 +388,26 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       );
       
       _match = updatedMatch;
+      _applyTeamScoreUpdate(
+        updatedMatch: updatedMatch,
+        teamId: teamId,
+        fallbackPoints: pointsEarned,
+      );
+      _recordPlayerScore(
+        playerId: playerId,
+        teamId: teamId,
+        points: pointsEarned,
+      );
       
-      // Add to action history
+      final teamLabel = _getTeamDisplayName(teamId);
+      final playerName = _getPlayerDisplayName(playerId);
+      final description = pointsEarned > 0
+          ? '$playerName scored +$pointsEarned pts'
+          : '$playerName recorded $actionType';
+      
       _addAction(
-        actionType,
-        'Action added for player',
+        '$actionType · $teamLabel',
+        description,
       );
       
       debugPrint('✅ Game action added successfully');
@@ -381,6 +478,9 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       }
       
       _teamPlayers[teamId] = players;
+      for (final player in players) {
+        _playerTeamMap[player.id] = teamId;
+      }
       debugPrint('✅ Loaded ${players.length} players for team: $teamId');
       
       // Log player details for debugging
@@ -452,6 +552,9 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   
   /// Mark player attendance
   void markAttendance(String playerId, bool isPresent) {
+    if (_isAttendanceLocked) {
+      return;
+    }
     _playerAttendance[playerId] = isPresent;
     
     // If marking as absent, remove from selected players in all teams
@@ -466,14 +569,59 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   
   /// Toggle player attendance
   void toggleAttendance(String playerId) {
+    if (_isAttendanceLocked) {
+      return;
+    }
     final currentStatus = _playerAttendance[playerId] ?? false;
     markAttendance(playerId, !currentStatus);
   }
   
   /// Clear attendance for all players
   void clearAttendance() {
+    if (_isAttendanceLocked) {
+      return;
+    }
     _playerAttendance.clear();
     notifyListeners();
+  }
+
+  /// Confirm attendance and lock further edits
+  Future<bool> confirmAttendance() async {
+    if (_isAttendanceLocked) {
+      return true;
+    }
+
+    final presentCount = _playerAttendance.values.where((v) => v == true).length;
+    if (presentCount == 0) {
+      _error = 'Please mark at least one player as present';
+      notifyListeners();
+      return false;
+    }
+
+    final requiredPlayers = _requiredPlayersPerTeam();
+    final homeTeamId = _match?.homeTeamId;
+    final awayTeamId = _match?.awayTeamId;
+    if (requiredPlayers > 0 &&
+        homeTeamId != null &&
+        homeTeamId.isNotEmpty &&
+        awayTeamId != null &&
+        awayTeamId.isNotEmpty) {
+      final homePresent = _countPresentPlayersForTeam(homeTeamId);
+      final awayPresent = _countPresentPlayersForTeam(awayTeamId);
+      if (homePresent < requiredPlayers || awayPresent < requiredPlayers) {
+        _error =
+            'Format ${_match?.format ?? ''} requires $requiredPlayers players per team. '
+            '${_match?.homeTeam ?? 'Home'}: $homePresent/$requiredPlayers, '
+            '${_match?.awayTeam ?? 'Away'}: $awayPresent/$requiredPlayers.';
+        notifyListeners();
+        return false;
+      }
+    }
+
+    _isAttendanceLocked = true;
+    _addAction('Attendance Locked', '$presentCount player(s) marked present');
+    notifyListeners();
+    return true;
   }
   
   // ============== Player Selection Methods ==============
@@ -494,6 +642,9 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   
   /// Select player for current team
   void selectPlayer(String playerId) {
+    if (_isPlayersLocked) {
+      return;
+    }
     if (_selectedPlayersTeamId == null) return;
     
     // Only allow selection if player is present
@@ -506,6 +657,9 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   
   /// Deselect player from current team
   void deselectPlayer(String playerId) {
+    if (_isPlayersLocked) {
+      return;
+    }
     if (_selectedPlayersTeamId == null) return;
     
     _selectedPlayersByTeam[_selectedPlayersTeamId]?.remove(playerId);
@@ -514,6 +668,9 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   
   /// Toggle player selection
   void togglePlayerSelection(String playerId) {
+    if (_isPlayersLocked) {
+      return;
+    }
     if (_selectedPlayersTeamId == null) return;
     
     _selectedPlayersByTeam[_selectedPlayersTeamId!] ??= {};
@@ -528,6 +685,9 @@ class RefereeGameDetailProvider extends ChangeNotifier {
   
   /// Clear all player selections
   void clearPlayerSelection() {
+    if (_isPlayersLocked) {
+      return;
+    }
     _selectedPlayersByTeam.clear();
     notifyListeners();
   }
@@ -557,6 +717,7 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       });
       
       _addAction('Players Selected', '$totalSelected players confirmed');
+      _isPlayersLocked = true;
       return true;
     } catch (e) {
       _error = 'Failed to confirm players: $e';
@@ -566,6 +727,158 @@ class RefereeGameDetailProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  // ============== Scoreboard Helpers ==============
+
+  void _resetScoreTracking() {
+    _playerScoreEntries.clear();
+    _homeScore = 0;
+    _awayScore = 0;
+  }
+
+  void _resetAttendanceAndSelection() {
+    _selectedAttendanceTeamId = null;
+    _playerAttendance.clear();
+    _isAttendanceLocked = false;
+    _playerTeamMap.clear();
+    _selectedPlayersTeamId = null;
+    _selectedPlayersByTeam.clear();
+    _isPlayersLocked = false;
+  }
+
+  int _requiredPlayersPerTeam() {
+    final format = _match?.format?.toLowerCase();
+    if (format == '5v5') {
+      return 5;
+    }
+    if (format == '7v7') {
+      return 7;
+    }
+    return 0;
+  }
+
+  int _countPresentPlayersForTeam(String teamId) {
+    int count = 0;
+    _playerAttendance.forEach((playerId, isPresent) {
+      if (isPresent && _playerTeamMap[playerId] == teamId) {
+        count++;
+      }
+    });
+    return count;
+  }
+
+  void _syncScoresFromMatch(MatchModel? match) {
+    if (match == null) return;
+    if (match.homeScore != null) {
+      _homeScore = match.homeScore!;
+    }
+    if (match.awayScore != null) {
+      _awayScore = match.awayScore!;
+    }
+  }
+
+  int _getPointsForAction(String actionType) {
+    switch (actionType) {
+      case 'Touchdown':
+        return 6;
+      case 'Extra Point from 5-yard line':
+        return 1;
+      case 'Extra Point from 12-yard line':
+        return 2;
+      case 'Extra Point from 20-yard line':
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  void _applyTeamScoreUpdate({
+    required MatchModel updatedMatch,
+    required String teamId,
+    required int fallbackPoints,
+  }) {
+    final hadBackendScores =
+        (updatedMatch.homeScore != null || updatedMatch.awayScore != null);
+    _syncScoresFromMatch(updatedMatch);
+    if (hadBackendScores || fallbackPoints == 0) {
+      return;
+    }
+
+    if (_isHomeTeam(teamId)) {
+      _homeScore += fallbackPoints;
+    } else {
+      _awayScore += fallbackPoints;
+    }
+  }
+
+  void _recordPlayerScore({
+    required String playerId,
+    required String teamId,
+    required int points,
+  }) {
+    if (points == 0) return;
+    final existing = _playerScoreEntries[playerId];
+    final playerName = existing?.playerName ?? _getPlayerDisplayName(playerId);
+
+    if (existing == null) {
+      _playerScoreEntries[playerId] = PlayerScoreEntry(
+        playerId: playerId,
+        playerName: playerName,
+        teamId: teamId,
+        points: points,
+      );
+    } else {
+      _playerScoreEntries[playerId] = existing.copyWith(
+        points: existing.points + points,
+        teamId: teamId,
+        playerName: playerName,
+      );
+    }
+  }
+
+  String getTeamLabel(String teamId) => _getTeamDisplayName(teamId);
+
+  String _getTeamDisplayName(String teamId) {
+    if (_match == null) return 'Team';
+    if (_match!.homeTeamId == teamId) {
+      return _match!.homeTeam;
+    }
+    if (_match!.awayTeamId == teamId) {
+      return _match!.awayTeam;
+    }
+    return 'Team';
+  }
+
+  String _getPlayerDisplayName(String playerId) {
+    final player = _findPlayerById(playerId);
+    if (player != null) {
+      if (player.number.isNotEmpty && player.number != '00') {
+        return '#${player.number} ${player.name}';
+      }
+      return player.name;
+    }
+    if (playerId.length <= 4) return 'Player $playerId';
+    return 'Player ${playerId.substring(playerId.length - 4)}';
+  }
+
+  PlayerModel? _findPlayerById(String playerId) {
+    for (final players in _teamPlayers.values) {
+      for (final player in players) {
+        if (player.id == playerId) {
+          return player;
+        }
+      }
+    }
+    return null;
+  }
+
+  bool _isHomeTeam(String teamId) {
+    final homeTeamId = _match?.homeTeamId;
+    if (homeTeamId != null && homeTeamId.isNotEmpty) {
+      return homeTeamId == teamId;
+    }
+    return false;
   }
 }
 
