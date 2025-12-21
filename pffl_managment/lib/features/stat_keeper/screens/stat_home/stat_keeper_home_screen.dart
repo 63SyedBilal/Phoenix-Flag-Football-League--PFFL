@@ -90,7 +90,7 @@ class StatKeeperHomeScreen extends StatelessWidget {
                     title: '',
                     onViewMore: null,
                     onGameTap: (game) {
-                      StatAddScreen.showAsDialog(context);
+                      StatAddScreen.showAsDialog(context, matchId: game.id);
                     },
                   )
                 else

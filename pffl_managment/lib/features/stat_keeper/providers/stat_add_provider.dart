@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/core/providers/bottom_nevigation_provider/stat_keeper_navigation_provider.dart';
-import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
-import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
+import 'package:pffl_managment/features/stat_keeper/models/player_model.dart';
+import 'package:pffl_managment/features/stat_keeper/models/team_model.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_stats_provider.dart';
+import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository.dart';
 
 class StatAddProvider extends ChangeNotifier {
+  // Match context
+  String? _matchId;
+
   // Selected values
-  String? _selectedTeam;
-  String? _selectedPlayer;
+  String? _selectedTeamId;
+  String? _selectedPlayerId;
+
+  // Available data
+  List<StatKeeperTeamModel> _teams = [];
+  List<StatKeeperPlayerModel> _players = [];
 
   // Text controllers for stat inputs
   final TextEditingController catchesController = TextEditingController();
@@ -28,36 +35,84 @@ class StatAddProvider extends ChangeNotifier {
 
   // Loading state
   bool _isLoading = false;
-
-  // Mock data for dropdowns
-  final List<String> teams = [
-    'Team Alpha',
-    'Team Beta',
-    'Team Gamma',
-    'Team Delta',
-  ];
-
-  final List<String> players = [
-    'John Doe',
-    'Jane Smith',
-    'Mike Johnson',
-    'Sarah Williams',
-  ];
+  bool _isLoadingTeams = false;
+  bool _isLoadingPlayers = false;
 
   // Getters
-  String? get selectedTeam => _selectedTeam;
-  String? get selectedPlayer => _selectedPlayer;
+  String? get selectedTeam => _selectedTeamId;
+  String? get selectedPlayer => _selectedPlayerId;
   bool get isLoading => _isLoading;
+  bool get isLoadingTeams => _isLoadingTeams;
+  bool get isLoadingPlayers => _isLoadingPlayers;
 
-  void setSelectedTeam(String team) {
-    _selectedTeam = team;
+  // Computed getters for dropdown data
+  List<String> get teams => _teams.map((team) => team.name).toList();
+  List<String> get players => _players.map((player) => player.name).toList();
+
+  // Get team ID from selected team name
+  String? get selectedTeamId => _selectedTeamId;
+
+  // Get player ID from selected player name
+  String? get selectedPlayerId => _selectedPlayerId;
+
+  // Initialize with match ID
+  void initialize(String matchId) {
+    _matchId = matchId;
+    loadTeams();
+  }
+
+  Future<void> loadTeams() async {
+    if (_matchId == null) return;
+
+    _isLoadingTeams = true;
+    notifyListeners();
+
+    try {
+      _teams = await StatKeeperRepository.getMatchTeams(_matchId!);
+    } catch (e) {
+      debugPrint('Error loading teams: $e');
+      _teams = [];
+    } finally {
+      _isLoadingTeams = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadPlayers() async {
+    if (_selectedTeamId == null || _matchId == null) {
+      _players = [];
+      notifyListeners();
+      return;
+    }
+
+    _isLoadingPlayers = true;
+    notifyListeners();
+
+    try {
+      // Get players for the selected team from match data
+      final teamPlayers = await StatKeeperRepository.getMatchTeamPlayers(_matchId!, _selectedTeamId!);
+      _players = teamPlayers;
+    } catch (e) {
+      _players = [];
+    } finally {
+      _isLoadingPlayers = false;
+      notifyListeners();
+    }
+  }
+
+
+  void setSelectedTeam(String teamName) {
+    final team = _teams.firstWhere((t) => t.name == teamName);
+    _selectedTeamId = team.id;
     // Reset player when team changes
-    _selectedPlayer = null;
+    _selectedPlayerId = null;
+    loadPlayers();
     notifyListeners();
   }
 
-  void setSelectedPlayer(String player) {
-    _selectedPlayer = player;
+  void setSelectedPlayer(String playerName) {
+    final player = _players.firstWhere((p) => p.name == playerName);
+    _selectedPlayerId = player.id;
     notifyListeners();
   }
 
@@ -66,84 +121,114 @@ class StatAddProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveAsDraft(BuildContext context) async {
+  Future<void> updateNow(BuildContext context) async {
+    if (_matchId == null || _selectedTeamId == null) {
+      // Show validation error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a team')),
+      );
+      return;
+    }
+
     _setLoading(true);
     try {
+      // Get stat values
+      final catches = int.tryParse(catchesController.text) ?? 0;
+      final catchesYards = int.tryParse(catchesYardsController.text) ?? 0;
+      final rushes = int.tryParse(rushesController.text) ?? 0;
+      final rushesYards = int.tryParse(rushesYardsController.text) ?? 0;
+      final passAttempts = int.tryParse(passAttemptsController.text) ?? 0;
+      final passYards = int.tryParse(passYardsController.text) ?? 0;
+      final completions = int.tryParse(completionsController.text) ?? 0;
+      final tds = int.tryParse(tdsController.text) ?? 0;
+      final flagPull = int.tryParse(flagPullController.text) ?? 0;
+      final sack = int.tryParse(sackController.text) ?? 0;
+      final interceptions = int.tryParse(intController.text) ?? 0;
+      final safety = int.tryParse(safetyController.text) ?? 0;
+      final conversionPoints = int.tryParse(conversionPointsController.text) ?? 0;
+
+      // Get player name if selected
+      String? playerName;
+      if (_selectedPlayerId != null) {
+        final player = _players.firstWhere((p) => p.id == _selectedPlayerId);
+        playerName = player.name;
+      }
+
+      // Add stats via repository
+      final gameStat = await StatKeeperRepository.addMatchStats(
+        matchId: _matchId!,
+        teamId: _selectedTeamId!,
+        playerId: _selectedPlayerId,
+        catches: catches,
+        catchesYards: catchesYards,
+        rushes: rushes,
+        rushesYards: rushesYards,
+        passAttempts: passAttempts,
+        passYards: passYards,
+        completions: completions,
+        tds: tds,
+        flagPull: flagPull,
+        sack: sack,
+        interceptions: interceptions,
+        safety: safety,
+        conversionPoints: conversionPoints,
+      );
+
+      // Add to stats provider for local management
       final statsProvider = Provider.of<StatStatsProvider>(
         context,
         listen: false,
       );
-      final navigationProvider = Provider.of<StatKeeperNavigationProvider>(
-        context,
-        listen: false,
-      );
-
-      // Create stat model
-      final newStat = GameStatModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        leagueName: 'New League Game',
-        team1Name: _selectedTeam ?? 'Team A',
-        team1Logo: 'assets/images/image 13.png',
-        team2Name: 'Opponent',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime.now(),
-        time: '12:00 PM',
-        status: StatStatus.draft,
-        team1Stats: TeamStatModel(
-          teamName: _selectedTeam ?? 'Team A',
-          teamLogo: 'assets/images/image 13.png',
-          catches: int.tryParse(catchesController.text) ?? 0,
-          catchesYards: int.tryParse(catchesYardsController.text) ?? 0,
-          rushes: int.tryParse(rushesController.text) ?? 0,
-          rushesYards: int.tryParse(rushesYardsController.text) ?? 0,
-          passAttempts: int.tryParse(passAttemptsController.text) ?? 0,
-          passYards: int.tryParse(passYardsController.text) ?? 0,
-          completions: int.tryParse(completionsController.text) ?? 0,
-          tds: int.tryParse(tdsController.text) ?? 0,
-          flagPull: int.tryParse(flagPullController.text) ?? 0,
-          sack: int.tryParse(sackController.text) ?? 0,
-          interceptions: int.tryParse(intController.text) ?? 0,
-          safety: int.tryParse(safetyController.text) ?? 0,
-          conversionPoints: int.tryParse(conversionPointsController.text) ?? 0,
-        ),
-        team2Stats: TeamStatModel(
-          teamName: 'Opponent',
-          teamLogo: 'assets/images/image 14.png',
-        ),
-      );
-
-      // Add to stats provider
-      statsProvider.addDraftStat(newStat);
+      statsProvider.addDraftStat(gameStat);
 
       // Clear form
       clearForm();
 
-      // Navigate to Stats tab (index 3) and set sub-tab to Drafts (index 1)
-      navigationProvider.setIndex(3);
-      statsProvider.setTabIndex(1);
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(
+            _selectedPlayerId != null
+                ? 'Stats added to ${playerName ?? 'player'}'
+                : 'Stats added to team'
+          )),
+        );
+      }
     } catch (e) {
-      debugPrint('Error saving stat: $e');
+      debugPrint('Error updating stats: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating stats: ${e.toString()}')),
+        );
+      }
     } finally {
       _setLoading(false);
     }
   }
 
+  void resetToDefault() {
+    // Reset all stat inputs to 0
+    catchesController.text = '0';
+    catchesYardsController.text = '0';
+    rushesController.text = '0';
+    rushesYardsController.text = '0';
+    passAttemptsController.text = '0';
+    passYardsController.text = '0';
+    completionsController.text = '0';
+    tdsController.text = '0';
+    flagPullController.text = '0';
+    sackController.text = '0';
+    intController.text = '0';
+    safetyController.text = '0';
+    conversionPointsController.text = '0';
+    notifyListeners();
+  }
+
   void clearForm() {
-    _selectedTeam = null;
-    _selectedPlayer = null;
-    catchesController.clear();
-    catchesYardsController.clear();
-    rushesController.clear();
-    rushesYardsController.clear();
-    passAttemptsController.clear();
-    passYardsController.clear();
-    completionsController.clear();
-    tdsController.clear();
-    flagPullController.clear();
-    sackController.clear();
-    intController.clear();
-    safetyController.clear();
-    conversionPointsController.clear();
+    _selectedTeamId = null;
+    _selectedPlayerId = null;
+    _players = []; // Clear players when team is deselected
+    resetToDefault();
     notifyListeners();
   }
 
@@ -163,5 +248,29 @@ class StatAddProvider extends ChangeNotifier {
     safetyController.dispose();
     conversionPointsController.dispose();
     super.dispose();
+  }
+
+  // Validation methods
+  bool validateInputs() {
+    if (_selectedTeamId == null) {
+      return false;
+    }
+
+    // Check if at least one stat field has a value > 0
+    final hasStats = (int.tryParse(catchesController.text) ?? 0) > 0 ||
+        (int.tryParse(catchesYardsController.text) ?? 0) > 0 ||
+        (int.tryParse(rushesController.text) ?? 0) > 0 ||
+        (int.tryParse(rushesYardsController.text) ?? 0) > 0 ||
+        (int.tryParse(passAttemptsController.text) ?? 0) > 0 ||
+        (int.tryParse(passYardsController.text) ?? 0) > 0 ||
+        (int.tryParse(completionsController.text) ?? 0) > 0 ||
+        (int.tryParse(tdsController.text) ?? 0) > 0 ||
+        (int.tryParse(flagPullController.text) ?? 0) > 0 ||
+        (int.tryParse(sackController.text) ?? 0) > 0 ||
+        (int.tryParse(intController.text) ?? 0) > 0 ||
+        (int.tryParse(safetyController.text) ?? 0) > 0 ||
+        (int.tryParse(conversionPointsController.text) ?? 0) > 0;
+
+    return hasStats;
   }
 }
