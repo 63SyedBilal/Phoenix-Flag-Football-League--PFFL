@@ -43,18 +43,29 @@ class RefereeBottomNevigation extends StatelessWidget {
                     onTap: () => viewModel.setIndex(1),
                   ),
                   NavItem(
-                    svgIcon: SvgIcons.leagues(size: 20),
-                    svgIconSelected: SvgIcons.leaguesFilled(size: 20),
-                    label: 'Leagues',
+                    svgIcon: const Icon(Icons.add_chart, size: 20),
+                    svgIconSelected: const Icon(
+                      Icons.add_chart,
+                      size: 20,
+                      color: Color(0xFF3B82F6),
+                    ),
+                    label: 'Add Stat',
                     isActive: viewModel.selectedIndex == 2,
                     onTap: () => viewModel.setIndex(2),
+                  ),
+                  NavItem(
+                    svgIcon: SvgIcons.leagues(size: 20),
+                    svgIconSelected: SvgIcons.leaguesFilled(size: 20),
+                    label: 'Stats',
+                    isActive: viewModel.selectedIndex == 3,
+                    onTap: () => viewModel.setIndex(3),
                   ),
                   NavItem(
                     svgIcon: SvgIcons.setting(size: 20),
                     svgIconSelected: SvgIcons.settingFilled(size: 20),
                     label: 'Settings',
-                    isActive: viewModel.selectedIndex == 3,
-                    onTap: () => viewModel.setIndex(3),
+                    isActive: viewModel.selectedIndex == 4,
+                    onTap: () => viewModel.setIndex(4),
                   ),
                 ],
               ),
@@ -93,24 +104,21 @@ class NavItem extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Use different icons for selected vs unselected states
-          ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              isActive
-                  ? const Color(0xFF3B82F6) // Use #3B82F6 for selected items
-                  : colorScheme.onSurface,
-              BlendMode.srcIn,
-            ),
-            child: isActive ? svgIconSelected : svgIcon,
-          ),
+          isActive
+              ? svgIconSelected
+              : ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    colorScheme.onSurface,
+                    BlendMode.srcIn,
+                  ),
+                  child: svgIcon,
+                ),
           const SizedBox(height: 4),
           Text(
             label,
             style: AppTextStyles.labelSmall.copyWith(
               fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-              color: isActive
-                  ? const Color(0xFF3B82F6) // Use #3B82F6 for selected items
-                  : colorScheme.onSurface, // Theme-appropriate text color
+              color: isActive ? const Color(0xFF3B82F6) : colorScheme.onSurface,
             ),
             overflow: TextOverflow.ellipsis,
           ),

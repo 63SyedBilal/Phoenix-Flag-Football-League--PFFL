@@ -106,7 +106,7 @@ const TeamMatchSchema = new mongoose.Schema(
           type: Date,
           default: Date.now
         },
-      
+
       }
     ],
 
@@ -188,7 +188,7 @@ const MatchSchema = new mongoose.Schema(
       enum: ["upcoming", "continue", "completed"],
       default: "upcoming"
     },
-    
+
     timesSwitched: {
       type: String,
       enum: ["halfTime", "fullTime", "overtime", null],

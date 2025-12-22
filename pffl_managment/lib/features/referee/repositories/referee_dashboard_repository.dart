@@ -23,14 +23,15 @@ class RefereeDashboardRepository {
     });
 
     return assignedMatches
-        .where((match) => match.status != MatchStatus.completed)
+        .where((match) => match.status == MatchStatus.upcoming)
         .map((match) => _convertToGameModel(match, refereeId))
         .toList();
   }
 
   GameModel _convertToGameModel(MatchModel match, String refereeId) {
     final gameDate = match.matchDateTime ?? _parseFallbackDate(match.date);
-    final isAssigned = match.refereeId != null &&
+    final isAssigned =
+        match.refereeId != null &&
         match.refereeId!.isNotEmpty &&
         match.refereeId == refereeId;
 
