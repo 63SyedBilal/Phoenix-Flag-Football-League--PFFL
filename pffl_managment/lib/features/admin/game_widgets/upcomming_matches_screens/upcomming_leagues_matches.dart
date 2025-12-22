@@ -2,57 +2,74 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/unified_games_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
-import 'package:pffl_managment/features/admin/screens/all_matches_screen.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/core/utils/svg_icons.dart';
 
 // Helper function to build team widget
-Widget _buildTeamWidget(BuildContext context, String teamName, String teamLogo, bool isAway) {
+Widget _buildTeamWidget(
+  BuildContext context,
+  String teamName,
+  String teamLogo,
+  bool isAway,
+) {
   final theme = Theme.of(context);
   final colorScheme = theme.colorScheme;
 
   return SizedBox(
     width: 100,
     child: Row(
-      mainAxisAlignment:
-          isAway ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: isAway
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: [
-        if (!isAway) ...[
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: colorScheme.outline, width: 1),
-            ),
-            child: ClipOval(
-              child: teamLogo.isNotEmpty
-                  ? Image.network(
-                      teamLogo,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: colorScheme.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.sports_football,
-                            size: 16,
-                            color: colorScheme.onSurfaceVariant,
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: colorScheme.outline, width: 1),
+          ),
+          child: ClipOval(
+            child: teamLogo.isNotEmpty
+                ? Image.network(
+                    teamLogo,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: colorScheme.surfaceContainerHighest,
+                        child: Center(
+                          child: Text(
+                            'No\nLogo',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurfaceVariant,
+                              height: 1.0,
+                            ),
                           ),
-                        );
-                      },
-                    )
-                  : Container(
-                      color: colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.sports_football,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
+                        ),
+                      );
+                    },
+                  )
+                : Container(
+                    color: colorScheme.surfaceContainerHighest,
+                    child: Center(
+                      child: Text(
+                        'No\nLogo',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.0,
+                        ),
                       ),
                     ),
-            ),
+                  ),
           ),
-          const SizedBox(width: 8),
-        ],
+        ),
+        const SizedBox(width: 8),
         Text(
           teamName,
           style: AppTextStyles.bodyMedium.copyWith(
@@ -60,42 +77,6 @@ Widget _buildTeamWidget(BuildContext context, String teamName, String teamLogo, 
             color: colorScheme.onSurface,
           ),
         ),
-        if (isAway) ...[
-          const SizedBox(width: 8),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: colorScheme.outline, width: 1),
-            ),
-            child: ClipOval(
-              child: teamLogo.isNotEmpty
-                  ? Image.network(
-                      teamLogo,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: colorScheme.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.sports_football,
-                            size: 16,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      color: colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.sports_football,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-            ),
-          ),
-        ],
       ],
     ),
   );
@@ -142,7 +123,12 @@ class UpcommingGamesCardWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTeamWidget(context, match.homeTeam, match.homeTeamLogo, false),
+              _buildTeamWidget(
+                context,
+                match.homeTeam,
+                match.homeTeamLogo,
+                false,
+              ),
               Column(
                 children: [
                   Text(
@@ -160,7 +146,12 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                   ),
                 ],
               ),
-              _buildTeamWidget(context, match.awayTeam, match.awayTeamLogo, true),
+              _buildTeamWidget(
+                context,
+                match.awayTeam,
+                match.awayTeamLogo,
+                true,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -177,7 +168,11 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                   color: colorScheme.primary,
                 ),
               ),
-              Icon(Icons.edit, size: 16, color: colorScheme.primary),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: colorScheme.primary,
+              ),
             ],
           ),
         ],
@@ -201,18 +196,20 @@ class UpcommingGames extends StatelessWidget {
           }
         });
 
-        final matches = gamesProvider.upcomingGames;
-        
+        final matches = gamesProvider.upcomingGamesPerLeague;
+
         // Debug print to check data
         debugPrint('🔍 UpcommingGames Widget Build:');
-        debugPrint('   - Total games in provider: ${gamesProvider.allGames.length}');
-        debugPrint('   - Upcoming games: ${matches.length}');
+        debugPrint(
+          '   - Total games in provider: ${gamesProvider.allGames.length}',
+        );
+        debugPrint('   - Upcoming games per league: ${matches.length}');
         debugPrint('   - Is loading: ${gamesProvider.isLoading}');
-        debugPrint('   - Error: ${gamesProvider.errorMessage}');
-        
+
         if (matches.isNotEmpty) {
-          debugPrint('   - First upcoming game: ${matches.first.homeTeam} vs ${matches.first.awayTeam}');
-          debugPrint('   - First game date: ${matches.first.matchDateTime}');
+          debugPrint(
+            '   - First entry: ${matches.first.leagueName} - ${matches.first.homeTeam} vs ${matches.first.awayTeam}',
+          );
         }
 
         return Column(
@@ -222,39 +219,15 @@ class UpcommingGames extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Upcoming Games', style: AppTextStyles.headlineSmall),
-                if (matches.isNotEmpty)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AllMatchesScreen(matches: matches),
-                        ),
-                      );
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          'View more',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
-                      ],
-                    ),
-                  ),
               ],
             ),
             const SizedBox(height: 18),
             if (matches.isEmpty)
               _buildEmptyState(context)
             else
-              ...matches.take(3).map(
+              ...matches.map(
                 (match) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: UpcommingGamesCardWidget(match: match),
                 ),
               ),
@@ -294,10 +267,7 @@ class UpcommingGames extends StatelessWidget {
           Text(
             'There are no upcoming games scheduled at the moment.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),
         ],
       ),

@@ -32,34 +32,10 @@ class AdminOverViewSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Overview', style: AppTextStyles.headlineSmall),
-                  // Refresh button
-                  if (viewModel.hasFetched && !viewModel.isLoading)
-                    GestureDetector(
-                      onTap: () => viewModel.refreshStats(),
-                      child: const Icon(
-                        Icons.refresh,
-                        size: 20,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  // Loading indicator
-                  if (viewModel.isLoading)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF0043AF),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
-
-            // Error message
             if (viewModel.error != null && !viewModel.isLoading)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -104,8 +80,6 @@ class AdminOverViewSection extends StatelessWidget {
                   ),
                 ),
               ),
-
-            // Stat cards grid
             Row(
               children: [
                 Expanded(child: StatCardWidget(stat: stats[0])),

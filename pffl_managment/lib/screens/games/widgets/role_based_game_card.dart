@@ -62,13 +62,10 @@ class RoleBasedGameCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF111827),
-                        ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Color(0xFF111827),
+                        size: 8,
                       ),
                     ],
                   ),
@@ -76,11 +73,9 @@ class RoleBasedGameCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            // Teams row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Home team
                 SizedBox(
                   width: 100,
                   child: GestureDetector(
@@ -94,14 +89,11 @@ class RoleBasedGameCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             match.homeTeam,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Lato',
-                              color: const Color(0xFF111827),
-                              decoration: onTeamTap != null && match.homeTeamId != null
-                                  ? TextDecoration.underline
-                                  : null,
+                              color: Color(0xFF111827),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -110,7 +102,6 @@ class RoleBasedGameCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Date and time
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -144,24 +135,21 @@ class RoleBasedGameCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        _buildTeamLogo(match.awayTeamLogo),
+                        const SizedBox(width: 8),
                         Flexible(
                           child: Text(
                             match.awayTeam,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Lato',
-                              color: const Color(0xFF111827),
-                              decoration: onTeamTap != null && match.awayTeamId != null
-                                  ? TextDecoration.underline
-                                  : null,
+                              color: Color(0xFF111827),
                             ),
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.right,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildTeamLogo(match.awayTeamLogo),
                       ],
                     ),
                   ),
@@ -187,6 +175,33 @@ class RoleBasedGameCard extends StatelessWidget {
   }
 
   Widget _buildTeamLogo(String logoUrl) {
+    if (logoUrl.isEmpty) {
+      return Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: const Color(0xFF000000).withValues(alpha: 0.12),
+            width: 0.5,
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            'No\nLogo',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              height: 1.1,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       width: 32,
       height: 32,
@@ -204,11 +219,28 @@ class RoleBasedGameCard extends StatelessWidget {
           fit: BoxFit.cover,
           placeholder: (context, url) => Container(
             color: Colors.grey[200],
-            child: const CircularProgressIndicator(strokeWidth: 2),
+            child: const Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
           ),
           errorWidget: (context, url, error) => Container(
             color: Colors.grey[200],
-            child: const Icon(Icons.sports, size: 16, color: Colors.grey),
+            child: const Center(
+              child: Text(
+                'No\nLogo',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                  height: 1.1,
+                ),
+              ),
+            ),
           ),
         ),
       ),
