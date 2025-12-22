@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
@@ -39,11 +40,10 @@ class StatCard extends StatelessWidget {
                 children: [
                   // Teams row
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Team 1
                       _buildTeam(gameStat.team1Logo, gameStat.team1Name),
-
-                      const SizedBox(width: 16),
 
                       // Date and time
                       Column(
@@ -66,8 +66,6 @@ class StatCard extends StatelessWidget {
                           ),
                         ],
                       ),
-
-                      const SizedBox(width: 16),
 
                       // Team 2
                       _buildTeam(gameStat.team2Logo, gameStat.team2Name),
@@ -125,9 +123,7 @@ class StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: gameStat.isCompleted
-                  ? const Color(0xFF3B82F6)
-                  : const Color(0xFF3B82F6),
+              color: const Color(0xFF3B82F6),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -154,20 +150,32 @@ class StatCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: AppColors.borderLight, width: 1),
           ),
-          child: Image.asset(
-            logo,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.sports_football, size: 24);
-            },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(5.5),
+            child: logo.isEmpty || !logo.startsWith('http')
+                ? const Icon(Icons.sports_football, size: 24)
+                : CachedNetworkImage(
+                    imageUrl: logo,
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(strokeWidth: 2),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.sports_football, size: 24),
+                    fit: BoxFit.cover,
+                  ),
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          name,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+        SizedBox(
+          width: 80,
+          child: Text(
+            name,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

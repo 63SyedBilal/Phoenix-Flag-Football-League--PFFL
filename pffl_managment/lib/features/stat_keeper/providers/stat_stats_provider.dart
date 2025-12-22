@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
+import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository.dart';
+import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StatStatsProvider extends ChangeNotifier {
   // All stats storage
@@ -12,26 +15,45 @@ class StatStatsProvider extends ChangeNotifier {
   // Search query
   String _searchQuery = '';
 
-  // Loading state
+  // Selected match
+  String? _selectedMatchId;
+  List<MatchModel> _assignedMatches = [];
+
+  // Loading states
   bool _isLoading = false;
+  bool _isSubmitting = false;
 
   // Getters
   int get currentTabIndex => _currentTabIndex;
   String get searchQuery => _searchQuery;
   bool get isLoading => _isLoading;
+  bool get isSubmitting => _isSubmitting;
+  String? get selectedMatchId => _selectedMatchId;
+  List<MatchModel> get assignedMatches => _assignedMatches;
 
   // Filtered lists
   List<GameStatModel> get allStats {
-    return _filterStats(_allStats);
+    // Show consolidated match summaries in All Stats
+    return _filterStats(
+      _allStats
+          .where(
+            (stat) =>
+                stat.status == StatStatus.approved ||
+                stat.status == StatStatus.all,
+          )
+          .toList(),
+    );
   }
 
   List<GameStatModel> get draftStats {
+    // Show individual draft records in Draft Stats
     return _filterStats(
       _allStats.where((stat) => stat.status == StatStatus.draft).toList(),
     );
   }
 
   List<GameStatModel> get approvedStats {
+    // Show only approved match summaries
     return _filterStats(
       _allStats.where((stat) => stat.status == StatStatus.approved).toList(),
     );
@@ -50,151 +72,15 @@ class StatStatsProvider extends ChangeNotifier {
     }
   }
 
-  StatStatsProvider() {
-    _initializeMockData();
-  }
-
-  void _initializeMockData() {
-    _allStats.addAll([
-      // Draft stats
-      GameStatModel(
-        id: '1',
-        leagueName: 'The Rugby Championship',
-        team1Name: 'RC',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STA',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '01:05 AM PKT',
-        status: StatStatus.draft,
-        isAssignedToMe: false,
-        isCompleted: false,
-        team1Stats: TeamStatModel(
-          teamName: 'RC',
-          teamLogo: 'assets/images/image 12.png',
-          catches: 14,
-          catchesYards: 235,
-          rushes: 8,
-          rushesYards: 155,
-          passAttempts: 25,
-          passYards: 312,
-          completions: 15,
-          tds: 11,
-          flagPull: 28,
-          sack: 2,
-          interceptions: 4,
-          safety: 1,
-          conversionPoints: 11,
-        ),
-        team2Stats: TeamStatModel(
-          teamName: 'STA',
-          teamLogo: 'assets/images/image 14.png',
-          catches: 14,
-          catchesYards: 235,
-          rushes: 8,
-          rushesYards: 155,
-          passAttempts: 25,
-          passYards: 312,
-          completions: 15,
-          tds: 11,
-          flagPull: 28,
-          sack: 2,
-          interceptions: 4,
-          safety: 1,
-          conversionPoints: 11,
-        ),
-      ),
-      // Approved stats
-      GameStatModel(
-        id: '2',
-        leagueName: 'Six Nations',
-        team1Name: 'GEO',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STB',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '02:15 AM PKT',
-        status: StatStatus.approved,
-        isAssignedToMe: false,
-        isCompleted: true,
-        team1Stats: TeamStatModel(
-          teamName: 'GEO',
-          teamLogo: 'assets/images/image 12.png',
-        ),
-        team2Stats: TeamStatModel(
-          teamName: 'STB',
-          teamLogo: 'assets/images/image 14.png',
-        ),
-      ),
-      GameStatModel(
-        id: '3',
-        leagueName: 'World Cup Qualifier',
-        team1Name: 'WQ',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STC',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '03:30 AM PKT',
-        status: StatStatus.approved,
-        isAssignedToMe: false,
-        isCompleted: true,
-        team1Stats: TeamStatModel(
-          teamName: 'WQ',
-          teamLogo: 'assets/images/image 12.png',
-        ),
-        team2Stats: TeamStatModel(
-          teamName: 'STC',
-          teamLogo: 'assets/images/image 14.png',
-        ),
-      ),
-      // All stats (for All Stats tab)
-      GameStatModel(
-        id: '4',
-        leagueName: 'The Rugby Championship',
-        team1Name: 'RC',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STA',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '01:05 AM PKT',
-        status: StatStatus.all,
-        isAssignedToMe: true,
-        isCompleted: false,
-        team1Stats: TeamStatModel(
-          teamName: 'RC',
-          teamLogo: 'assets/images/image 12.png',
-        ),
-        team2Stats: TeamStatModel(
-          teamName: 'STA',
-          teamLogo: 'assets/images/image 14.png',
-        ),
-      ),
-      GameStatModel(
-        id: '5',
-        leagueName: 'European League',
-        team1Name: 'EL',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STD',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '04:45 AM PKT',
-        status: StatStatus.all,
-        isAssignedToMe: false,
-        isCompleted: true,
-        team1Stats: TeamStatModel(
-          teamName: 'EL',
-          teamLogo: 'assets/images/image 12.png',
-        ),
-        team2Stats: TeamStatModel(
-          teamName: 'STD',
-          teamLogo: 'assets/images/image 14.png',
-        ),
-      ),
-    ]);
-  }
+  StatStatsProvider();
 
   void _setLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  void _setSubmitting(bool value) {
+    _isSubmitting = value;
     notifyListeners();
   }
 
@@ -219,39 +105,154 @@ class StatStatsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addDraftStat(GameStatModel stat) {
-    _allStats.add(stat.copyWith(status: StatStatus.draft));
-    notifyListeners();
+  void setSelectedMatchId(String? matchId) {
+    _selectedMatchId = matchId;
+    if (matchId != null) {
+      loadStats(matchId);
+    } else {
+      _allStats.clear();
+      notifyListeners();
+    }
   }
 
-  Future<void> approveStat(String statId) async {
+  Future<void> fetchAssignedMatches() async {
     _setLoading(true);
     try {
-      final index = _allStats.indexWhere((stat) => stat.id == statId);
-      if (index != -1) {
-        _allStats[index] = _allStats[index].copyWith(
-          status: StatStatus.approved,
-          isCompleted: true,
-        );
-        notifyListeners();
+      final matches = await StatKeeperRepository.getAssignedMatches();
+      _assignedMatches = matches;
+      if (_selectedMatchId == null && matches.isNotEmpty) {
+        _selectedMatchId = matches.first.id;
+        loadStats(_selectedMatchId!);
       }
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching matches: $e');
     } finally {
       _setLoading(false);
     }
   }
 
-  void deleteStat(String statId) {
-    _allStats.removeWhere((stat) => stat.id == statId);
-    notifyListeners();
+  Future<void> loadStats(String matchId) async {
+    _setLoading(true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserId = prefs.getString('userId');
+
+      // 1. Fetch consolidated match stats (from Match doc)
+      final matchStat = await StatKeeperRepository.getMatchStats(matchId);
+
+      // 2. Fetch individual draft records for current user (from Stat records)
+      final draftStatsList = await StatKeeperRepository.getMatchStatsList(
+        matchId: matchId,
+        status: 'DRAFT',
+        createdBy: currentUserId,
+      );
+
+      _allStats.clear();
+
+      // Add official match stat
+      if (matchStat != null) {
+        _allStats.add(matchStat);
+      }
+
+      // Add individual draft records
+      for (var item in draftStatsList) {
+        _allStats.add(_parseStatItem(item));
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading stats: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  GameStatModel _parseStatItem(dynamic item) {
+    final stats = item['stats'] ?? {};
+    final player = item['playerId'] ?? {};
+    final team = item['teamId'] ?? {};
+    final league = item['leagueId'] ?? {};
+
+    final statusStr = item['status']?.toString().toUpperCase() ?? 'DRAFT';
+    StatStatus status = StatStatus.draft;
+    if (statusStr == 'APPROVED') status = StatStatus.approved;
+    if (statusStr == 'PENDING_APPROVAL') status = StatStatus.all;
+
+    return GameStatModel(
+      id: item['_id'] ?? '',
+      leagueName: league['leagueName'] ?? 'League',
+      team1Name: team['teamName'] ?? 'Team',
+      team1Logo: '',
+      team2Name: '',
+      team2Logo: '',
+      date: DateTime.now(),
+      time: '',
+      status: status,
+      team1Stats: TeamStatModel(
+        teamName: team['teamName'] ?? 'Team',
+        teamLogo: '',
+        catches: stats['catches'] ?? 0,
+        catchesYards: stats['catchYards'] ?? 0,
+        rushes: stats['rushes'] ?? 0,
+        rushesYards: stats['rushYards'] ?? 0,
+        passAttempts: stats['passAttempts'] ?? 0,
+        passYards: stats['passYards'] ?? 0,
+        completions: stats['completions'] ?? 0,
+        tds: stats['touchdowns'] ?? 0,
+        flagPull: stats['flagPull'] ?? 0,
+        sack: stats['sack'] ?? 0,
+        interceptions: stats['interceptions'] ?? 0,
+        safety: stats['safeties'] ?? 0,
+        conversionPoints: stats['extraPoints'] ?? 0,
+        playerStats: [
+          PlayerStatModel(
+            playerId: player['_id'] ?? '',
+            playerName:
+                '${player['firstName'] ?? ''} ${player['lastName'] ?? ''}'
+                    .trim(),
+            catches: stats['catches'] ?? 0,
+            catchesYards: stats['catchYards'] ?? 0,
+            rushes: stats['rushes'] ?? 0,
+            rushesYards: stats['rushYards'] ?? 0,
+            passAttempts: stats['passAttempts'] ?? 0,
+            passYards: stats['passYards'] ?? 0,
+            completions: stats['completions'] ?? 0,
+            tds: stats['touchdowns'] ?? 0,
+            flagPull: stats['flagPull'] ?? 0,
+            sack: stats['sack'] ?? 0,
+            interceptions: stats['interceptions'] ?? 0,
+            safety: stats['safeties'] ?? 0,
+            conversionPoints: stats['extraPoints'] ?? 0,
+          ),
+        ],
+      ),
+      team2Stats: TeamStatModel(teamName: '', teamLogo: ''),
+    );
+  }
+
+  Future<void> submitForApproval() async {
+    if (_selectedMatchId == null) return;
+
+    _setSubmitting(true);
+    try {
+      await StatKeeperRepository.submitStatsForApproval(_selectedMatchId!);
+      await loadStats(_selectedMatchId!);
+    } catch (e) {
+      print('Error submitting stats: $e');
+    } finally {
+      _setSubmitting(false);
+    }
   }
 
   Future<void> refreshStats() async {
-    _setLoading(true);
-    try {
-      // TODO: Implement API call
-      await Future.delayed(const Duration(seconds: 1));
-    } finally {
-      _setLoading(false);
+    if (_selectedMatchId != null) {
+      await loadStats(_selectedMatchId!);
     }
+  }
+
+  // Legacy method fix for draft_stats_tab.dart
+  Future<void> approveStat(String statId) async {
+    // No-op or call submitForApproval if intended for single stat (though system is match-wide)
   }
 }

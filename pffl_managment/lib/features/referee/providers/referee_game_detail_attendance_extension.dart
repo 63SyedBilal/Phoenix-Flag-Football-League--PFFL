@@ -47,7 +47,9 @@ extension RefereeGameDetailAttendanceExtension on RefereeGameDetailProvider {
       return true;
     }
 
-    final presentCount = _playerAttendance.values.where((v) => v == true).length;
+    final presentCount = _playerAttendance.values
+        .where((v) => v == true)
+        .length;
     if (presentCount == 0) {
       _error = 'Please mark at least one player as present';
       _emitStateChange();
@@ -74,15 +76,95 @@ extension RefereeGameDetailAttendanceExtension on RefereeGameDetailProvider {
       }
     }
 
-    _isAttendanceLocked = true;
-    _addAction(
-      'Attendance Locked',
-      '$presentCount player(s) marked present',
-      type: GameTimelineEntryType.milestone,
-      icon: Icons.lock,
-      iconColor: const Color(0xFF1E293B),
-    );
-    _emitStateChange();
-    return true;
+    // Verify team ID mapping availability
+    if (homeTeamId != null &&
+        _AttendanceRefHelper.extractId(homeTeamId) != null) {
+      if (!_AttendanceRefHelper.hasTeamId(homeTeamId)) {
+        // Fallback or skip
+      }
+    }
+
+    try {
+      _isLoading = true;
+      _emitStateChange();
+
+      final homeId = _AttendanceRefHelper.extractId(_match?.homeTeamId);
+      final awayId = _AttendanceRefHelper.extractId(_match?.awayTeamId);
+
+      final Map<String, dynamic> attendanceUpdate = {};
+
+      // Helper to build player list with isActive: false
+      List<Map<String, dynamic>> buildAttendanceList(String teamId) {
+        final presentIds = _playerAttendance.entries
+            .where((e) => e.value == true)
+            .map((e) => e.key)
+            .toSet();
+
+        final teamPlayers = _teamPlayers[teamId] ?? [];
+
+        // Filter only present players
+        return teamPlayers
+            .where((p) => presentIds.contains(p.id))
+            .map(
+              (p) => {
+                'playerId': p.id, // Correct key for backend schema
+                'isActive': false, // Default to false for attendance only
+              },
+            )
+            .toList();
+      }
+
+      if (homeId != null) {
+        attendanceUpdate['teamA'] = {
+          'teamId': homeId,
+          'players': buildAttendanceList(homeId),
+        };
+      }
+
+      if (awayId != null) {
+        attendanceUpdate['teamB'] = {
+          'teamId': awayId,
+          'players': buildAttendanceList(awayId),
+        };
+      }
+
+      if (attendanceUpdate.isNotEmpty && _match?.id != null) {
+        await _refereeGameDetailService.updateMatch(
+          _match!.id!,
+          attendanceUpdate,
+        );
+      }
+
+      _isAttendanceLocked = true;
+      _addAction(
+        'Attendance Locked',
+        '$presentCount player(s) marked present & saved',
+        type: GameTimelineEntryType.milestone,
+        icon: Icons.lock,
+        iconColor: const Color(0xFF1E293B),
+      );
+      return true;
+    } catch (e) {
+      _error = 'Failed to save attendance: $e';
+      debugPrint('❌ Error saving attendance: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      _emitStateChange();
+    }
+  }
+}
+
+// Helper class for safe ID extraction (duplicated to avoid dependency issues if not shared)
+class _AttendanceRefHelper {
+  static String? extractId(dynamic data) {
+    if (data == null) return null;
+    if (data is String) return data;
+    if (data is Map) return data['_id']?.toString() ?? data['id']?.toString();
+    return null;
+  }
+
+  static bool hasTeamId(dynamic data) {
+    return extractId(data) != null;
   }
 }

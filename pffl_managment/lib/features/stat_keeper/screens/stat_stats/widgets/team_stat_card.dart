@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
-import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/widgets/stat_detail_row.dart';
@@ -42,11 +42,9 @@ class _TeamStatCardState extends State<TeamStatCard> {
           // Team 1 Stats
           _buildTeamSection(widget.gameStat.team1Stats, isFirst: true),
 
-          // Team 2 Stats
-          _buildTeamSection(widget.gameStat.team2Stats, isFirst: false),
-
-          // Submit button for drafts
-          if (widget.isDraft && _isExpanded) _buildSubmitButton(),
+          // Team 2 Stats (only if present)
+          if (widget.gameStat.team2Name.isNotEmpty)
+            _buildTeamSection(widget.gameStat.team2Stats, isFirst: false),
         ],
       ),
     );
@@ -124,17 +122,26 @@ class _TeamStatCardState extends State<TeamStatCard> {
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: AppColors.borderLight, width: 1),
                   ),
-                  child: Image.asset(
-                    teamStats.teamLogo,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.sports_football, size: 20);
-                    },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(3.5),
+                    child:
+                        teamStats.teamLogo.isEmpty ||
+                            !teamStats.teamLogo.startsWith('http')
+                        ? const Icon(Icons.sports_football, size: 20)
+                        : CachedNetworkImage(
+                            imageUrl: teamStats.teamLogo,
+                            placeholder: (context, url) =>
+                                const CircularProgressIndicator(strokeWidth: 2),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.sports_football, size: 20),
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '${teamStats.teamName} Team Stats',
+                    '${teamStats.teamName} stats',
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontSize: 15,
@@ -142,19 +149,12 @@ class _TeamStatCardState extends State<TeamStatCard> {
                     ),
                   ),
                 ),
-                if (!widget.isDraft)
-                  const Icon(
-                    Icons.check_circle,
-                    color: Color(0xFF10B981),
-                    size: 20,
-                  )
-                else
-                  Icon(
-                    _isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: AppColors.textSecondary,
-                  ),
+                Icon(
+                  _isExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: AppColors.textSecondary,
+                ),
               ],
             ),
           ),
@@ -191,26 +191,36 @@ class _TeamStatCardState extends State<TeamStatCard> {
             value: '${teamStats.conversionPoints}',
             showBorder: false,
           ),
+
+          // Player individual stats if available
+          if (teamStats.playerStats.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Player Details:',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            ...teamStats.playerStats.map(
+              (p) => Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: StatDetailRow(
+                  label: p.playerName,
+                  value: 'TD: ${p.tds}, C: ${p.catches}',
+                  showBorder: true,
+                ),
+              ),
+            ),
+          ],
         ],
       ],
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.borderLight, width: 1)),
-      ),
-      child: CustomButton.primary(
-        text: 'Submit for Approval',
-        onPressed: () {
-          if (widget.onApprove != null) {
-            widget.onApprove!();
-          }
-        },
-        height: 48,
-      ),
     );
   }
 }

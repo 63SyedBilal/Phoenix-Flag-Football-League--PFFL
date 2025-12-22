@@ -3,10 +3,11 @@ import 'package:pffl_managment/core/providers/bottom_nevigation_provider/referee
 import 'package:pffl_managment/features/bottom_nevigation/referee_bottom_nevigation/referee_bottom_nevigation.dart';
 import 'package:pffl_managment/features/header_widgets/raferee_header_widget/raferee_header_widget.dart';
 import 'package:pffl_managment/features/referee/screens/referee_home/referee_home_screen.dart';
+import 'package:pffl_managment/features/stat_keeper/screens/stat_add/stat_add_screen.dart';
+import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/stat_stats_screen.dart';
+import 'package:pffl_managment/features/stat_keeper/providers/stat_stats_provider.dart';
 import 'package:pffl_managment/screens/games/common/games_screen.dart';
 import 'package:pffl_managment/screens/games/common/games_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_leagues/leagues_screen.dart';
-import 'package:pffl_managment/screens/leagues/common/league_provider.dart';
 import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:provider/provider.dart';
@@ -18,14 +19,17 @@ class RefereeDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<RefereeNavigationProvider>(context);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            const RafereeHeaderWidget(),
-            Expanded(child: _buildContent(navigationProvider.selectedIndex)),
-            const RefereeBottomNevigation(),
-          ],
+    return MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => StatStatsProvider())],
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              const RafereeHeaderWidget(),
+              Expanded(child: _buildContent(navigationProvider.selectedIndex)),
+              const RefereeBottomNevigation(),
+            ],
+          ),
         ),
       ),
     );
@@ -41,18 +45,17 @@ class RefereeDashboard extends StatelessWidget {
           child: const GamesScreen(),
         );
       case 2:
-        return ChangeNotifierProvider(
-          create: (_) => LeagueProvider(userRole: 'referee'),
-          child: const LeaguesScreen(),
-        );
+        return const StatAddScreen();
       case 3:
+        return const StatStatsScreen();
+      case 4:
         return ChangeNotifierProvider(
           create: (_) => RoleBasedSettingsProvider(userRole: 'referee'),
           child: const SettingsScreen(),
         );
 
       default:
-        return const Center(child: Text('Captain Dashboard'));
+        return const Center(child: Text('Referee Dashboard'));
     }
   }
 }
