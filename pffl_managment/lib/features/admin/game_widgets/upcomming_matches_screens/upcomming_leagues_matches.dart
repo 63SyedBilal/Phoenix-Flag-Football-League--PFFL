@@ -174,10 +174,10 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                 'Edit Game',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
+                  color: Color(0x33000000),
                 ),
               ),
-              Icon(Icons.edit, size: 16, color: colorScheme.primary),
+              Icon(Icons.keyboard_arrow_right, size: 16, color: Color(0x33000000)),
             ],
           ),
         ],
@@ -222,30 +222,7 @@ class UpcommingGames extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Upcoming Games', style: AppTextStyles.headlineSmall),
-                if (matches.isNotEmpty)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AllMatchesScreen(matches: matches),
-                        ),
-                      );
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          'View more',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
-                      ],
-                    ),
-                  ),
+                // Removed the "View more" text and arrow icon
               ],
             ),
             const SizedBox(height: 18),

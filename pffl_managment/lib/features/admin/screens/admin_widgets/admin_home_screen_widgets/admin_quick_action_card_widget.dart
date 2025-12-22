@@ -23,6 +23,7 @@ class AdminQuickActionCardWidget extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(12),
       child: Card(
+        shadowColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           decoration: BoxDecoration(

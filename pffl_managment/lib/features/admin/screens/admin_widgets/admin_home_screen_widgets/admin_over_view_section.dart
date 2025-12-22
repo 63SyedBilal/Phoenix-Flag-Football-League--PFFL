@@ -33,27 +33,7 @@ class AdminOverViewSection extends StatelessWidget {
                 children: [
                   Text('Overview', style: AppTextStyles.headlineSmall),
                   // Refresh button
-                  if (viewModel.hasFetched && !viewModel.isLoading)
-                    GestureDetector(
-                      onTap: () => viewModel.refreshStats(),
-                      child: const Icon(
-                        Icons.refresh,
-                        size: 20,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  // Loading indicator
-                  if (viewModel.isLoading)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF0043AF),
-                        ),
-                      ),
-                    ),
+                
                 ],
               ),
             ),
