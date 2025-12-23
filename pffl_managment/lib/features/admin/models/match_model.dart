@@ -1,3 +1,5 @@
+import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
+
 enum MatchStatus { upcoming, live, completed, cancelled }
 
 class MatchModel {
@@ -21,6 +23,8 @@ class MatchModel {
   final int? awayScore;
   final String? roundName;
   final String? gameNumber;
+  final TeamStatModel? homeTeamStats;
+  final TeamStatModel? awayTeamStats;
 
   // Filtering fields
   final String? leagueId;
@@ -49,6 +53,8 @@ class MatchModel {
     this.homeTeamId,
     this.awayTeamId,
     this.format,
+    this.homeTeamStats,
+    this.awayTeamStats,
   });
 
   MatchModel copyWith({
@@ -73,6 +79,8 @@ class MatchModel {
     String? homeTeamId,
     String? awayTeamId,
     String? format,
+    TeamStatModel? homeTeamStats,
+    TeamStatModel? awayTeamStats,
   }) {
     return MatchModel(
       id: id ?? this.id,
@@ -96,6 +104,8 @@ class MatchModel {
       homeTeamId: homeTeamId ?? this.homeTeamId,
       awayTeamId: awayTeamId ?? this.awayTeamId,
       format: format ?? this.format,
+      homeTeamStats: homeTeamStats ?? this.homeTeamStats,
+      awayTeamStats: awayTeamStats ?? this.awayTeamStats,
     );
   }
 

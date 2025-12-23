@@ -5,7 +5,7 @@ class LeagueDetailProvider extends ChangeNotifier {
   int _selectedTabIndex = 0;
   LeagueGameModel? _editingGame;
   bool _isEditing = false;
-  
+
   // Team expansion state
   final Map<String, bool> _teamExpansionState = {};
 
@@ -34,7 +34,7 @@ class LeagueDetailProvider extends ChangeNotifier {
     _editingGame = updatedGame;
     notifyListeners();
   }
-  
+
   bool isTeamExpanded(String teamId) {
     return _teamExpansionState[teamId] ?? false;
   }
@@ -81,49 +81,67 @@ class LeagueDetailProvider extends ChangeNotifier {
         rank: 1,
         teamName: 'Shadow Wolves',
         teamLogo: '',
+        matchesPlayed: 6,
         wins: 6,
         draws: 0,
         losses: 0,
+        pointsScored: 180,
+        pointsAgainst: 60,
       ),
       LeagueTeamStandingModel(
         rank: 2,
         teamName: 'Iron Rangers',
         teamLogo: '',
+        matchesPlayed: 6,
         wins: 4,
         draws: 0,
         losses: 2,
+        pointsScored: 140,
+        pointsAgainst: 100,
       ),
       LeagueTeamStandingModel(
         rank: 3,
         teamName: 'Metro Kings',
         teamLogo: '',
+        matchesPlayed: 6,
         wins: 2,
         draws: 0,
         losses: 4,
+        pointsScored: 100,
+        pointsAgainst: 140,
       ),
       LeagueTeamStandingModel(
         rank: 4,
         teamName: 'Blaze Squad',
         teamLogo: '',
+        matchesPlayed: 6,
         wins: 0,
         draws: 0,
         losses: 6,
+        pointsScored: 60,
+        pointsAgainst: 180,
       ),
       LeagueTeamStandingModel(
         rank: 5,
         teamName: 'Metro Kings',
         teamLogo: '',
+        matchesPlayed: 6,
         wins: 0,
         draws: 0,
         losses: 6,
+        pointsScored: 60,
+        pointsAgainst: 180,
       ),
       LeagueTeamStandingModel(
         rank: 6,
         teamName: 'Iron Rangers',
         teamLogo: '',
+        matchesPlayed: 6,
         wins: 4,
         draws: 0,
         losses: 2,
+        pointsScored: 140,
+        pointsAgainst: 100,
       ),
     ];
   }

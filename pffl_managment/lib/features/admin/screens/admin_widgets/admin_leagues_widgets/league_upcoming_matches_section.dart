@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/unified_games_provider.dart';
 import 'package:pffl_managment/features/admin/game_widgets/upcomming_matches_screens/upcomming_matches_card_widget.dart';
+import 'package:pffl_managment/features/admin/screens/admin_games/admin_games_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/admin/screens/all_matches_screen.dart';
 
 class LeagueUpcomingMatchesSection extends StatelessWidget {
   const LeagueUpcomingMatchesSection({super.key});
@@ -38,7 +38,8 @@ class LeagueUpcomingMatchesSection extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AllMatchesScreen(matches: matches),
+                            builder: (context) =>
+                                AdminGamesScreen(matches: matches),
                           ),
                         );
                       },
@@ -52,7 +53,11 @@ class LeagueUpcomingMatchesSection extends StatelessWidget {
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-                          Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 12,
+                            color: Colors.grey,
+                          ),
                         ],
                       ),
                     ),
@@ -60,12 +65,14 @@ class LeagueUpcomingMatchesSection extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               // Display only first 3 matches (as per project requirement)
-              ...matches.take(3).map(
-                (match) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: UpcommingMatchesCardWidget(match: match),
-                ),
-              ),
+              ...matches
+                  .take(3)
+                  .map(
+                    (match) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: UpcommingMatchesCardWidget(match: match),
+                    ),
+                  ),
             ],
           ),
         );

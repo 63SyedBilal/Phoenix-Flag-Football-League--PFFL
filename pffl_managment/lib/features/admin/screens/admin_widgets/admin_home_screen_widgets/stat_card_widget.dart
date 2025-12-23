@@ -14,6 +14,7 @@ class StatCardWidget extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
+      shadowColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
@@ -56,7 +57,7 @@ class StatCardWidget extends StatelessWidget {
                   Text(
                     stat.subtitle,
                     style: AppTextStyles.labelSmall,
-                    
+
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

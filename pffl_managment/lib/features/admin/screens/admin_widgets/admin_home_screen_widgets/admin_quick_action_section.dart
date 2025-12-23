@@ -5,11 +5,10 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 
 class AdminQuickActionSection extends StatelessWidget {
-  const AdminQuickActionSection ({super.key});
+  const AdminQuickActionSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     return Consumer<DashboardViewModel>(
       builder: (context, viewModel, child) {
         final actions = viewModel.quickActions;
@@ -36,8 +35,19 @@ class AdminQuickActionSection extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: AdminQuickActionCardWidget(action: actions[2])),
-                Expanded(child: AdminQuickActionCardWidget(action: actions[3])),
+                Expanded(
+                  child: AdminQuickActionCardWidget(
+                    action: actions[2],
+                    isBlurred: true,
+                  ),
+                ),
+
+                Expanded(
+                  child: AdminQuickActionCardWidget(
+                    action: actions[3],
+                    isBlurred: true,
+                  ),
+                ),
               ],
             ),
           ],

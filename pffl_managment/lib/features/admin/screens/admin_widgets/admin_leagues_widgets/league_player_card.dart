@@ -22,16 +22,24 @@ class LeaguePlayerCard extends StatelessWidget {
             top: 0,
             right: -5,
             bottom: 0,
-            child: Image.asset(
-              index % 2 == 0 
-                  ? 'assets/images/image 14.png'
-                  : 'assets/images/Real Madrid.png',
-              width: 95,
-              height: 90,
-              fit: BoxFit.cover,
-            ),
+            child: player.avatarUrl.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                    child: Image.network(
+                      player.avatarUrl,
+                      width: 95,
+                      height: 90,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildPersonIcon(),
+                    ),
+                  )
+                : _buildPersonIcon(),
           ),
-          
+
           // Text Content
           Padding(
             padding: const EdgeInsets.only(left: 10, top: 12, right: 10),
@@ -63,9 +71,9 @@ class LeaguePlayerCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 const SizedBox(height: 22),
-                
+
                 // Stats Row
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -96,6 +104,15 @@ class LeaguePlayerCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPersonIcon() {
+    return Container(
+      width: 95,
+      height: 90,
+      color: Colors.white.withOpacity(0.1),
+      child: const Icon(Icons.person, size: 50, color: Colors.white54),
     );
   }
 }
