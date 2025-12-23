@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 class LeagueTeamList extends StatelessWidget {
   const LeagueTeamList({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = authProvider.userRole.toLowerCase() == 'admin';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -24,12 +28,17 @@ class LeagueTeamList extends StatelessWidget {
                   color: Color(0xFF000000),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 28, color: Color(0xFF000000)),
-                onPressed: () {},
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+              if (isAdmin)
+                IconButton(
+                  icon: const Icon(
+                    Icons.add,
+                    size: 28,
+                    color: Color(0xFF000000),
+                  ),
+                  onPressed: () {},
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
             ],
           ),
           _TeamList(),
@@ -40,57 +49,66 @@ class LeagueTeamList extends StatelessWidget {
 }
 
 class _TeamList extends StatelessWidget {
-  _TeamList();
-
-  final List<Map<String, dynamic>> _teams = [
-    {
-      'id': '1',
-      'name': 'STC',
-      'logo': 'assets/team_logos/stc.png',
-      'players': 4,
-      'total': 8,
-      'playersList': [
-        {'number': '01', 'name': 'Alex Morgan (C)', 'paid': true},
-        {'number': '02', 'name': 'John Carter', 'paid': true},
-        {'number': '03', 'name': 'Michael Lee', 'paid': false},
-        {'number': '04', 'name': 'Rebecca Torres', 'paid': true},
-      ],
-    },
-    {
-      'id': '2',
-      'name': 'GEO',
-      'logo': 'assets/team_logos/geo.png',
-      'players': 8,
-      'total': 8,
-      'playersList': [],
-    },
-    {
-      'id': '3',
-      'name': 'RTA',
-      'logo': 'assets/team_logos/rta.png',
-      'players': 8,
-      'total': 8,
-      'playersList': [],
-    },
-  ];
+  const _TeamList();
 
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<LeagueDetailProvider>(context);
+    final teams = viewModel.leagueTeams;
+
+    if (viewModel.isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (teams.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        alignment: Alignment.center,
+        child: const Text(
+          'No teams added to this league yet.',
+          style: TextStyle(color: Colors.grey, fontSize: 16),
+        ),
+      );
+    }
+
     return Column(
-      children: _teams.map((team) {
-        final updatedTeam = Map<String, dynamic>.from(team);
-        updatedTeam['expanded'] = viewModel.isTeamExpanded(team['id']);
-        return _buildTeamItem(updatedTeam, viewModel, context);
+      children: teams.map((team) {
+        final isExpanded = viewModel.isTeamExpanded(team.id);
+
+        // Use the helper we added to TeamModel to get UI-ready player list
+        final playersList = team.formattedPlayers;
+
+        return _buildTeamItem(
+          team,
+          playersList,
+          isExpanded,
+          viewModel,
+          context,
+        );
       }).toList(),
     );
   }
 
   Widget _buildTeamItem(
-    Map<String, dynamic> team,
+    dynamic
+    team, // Using dynamic or TeamModel. Since we imported service, it's TeamModel
+    List<Map<String, dynamic>> playersList,
+    bool isExpanded,
     LeagueDetailProvider viewModel,
     BuildContext context,
   ) {
+    // Determine player counts
+    final currentPlayers = team.playerCount;
+    // We can default total to something reasonable or hide it if unknown,
+    // but the UI mockup usually wants "current/total".
+    // Assuming 5v5 league = 8 max, 7v7 = 12 max usually, but we don't have format here easily.
+    // Let's just show current count for now to be safe, or 12 as generic max.
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -115,24 +133,20 @@ class _TeamList extends StatelessWidget {
                     ),
                   ),
                   child: ClipOval(
-                    child: Image.asset(
-                      team['logo'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey[100],
-                        child: const Icon(
-                          Icons.shield,
-                          size: 24,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
+                    child: team.image != null && team.image!.isNotEmpty
+                        ? Image.network(
+                            team.image!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                _buildPlaceholderIcon(),
+                          )
+                        : _buildPlaceholderIcon(),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    team['name'],
+                    team.teamName,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -148,7 +162,7 @@ class _TeamList extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => viewModel.toggleTeamExpansion(team['id']),
+                onTap: () => viewModel.toggleTeamExpansion(team.id),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -158,7 +172,7 @@ class _TeamList extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'View Team Overview (${team['players']}/${team['total']})',
+                        'View Team Overview ($currentPlayers)',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -166,7 +180,7 @@ class _TeamList extends StatelessWidget {
                         ),
                       ),
                       Icon(
-                        team['expanded']
+                        isExpanded
                             ? Icons.keyboard_arrow_up
                             : Icons.keyboard_arrow_down,
                         color: const Color(0xFF111827),
@@ -178,7 +192,7 @@ class _TeamList extends StatelessWidget {
               ),
             ),
           ),
-          if (team['expanded'] && team['playersList'].isNotEmpty)
+          if (isExpanded && playersList.isNotEmpty)
             Container(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
@@ -227,7 +241,8 @@ class _TeamList extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...team['playersList'].map<Widget>((player) {
+                  ...playersList.map<Widget>((player) {
+                    final isPaid = player['paid'] == true;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       child: Row(
@@ -258,33 +273,40 @@ class _TeamList extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: player['paid']
-                                      ? const Color(0xFF1E293B)
-                                      : const Color(0xFFA2A2A2),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  player['paid'] ? 'Paid' : 'UnPaid',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
+                              Text(
+                                isPaid ? 'Paid' : 'UnPaid',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF6B7280),
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Icon(
-                                Icons.access_time,
-                                size: 18,
-                                color: player['paid']
-                                    ? const Color(0xFFD1D5DB)
-                                    : const Color(0xFFA2A2A2),
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: !isPaid
+                                      ? () {
+                                          if (player['id'] != null &&
+                                              player['id'].isNotEmpty) {
+                                            viewModel.sendPaymentReminder(
+                                              player['id'],
+                                            );
+                                          }
+                                        }
+                                      : null,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Icon(
+                                      Icons.access_time,
+                                      size: 18,
+                                      color: isPaid
+                                          ? const Color(0xFFD1D5DB)
+                                          : const Color(0xFFA2A2A2),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -297,6 +319,13 @@ class _TeamList extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPlaceholderIcon() {
+    return Container(
+      color: Colors.grey[100],
+      child: const Icon(Icons.shield, size: 24, color: Colors.grey),
     );
   }
 }

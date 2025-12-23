@@ -47,9 +47,10 @@ class AppConfig {
   static String get networkBaseUrl => 'http://$networkIp:$serverPort$apiPath';
 
   // Emulator/Simulator URLs
-  static String get androidEmulatorUrl => 'http://$androidEmulatorIp:$serverPort$apiPath';
+  static String get androidEmulatorUrl =>
+      'http://$androidEmulatorIp:$serverPort$apiPath';
   static String get iosSimulatorUrl => 'http://$localhost:$serverPort$apiPath';
-  
+
   // Full server URLs (without /api)
   static String get serverBaseUrl => 'http://$networkIp:$serverPort';
   static String get localhostServerUrl => 'http://$localhost:$serverPort';
@@ -115,10 +116,10 @@ class AppConfig {
   static const String testRoleMappingEndpoint = '/test-role-mapping';
   static const String testUpdateRoleEndpoint = '/test-update-role';
 
-  // Timeouts - Increased for better network reliability
-  static const Duration connectTimeout = Duration(seconds: 300);
-  static const Duration receiveTimeout = Duration(seconds: 300);
-  static const Duration sendTimeout = Duration(seconds: 300);
+  // Timeouts - Optimized for faster failover
+  static const Duration connectTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration sendTimeout = Duration(seconds: 30);
 
   // Get full API URL
   static String getApiUrl(String endpoint) {

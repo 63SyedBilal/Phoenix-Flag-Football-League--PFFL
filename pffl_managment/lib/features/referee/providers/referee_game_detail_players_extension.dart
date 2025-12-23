@@ -66,7 +66,8 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
         return PlayerModel(
           id: playerId.toString(),
           name: data['name'] ?? 'Unknown',
-          number: data['number']?.toString() ??
+          number:
+              data['number']?.toString() ??
               data['jerseyNumber']?.toString() ??
               '00',
           email: data['email'] ?? '',
@@ -79,7 +80,9 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       }
 
       final idStr = playerId.toString();
-      final suffix = idStr.length >= 4 ? idStr.substring(idStr.length - 4) : idStr;
+      final suffix = idStr.length >= 4
+          ? idStr.substring(idStr.length - 4)
+          : idStr;
 
       return PlayerModel(
         id: idStr,
@@ -112,7 +115,7 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
     if (isPlayerPresent(playerId)) {
       _selectedPlayersByTeam[_selectedPlayersTeamId!] ??= {};
       _selectedPlayersByTeam[_selectedPlayersTeamId!]!.add(playerId);
-    _emitStateChange();
+      _emitStateChange();
     }
   }
 
@@ -131,8 +134,8 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
     }
 
     _selectedPlayersByTeam[_selectedPlayersTeamId!] ??= {};
-    final isSelected =
-        _selectedPlayersByTeam[_selectedPlayersTeamId!]!.contains(playerId);
+    final isSelected = _selectedPlayersByTeam[_selectedPlayersTeamId!]!
+        .contains(playerId);
 
     if (isSelected) {
       deselectPlayer(playerId);
@@ -161,13 +164,80 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       return false;
     }
 
+    // Validation: Check format limits (5v5 or 7v7)
+    final format = _match?.format ?? '5v5';
+    final maxPlayers = (format == '7v7') ? 7 : 5;
+
+    // Check limit for each team
+    String? limitError;
+    _selectedPlayersByTeam.forEach((teamId, selectedIds) {
+      if (selectedIds.length > maxPlayers) {
+        limitError =
+            'Limit exceeded: Max $maxPlayers players allowed for $format format.';
+      }
+    });
+
+    if (limitError != null) {
+      _error = limitError;
+      _emitStateChange();
+      return false;
+    }
+
     _isLoading = true;
     _emitStateChange();
 
     try {
+      // 1. Prepare data for update
+      final homeId = _RefHelper.extractId(_match?.homeTeamId);
+      final awayId = _RefHelper.extractId(_match?.awayTeamId);
+
+      final Map<String, dynamic> playersUpdate = {};
+
+      // Build payload containing ALL present players, marking selected ones as active
+      List<Map<String, dynamic>> buildRoster(String teamId) {
+        final presentIds = _playerAttendance.entries
+            .where((e) => e.value == true)
+            .map((e) => e.key)
+            .toSet();
+
+        final selectedIds = _selectedPlayersByTeam[teamId] ?? {};
+        final teamPlayers = _teamPlayers[teamId] ?? [];
+
+        // Filter only present players (superset)
+        return teamPlayers
+            .where((p) => presentIds.contains(p.id))
+            .map(
+              (p) => {
+                'playerId': p.id,
+                'isActive': selectedIds.contains(
+                  p.id,
+                ), // True if selected, False if just present
+              },
+            )
+            .toList();
+      }
+
+      if (homeId != null) {
+        playersUpdate['teamA'] = {
+          'teamId': homeId,
+          'players': buildRoster(homeId),
+        };
+      }
+
+      if (awayId != null) {
+        playersUpdate['teamB'] = {
+          'teamId': awayId,
+          'players': buildRoster(awayId),
+        };
+      }
+
+      if (playersUpdate.isNotEmpty) {
+        await _refereeGameDetailService.updateMatch(_match!.id!, playersUpdate);
+      }
+
       _addAction(
         'Players Selected',
-        '$totalSelected players confirmed',
+        '$totalSelected players confirmed & saved',
         type: GameTimelineEntryType.milestone,
         icon: Icons.group,
         iconColor: const Color(0xFF1E293B),
@@ -182,5 +252,15 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       _isLoading = false;
       _emitStateChange();
     }
+  }
+}
+
+// Helper class for this extension to avoid polluting the main namespace
+class _RefHelper {
+  static String? extractId(dynamic data) {
+    if (data == null) return null;
+    if (data is String) return data;
+    if (data is Map) return data['_id']?.toString() ?? data['id']?.toString();
+    return null;
   }
 }

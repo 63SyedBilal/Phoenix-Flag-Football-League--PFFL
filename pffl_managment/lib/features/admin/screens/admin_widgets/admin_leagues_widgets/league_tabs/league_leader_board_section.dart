@@ -171,7 +171,7 @@ class LeagueLeaderboardSection extends StatelessWidget {
                           const SizedBox(
                             width: 40,
                             child: Text(
-                              'PTA',
+                              'PTS',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -217,11 +217,30 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               width: 120,
                               child: Row(
                                 children: [
-                                  Image.asset(
-                                    'assets/images/image 4.png',
+                                  Container(
                                     width: 24,
                                     height: 24,
-                                    fit: BoxFit.contain,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.grey[200],
+                                    ),
+                                    child: ClipOval(
+                                      child: standing.teamLogo.isNotEmpty
+                                          ? Image.network(
+                                              standing.teamLogo,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => const Icon(
+                                                    Icons.group,
+                                                    size: 14,
+                                                  ),
+                                            )
+                                          : const Icon(Icons.group, size: 14),
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Flexible(
@@ -281,7 +300,7 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             SizedBox(
                               width: 30,
                               child: Text(
-                                '0',
+                                standing.pointsDifference.toString(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -294,7 +313,7 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             SizedBox(
                               width: 30,
                               child: Text(
-                                '0',
+                                standing.pointsScored.toString(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -307,7 +326,7 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             SizedBox(
                               width: 30,
                               child: Text(
-                                '0',
+                                standing.pointsAgainst.toString(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -320,10 +339,11 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             SizedBox(
                               width: 40,
                               child: Text(
-                                '0',
+                                ((standing.wins * 3) + standing.draws)
+                                    .toString(),
                                 style: const TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.w600,
                                   color: Color(0xFF111827),
                                 ),
                                 textAlign: TextAlign.center,

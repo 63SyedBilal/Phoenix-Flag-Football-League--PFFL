@@ -1,17 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/services/match_service.dart';
+import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/services/team_service.dart';
+import 'package:pffl_managment/core/services/notification_service.dart';
+import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_detail_models.dart';
 
 class LeagueDetailProvider extends ChangeNotifier {
   int _selectedTabIndex = 0;
   LeagueGameModel? _editingGame;
   bool _isEditing = false;
-  
+
+  String? _leagueId;
+  String _leagueName = '';
+  List<MatchModel> _allMatches = [];
+  List<TeamModel> _leagueTeams = []; // From LeagueService
+  bool _isLoading = false;
+  String? _errorMessage;
+
   // Team expansion state
   final Map<String, bool> _teamExpansionState = {};
 
   int get selectedTabIndex => _selectedTabIndex;
   LeagueGameModel? get editingGame => _editingGame;
   bool get isEditing => _isEditing;
+  String? get leagueId => _leagueId;
+  String get leagueName => _leagueName;
+  List<MatchModel> get allMatches => _allMatches;
+  List<TeamModel> get leagueTeams => _leagueTeams;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  Future<void> initialize(String leagueId) async {
+    _leagueId = leagueId;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Parallel fetch: Matches and League Details (which includes teams)
+      final results = await Future.wait([
+        MatchService.getMatchesByLeague(leagueId),
+        LeagueService.getLeagueById(leagueId),
+      ]);
+
+      _allMatches = results[0] as List<MatchModel>;
+
+      final leagueDetail = results[1] as LeagueDetailModel?;
+      if (leagueDetail != null) {
+        _leagueName = leagueDetail.leagueName;
+
+        // Fetch detailed info for each team to ensure players are populated
+        if (leagueDetail.teams.isNotEmpty) {
+          final futures = leagueDetail.teams.map((team) async {
+            try {
+              final teamData = await TeamService.getTeamById(team.id);
+              if (teamData != null) {
+                return TeamModel.fromJson(teamData);
+              }
+              return team;
+            } catch (e) {
+              print('⚠️ Failed to fetch details for team ${team.teamName}: $e');
+              return team;
+            }
+          });
+
+          _leagueTeams = await Future.wait(futures);
+        } else {
+          _leagueTeams = [];
+        }
+      } else {
+        _leagueTeams = [];
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      print('❌ Error initializing league detail: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refresh() async {
+    if (_leagueId != null) {
+      await initialize(_leagueId!);
+    }
+  }
 
   void selectTab(int index) {
     _selectedTabIndex = index;
@@ -34,7 +108,7 @@ class LeagueDetailProvider extends ChangeNotifier {
     _editingGame = updatedGame;
     notifyListeners();
   }
-  
+
   bool isTeamExpanded(String teamId) {
     return _teamExpansionState[teamId] ?? false;
   }
@@ -44,163 +118,265 @@ class LeagueDetailProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Mock data for upcoming games
-  List<LeagueGameModel> getUpcomingGames() {
-    return [
-      LeagueGameModel(
-        id: '1',
-        team1Name: 'RC',
-        team1Logo: '',
-        team2Name: 'STA',
-        team2Logo: '',
-        gameDateTime: DateTime.now().add(const Duration(days: 1, hours: 1)),
-      ),
-      LeagueGameModel(
-        id: '2',
-        team1Name: 'GEO',
-        team1Logo: '',
-        team2Name: 'STB',
-        team2Logo: '',
-        gameDateTime: DateTime.now().add(const Duration(days: 2, hours: 2)),
-      ),
-      LeagueGameModel(
-        id: '3',
-        team1Name: 'RC',
-        team1Logo: '',
-        team2Name: 'STA',
-        team2Logo: '',
-        gameDateTime: DateTime.now().add(const Duration(days: 3, hours: 3)),
-      ),
-    ];
+  // Data for upcoming games section - shows next 3 matches by date
+  List<MatchModel> getUpcomingGames() {
+    if (_allMatches.isEmpty) return [];
+
+    final now = DateTime.now();
+
+    // Filter matches that have a future date
+    final upcomingMatches = _allMatches
+        .where((m) => m.matchDateTime != null && m.matchDateTime!.isAfter(now))
+        .toList();
+
+    // Sort by date (ascending - nearest first)
+    upcomingMatches.sort((a, b) {
+      if (a.matchDateTime == null) return 1;
+      if (b.matchDateTime == null) return -1;
+      return a.matchDateTime!.compareTo(b.matchDateTime!);
+    });
+
+    // Return exactly 3 matches (or fewer if not available)
+    return upcomingMatches.take(3).toList();
   }
 
-  // Mock data for leaderboard
+  // Data for leaderboard
   List<LeagueTeamStandingModel> getLeaderboard() {
-    return [
-      LeagueTeamStandingModel(
-        rank: 1,
-        teamName: 'Shadow Wolves',
-        teamLogo: '',
-        wins: 6,
-        draws: 0,
-        losses: 0,
-      ),
-      LeagueTeamStandingModel(
-        rank: 2,
-        teamName: 'Iron Rangers',
-        teamLogo: '',
-        wins: 4,
-        draws: 0,
-        losses: 2,
-      ),
-      LeagueTeamStandingModel(
-        rank: 3,
-        teamName: 'Metro Kings',
-        teamLogo: '',
-        wins: 2,
-        draws: 0,
-        losses: 4,
-      ),
-      LeagueTeamStandingModel(
-        rank: 4,
-        teamName: 'Blaze Squad',
-        teamLogo: '',
-        wins: 0,
-        draws: 0,
-        losses: 6,
-      ),
-      LeagueTeamStandingModel(
-        rank: 5,
-        teamName: 'Metro Kings',
-        teamLogo: '',
-        wins: 0,
-        draws: 0,
-        losses: 6,
-      ),
-      LeagueTeamStandingModel(
-        rank: 6,
-        teamName: 'Iron Rangers',
-        teamLogo: '',
-        wins: 4,
-        draws: 0,
-        losses: 2,
-      ),
-    ];
+    final Map<String, _TeamStatsBuilder> statsMap = _aggregateTeamStats();
+    final standingList = statsMap.values.toList();
+    _sortStandings(standingList);
+    return _mapStandingsToModels(standingList);
   }
 
-  // Mock data for key players - Updated to return 4 players instead of 2
+  Map<String, _TeamStatsBuilder> _aggregateTeamStats() {
+    final Map<String, _TeamStatsBuilder> statsMap = {};
+    for (final m in _allMatches) {
+      if (m.status != MatchStatus.completed) continue;
+      if (m.homeTeamId == null || m.awayTeamId == null) continue;
+      _updateStats(statsMap, m);
+    }
+    return statsMap;
+  }
+
+  void _updateStats(Map<String, _TeamStatsBuilder> statsMap, MatchModel m) {
+    statsMap.putIfAbsent(
+      m.homeTeamId!,
+      () => _TeamStatsBuilder(name: m.homeTeam, logo: m.homeTeamLogo),
+    );
+    statsMap.putIfAbsent(
+      m.awayTeamId!,
+      () => _TeamStatsBuilder(name: m.awayTeam, logo: m.awayTeamLogo),
+    );
+
+    final home = statsMap[m.homeTeamId!]!;
+    final away = statsMap[m.awayTeamId!]!;
+
+    final homeScore = m.homeScore ?? 0;
+    final awayScore = m.awayScore ?? 0;
+
+    home.matchesPlayed++;
+    away.matchesPlayed++;
+    home.pointsScored += homeScore;
+    home.pointsAgainst += awayScore;
+    away.pointsScored += awayScore;
+    away.pointsAgainst += homeScore;
+
+    if (homeScore > awayScore) {
+      home.wins++;
+      away.losses++;
+    } else if (homeScore < awayScore) {
+      away.wins++;
+      home.losses++;
+    } else {
+      home.draws++;
+      away.draws++;
+    }
+  }
+
+  void _sortStandings(List<_TeamStatsBuilder> list) {
+    list.sort((a, b) {
+      final pA = (a.wins * 3) + a.draws;
+      final pB = (b.wins * 3) + b.draws;
+      if (pA != pB) return pB.compareTo(pA);
+      final pdA = a.pointsScored - a.pointsAgainst;
+      final pdB = b.pointsScored - b.pointsAgainst;
+      return pdB.compareTo(pdA);
+    });
+  }
+
+  List<LeagueTeamStandingModel> _mapStandingsToModels(
+    List<_TeamStatsBuilder> list,
+  ) {
+    return list.asMap().entries.map((entry) {
+      final i = entry.key;
+      final s = entry.value;
+      return LeagueTeamStandingModel(
+        rank: i + 1,
+        teamName: s.name,
+        teamLogo: s.logo,
+        matchesPlayed: s.matchesPlayed,
+        wins: s.wins,
+        draws: s.draws,
+        losses: s.losses,
+        pointsScored: s.pointsScored,
+        pointsAgainst: s.pointsAgainst,
+      );
+    }).toList();
+  }
+
+  // Data for key players
   List<LeagueKeyPlayerModel> getKeyPlayers() {
-    return [
-      LeagueKeyPlayerModel(
-        id: '1',
-        name: 'Andrew Brooks',
-        avatarUrl: '',
-        statValue: 12,
-        statLabel: 'TDs',
-        gradientStart: const Color(0xFF1E3A8A), // Dark blue
-        gradientEnd: const Color(0xFF3B82F6),
-      ),
-      LeagueKeyPlayerModel(
-        id: '2',
-        name: 'Malik Carter',
-        avatarUrl: '',
-        statValue: 9,
-        statLabel: 'TDs',
-        gradientStart: const Color(0xFF1E293B), // Dark navy/black
-        gradientEnd: const Color(0xFF334155),
-      ),
-      LeagueKeyPlayerModel(
-        id: '3',
-        name: 'James Wilson',
-        avatarUrl: '',
-        statValue: 8,
-        statLabel: 'TDs',
-        gradientStart: const Color(0xFF7E22CE), // Purple
-        gradientEnd: const Color(0xFFA855F7),
-      ),
-      LeagueKeyPlayerModel(
-        id: '4',
-        name: 'Robert Davis',
-        avatarUrl: '',
-        statValue: 7,
-        statLabel: 'TDs',
-        gradientStart: const Color(0xFF0D9488), // Teal
-        gradientEnd: const Color(0xFF14B8A6),
-      ),
-    ];
+    final Map<String, _PlayerStatsBuilder> playerMap = _aggregatePlayerStats();
+    final sortedPlayers = playerMap.entries.toList()
+      ..sort((a, b) => b.value.touchdowns.compareTo(a.value.touchdowns));
+    return _mapPlayersToModels(sortedPlayers);
   }
 
-  // Mock data for team stats - Updated to return 4 team stats instead of 2
-  List<LeagueTeamStatModel> getTeamStats() {
-    return [
-      LeagueTeamStatModel(
-        teamName: 'Shadow Wolves',
-        teamLogo: '',
-        statValue: '266',
-        statLabel: 'PS',
-        backgroundColor: const Color(0xFF4C1D95), // Purple
-      ),
-      LeagueTeamStatModel(
-        teamName: 'Iron Rangers',
-        teamLogo: '',
-        statValue: '284',
-        statLabel: 'PS',
-        backgroundColor: const Color(0xFF7F1D1D), // Red
-      ),
-      LeagueTeamStatModel(
-        teamName: 'Thunderbolts',
-        teamLogo: '',
-        statValue: '245',
-        statLabel: 'PS',
-        backgroundColor: const Color(0xFF0D9488), // Teal
-      ),
-      LeagueTeamStatModel(
-        teamName: 'Fire Storm',
-        teamLogo: '',
-        statValue: '231',
-        statLabel: 'PS',
-        backgroundColor: const Color(0xFFCA8A04), // Yellow
-      ),
-    ];
+  Map<String, _PlayerStatsBuilder> _aggregatePlayerStats() {
+    final Map<String, _PlayerStatsBuilder> playerMap = {};
+    for (final m in _allMatches) {
+      if (m.homeTeamStats != null) {
+        _updatePlayerStats(playerMap, m.homeTeamStats!.playerStats);
+      }
+      if (m.awayTeamStats != null) {
+        _updatePlayerStats(playerMap, m.awayTeamStats!.playerStats);
+      }
+    }
+    return playerMap;
   }
+
+  void _updatePlayerStats(
+    Map<String, _PlayerStatsBuilder> map,
+    List<dynamic> playerStats,
+  ) {
+    for (final p in playerStats) {
+      map.putIfAbsent(
+        p.playerId,
+        () => _PlayerStatsBuilder(name: p.playerName, image: p.image),
+      );
+      map[p.playerId]!.touchdowns += (p.tds as num).toInt();
+    }
+  }
+
+  List<LeagueKeyPlayerModel> _mapPlayersToModels(
+    List<MapEntry<String, _PlayerStatsBuilder>> sortedPlayers,
+  ) {
+    final List<ColorPair> colors = [
+      ColorPair(const Color(0xFF1E3A8A), const Color(0xFF3B82F6)),
+      ColorPair(const Color(0xFF1E293B), const Color(0xFF334155)),
+      ColorPair(const Color(0xFF7E22CE), const Color(0xFFA855F7)),
+      ColorPair(const Color(0xFF0D9488), const Color(0xFF14B8A6)),
+    ];
+
+    return sortedPlayers.take(4).toList().asMap().entries.map((entry) {
+      final i = entry.key;
+      final pair = entry.value;
+      final color = colors[i % colors.length];
+      return LeagueKeyPlayerModel(
+        id: pair.key,
+        name: pair.value.name,
+        avatarUrl: pair.value.image,
+        statValue: pair.value.touchdowns,
+        statLabel: 'TDs',
+        gradientStart: color.start,
+        gradientEnd: color.end,
+      );
+    }).toList();
+  }
+
+  // Data for team stats (Points Scored)
+  List<LeagueTeamStatModel> getTeamStats() {
+    final Map<String, _TeamStatsBuilder> statsMap = _aggregatePointsScored();
+    final sortedTeams = statsMap.values.toList()
+      ..sort((a, b) => b.pointsScored.compareTo(a.pointsScored));
+    return _mapTeamStatsToModels(sortedTeams);
+  }
+
+  Map<String, _TeamStatsBuilder> _aggregatePointsScored() {
+    final Map<String, _TeamStatsBuilder> statsMap = {};
+    for (final m in _allMatches) {
+      if (m.status != MatchStatus.completed) continue;
+      if (m.homeTeamId == null || m.awayTeamId == null) continue;
+
+      statsMap.putIfAbsent(
+        m.homeTeamId!,
+        () => _TeamStatsBuilder(name: m.homeTeam, logo: m.homeTeamLogo),
+      );
+      statsMap.putIfAbsent(
+        m.awayTeamId!,
+        () => _TeamStatsBuilder(name: m.awayTeam, logo: m.awayTeamLogo),
+      );
+
+      statsMap[m.homeTeamId!]!.pointsScored += m.homeScore ?? 0;
+      statsMap[m.awayTeamId!]!.pointsScored += m.awayScore ?? 0;
+    }
+    return statsMap;
+  }
+
+  List<LeagueTeamStatModel> _mapTeamStatsToModels(
+    List<_TeamStatsBuilder> sortedTeams,
+  ) {
+    final List<Color> bgColors = [
+      const Color(0xFF4C1D95),
+      const Color(0xFF7F1D1D),
+      const Color(0xFF0D9488),
+      const Color(0xFFCA8A04),
+    ];
+
+    return sortedTeams.take(4).toList().asMap().entries.map((entry) {
+      final i = entry.key;
+      final t = entry.value;
+      final color = bgColors[i % bgColors.length];
+      return LeagueTeamStatModel(
+        teamName: t.name,
+        teamLogo: t.logo,
+        statValue: t.pointsScored.toString(),
+        statLabel: 'PS',
+        backgroundColor: color,
+      );
+    }).toList();
+  }
+
+  // Send payment reminder
+  Future<void> sendPaymentReminder(String playerId) async {
+    if (_leagueId == null) return;
+
+    final message =
+        "You have not completed payment for this league: $_leagueName. Please complete your payment.";
+
+    // We don't await this to block UI, but we do want to trigger it.
+    // Actually, good practice to await but we won't show loader.
+    await NotificationService.sendPaymentReminder(
+      playerId: playerId,
+      leagueId: _leagueId!,
+      message: message,
+    );
+  }
+}
+
+class _TeamStatsBuilder {
+  final String name;
+  final String logo;
+  int matchesPlayed = 0;
+  int wins = 0;
+  int draws = 0;
+  int losses = 0;
+  int pointsScored = 0;
+  int pointsAgainst = 0;
+
+  _TeamStatsBuilder({required this.name, required this.logo});
+}
+
+class _PlayerStatsBuilder {
+  final String name;
+  final String image;
+  int touchdowns = 0;
+
+  _PlayerStatsBuilder({required this.name, required this.image});
+}
+
+class ColorPair {
+  final Color start;
+  final Color end;
+  ColorPair(this.start, this.end);
 }

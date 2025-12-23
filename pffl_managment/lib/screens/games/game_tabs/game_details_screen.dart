@@ -16,7 +16,7 @@ class GameDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => GameTabsProvider(match: match),
+      create: (_) => GameTabsProvider(match: match)..initialize(),
       child: const _GameDetailsContent(),
     );
   }

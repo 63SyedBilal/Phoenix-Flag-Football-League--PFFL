@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
 
 /// Widget for displaying a single notification card
@@ -20,6 +21,7 @@ class NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
+    final provider = context.read<NotificationProvider>();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -31,8 +33,8 @@ class NotificationCard extends StatelessWidget {
           color: notification.isPending
               ? Colors.blue.shade200
               : (notification.isAccepted
-                  ? Colors.green.shade200
-                  : Colors.grey.shade300),
+                    ? Colors.green.shade200
+                    : Colors.grey.shade300),
           width: notification.isPending ? 1.5 : 1,
         ),
       ),
@@ -55,18 +57,21 @@ class NotificationCard extends StatelessWidget {
                           fit: BoxFit.cover,
                         )
                       : notification.leagueLogo != null
-                          ? DecorationImage(
-                              image: NetworkImage(notification.leagueLogo!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+                      ? DecorationImage(
+                          image: NetworkImage(notification.leagueLogo!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: notification.teamImage == null &&
+                child:
+                    notification.teamImage == null &&
                         notification.leagueLogo == null
                     ? Icon(
                         notification.type == 'TEAM_INVITE'
                             ? Icons.group
-                            : Icons.emoji_events,
+                            : (notification.type == 'STATS_APPROVAL_REQUEST'
+                                  ? Icons.analytics
+                                  : Icons.emoji_events),
                         color: Colors.grey[600],
                         size: 24,
                       )
@@ -121,8 +126,8 @@ class NotificationCard extends StatelessWidget {
                   color: notification.isPending
                       ? Colors.blue.shade50
                       : (notification.isAccepted
-                          ? Colors.green.shade50
-                          : Colors.grey.shade100),
+                            ? Colors.green.shade50
+                            : Colors.grey.shade100),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -133,77 +138,130 @@ class NotificationCard extends StatelessWidget {
                     color: notification.isPending
                         ? Colors.blue.shade700
                         : (notification.isAccepted
-                            ? Colors.green.shade700
-                            : Colors.grey.shade700),
+                              ? Colors.green.shade700
+                              : Colors.grey.shade700),
                   ),
                 ),
               ),
             ],
           ),
+
           // Action buttons for pending notifications
-          if (notification.isPending && (onAccept != null || onReject != null)) ...[
+          if (notification.isPending) ...[
             const SizedBox(height: 12),
-            Row(
-              children: [
-                // Cancel/Reject button
-                if (onReject != null)
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: isLoading ? null : onReject,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red.shade700,
-                        side: BorderSide(color: Colors.red.shade700),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+            if (notification.type == 'STATS_APPROVAL_REQUEST') ...[
+              // Special Action for Stats Approval
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final success = await provider.approveStats(
+                            notification.id,
+                          );
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Stats approved and published successfully!',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    elevation: 0,
                   ),
-                // Spacing between buttons
-                if (onAccept != null && onReject != null)
-                  const SizedBox(width: 12),
-                // Accept button
-                if (onAccept != null)
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : onAccept,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text(
-                              'Accept',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
                             ),
+                          ),
+                        )
+                      : const Text(
+                          'Approve & Publish',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+            ] else if (onAccept != null || onReject != null) ...[
+              // Standard Invite buttons
+              Row(
+                children: [
+                  if (onReject != null)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: isLoading ? null : onReject,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red.shade700,
+                          side: BorderSide(color: Colors.red.shade700),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-              ],
-            ),
+                  if (onAccept != null && onReject != null)
+                    const SizedBox(width: 12),
+                  if (onAccept != null)
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : onAccept,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Text(
+                                'Accept',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
         ],
       ),
@@ -227,4 +285,3 @@ class NotificationCard extends StatelessWidget {
     }
   }
 }
-

@@ -16,7 +16,6 @@ class SharedGameCard extends StatelessWidget {
     this.showYourGameTag = false,
     this.showPaymentSection = false,
   });
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -36,34 +35,13 @@ class SharedGameCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Opacity(
-                  opacity: 0.6,
-                  child: Row(
-                    children: [
-                      Text(
-                        game.leagueName,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'Lato',
-                          color: Color(0xFF111827),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF111827),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Removed league name section
                 if (showYourGameTag && game.isMyGame)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF3B82F6),
                       borderRadius: BorderRadius.circular(110),
@@ -83,14 +61,13 @@ class SharedGameCard extends StatelessWidget {
             const SizedBox(height: 18),
             Row(
               children: [
-                // Team 1 - Flexible
-                Flexible(
-                  flex: 2,
+                Expanded(
+                  flex: 3,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildTeamLogo(game.team1Logo),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           game.team1Name,
@@ -107,14 +84,16 @@ class SharedGameCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Date/Time - Fixed but flexible
-                Flexible(
-                  flex: 1,
+                // Date/Time - Centered
+                Expanded(
+                  flex: 2,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         DateFormat('MM/dd').format(game.date),
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -122,8 +101,10 @@ class SharedGameCard extends StatelessWidget {
                           color: Color(0xFF111827),
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         game.time,
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -134,13 +115,15 @@ class SharedGameCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Team 2 - Flexible
-                Flexible(
-                  flex: 2,
+                // Team 2 - Expanded (icon first, then text)
+                Expanded(
+                  flex: 3,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      _buildTeamLogo(game.team2Logo),
+                      const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           game.team2Name,
@@ -155,8 +138,6 @@ class SharedGameCard extends StatelessWidget {
                           textAlign: TextAlign.right,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      _buildTeamLogo(game.team2Logo),
                     ],
                   ),
                 ),
@@ -186,17 +167,11 @@ class SharedGameCard extends StatelessWidget {
           fit: BoxFit.cover,
           placeholder: (context, url) => Container(
             color: Colors.grey[200],
-            child: const CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
+            child: const CircularProgressIndicator(strokeWidth: 2),
           ),
           errorWidget: (context, url, error) => Container(
             color: Colors.grey[200],
-            child: const Icon(
-              Icons.sports,
-              size: 16,
-              color: Colors.grey,
-            ),
+            child: const Icon(Icons.sports, size: 16, color: Colors.grey),
           ),
         ),
       ),

@@ -58,7 +58,7 @@ class StatCardWidget extends StatelessWidget {
                   Text(
                     stat.subtitle,
                     style: AppTextStyles.labelSmall,
-                    
+
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

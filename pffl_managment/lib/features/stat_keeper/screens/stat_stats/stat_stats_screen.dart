@@ -8,12 +8,24 @@ import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/tabs/draf
 import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/tabs/approved_stats_tab.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/widgets/stats_search_bar.dart';
 
-class StatStatsScreen extends StatelessWidget {
+class StatStatsScreen extends StatefulWidget {
   const StatStatsScreen({super.key});
 
   @override
+  State<StatStatsScreen> createState() => _StatStatsScreenState();
+}
+
+class _StatStatsScreenState extends State<StatStatsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StatStatsProvider>().fetchAssignedMatches();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Provider is now provided by the dashboard, so we just watch it
     final provider = context.watch<StatStatsProvider>();
 
     return Scaffold(
@@ -22,6 +34,39 @@ class StatStatsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
+            // Game Selector
+            if (provider.assignedMatches.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: provider.selectedMatchId,
+                      isExpanded: true,
+                      hint: const Text('Select a Game'),
+                      items: provider.assignedMatches.map((match) {
+                        return DropdownMenuItem<String>(
+                          value: match.id,
+                          child: Text(
+                            '${match.homeTeam} vs ${match.awayTeam} (${match.date})',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        provider.setSelectedMatchId(value);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
             // Search bar
             Container(
               color: Colors.white,
@@ -65,7 +110,13 @@ class StatStatsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Expanded(child: _buildTabContent(provider.currentTabIndex)),
+            const SizedBox(height: 12),
+            if (provider.isLoading &&
+                provider.draftStats.isEmpty &&
+                provider.allStats.isEmpty)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else
+              Expanded(child: _buildTabContent(provider.currentTabIndex)),
           ],
         ),
       ),
@@ -82,7 +133,7 @@ class StatStatsScreen extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 40,
-        margin: const EdgeInsets.symmetric(horizontal: 2), // Minimal gap
+        margin: const EdgeInsets.symmetric(horizontal: 2),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF3B82F6) : Colors.transparent,

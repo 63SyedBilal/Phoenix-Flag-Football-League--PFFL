@@ -94,15 +94,19 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
-      // For Android, try emulator URL first
+      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
+
+      // Then try Network IP (reliable for both physical device and emulator)
+      urlsToTry.add(AppConfig.networkBaseUrl);
+
+      // Fallback to emulator specific IP
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
-      urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // Fallback
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // Fallback
     } else {
       urlsToTry.add(AppConfig.baseUrl); // Default
     }
@@ -258,15 +262,19 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
-      // For Android, try emulator URL first
+      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
+
+      // Then try Network IP (reliable for both physical device and emulator)
+      urlsToTry.add(AppConfig.networkBaseUrl);
+
+      // Fallback to emulator specific IP
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
-      urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // Fallback
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // Fallback
     } else {
       urlsToTry.add(AppConfig.baseUrl); // Default
     }

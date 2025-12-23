@@ -49,12 +49,12 @@ class SharedUpcomingMatches extends StatelessWidget {
                     Text(
                       'View more',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
+                        color: Color(0xFF0F173E),
+                        fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                    Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF0F173E),),
                   ],
                 ),
               ),

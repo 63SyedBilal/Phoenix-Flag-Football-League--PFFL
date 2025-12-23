@@ -5,7 +5,7 @@ import 'package:pffl_managment/core/utils/game_navigation_helper.dart';
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_keeper_dashboard_provider.dart';
-import 'package:pffl_managment/features/stat_keeper/screens/stat_add/stat_add_screen.dart';
+import 'package:pffl_managment/features/stat_keeper/screens/game_stats/game_stats_screen.dart';
 
 class StatKeeperHomeScreen extends StatelessWidget {
   const StatKeeperHomeScreen({super.key});
@@ -37,7 +37,7 @@ class StatKeeperHomeScreen extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: Color(0xFF111827),
                       ),
                     ),
                     if (assignedGames.isNotEmpty)
@@ -58,12 +58,16 @@ class StatKeeperHomeScreen extends StatelessWidget {
                             Text(
                               'View more',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 14,
+                                color: Color(0xFF0F173E),
+                                fontSize: 12,
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 12,
+                              color:Color(0xFF0F173E),
+                            ),
                           ],
                         ),
                       )
@@ -73,12 +77,16 @@ class StatKeeperHomeScreen extends StatelessWidget {
                           Text(
                             'View more',
                             style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
+                              color: Color(0xFF0F173E),
+                              fontSize: 12,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-                          Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 12,
+                            color: Color(0xFF0F173E),
+                          ),
                         ],
                       ),
                   ],
@@ -90,20 +98,24 @@ class StatKeeperHomeScreen extends StatelessWidget {
                     title: '',
                     onViewMore: null,
                     onGameTap: (game) {
-                      StatAddScreen.showAsDialog(context, matchId: game.id);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              GameStatsScreen(matchId: game.id),
+                        ),
+                      );
                     },
                   )
                 else
                   const Text('No games assigned to you yet.'),
-                
+
                 SharedUpcomingMatches(
                   games: games,
                   maxVisibleGames: 3, // Show only 3 games in main view
                   title: 'Upcoming Games',
-                  onGameTap: (game) => GameNavigationHelper.navigateToGameDetail(
-                    context,
-                    game,
-                  ),
+                  onGameTap: (game) =>
+                      GameNavigationHelper.navigateToGameDetail(context, game),
                   onViewMore: () {
                     // Navigate to full matches list
                     Navigator.push(

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 class LeagueOfficialsList extends StatelessWidget {
   const LeagueOfficialsList({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = authProvider.userRole.toLowerCase() == 'admin';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -23,18 +28,19 @@ class LeagueOfficialsList extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 24),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AddOfficialPage(officialType: 'Referee'),
-                    ),
-                  );
-                },
-              ),
+              if (isAdmin)
+                IconButton(
+                  icon: const Icon(Icons.add, size: 24),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AddOfficialPage(officialType: 'Referee'),
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
           _RefereeList(),
@@ -51,18 +57,19 @@ class LeagueOfficialsList extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 24),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AddOfficialPage(officialType: 'Stat Keeper'),
-                    ),
-                  );
-                },
-              ),
+              if (isAdmin)
+                IconButton(
+                  icon: const Icon(Icons.add, size: 24),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AddOfficialPage(officialType: 'Stat Keeper'),
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
           _StatKeeperList(),
@@ -330,13 +337,13 @@ class _AddOfficialPageState extends State<AddOfficialPage> {
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     height: 40,
                     decoration: BoxDecoration(
-                      color: _selectedIndex == 0 
+                      color: _selectedIndex == 0
                           ? const Color(0xFF4285F4) // Blue button color
                           : const Color(0xFFF9FAFB),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _selectedIndex == 0 
-                            ? const Color(0xFF3B82F6) 
+                        color: _selectedIndex == 0
+                            ? const Color(0xFF3B82F6)
                             : const Color(0xFFE5E7EB),
                         width: 2,
                       ),
@@ -345,8 +352,9 @@ class _AddOfficialPageState extends State<AddOfficialPage> {
                       child: Text(
                         tabs[0],
                         style: TextStyle(
-                          color: _selectedIndex == 0 
-                              ? Colors.white // White text for blue button
+                          color: _selectedIndex == 0
+                              ? Colors
+                                    .white // White text for blue button
                               : const Color(0xFF111827),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -366,13 +374,13 @@ class _AddOfficialPageState extends State<AddOfficialPage> {
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     height: 40,
                     decoration: BoxDecoration(
-                      color: _selectedIndex == 1 
+                      color: _selectedIndex == 1
                           ? const Color(0xFF4285F4) // Blue button color
                           : const Color(0xFFF9FAFB),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _selectedIndex == 1 
-                            ? const Color(0xFF3B82F6) 
+                        color: _selectedIndex == 1
+                            ? const Color(0xFF3B82F6)
                             : const Color(0xFFE5E7EB),
                         width: 2,
                       ),
@@ -381,8 +389,9 @@ class _AddOfficialPageState extends State<AddOfficialPage> {
                       child: Text(
                         tabs[1],
                         style: TextStyle(
-                          color: _selectedIndex == 1 
-                              ? Colors.white // White text for blue button
+                          color: _selectedIndex == 1
+                              ? Colors
+                                    .white // White text for blue button
                               : const Color(0xFF111827),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

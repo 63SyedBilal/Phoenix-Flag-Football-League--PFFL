@@ -1,4 +1,3 @@
-
 enum StatStatus { draft, approved, all }
 
 class PlayerStatModel {
@@ -17,10 +16,12 @@ class PlayerStatModel {
   final int interceptions;
   final int safety;
   final int conversionPoints;
+  final String image;
 
   PlayerStatModel({
     required this.playerId,
     required this.playerName,
+    this.image = '',
     this.catches = 0,
     this.catchesYards = 0,
     this.rushes = 0,
@@ -39,6 +40,7 @@ class PlayerStatModel {
   PlayerStatModel copyWith({
     String? playerId,
     String? playerName,
+    String? image,
     int? catches,
     int? catchesYards,
     int? rushes,
@@ -56,6 +58,7 @@ class PlayerStatModel {
     return PlayerStatModel(
       playerId: playerId ?? this.playerId,
       playerName: playerName ?? this.playerName,
+      image: image ?? this.image,
       catches: catches ?? this.catches,
       catchesYards: catchesYards ?? this.catchesYards,
       rushes: rushes ?? this.rushes,
@@ -77,6 +80,7 @@ class PlayerStatModel {
     return PlayerStatModel(
       playerId: playerId,
       playerName: playerName,
+      image: image,
       catches: catches + other.catches,
       catchesYards: catchesYards + other.catchesYards,
       rushes: rushes + other.rushes,
@@ -97,6 +101,7 @@ class PlayerStatModel {
   factory PlayerStatModel.fromStatsInput({
     required String playerId,
     required String playerName,
+    required String image,
     required int catches,
     required int catchesYards,
     required int rushes,
@@ -114,6 +119,7 @@ class PlayerStatModel {
     return PlayerStatModel(
       playerId: playerId,
       playerName: playerName,
+      image: image,
       catches: catches,
       catchesYards: catchesYards,
       rushes: rushes,
@@ -209,31 +215,61 @@ class TeamStatModel {
   // Add player stats and update team totals
   TeamStatModel addPlayerStats(PlayerStatModel playerStat) {
     // Check if player already exists, if so update their stats
-    final existingIndex = playerStats.indexWhere((p) => p.playerId == playerStat.playerId);
+    final existingIndex = playerStats.indexWhere(
+      (p) => p.playerId == playerStat.playerId,
+    );
 
     final updatedPlayerStats = List<PlayerStatModel>.from(playerStats);
     if (existingIndex >= 0) {
       // Update existing player stats
-      updatedPlayerStats[existingIndex] = updatedPlayerStats[existingIndex].addStats(playerStat);
+      updatedPlayerStats[existingIndex] = updatedPlayerStats[existingIndex]
+          .addStats(playerStat);
     } else {
       // Add new player stats
       updatedPlayerStats.add(playerStat);
     }
 
     // Calculate new team totals
-    final totalCatches = updatedPlayerStats.fold(0, (sum, p) => sum + p.catches);
-    final totalCatchesYards = updatedPlayerStats.fold(0, (sum, p) => sum + p.catchesYards);
+    final totalCatches = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.catches,
+    );
+    final totalCatchesYards = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.catchesYards,
+    );
     final totalRushes = updatedPlayerStats.fold(0, (sum, p) => sum + p.rushes);
-    final totalRushesYards = updatedPlayerStats.fold(0, (sum, p) => sum + p.rushesYards);
-    final totalPassAttempts = updatedPlayerStats.fold(0, (sum, p) => sum + p.passAttempts);
-    final totalPassYards = updatedPlayerStats.fold(0, (sum, p) => sum + p.passYards);
-    final totalCompletions = updatedPlayerStats.fold(0, (sum, p) => sum + p.completions);
+    final totalRushesYards = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.rushesYards,
+    );
+    final totalPassAttempts = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.passAttempts,
+    );
+    final totalPassYards = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.passYards,
+    );
+    final totalCompletions = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.completions,
+    );
     final totalTds = updatedPlayerStats.fold(0, (sum, p) => sum + p.tds);
-    final totalFlagPull = updatedPlayerStats.fold(0, (sum, p) => sum + p.flagPull);
+    final totalFlagPull = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.flagPull,
+    );
     final totalSack = updatedPlayerStats.fold(0, (sum, p) => sum + p.sack);
-    final totalInterceptions = updatedPlayerStats.fold(0, (sum, p) => sum + p.interceptions);
+    final totalInterceptions = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.interceptions,
+    );
     final totalSafety = updatedPlayerStats.fold(0, (sum, p) => sum + p.safety);
-    final totalConversionPoints = updatedPlayerStats.fold(0, (sum, p) => sum + p.conversionPoints);
+    final totalConversionPoints = updatedPlayerStats.fold(
+      0,
+      (sum, p) => sum + p.conversionPoints,
+    );
 
     return TeamStatModel(
       teamName: teamName,

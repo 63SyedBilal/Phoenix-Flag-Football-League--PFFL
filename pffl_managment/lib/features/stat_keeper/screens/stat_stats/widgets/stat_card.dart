@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
@@ -22,7 +23,7 @@ class StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // League header
+          // League header (NO divider here now)
           _buildLeagueHeader(),
 
           // Game info
@@ -39,13 +40,13 @@ class StatCard extends StatelessWidget {
                 children: [
                   // Teams row
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Team 1
-                      _buildTeam(gameStat.team1Logo, gameStat.team1Name),
+                      _buildTeam(
+                        gameStat.team1Logo,
+                        gameStat.team1Name,
+                      ),
 
-                      const SizedBox(width: 16),
-
-                      // Date and time
                       Column(
                         children: [
                           Text(
@@ -67,20 +68,28 @@ class StatCard extends StatelessWidget {
                         ],
                       ),
 
-                      const SizedBox(width: 16),
-
-                      // Team 2
-                      _buildTeam(gameStat.team2Logo, gameStat.team2Name),
+                      _buildTeam(
+                        gameStat.team2Logo,
+                        gameStat.team2Name,
+                      ),
                     ],
                   ),
 
-                  // Assigned game label
+                  // Divider + Assigned game label
                   if (gameStat.isAssignedToMe) ...[
                     const SizedBox(height: 12),
+
+                    // ✅ Divider moved here
+                    const Divider(
+                      color: AppColors.borderLight,
+                      thickness: 1,
+                    ),
+
+                    const SizedBox(height: 8),
                     Text(
                       'Your Assigned Game',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Color(0xFF000000),
                         fontSize: 12,
                       ),
                     ),
@@ -94,14 +103,10 @@ class StatCard extends StatelessWidget {
     );
   }
 
+  /// League header WITHOUT bottom divider
   Widget _buildLeagueHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 1),
-        ),
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -125,9 +130,7 @@ class StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: gameStat.isCompleted
-                  ? const Color(0xFF3B82F6)
-                  : const Color(0xFF3B82F6),
+              color: const Color(0xFF3B82F6),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -145,23 +148,34 @@ class StatCard extends StatelessWidget {
   }
 
   Widget _buildTeam(String logo, String name) {
-    return Column(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppColors.borderLight, width: 1),
+            border: Border.all(
+              color: AppColors.borderLight,
+              width: 1,
+            ),
           ),
-          child: Image.asset(
-            logo,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.sports_football, size: 24);
-            },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(5.5),
+            child: logo.isEmpty || !logo.startsWith('http')
+                ? const Icon(Icons.sports_football, size: 24)
+                : CachedNetworkImage(
+                    imageUrl: logo,
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(strokeWidth: 2),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.sports_football, size: 24),
+                    fit: BoxFit.cover,
+                  ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(width: 6),
         Text(
           name,
           style: AppTextStyles.bodyMedium.copyWith(

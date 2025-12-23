@@ -23,12 +23,6 @@ class _ActionButtons extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Reset to Default button
-          CustomButton.secondary(
-            text: 'Reset to Default',
-            onPressed: provider.resetToDefault,
-            height: 48,
-          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -40,7 +34,6 @@ class _ActionButtons extends StatelessWidget {
                     if (isDialog) {
                       Navigator.of(context).pop();
                     } else {
-                      // Navigate back to Home (index 0) or Stats (index 3)
                       Provider.of<StatKeeperNavigationProvider>(
                         context,
                         listen: false,
@@ -53,16 +46,22 @@ class _ActionButtons extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: CustomButton.primary(
-                  text: 'Update Now',
-                  onPressed: () {
-                    if (provider.validateInputs()) {
-                      provider.updateNow(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select a team and enter at least one stat')),
-                      );
-                    }
-                  },
+                  text: provider.isReadOnly ? 'Read Only' : 'Update Now',
+                  onPressed: provider.isReadOnly
+                      ? () {}
+                      : () {
+                          if (provider.validateInputs()) {
+                            provider.updateNow(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please select a team and enter valid data',
+                                ),
+                              ),
+                            );
+                          }
+                        },
                   height: 48,
                   isLoading: provider.isLoading,
                 ),
@@ -76,15 +75,16 @@ class _ActionButtons extends StatelessWidget {
 }
 
 class StatAddScreen extends StatelessWidget {
-  const StatAddScreen({super.key});
+  final String? matchId;
+
+  const StatAddScreen({super.key, this.matchId});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) {
         final provider = StatAddProvider();
-        // For the full screen, we might need to get match ID from route or provider
-        // For now, initialize without match ID (will show empty dropdowns)
+        provider.initialize(matchId);
         return provider;
       },
       child: const _StatAddScreenContent(),
@@ -96,17 +96,13 @@ class StatAddScreen extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
           child: ChangeNotifierProvider(
             create: (_) {
               final provider = StatAddProvider();
-              if (matchId != null) {
-                provider.initialize(matchId);
-              }
+              provider.initialize(matchId);
               return provider;
             },
             child: const _StatAddScreenContent(isDialog: true),
@@ -143,10 +139,7 @@ class _StatAddScreenContent extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header
           const _HeaderSection(),
-
-          // Scrollable content
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -155,7 +148,62 @@ class _StatAddScreenContent extends StatelessWidget {
                 children: [
                   const SizedBox(height: 24),
 
-                  // Team Selection
+                  if (provider.isReadOnly)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.lock,
+                            color: Colors.amber.shade800,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'This match is completed and stats are locked.',
+                              style: TextStyle(
+                                color: Colors.amber.shade900,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  _buildLabel('Select Game'),
+                  const SizedBox(height: 8),
+                  if (provider.isLoadingMatches)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    SimpleDropdownList(
+                      selectedValue: provider.selectedMatchId != null
+                          ? provider.assignedMatches
+                                .where((m) => m.id == provider.selectedMatchId)
+                                .map(
+                                  (m) =>
+                                      '${m.homeTeam} vs ${m.awayTeam} (${m.date})',
+                                )
+                                .firstOrNull
+                          : null,
+                      items: provider.matchOptions,
+                      onSelected: (String val) {
+                        if (!provider.isReadOnly)
+                          provider.setSelectedMatch(val);
+                      },
+                      hintText: 'Select Game',
+                      
+                      
+                    ),
+                  const SizedBox(height: 20),
+
                   _buildLabel('Select Team'),
                   const SizedBox(height: 8),
                   if (provider.isLoadingTeams)
@@ -164,12 +212,13 @@ class _StatAddScreenContent extends StatelessWidget {
                     SimpleDropdownList(
                       selectedValue: provider.selectedTeam,
                       items: provider.teams,
-                      onSelected: provider.setSelectedTeam,
+                      onSelected: (String val) {
+                        if (!provider.isReadOnly) provider.setSelectedTeam(val);
+                      },
                       hintText: 'Select Team',
                     ),
                   const SizedBox(height: 20),
 
-                  // Player Selection
                   _buildLabel('Select Player'),
                   const SizedBox(height: 8),
                   if (provider.isLoadingPlayers)
@@ -178,17 +227,20 @@ class _StatAddScreenContent extends StatelessWidget {
                     SimpleDropdownList(
                       selectedValue: provider.selectedPlayer,
                       items: provider.players,
-                      onSelected: provider.setSelectedPlayer,
+                      onSelected: (String val) {
+                        if (!provider.isReadOnly)
+                          provider.setSelectedPlayer(val);
+                      },
                       hintText: 'Select Player',
                     ),
                   const SizedBox(height: 24),
 
-                  // Stat Fields
                   _buildStatRow(
                     'Catches',
                     'Catches Yards',
                     provider.catchesController,
                     provider.catchesYardsController,
+                    provider.isReadOnly,
                   ),
                   const SizedBox(height: 16),
 
@@ -197,6 +249,7 @@ class _StatAddScreenContent extends StatelessWidget {
                     'Rushes Yards',
                     provider.rushesController,
                     provider.rushesYardsController,
+                    provider.isReadOnly,
                   ),
                   const SizedBox(height: 16),
 
@@ -205,6 +258,7 @@ class _StatAddScreenContent extends StatelessWidget {
                     'Pass Yards',
                     provider.passAttemptsController,
                     provider.passYardsController,
+                    provider.isReadOnly,
                   ),
                   const SizedBox(height: 16),
 
@@ -213,6 +267,7 @@ class _StatAddScreenContent extends StatelessWidget {
                     'TD\'s',
                     provider.completionsController,
                     provider.tdsController,
+                    provider.isReadOnly,
                   ),
                   const SizedBox(height: 16),
 
@@ -221,6 +276,7 @@ class _StatAddScreenContent extends StatelessWidget {
                     'Sack',
                     provider.flagPullController,
                     provider.sackController,
+                    provider.isReadOnly,
                   ),
                   const SizedBox(height: 16),
 
@@ -229,40 +285,32 @@ class _StatAddScreenContent extends StatelessWidget {
                     'Safety',
                     provider.intController,
                     provider.safetyController,
+                    provider.isReadOnly,
                   ),
                   const SizedBox(height: 16),
 
-                  // Conversion Points (full width)
                   _buildLabel('Conversion Points'),
                   const SizedBox(height: 8),
                   CustomTextField(
                     controller: provider.conversionPointsController,
                     hintText: 'Enter here',
                     keyboardType: TextInputType.number,
+                    enabled: !provider.isReadOnly,
                   ),
                   const SizedBox(height: 32),
                 ],
               ),
             ),
           ),
-
-          // Action Buttons
           _ActionButtons(provider: provider, isDialog: isDialog),
         ],
       ),
     );
 
-    if (isDialog) {
-      return content;
-    }
-
+    if (isDialog) return content;
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: Center(
-          child: content,
-        ),
-      ),
+      body: SafeArea(child: Center(child: content)),
     );
   }
 
@@ -281,6 +329,7 @@ class _StatAddScreenContent extends StatelessWidget {
     String label2,
     TextEditingController controller1,
     TextEditingController controller2,
+    bool readOnly,
   ) {
     return Row(
       children: [
@@ -294,6 +343,7 @@ class _StatAddScreenContent extends StatelessWidget {
                 controller: controller1,
                 hintText: 'Enter here',
                 keyboardType: TextInputType.number,
+                enabled: !readOnly,
               ),
             ],
           ),
@@ -309,6 +359,7 @@ class _StatAddScreenContent extends StatelessWidget {
                 controller: controller2,
                 hintText: 'Enter here',
                 keyboardType: TextInputType.number,
+                enabled: !readOnly,
               ),
             ],
           ),
@@ -336,7 +387,7 @@ class _HeaderSection extends StatelessWidget {
             'Add Game Stats',
             style: AppTextStyles.headlineSmall.copyWith(
               color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
+             fontSize: 22,
             ),
           ),
           const SizedBox(height: 8),
@@ -345,7 +396,7 @@ class _HeaderSection extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
-              fontSize: 13,
+              fontSize: 14,
             ),
           ),
         ],

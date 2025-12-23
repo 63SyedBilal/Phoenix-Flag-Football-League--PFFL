@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/key_players/league_key_players_section.dart';
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_tabs_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 class SummaryTab extends StatelessWidget {
   const SummaryTab({Key? key}) : super(key: key);
@@ -29,11 +32,10 @@ class SummaryTab extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          _buildPerformanceCard(match.homeTeamLogo, match.awayTeamLogo),
+          _buildPerformanceCard(match),
 
           const SizedBox(height: 24),
 
-          // Actions Section
           const Text(
             'Actions',
             style: TextStyle(
@@ -44,7 +46,7 @@ class SummaryTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _buildActionsTimeline(),
+          _buildActionsTimeline(match),
 
           const SizedBox(height: 24),
 
@@ -66,32 +68,78 @@ class SummaryTab extends StatelessWidget {
           // Upcoming Games Header
           _buildSectionHeader('Upcoming Games', 'View More', () {}),
           const SizedBox(height: 16),
-          // RC Match Card
-          _buildMatchCard("RC", "STA", "08/11", "04:05 AM PKT"),
-          const SizedBox(height: 12),
-          // STA Match Card
-          _buildMatchCard("STA", "RC", "08/11", "04:05 AM PKT"),
+          if (provider.upcomingGames.isEmpty && !provider.isLoading)
+            Container(
+              padding: const EdgeInsets.all(20),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: const Text(
+                'No upcoming games found for these teams.',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontFamily: 'Lato',
+                  fontSize: 14,
+                ),
+              ),
+            )
+          else if (provider.isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            ...provider.upcomingGames.map(
+              (game) => Column(
+                children: [
+                  _buildMatchCard(game, context),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
           const SizedBox(height: 24),
 
-        SponsorBannerScreen(),
+          SponsorBannerScreen(),
 
-          _FilteredLeaderboardSection(selectedTeam: _getSelectedTeam(provider.selectedTabIndex)),
+          _FilteredLeaderboardSection(
+            selectedTeam: _getSelectedTeam(provider.selectedTabIndex),
+          ),
           const SizedBox(height: 12),
           LeagueKeyPlayersSection(),
-         SizedBox(height: 24),
+          SizedBox(height: 24),
           SponsorBannerScreen(),
         ],
       ),
     );
   }
 
-  Widget _buildPerformanceCard(String homeLogo, String awayLogo) {
+  Widget _buildPerformanceCard(MatchModel match) {
+    final home = match.homeTeamStats;
+    final away = match.awayTeamStats;
+
+    // Helper to get string value safely
+    String h(int? val) => (val ?? 0).toString();
+    String a(int? val) => (val ?? 0).toString();
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildTeamLogo(homeLogo),
+            Column(
+              children: [
+                _buildTeamLogo(match.homeTeamLogo),
+                const SizedBox(height: 8),
+                Text(
+                  match.homeScore?.toString() ?? '0',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Lato',
+                  ),
+                ),
+              ],
+            ),
             const Text(
               'Team Performance',
               style: TextStyle(
@@ -101,20 +149,49 @@ class SummaryTab extends StatelessWidget {
                 color: Color(0xFF111827),
               ),
             ),
-            _buildTeamLogo(awayLogo),
+            Column(
+              children: [
+                _buildTeamLogo(match.awayTeamLogo),
+                const SizedBox(height: 8),
+                Text(
+                  match.awayScore?.toString() ?? '0',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Lato',
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 16),
-        _buildStatRow('10', 'Catches', '14'),
-        _buildStatRow('230', 'Catches Yards', '235'),
-        _buildStatRow('8', 'Rushes', '8'),
-        _buildStatRow('150', 'Rush Yards', '155'),
-        _buildStatRow('20', 'Pass Attempts', '25'),
-        _buildStatRow('8', 'Completions', '15'),
-        _buildStatRow('4', 'Touchdowns', '11'),
-        _buildStatRow('20', 'Flag Pulls', '28'),
-        _buildStatRow('1', 'Safety', '0'),
-        _buildStatRow('9', 'Conversion Points', '11'),
+        _buildStatRow(h(home?.catches), 'Catches', a(away?.catches)),
+        _buildStatRow(
+          h(home?.catchesYards),
+          'Catches Yards',
+          a(away?.catchesYards),
+        ),
+        _buildStatRow(h(home?.rushes), 'Rushes', a(away?.rushes)),
+        _buildStatRow(h(home?.rushesYards), 'Rush Yards', a(away?.rushesYards)),
+        _buildStatRow(
+          h(home?.passAttempts),
+          'Pass Attempts',
+          a(away?.passAttempts),
+        ),
+        _buildStatRow(
+          h(home?.completions),
+          'Completions',
+          a(away?.completions),
+        ),
+        _buildStatRow(h(home?.tds), 'Touchdowns', a(away?.tds)),
+        _buildStatRow(h(home?.flagPull), 'Flag Pulls', a(away?.flagPull)),
+        _buildStatRow(h(home?.safety), 'Safety', a(away?.safety)),
+        _buildStatRow(
+          h(home?.conversionPoints),
+          'Conversion Points',
+          a(away?.conversionPoints),
+        ),
       ],
     );
   }
@@ -187,7 +264,29 @@ class SummaryTab extends StatelessWidget {
     );
   }
 
-  Widget _buildActionsTimeline() {
+  Widget _buildActionsTimeline(MatchModel match) {
+    final actions = match.actions;
+
+    if (actions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: const Text(
+          'No actions recorded for this game yet.',
+          style: TextStyle(
+            color: Colors.grey,
+            fontFamily: 'Lato',
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
     return Stack(
       children: [
         Positioned(
@@ -202,66 +301,127 @@ class SummaryTab extends StatelessWidget {
         Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildActionItem(
-              "#17 - Michael Lee",
-              "Slot Receiver",
-              Icons.shield,
-              "Half Time",
-              true,
-            ),
-            _buildActionItem(
-              "#17 - Michael Lee",
-              "Slot Receiver",
-              Icons.shield,
-              "",
-              true,
-            ), // Icon only?
-            _buildActionItem(
-              "#17 - Michael Lee",
-              "Slot Receiver",
-              Icons.gps_fixed,
-              "",
-              true,
-            ),
-            _buildActionItem(
-              "#10 - John Carter",
-              "Slot Receiver",
-              Icons.warning_amber_rounded,
-              "Warning",
-              false,
-              color: Colors.amber,
-            ),
-            _buildActionItem(
-              "#10 - John Carter",
-              "Slot Receiver",
-              Icons.sports_football,
-              "Start",
-              false,
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  "View more",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Lato',
+          children: actions.map((action) {
+            final type = action['type'] ?? action['actionType'] ?? 'unknown';
+            final teamId = action['teamId'];
+            final playerId = action['playerId'];
+            final isHome = teamId == match.homeTeamId; // Assuming home is left
+
+            // Determine label and icon
+            String label = '';
+            IconData icon = Icons.circle;
+            Color color = const Color(0xFF1F2937);
+
+            switch (type.toString().toLowerCase()) {
+              case 'touchdown':
+              case 'td':
+                label = 'Touchdown';
+                icon = Icons.sports_football;
+                break;
+              case 'extrapoint':
+              case 'conversion':
+                label = 'Conversion';
+                icon = Icons.add_circle_outline;
+                break;
+              case 'safety':
+                label = 'Safety';
+                icon = Icons.warning_amber_rounded;
+                color = Colors.amber;
+                break;
+              case 'interception':
+              case 'int':
+                label = 'Interception';
+                icon = Icons.swap_horiz;
+                break;
+              case 'sack':
+                label = 'Sack';
+                icon = Icons.arrow_downward;
+                break;
+              // Add milestones
+              case 'halftime':
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Half Time',
+                      style: TextStyle(fontSize: 12, fontFamily: 'Lato'),
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ],
+                );
+              case 'fulltime':
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Full Time',
+                      style: TextStyle(fontSize: 12, fontFamily: 'Lato'),
+                    ),
+                  ),
+                );
+              default:
+                label = type.toString();
+                icon = Icons.circle;
+            }
+
+            // Lookup player name
+            String playerName = 'Unknown Player';
+            String role = ''; // Can look up position if available
+
+            // Try to find in stats
+            final stats = isHome ? match.homeTeamStats : match.awayTeamStats;
+            if (stats != null && playerId != null) {
+              try {
+                final p = stats.playerStats.firstWhere(
+                  (ps) => ps.playerId == playerId,
+                );
+                playerName = p.playerName;
+                // Position not in PlayerStatModel, but maybe keep it empty or generic
+              } catch (_) {
+                // Try looking in the other team just in case IDs are mixed
+                final otherStats = isHome
+                    ? match.awayTeamStats
+                    : match.homeTeamStats;
+                if (otherStats != null) {
+                  try {
+                    final p = otherStats.playerStats.firstWhere(
+                      (ps) => ps.playerId == playerId,
+                    );
+                    playerName = p.playerName;
+                  } catch (_) {}
+                }
+              }
+            }
+            // If still unknown and action has 'playerName', use it
+            if (playerName == 'Unknown Player' &&
+                action['playerName'] != null) {
+              playerName = action['playerName'];
+            }
+
+            return _buildActionItem(
+              playerName,
+              role,
+              icon,
+              label,
+              isHome, // Left if home
+              color: color,
+            );
+          }).toList(),
         ),
       ],
     );
@@ -306,7 +466,7 @@ class SummaryTab extends StatelessWidget {
                 : const SizedBox(),
           ),
           const SizedBox(width: 12),
-        // ... existing code ...
+          // ... existing code ...
           Column(
             children: [
               Container(
@@ -316,7 +476,7 @@ class SummaryTab extends StatelessWidget {
                 child: Icon(icon, color: Colors.white, size: 16),
               ),
               if (label.isNotEmpty)
-                               Padding(
+                Padding(
                   padding: const EdgeInsets.only(top: 4.0),
                   child: Text(
                     label,
@@ -329,7 +489,6 @@ class SummaryTab extends StatelessWidget {
                     ),
                   ),
                 ),
-
             ],
           ),
           const SizedBox(width: 12),
@@ -363,7 +522,21 @@ class SummaryTab extends StatelessWidget {
     );
   }
 
-  Widget _buildGameInfoCard(match) {
+  Widget _buildGameInfoCard(MatchModel match) {
+    final gameNo = match.gameNumber != null ? 'Game ${match.gameNumber}: ' : '';
+    final league = match.leagueName;
+
+    // Resolve Toss text
+    String tossText = "Toss information not available.";
+    if (match.tossWinnerId != null) {
+      String winner = "Unknown Team";
+      if (match.tossWinnerId == match.homeTeamId) winner = match.homeTeam;
+      if (match.tossWinnerId == match.awayTeamId) winner = match.awayTeam;
+
+      final choice = match.tossChoice ?? "play";
+      tossText = "$winner won the toss and chose to $choice.";
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -372,39 +545,39 @@ class SummaryTab extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Game No 2: BS vs STA | League: Phoenix Winter 2025",
-            style: TextStyle(
+            "$gameNo${match.homeTeam} vs ${match.awayTeam} | League: $league",
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               fontFamily: 'Lato',
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
-            "Format: 5v5 | Venue: Phoenix Turf Arena - Field 3",
-            style: TextStyle(
+            "Format: ${match.format ?? 'N/A'} | Venue: ${match.venue ?? 'N/A'}",
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               fontFamily: 'Lato',
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
-            "Date: 12 January 2025 | Time: 6:30 PM",
-            style: TextStyle(
+            "Date: ${match.date} | Time: ${match.time}",
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               fontFamily: 'Lato',
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
-            "Toss: BS won the toss and will play defense first.",
-            style: TextStyle(
+            "Toss: $tossText",
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               fontFamily: 'Lato',
@@ -456,10 +629,17 @@ class SummaryTab extends StatelessWidget {
     );
   }
 
+  Widget _buildMatchCard(MatchModel game, BuildContext context) {
+    // Get user role
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = authProvider.userRole.toLowerCase() == 'admin';
 
+    // Extract details
+    final team1 = game.homeTeam;
+    final team2 = game.awayTeam;
+    final date = game.date;
+    final time = game.time;
 
-
-  Widget _buildMatchCard(String team1, String team2, String date, String time) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
@@ -471,10 +651,10 @@ class SummaryTab extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Team 1
               SizedBox(
                 width: 100,
                 child: Row(
@@ -485,27 +665,43 @@ class SummaryTab extends StatelessWidget {
                       height: 32,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 1,
+                        ),
                       ),
-                      child: const ClipOval(
+                      child: ClipOval(
                         child: ColoredBox(
-                          color: Color(0xFFF3F4F6),
-                          child: Icon(
-                            Icons.sports_football,
-                            size: 16,
-                            color: Color(0xFF6B7280),
-                          ),
+                          color: const Color(0xFFF3F4F6),
+                          child: game.homeTeamLogo.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: game.homeTeamLogo,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => const Icon(
+                                    Icons.sports_football,
+                                    size: 16,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.sports_football,
+                                  size: 16,
+                                  color: Color(0xFF6B7280),
+                                ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      team1,
-                      style: const TextStyle(
-                        fontFamily: 'Lato',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
+                    Expanded(
+                      child: Text(
+                        team1,
+                        style: const TextStyle(
+                          fontFamily: 'Lato',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1F2937),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -532,18 +728,23 @@ class SummaryTab extends StatelessWidget {
                   ),
                 ],
               ),
+              // Team 2
               SizedBox(
                 width: 100,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
-                      team2,
-                      style: const TextStyle(
-                        fontFamily: 'Lato',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
+                    Expanded(
+                      child: Text(
+                        team2,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontFamily: 'Lato',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1F2937),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -552,16 +753,29 @@ class SummaryTab extends StatelessWidget {
                       height: 32,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 1,
+                        ),
                       ),
-                      child: const ClipOval(
+                      child: ClipOval(
                         child: ColoredBox(
-                          color: Color(0xFFF3F4F6),
-                          child: Icon(
-                            Icons.sports_football,
-                            size: 16,
-                            color: Color(0xFF6B7280),
-                          ),
+                          color: const Color(0xFFF3F4F6),
+                          child: game.awayTeamLogo.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: game.awayTeamLogo,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => const Icon(
+                                    Icons.sports_football,
+                                    size: 16,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.sports_football,
+                                  size: 16,
+                                  color: Color(0xFF6B7280),
+                                ),
                         ),
                       ),
                     ),
@@ -570,32 +784,42 @@ class SummaryTab extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Divider(),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Edit Game',
-                style: TextStyle(
-                  fontFamily: 'Lato',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[400],
-                ),
+
+          if (isAdmin) ...[
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () async {
+                await Navigator.pushNamed(
+                  context,
+                  AppRoutes.adminEditMatch,
+                  arguments: game,
+                );
+                if (context.mounted) {
+                  Provider.of<GameTabsProvider>(
+                    context,
+                    listen: false,
+                  ).initialize();
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Edit Game',
+                    style: TextStyle(
+                      fontFamily: 'Lato',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.blue[700], // Active color
+                    ),
+                  ),
+                  const Icon(Icons.edit, size: 14, color: Colors.blue),
+                ],
               ),
-              const SizedBox(width: 6),
-              Container(
-                width: 12,
-                height: 12,
-                decoration:  BoxDecoration(
-                  color: Colors.grey[400],
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );
@@ -617,7 +841,10 @@ class SummaryTab extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text('Leaderboard', style: TextStyle(fontFamily: 'Lato', fontSize: 16)),
+            const Text(
+              'Leaderboard',
+              style: TextStyle(fontFamily: 'Lato', fontSize: 16),
+            ),
             const Spacer(),
             Text(
               'View Leaderboard',
@@ -637,9 +864,7 @@ class SummaryTab extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-          ),
+          decoration: BoxDecoration(color: Colors.white),
           child: Scrollbar(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -654,10 +879,7 @@ class SummaryTab extends StatelessWidget {
                     decoration: const BoxDecoration(
                       color: Color(0xffe3ecfb),
                       border: Border(
-                        bottom: BorderSide(
-                          color: Color(0xFFE5E7EB),
-                          width: 1,
-                        ),
+                        bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
                       ),
                     ),
                     child: Row(
@@ -780,9 +1002,29 @@ class SummaryTab extends StatelessWidget {
                   ),
                   // Team rows - showing only 2 lines as requested
                   if (selectedTeam.isEmpty || selectedTeam == 'RC')
-                    _buildLeaderboardRowFull('01', 'RC', '6', '0', '0', '0', '0', '0', '0'),
+                    _buildLeaderboardRowFull(
+                      '01',
+                      'RC',
+                      '6',
+                      '0',
+                      '0',
+                      '0',
+                      '0',
+                      '0',
+                      '0',
+                    ),
                   if (selectedTeam.isEmpty || selectedTeam == 'STA')
-                    _buildLeaderboardRowFull('02', 'STA', '4', '0', '2', '0', '0', '0', '0'),
+                    _buildLeaderboardRowFull(
+                      '02',
+                      'STA',
+                      '4',
+                      '0',
+                      '2',
+                      '0',
+                      '0',
+                      '0',
+                      '0',
+                    ),
                 ],
               ),
             ),
@@ -792,12 +1034,19 @@ class SummaryTab extends StatelessWidget {
     );
   }
 
-  Widget _buildLeaderboardRowFull(String rank, String team, String wins, String draws, String losses, String od, String ps, String pa, String pta) {
+  Widget _buildLeaderboardRowFull(
+    String rank,
+    String team,
+    String wins,
+    String draws,
+    String losses,
+    String od,
+    String ps,
+    String pa,
+    String pta,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -830,11 +1079,7 @@ class SummaryTab extends StatelessWidget {
                     color: Colors.grey[200],
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.shield,
-                    size: 16,
-                    color: Colors.grey,
-                  ),
+                  child: const Icon(Icons.shield, size: 16, color: Colors.grey),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
