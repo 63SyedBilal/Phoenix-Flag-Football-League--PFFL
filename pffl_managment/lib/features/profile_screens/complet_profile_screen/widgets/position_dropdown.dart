@@ -29,14 +29,14 @@ class PositionDropdown extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Positions (Select Multiple)',
+              'Positions',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF000000),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             GestureDetector(
               onTap: provider.togglePositionDropdown,
               child: Container(

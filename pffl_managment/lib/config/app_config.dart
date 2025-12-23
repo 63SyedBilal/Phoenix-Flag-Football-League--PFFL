@@ -7,8 +7,8 @@ class AppConfig {
   // Network IP for physical devices and network access
   // For Android emulator, use: 'http://10.0.2.2:3000/api'
   // For iOS simulator, use: 'http://localhost:3000/api'
-  // For physical device, use your local network IP: 'http://192.168.18.32:3000/api'
-  // Current IP: 192.168.18.32 (updated automatically)
+  // For physical device, use your local network IP: 'http://192.168.18.174:3000/api'
+  // Current IP: 192.168.18.174 (updated automatically)
 
   // Server Configuration
   static const String serverHost = '0.0.0.0'; // Listen on all interfaces
@@ -16,7 +16,11 @@ class AppConfig {
   static const String apiPath = '/api'; // API base path
 
   // Network IP Configuration
+ mustafa
+  static const String networkIp = '192.168.18.174'; // Current system IP
+
   static const String networkIp = '192.168.18.32'; // Current system IP
+ bilalphoenix
   static const String localhost = 'localhost';
   static const String androidEmulatorIp = '10.0.2.2';
 
@@ -117,9 +121,9 @@ class AppConfig {
   static const String testUpdateRoleEndpoint = '/test-update-role';
 
   // Timeouts - Increased for better network reliability
-  static const Duration connectTimeout = Duration(seconds: 60);
-  static const Duration receiveTimeout = Duration(seconds: 60);
-  static const Duration sendTimeout = Duration(seconds: 60);
+  static const Duration connectTimeout = Duration(seconds: 300);
+  static const Duration receiveTimeout = Duration(seconds: 300);
+  static const Duration sendTimeout = Duration(seconds: 300);
 
   // Get full API URL
   static String getApiUrl(String endpoint) {

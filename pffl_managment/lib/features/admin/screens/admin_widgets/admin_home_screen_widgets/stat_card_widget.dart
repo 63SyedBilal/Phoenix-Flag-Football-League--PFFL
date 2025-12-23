@@ -40,7 +40,8 @@ class StatCardWidget extends StatelessWidget {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: AppColors.circleColor,
+                           color: const Color(0xFFFBFBFB),
+                         // color: AppColors.circleColor,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(stat.icon, size: 16, color: stat.iconColor),
