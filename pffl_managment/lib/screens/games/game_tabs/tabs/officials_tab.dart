@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/screens/games/game_tabs/tabs/add_officials.dart';
 
 class OfficialsTab extends StatelessWidget {
@@ -6,20 +8,23 @@ class OfficialsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = provider.userRole.toLowerCase() == 'admin';
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildRefereeSection(context),
+          _buildRefereeSection(context, isAdmin),
           const SizedBox(height: 24),
-          _buildStatKeeperSection(context),
+          _buildStatKeeperSection(context, isAdmin),
         ],
       ),
     );
   }
 
-  Widget _buildRefereeSection(BuildContext context) {
+  Widget _buildRefereeSection(BuildContext context, bool isAdmin) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -34,19 +39,20 @@ class OfficialsTab extends StatelessWidget {
                 color: Color(0xFF000000),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.add, size: 24, color: Color(0xFF000000)),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddOfficials(),
-                  ),
-                );
-              },
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
+            if (isAdmin)
+              IconButton(
+                icon: const Icon(Icons.add, size: 24, color: Color(0xFF000000)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddOfficials(),
+                    ),
+                  );
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
           ],
         ),
         const SizedBox(height: 12),
@@ -65,7 +71,7 @@ class OfficialsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildStatKeeperSection(BuildContext context) {
+  Widget _buildStatKeeperSection(BuildContext context, bool isAdmin) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -80,19 +86,20 @@ class OfficialsTab extends StatelessWidget {
                 color: Color(0xFF000000),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.add, size: 24, color: Color(0xFF000000)),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddOfficials(),
-                  ),
-                );
-              },
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
+            if (isAdmin)
+              IconButton(
+                icon: const Icon(Icons.add, size: 24, color: Color(0xFF000000)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddOfficials(),
+                    ),
+                  );
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
           ],
         ),
         const SizedBox(height: 12),

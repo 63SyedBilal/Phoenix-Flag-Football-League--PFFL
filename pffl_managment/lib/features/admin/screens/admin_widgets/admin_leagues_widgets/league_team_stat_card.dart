@@ -9,24 +9,6 @@ class LeagueTeamStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Select image based on index to support 4 different images
-    String imagePath;
-    switch (index % 4) {
-      case 0:
-        imagePath = 'assets/images/image 4.png';
-        break;
-      case 1:
-        imagePath = 'assets/images/image 5.png';
-        break;
-      case 2:
-        imagePath = 'assets/images/image 14.png';
-        break;
-      case 3:
-      default:
-        imagePath = 'assets/images/Real Madrid.png';
-        break;
-    }
-
     return Container(
       width: 165.5,
       height: 90,
@@ -40,14 +22,21 @@ class LeagueTeamStatCard extends StatelessWidget {
           Positioned(
             top: 18,
             right: 10,
-            child: Image.asset(
-              imagePath,
-              width: 55,
-              height: 55,
-              fit: BoxFit.contain,
-            ),
+            child: teamStat.teamLogo.isNotEmpty
+                ? Image.network(
+                    teamStat.teamLogo,
+                    width: 55,
+                    height: 55,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.group,
+                      size: 40,
+                      color: Colors.white24,
+                    ),
+                  )
+                : const Icon(Icons.group, size: 40, color: Colors.white24),
           ),
-          
+
           // Text Content
           Padding(
             padding: const EdgeInsets.only(left: 10, top: 12, right: 10),
@@ -79,9 +68,9 @@ class LeagueTeamStatCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 const SizedBox(height: 20),
-                                Row(
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(

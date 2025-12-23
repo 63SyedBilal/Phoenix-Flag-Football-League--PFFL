@@ -1,3 +1,5 @@
+import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
+
 enum MatchStatus { upcoming, live, completed, cancelled }
 
 class MatchModel {
@@ -21,6 +23,11 @@ class MatchModel {
   final int? awayScore;
   final String? roundName;
   final String? gameNumber;
+  final TeamStatModel? homeTeamStats;
+  final TeamStatModel? awayTeamStats;
+  final List<Map<String, dynamic>> actions;
+  final String? tossWinnerId;
+  final String? tossChoice;
 
   // Filtering fields
   final String? leagueId;
@@ -49,6 +56,11 @@ class MatchModel {
     this.homeTeamId,
     this.awayTeamId,
     this.format,
+    this.homeTeamStats,
+    this.awayTeamStats,
+    this.actions = const [],
+    this.tossWinnerId,
+    this.tossChoice,
   });
 
   MatchModel copyWith({
@@ -73,6 +85,11 @@ class MatchModel {
     String? homeTeamId,
     String? awayTeamId,
     String? format,
+    TeamStatModel? homeTeamStats,
+    TeamStatModel? awayTeamStats,
+    List<Map<String, dynamic>>? actions,
+    String? tossWinnerId,
+    String? tossChoice,
   }) {
     return MatchModel(
       id: id ?? this.id,
@@ -96,6 +113,11 @@ class MatchModel {
       homeTeamId: homeTeamId ?? this.homeTeamId,
       awayTeamId: awayTeamId ?? this.awayTeamId,
       format: format ?? this.format,
+      homeTeamStats: homeTeamStats ?? this.homeTeamStats,
+      awayTeamStats: awayTeamStats ?? this.awayTeamStats,
+      actions: actions ?? this.actions,
+      tossWinnerId: tossWinnerId ?? this.tossWinnerId,
+      tossChoice: tossChoice ?? this.tossChoice,
     );
   }
 

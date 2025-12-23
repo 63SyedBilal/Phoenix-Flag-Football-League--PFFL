@@ -3,6 +3,7 @@ import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
 
 /// Service for match/game-related API calls
 class MatchService {
@@ -28,16 +29,23 @@ class MatchService {
         final fallbackAwayId = matchData['teamB']?.toString();
 
         MatchModel fixed = parsed;
-        final needsHomeNameFix = (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
+        final needsHomeNameFix =
+            (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
             (fallbackHomeName != null && fallbackHomeName.isNotEmpty);
-        final needsAwayNameFix = (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
+        final needsAwayNameFix =
+            (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
             (fallbackAwayName != null && fallbackAwayName.isNotEmpty);
-        final needsHomeIdFix = (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
+        final needsHomeIdFix =
+            (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
             (fallbackHomeId != null && fallbackHomeId.isNotEmpty);
-        final needsAwayIdFix = (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
+        final needsAwayIdFix =
+            (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
             (fallbackAwayId != null && fallbackAwayId.isNotEmpty);
 
-        if (needsHomeNameFix || needsAwayNameFix || needsHomeIdFix || needsAwayIdFix) {
+        if (needsHomeNameFix ||
+            needsAwayNameFix ||
+            needsHomeIdFix ||
+            needsAwayIdFix) {
           fixed = parsed.copyWith(
             homeTeam: needsHomeNameFix ? fallbackHomeName : null,
             awayTeam: needsAwayNameFix ? fallbackAwayName : null,
@@ -54,9 +62,7 @@ class MatchService {
       print('Error creating match: ${e.message}');
       if (e.response != null) {
         print('Error response: ${e.response?.data}');
-        throw Exception(
-          e.response?.data['error'] ?? 'Failed to create match',
-        );
+        throw Exception(e.response?.data['error'] ?? 'Failed to create match');
       }
       rethrow;
     } catch (e) {
@@ -84,16 +90,23 @@ class MatchService {
         final fallbackAwayId = matchData['teamB']?.toString();
 
         MatchModel fixed = parsed;
-        final needsHomeNameFix = (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
+        final needsHomeNameFix =
+            (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
             (fallbackHomeName != null && fallbackHomeName.isNotEmpty);
-        final needsAwayNameFix = (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
+        final needsAwayNameFix =
+            (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
             (fallbackAwayName != null && fallbackAwayName.isNotEmpty);
-        final needsHomeIdFix = (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
+        final needsHomeIdFix =
+            (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
             (fallbackHomeId != null && fallbackHomeId.isNotEmpty);
-        final needsAwayIdFix = (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
+        final needsAwayIdFix =
+            (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
             (fallbackAwayId != null && fallbackAwayId.isNotEmpty);
 
-        if (needsHomeNameFix || needsAwayNameFix || needsHomeIdFix || needsAwayIdFix) {
+        if (needsHomeNameFix ||
+            needsAwayNameFix ||
+            needsHomeIdFix ||
+            needsAwayIdFix) {
           fixed = parsed.copyWith(
             homeTeam: needsHomeNameFix ? fallbackHomeName : null,
             awayTeam: needsAwayNameFix ? fallbackAwayName : null,
@@ -110,9 +123,7 @@ class MatchService {
       print('Error updating match: ${e.message}');
       if (e.response != null) {
         print('Error response: ${e.response?.data}');
-        throw Exception(
-          e.response?.data['error'] ?? 'Failed to update match',
-        );
+        throw Exception(e.response?.data['error'] ?? 'Failed to update match');
       }
       rethrow;
     } catch (e) {
@@ -155,7 +166,9 @@ class MatchService {
           final Map<String, Map<String, String>> leagueTeamNameCache = {};
           for (final m in parsed) {
             final lid = m.leagueId;
-            if (lid != null && lid.isNotEmpty && !leagueTeamNameCache.containsKey(lid)) {
+            if (lid != null &&
+                lid.isNotEmpty &&
+                !leagueTeamNameCache.containsKey(lid)) {
               try {
                 final league = await LeagueService.getLeagueById(lid);
                 final Map<String, String> map = {};
@@ -185,12 +198,18 @@ class MatchService {
           // Final fallback: resolve names directly via TeamService by ID if still unknown
           for (int i = 0; i < fixed.length; i++) {
             final m = fixed[i];
-            bool needHome = (m.homeTeam.isEmpty || m.homeTeam == 'Unknown Team') && (m.homeTeamId != null && m.homeTeamId!.isNotEmpty);
-            bool needAway = (m.awayTeam.isEmpty || m.awayTeam == 'Unknown Team') && (m.awayTeamId != null && m.awayTeamId!.isNotEmpty);
+            bool needHome =
+                (m.homeTeam.isEmpty || m.homeTeam == 'Unknown Team') &&
+                (m.homeTeamId != null && m.homeTeamId!.isNotEmpty);
+            bool needAway =
+                (m.awayTeam.isEmpty || m.awayTeam == 'Unknown Team') &&
+                (m.awayTeamId != null && m.awayTeamId!.isNotEmpty);
             if (needHome) {
               try {
                 final team = await TeamService.getTeamById(m.homeTeamId!);
-                final String? name = (team?['teamName']?.toString() ?? team?['enterCode']?.toString());
+                final String? name =
+                    (team?['teamName']?.toString() ??
+                    team?['enterCode']?.toString());
                 if (name != null && name.isNotEmpty) {
                   fixed[i] = fixed[i].copyWith(homeTeam: name);
                 }
@@ -199,7 +218,9 @@ class MatchService {
             if (needAway) {
               try {
                 final team = await TeamService.getTeamById(m.awayTeamId!);
-                final String? name = (team?['teamName']?.toString() ?? team?['enterCode']?.toString());
+                final String? name =
+                    (team?['teamName']?.toString() ??
+                    team?['enterCode']?.toString());
                 if (name != null && name.isNotEmpty) {
                   fixed[i] = fixed[i].copyWith(awayTeam: name);
                 }
@@ -207,7 +228,9 @@ class MatchService {
             }
           }
 
-          print('✅ Successfully parsed ${fixed.length} matches (names resolved)');
+          print(
+            '✅ Successfully parsed ${fixed.length} matches (names resolved)',
+          );
           return fixed;
         }
         print('⚠️ No data field in response');
@@ -239,9 +262,10 @@ class MatchService {
   static Future<List<MatchModel>> getMatchesByLeague(String leagueId) async {
     try {
       final dio = await _getAuthenticatedDio();
-      final response = await dio.get('/match', queryParameters: {
-        'leagueId': leagueId,
-      });
+      final response = await dio.get(
+        '/match',
+        queryParameters: {'leagueId': leagueId},
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -315,9 +339,7 @@ class MatchService {
       print('Error fetching match: ${e.message}');
       if (e.response != null) {
         print('Error response: ${e.response?.data}');
-        throw Exception(
-          e.response?.data['error'] ?? 'Failed to get match',
-        );
+        throw Exception(e.response?.data['error'] ?? 'Failed to get match');
       }
       rethrow;
     } catch (e) {
@@ -344,12 +366,10 @@ class MatchService {
           return teamId;
         }
       }
-      
+
       // Then check for _id (for populated team objects)
       // Finally check for id
-      return teamData['_id']?.toString() ??
-             teamData['id']?.toString() ??
-             null;
+      return teamData['_id']?.toString() ?? teamData['id']?.toString() ?? null;
     }
     return null;
   }
@@ -360,16 +380,18 @@ class MatchService {
       print('DEBUG: Team ID is null or empty');
       return 'Unknown Team';
     }
-    
+
     // Normalize team ID (convert to string and trim)
     final normalizedId = teamId.toString().trim();
     print('DEBUG: Looking up team with ID: $normalizedId');
-    
+
     try {
       final team = _getDummyTeams().firstWhere(
         (t) => t.id.toString().trim() == normalizedId,
         orElse: () {
-          print('DEBUG: Team not found in dummy teams. Available IDs: ${_getDummyTeams().map((t) => t.id).join(", ")}');
+          print(
+            'DEBUG: Team not found in dummy teams. Available IDs: ${_getDummyTeams().map((t) => t.id).join(", ")}',
+          );
           return TeamModel(
             id: normalizedId,
             teamName: 'Unknown Team',
@@ -433,9 +455,11 @@ class MatchService {
   /// Parse match JSON from backend to MatchModel
   static MatchModel _parseMatchFromJson(Map<String, dynamic> json) {
     final id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
-    
+
     print('🔍 Parsing match: $id');
-    print('   Raw gameDate: ${json['gameDate']}, type: ${json['gameDate']?.runtimeType}');
+    print(
+      '   Raw gameDate: ${json['gameDate']}, type: ${json['gameDate']?.runtimeType}',
+    );
     print('   Raw gameTime: ${json['gameTime']}');
     print('   Raw status: ${json['status']}');
 
@@ -444,15 +468,19 @@ class MatchService {
     final leagueName = leagueData is Map
         ? (leagueData['leagueName'] ?? '')
         : json['leagueName'] ?? '';
-    
+
     // Extract league ID for filtering
     final leagueId = leagueData is Map
         ? (leagueData['_id']?.toString() ?? leagueData['id']?.toString())
         : (json['leagueId']?.toString());
 
     // Debug: Print team data to understand the format
-    print('DEBUG: teamA data type: ${json['teamA'].runtimeType}, value: ${json['teamA']}');
-    print('DEBUG: teamB data type: ${json['teamB'].runtimeType}, value: ${json['teamB']}');
+    print(
+      'DEBUG: teamA data type: ${json['teamA'].runtimeType}, value: ${json['teamA']}',
+    );
+    print(
+      'DEBUG: teamB data type: ${json['teamB'].runtimeType}, value: ${json['teamB']}',
+    );
 
     // Parse team A data
     // First check if team name is stored directly in database
@@ -463,14 +491,14 @@ class MatchService {
     // If stored name is empty, fallback to existing logic
     if (teamAName.isEmpty) {
       final teamAData = json['teamA'];
-      
+
       if (teamAData == null) {
         // Team data is null - skip
         teamAName = '';
       } else if (teamAData is Map) {
         // Extract team ID for filtering
         homeTeamId = _extractTeamId(teamAData);
-        
+
         // Check if team is populated (has teamName) or just has _id
         if (teamAData['teamName'] != null || teamAData['enterCode'] != null) {
           // Team is populated from backend (real team data)
@@ -507,14 +535,14 @@ class MatchService {
     // If stored name is empty, fallback to existing logic
     if (teamBName.isEmpty) {
       final teamBData = json['teamB'];
-      
+
       if (teamBData == null) {
         // Team data is null - skip
         teamBName = '';
       } else if (teamBData is Map) {
         // Extract team ID for filtering
         awayTeamId = _extractTeamId(teamBData);
-        
+
         // Check if team is populated (has teamName) or just has _id
         if (teamBData['teamName'] != null || teamBData['enterCode'] != null) {
           // Team is populated from backend (real team data)
@@ -547,7 +575,7 @@ class MatchService {
     if (json['gameDate'] != null) {
       try {
         final dateValue = json['gameDate'];
-        
+
         // Handle different date formats from MongoDB
         if (dateValue is String) {
           // ISO string format
@@ -566,7 +594,9 @@ class MatchService {
           gameDate = DateTime.parse(dateValue.toString());
         }
       } catch (e) {
-        print('❌ Error parsing gameDate: $e, value: ${json['gameDate']}, type: ${json['gameDate'].runtimeType}');
+        print(
+          '❌ Error parsing gameDate: $e, value: ${json['gameDate']}, type: ${json['gameDate'].runtimeType}',
+        );
         // Fallback: use current date + 1 day to ensure it's in the future
         gameDate = DateTime.now().add(const Duration(days: 1));
       }
@@ -574,9 +604,11 @@ class MatchService {
       // Fallback: use current date + 1 day to ensure it's in the future
       gameDate = DateTime.now().add(const Duration(days: 1));
     }
-    
-    print('📅 Parsed gameDate: $gameDate for match ${json['_id'] ?? json['id']}');
-    
+
+    print(
+      '📅 Parsed gameDate: $gameDate for match ${json['_id'] ?? json['id']}',
+    );
+
     final gameTime = json['gameTime'] ?? '';
 
     // Combine date and time for matchDateTime
@@ -589,7 +621,7 @@ class MatchService {
           int hour = int.parse(timeParts[0].trim());
           final minutePart = timeParts[1].trim().split(RegExp(r'[\s]'))[0];
           int minute = int.parse(minutePart);
-          
+
           // Check for AM/PM (case insensitive)
           final timeUpper = gameTime.toUpperCase();
           if (timeUpper.contains('PM') && hour != 12) {
@@ -597,11 +629,11 @@ class MatchService {
           } else if (timeUpper.contains('AM') && hour == 12) {
             hour = 0;
           }
-          
+
           // Ensure hour is in valid range
           if (hour < 0 || hour > 23) hour = 0;
           if (minute < 0 || minute > 59) minute = 0;
-          
+
           matchDateTime = DateTime(
             gameDate.year,
             gameDate.month,
@@ -619,11 +651,14 @@ class MatchService {
     } else {
       matchDateTime = gameDate;
     }
-    
-    print('🕐 matchDateTime set to: $matchDateTime for match ${json['_id'] ?? json['id']}');
+
+    print(
+      '🕐 matchDateTime set to: $matchDateTime for match ${json['_id'] ?? json['id']}',
+    );
 
     // Format date as dd/MM
-    final dateStr = '${gameDate.day.toString().padLeft(2, '0')}/${gameDate.month.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${gameDate.day.toString().padLeft(2, '0')}/${gameDate.month.toString().padLeft(2, '0')}';
 
     // Format time
     final timeStr = gameTime.isNotEmpty ? gameTime : '';
@@ -654,17 +689,34 @@ class MatchService {
     // Parse referee and stat keeper IDs
     final refereeData = json['refereeId'];
     final statKeeperData = json['statKeeperId'];
-    
-    // Try to get raw IDs first (from backend fix), fallback to populated data extraction
-    final refereeId = json['refereeIdRaw']?.toString() ?? 
-                     (refereeData is Map
-                         ? (refereeData['_id']?.toString() ?? refereeData['id']?.toString())
-                         : (json['refereeId']?.toString()));
 
-    final statKeeperId = json['statKeeperIdRaw']?.toString() ?? 
-                        (statKeeperData is Map
-                            ? (statKeeperData['_id']?.toString() ?? statKeeperData['id']?.toString())
-                            : (json['statKeeperId']?.toString()));
+    // Try to get raw IDs first (from backend fix), fallback to populated data extraction
+    final refereeId =
+        json['refereeIdRaw']?.toString() ??
+        (refereeData is Map
+            ? (refereeData['_id']?.toString() ?? refereeData['id']?.toString())
+            : (json['refereeId']?.toString()));
+
+    final statKeeperId =
+        json['statKeeperIdRaw']?.toString() ??
+        (statKeeperData is Map
+            ? (statKeeperData['_id']?.toString() ??
+                  statKeeperData['id']?.toString())
+            : (json['statKeeperId']?.toString()));
+
+    // Parse actions
+    List<Map<String, dynamic>> actionsList = [];
+    final rawActions = json['actions'] ?? json['timeline'] ?? [];
+    if (rawActions is List) {
+      for (var item in rawActions) {
+        if (item is Map) {
+          actionsList.add(Map<String, dynamic>.from(item));
+        }
+      }
+    }
+
+    final tossWinnerId = json['tossWinner']?.toString();
+    final tossChoice = json['tossChoice']?.toString();
 
     return MatchModel(
       id: id,
@@ -688,7 +740,102 @@ class MatchService {
       homeTeamId: homeTeamId,
       awayTeamId: awayTeamId,
       format: json['format']?.toString(),
+      homeTeamStats: _parseTeamStats(json['teamA'], teamAName),
+      awayTeamStats: _parseTeamStats(json['teamB'], teamBName),
+      actions: actionsList,
+      tossWinnerId: tossWinnerId,
+      tossChoice: tossChoice,
     );
+  }
+
+  static TeamStatModel _parseTeamStats(dynamic teamData, String defaultName) {
+    if (teamData == null || teamData is! Map) {
+      return TeamStatModel(teamName: defaultName, teamLogo: '');
+    }
+
+    final stats =
+        teamData['teamStats'] as Map? ?? teamData['stats'] as Map? ?? {};
+    final players =
+        teamData['playerStats'] as List? ?? teamData['players'] as List? ?? [];
+
+    final List<PlayerStatModel> playerStatsList = [];
+    for (final p in players) {
+      if (p is Map) {
+        final id =
+            p['playerId']?.toString() ??
+            p['_id']?.toString() ??
+            p['id']?.toString() ??
+            '';
+
+        String name = '';
+        final firstName = p['firstName']?.toString() ?? '';
+        final lastName = p['lastName']?.toString() ?? '';
+        final playerName = p['playerName']?.toString() ?? '';
+        final fullName = p['name']?.toString() ?? '';
+
+        if (firstName.isNotEmpty || lastName.isNotEmpty) {
+          name = '$firstName $lastName'.trim();
+        } else if (playerName.isNotEmpty) {
+          name = playerName;
+        } else if (fullName.isNotEmpty) {
+          name = fullName;
+        }
+        // If still empty, leave it as empty string - no fallback text
+
+        playerStatsList.add(
+          PlayerStatModel(
+            playerId: id,
+            playerName: name,
+            image: p['image'] ?? p['avatar'] ?? p['profileImage'] ?? '',
+            catches: _toInt(p['catches']),
+            catchesYards: _toInt(p['catchYards'] ?? p['catchesYards']),
+            rushes: _toInt(p['rushes']),
+            rushesYards: _toInt(p['rushYards'] ?? p['rushesYards']),
+            passAttempts: _toInt(p['passAttempts']),
+            passYards: _toInt(p['passYards']),
+            completions: _toInt(p['completions']),
+            tds: _toInt(p['touchdowns'] ?? p['tds']),
+            flagPull: _toInt(p['flags'] ?? p['flagPull']),
+            sack: _toInt(p['sack']),
+            interceptions: _toInt(p['defensiveTDs'] ?? p['interceptions']),
+            safety: _toInt(p['safeties'] ?? p['safety']),
+            conversionPoints: _toInt(p['extraPoints'] ?? p['conversionPoints']),
+          ),
+        );
+      }
+    }
+
+    String teamName = defaultName;
+    if (teamData['teamName'] != null) teamName = teamData['teamName'];
+
+    return TeamStatModel(
+      teamName: teamName,
+      teamLogo: teamData['image'] ?? '',
+      catches: _toInt(stats['catches']),
+      catchesYards: _toInt(stats['catchYards'] ?? stats['catchesYards']),
+      rushes: _toInt(stats['rushes']),
+      rushesYards: _toInt(stats['rushYards'] ?? stats['rushesYards']),
+      passAttempts: _toInt(stats['passAttempts']),
+      passYards: _toInt(stats['passYards']),
+      completions: _toInt(stats['completions']),
+      tds: _toInt(stats['touchdowns'] ?? stats['tds']),
+      flagPull: _toInt(stats['flags'] ?? stats['flagPull']),
+      sack: _toInt(stats['sack']),
+      interceptions: _toInt(stats['defensiveTDs'] ?? stats['interceptions']),
+      safety: _toInt(stats['safeties'] ?? stats['safety']),
+      conversionPoints: _toInt(
+        stats['extraPoints'] ?? stats['conversionPoints'],
+      ),
+      playerStats: playerStatsList,
+    );
+  }
+
+  static int _toInt(dynamic val) {
+    if (val == null) return 0;
+    if (val is int) return val;
+    if (val is double) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? 0;
+    return 0;
   }
 
   /// Fallback fill: if names are missing/Unknown, use league team map
@@ -714,10 +861,7 @@ class MatchService {
       return match;
     }
 
-    return match.copyWith(
-      homeTeam: resolvedHome,
-      awayTeam: resolvedAway,
-    );
+    return match.copyWith(homeTeam: resolvedHome, awayTeam: resolvedAway);
   }
 
   /// Switch to half time
@@ -731,7 +875,9 @@ class MatchService {
         final data = response.data['data'];
         return _parseMatchFromJson(data);
       } else {
-        throw Exception('Failed to switch half time: ${response.statusMessage}');
+        throw Exception(
+          'Failed to switch half time: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       print('Error switching half time: ${e.message}');
@@ -759,7 +905,9 @@ class MatchService {
         final data = response.data['data'];
         return _parseMatchFromJson(data);
       } else {
-        throw Exception('Failed to switch full time: ${response.statusMessage}');
+        throw Exception(
+          'Failed to switch full time: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       print('Error switching full time: ${e.message}');
@@ -815,14 +963,17 @@ class MatchService {
   }) async {
     try {
       final dio = await _getAuthenticatedDio();
-      
+
       // Prepare request body for toss endpoint
       final requestData = {
         'winnerTeamId': winnerTeamId,
         'winnerSide': winnerSide,
       };
 
-      final response = await dio.post('/match/$matchId/toss', data: requestData);
+      final response = await dio.post(
+        '/match/$matchId/toss',
+        data: requestData,
+      );
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
@@ -834,9 +985,7 @@ class MatchService {
       print('Error completing toss: ${e.message}');
       if (e.response != null) {
         print('Error response: ${e.response?.data}');
-        throw Exception(
-          e.response?.data['error'] ?? 'Failed to complete toss',
-        );
+        throw Exception(e.response?.data['error'] ?? 'Failed to complete toss');
       }
       rethrow;
     } catch (e) {
@@ -857,7 +1006,7 @@ class MatchService {
   }) async {
     try {
       final dio = await _getAuthenticatedDio();
-      
+
       final requestData = {
         'teamId': teamId,
         'playerId': playerId,
@@ -867,7 +1016,10 @@ class MatchService {
 
       print('📤 Adding game action: $requestData');
 
-      final response = await dio.post('/match/$matchId/action', data: requestData);
+      final response = await dio.post(
+        '/match/$matchId/action',
+        data: requestData,
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data['data'];
@@ -891,4 +1043,3 @@ class MatchService {
     }
   }
 }
-

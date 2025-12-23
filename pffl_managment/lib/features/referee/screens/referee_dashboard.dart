@@ -52,7 +52,7 @@ class RefereeDashboard extends StatelessWidget {
         );
 
       default:
-        return const Center(child: Text('Captain Dashboard'));
+        return const Center(child: Text('Referee Dashboard'));
     }
   }
 }

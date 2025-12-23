@@ -93,24 +93,21 @@ class NavItem extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Use different icons for selected vs unselected states
-          ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              isActive
-                  ? const Color(0xFF3B82F6) // Use #3B82F6 for selected items
-                  : colorScheme.onSurface,
-              BlendMode.srcIn,
-            ),
-            child: isActive ? svgIconSelected : svgIcon,
-          ),
+          isActive
+              ? svgIconSelected
+              : ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    colorScheme.onSurface,
+                    BlendMode.srcIn,
+                  ),
+                  child: svgIcon,
+                ),
           const SizedBox(height: 4),
           Text(
             label,
             style: AppTextStyles.labelSmall.copyWith(
               fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-              color: isActive
-                  ? const Color(0xFF3B82F6) // Use #3B82F6 for selected items
-                  : colorScheme.onSurface, // Theme-appropriate text color
+              color: isActive ? const Color(0xFF3B82F6) : colorScheme.onSurface,
             ),
             overflow: TextOverflow.ellipsis,
           ),

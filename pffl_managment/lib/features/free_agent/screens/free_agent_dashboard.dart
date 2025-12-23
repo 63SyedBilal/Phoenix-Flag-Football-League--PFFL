@@ -31,7 +31,10 @@ class FreeAgentDashboard extends StatelessWidget {
                 children: [
                   const FreeAgentHeaderWidget(),
                   Expanded(
-                    child: _buildContent(navigationProvider.selectedIndex),
+                    child: _buildContent(
+                      context,
+                      navigationProvider.selectedIndex,
+                    ),
                   ),
                   const FreeAgentBottomNevigation(),
                 ],
@@ -43,14 +46,17 @@ class FreeAgentDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(int selectedIndex) {
+  Widget _buildContent(BuildContext context, int selectedIndex) {
     // Check user role - if not free-agent, redirect to appropriate dashboard
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
         final userRole = authProvider.userRole.toLowerCase();
-        
+
         // If user is no longer a free-agent, redirect to appropriate dashboard
-        if (userRole != 'free-agent' && userRole != 'freeagent') {
+        // Note: checking normalized 'freeagent' as well just in case
+        if (userRole != 'free-agent' &&
+            userRole != 'freeagent' &&
+            userRole != 'free agent') {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             String route;
             switch (userRole) {
@@ -70,14 +76,15 @@ class FreeAgentDashboard extends StatelessWidget {
               default:
                 route = AppRoutes.playerDashboard;
             }
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              route,
-              (route) => false,
-            );
+            if (context.mounted) {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil(route, (route) => false);
+            }
           });
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         // User is still a free-agent, show dashboard
         switch (selectedIndex) {
           case 0:
@@ -94,7 +101,7 @@ class FreeAgentDashboard extends StatelessWidget {
             );
           case 3:
             return ChangeNotifierProvider(
-              create: (_) => RoleBasedSettingsProvider(userRole: 'free agent'),
+              create: (_) => RoleBasedSettingsProvider(userRole: 'freeagent'),
               child: const SettingsScreen(),
             );
 

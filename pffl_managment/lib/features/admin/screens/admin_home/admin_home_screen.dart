@@ -20,7 +20,7 @@ class AdminHomeScreen extends StatelessWidget {
             SizedBox(height: 8),
             SponsorBannerScreen(),
             SizedBox(height: 8),
-            const UpcommingGames(), // Changed from UpcommingMatches to UpcommingGames for overview section
+            const UpcommingGames(),
           ],
         ),
       ),

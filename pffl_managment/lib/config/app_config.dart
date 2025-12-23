@@ -16,7 +16,11 @@ class AppConfig {
   static const String apiPath = '/api'; // API base path
 
   // Network IP Configuration
+ mustafa
   static const String networkIp = '192.168.18.174'; // Current system IP
+
+  static const String networkIp = '192.168.18.32'; // Current system IP
+ bilalphoenix
   static const String localhost = 'localhost';
   static const String androidEmulatorIp = '10.0.2.2';
 
@@ -47,9 +51,10 @@ class AppConfig {
   static String get networkBaseUrl => 'http://$networkIp:$serverPort$apiPath';
 
   // Emulator/Simulator URLs
-  static String get androidEmulatorUrl => 'http://$androidEmulatorIp:$serverPort$apiPath';
+  static String get androidEmulatorUrl =>
+      'http://$androidEmulatorIp:$serverPort$apiPath';
   static String get iosSimulatorUrl => 'http://$localhost:$serverPort$apiPath';
-  
+
   // Full server URLs (without /api)
   static String get serverBaseUrl => 'http://$networkIp:$serverPort';
   static String get localhostServerUrl => 'http://$localhost:$serverPort';

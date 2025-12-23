@@ -4,14 +4,18 @@ import 'package:pffl_managment/features/admin/providers/league_officials_provide
 import 'package:pffl_managment/features/admin/providers/add_official_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 class LeagueOfficialsList extends StatelessWidget {
   final String leagueId;
-  
+
   const LeagueOfficialsList({super.key, required this.leagueId});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = authProvider.userRole.toLowerCase() == 'admin';
+
     return ChangeNotifierProvider(
       create: (_) {
         final provider = LeagueOfficialsProvider(leagueId: leagueId);
@@ -70,26 +74,30 @@ class LeagueOfficialsList extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 24),
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AddOfficialPage(
-                            officialType: 'Referee',
-                            leagueId: leagueId,
-                          ),
-                    ),
-                  );
-                  // Refresh officials when returning from AddOfficialPage
-                  if (context.mounted) {
-                    final officialsProvider = Provider.of<LeagueOfficialsProvider>(context, listen: false);
-                    officialsProvider.refresh();
-                  }
-                },
-              ),
+                    if (isAdmin)
+                      IconButton(
+                        icon: const Icon(Icons.add, size: 24),
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddOfficialPage(
+                                officialType: 'Referee',
+                                leagueId: leagueId,
+                              ),
+                            ),
+                          );
+                          // Refresh officials when returning from AddOfficialPage
+                          if (context.mounted) {
+                            final officialsProvider =
+                                Provider.of<LeagueOfficialsProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            officialsProvider.refresh();
+                          }
+                        },
+                      ),
                   ],
                 ),
                 _RefereeList(referees: provider.referees),
@@ -106,26 +114,30 @@ class LeagueOfficialsList extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 24),
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AddOfficialPage(
-                            officialType: 'Stat Keeper',
-                            leagueId: leagueId,
-                          ),
-                    ),
-                  );
-                  // Refresh officials when returning from AddOfficialPage
-                  if (context.mounted) {
-                    final officialsProvider = Provider.of<LeagueOfficialsProvider>(context, listen: false);
-                    officialsProvider.refresh();
-                  }
-                },
-              ),
+                    if (isAdmin)
+                      IconButton(
+                        icon: const Icon(Icons.add, size: 24),
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddOfficialPage(
+                                officialType: 'Stat Keeper',
+                                leagueId: leagueId,
+                              ),
+                            ),
+                          );
+                          // Refresh officials when returning from AddOfficialPage
+                          if (context.mounted) {
+                            final officialsProvider =
+                                Provider.of<LeagueOfficialsProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            officialsProvider.refresh();
+                          }
+                        },
+                      ),
                   ],
                 ),
                 _StatKeeperList(statKeepers: provider.statKeepers),
@@ -242,7 +254,10 @@ class _RefereeList extends StatelessWidget {
               return GestureDetector(
                 onTap: () async {
                   // Send invitation
-                  final success = await provider.sendInvitation(referee.id, 'referee');
+                  final success = await provider.sendInvitation(
+                    referee.id,
+                    'referee',
+                  );
                   if (success && context.mounted) {
                     // Icon color will change automatically via Consumer rebuild
                   }
@@ -289,10 +304,7 @@ class _StatKeeperList extends StatelessWidget {
     );
   }
 
-  Widget _buildStatKeeperItem(
-    BuildContext context,
-    OfficialUser statKeeper,
-  ) {
+  Widget _buildStatKeeperItem(BuildContext context, OfficialUser statKeeper) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -317,7 +329,8 @@ class _StatKeeperList extends StatelessWidget {
               ),
             ),
             child: ClipOval(
-              child: statKeeper.imageUrl != null && statKeeper.imageUrl!.isNotEmpty
+              child:
+                  statKeeper.imageUrl != null && statKeeper.imageUrl!.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: statKeeper.imageUrl!,
                       fit: BoxFit.cover,
@@ -368,7 +381,10 @@ class _StatKeeperList extends StatelessWidget {
               return GestureDetector(
                 onTap: () async {
                   // Send invitation
-                  final success = await provider.sendInvitation(statKeeper.id, 'stat-keeper');
+                  final success = await provider.sendInvitation(
+                    statKeeper.id,
+                    'stat-keeper',
+                  );
                   if (success && context.mounted) {
                     // Icon color will change automatically via Consumer rebuild
                   }
@@ -401,7 +417,10 @@ class AddOfficialPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) {
-        final provider = AddOfficialProvider(leagueId: leagueId, officialType: officialType);
+        final provider = AddOfficialProvider(
+          leagueId: leagueId,
+          officialType: officialType,
+        );
         provider.initialize();
         return provider;
       },
@@ -447,7 +466,10 @@ class _AddOfficialPageContent extends StatelessWidget {
               children: [
                 Text(
                   'Choose $officialType for this league. You can invite new officials or select from existing ones.',
-                  style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 _TabSelector(
@@ -587,10 +609,7 @@ class _OfficialsList extends StatelessWidget {
   final List<OfficialUser> officials;
   final String officialType;
 
-  const _OfficialsList({
-    required this.officials,
-    required this.officialType,
-  });
+  const _OfficialsList({required this.officials, required this.officialType});
 
   @override
   Widget build(BuildContext context) {
@@ -636,7 +655,8 @@ class _OfficialsList extends StatelessWidget {
                   ),
                 ),
                 child: ClipOval(
-                  child: official.imageUrl != null && official.imageUrl!.isNotEmpty
+                  child:
+                      official.imageUrl != null && official.imageUrl!.isNotEmpty
                       ? CachedNetworkImage(
                           imageUrl: official.imageUrl!,
                           fit: BoxFit.cover,

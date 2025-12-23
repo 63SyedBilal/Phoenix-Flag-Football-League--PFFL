@@ -31,7 +31,7 @@ const NotificationSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["TEAM_INVITE", "LEAGUE_REFEREE_INVITE", "LEAGUE_STATKEEPER_INVITE", "LEAGUE_TEAM_INVITE", "GAME_ASSIGNED", "INVITE_ACCEPTED_REFEREE", "INVITE_ACCEPTED_STATKEEPER", "INVITE_ACCEPTED_TEAM", "TEAM_INVITE_ACCEPTED"],
+      enum: ["TEAM_INVITE", "LEAGUE_REFEREE_INVITE", "LEAGUE_STATKEEPER_INVITE", "LEAGUE_TEAM_INVITE", "GAME_ASSIGNED", "INVITE_ACCEPTED_REFEREE", "INVITE_ACCEPTED_STATKEEPER", "INVITE_ACCEPTED_TEAM", "TEAM_INVITE_ACCEPTED", "STATS_APPROVAL_REQUEST", "STATS_APPROVED"],
       default: "TEAM_INVITE"
     },
 
@@ -44,6 +44,14 @@ const NotificationSchema = new mongoose.Schema(
     format: {
       type: String,
       enum: ["5v5", "7v7"],
+    },
+    message: {
+      type: String,
+      default: ""
+    },
+    data: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
     }
   },
   { timestamps: true }
