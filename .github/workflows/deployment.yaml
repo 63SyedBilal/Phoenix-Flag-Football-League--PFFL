@@ -3,14 +3,14 @@ name: Deploy PFFL Backend
 on:
   push:
     branches:
-      - bilalphoenix
+      - staging
       - main
   workflow_dispatch:
 
 jobs:
   deploy-staging:
     name: Deploy Staging
-    if: github.ref == 'refs/heads/bilalphoenix'
+    if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     steps:
       - name: SSH into Bilal Server
