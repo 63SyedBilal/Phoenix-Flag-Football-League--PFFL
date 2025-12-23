@@ -183,6 +183,33 @@ class UnifiedGamesProvider extends ChangeNotifier {
   }
 
   // Admin-only: Update existing game (syncs with backend)
+  Future<bool> updateMatchDetails(
+    String matchId,
+    Map<String, dynamic> data,
+  ) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updatedMatch = await MatchService.updateMatch(matchId, data);
+      final index = _allGames.indexWhere((g) => g.id == matchId);
+      if (index != -1) {
+        _allGames[index] = updatedMatch;
+        _sortGames();
+      }
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to update game: ${e.toString()}';
+      debugPrint('Error updating game: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Admin-only: Update existing game (local only - deprecated or for internal use)
   void updateGame(String gameId, MatchModel updatedGame) {
     final index = _allGames.indexWhere((g) => g.id == gameId);
     if (index != -1) {

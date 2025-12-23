@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
-import 'package:pffl_managment/core/services/league_service.dart' show LeagueService, LeagueModel;
+import 'package:pffl_managment/core/services/league_service.dart'
+    show LeagueService, LeagueModel;
 import 'package:intl/intl.dart';
 
 /// Provider for managing games screen state with role-based filtering
@@ -19,7 +20,7 @@ class GamesProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _selectedTeamId;
-  
+
   // Helper method to safely notify listeners
   void _safeNotifyListeners() {
     if (!hasListeners) return; // Check if disposed
@@ -51,15 +52,12 @@ class GamesProvider extends ChangeNotifier {
       final filters = <Map<String, String>>[
         {'id': 'all', 'label': 'All Games'},
       ];
-      
+
       // Add filters for each league
       for (var league in _leagues) {
-        filters.add({
-          'id': league.id,
-          'label': league.leagueName,
-        });
+        filters.add({'id': league.id, 'label': league.leagueName});
       }
-      
+
       return filters;
     } else {
       // Other roles see date filters
@@ -108,14 +106,20 @@ class GamesProvider extends ChangeNotifier {
 
     // Apply role-based filtering first
     if (userRole == 'stat keeper') {
-      filtered = filtered.where((match) => _isAssignedToStatKeeper(match)).toList();
+      filtered = filtered
+          .where((match) => _isAssignedToStatKeeper(match))
+          .toList();
     } else if (userRole == 'referee') {
-      filtered = filtered.where((match) => _isAssignedToReferee(match)).toList();
+      filtered = filtered
+          .where((match) => _isAssignedToReferee(match))
+          .toList();
     }
 
     // Apply league filter (for admin)
     if (userRole == 'admin' && _selectedFilter != 'all') {
-      filtered = filtered.where((match) => match.leagueId == _selectedFilter).toList();
+      filtered = filtered
+          .where((match) => match.leagueId == _selectedFilter)
+          .toList();
     }
 
     // Apply date filter (for non-admin roles)
@@ -125,9 +129,13 @@ class GamesProvider extends ChangeNotifier {
 
     // Apply team filter (if set)
     if (_selectedTeamId != null && _selectedTeamId!.isNotEmpty) {
-      filtered = filtered.where((match) => 
-        match.homeTeamId == _selectedTeamId || match.awayTeamId == _selectedTeamId
-      ).toList();
+      filtered = filtered
+          .where(
+            (match) =>
+                match.homeTeamId == _selectedTeamId ||
+                match.awayTeamId == _selectedTeamId,
+          )
+          .toList();
     }
 
     return filtered;
@@ -137,16 +145,16 @@ class GamesProvider extends ChangeNotifier {
   bool _isAssignedToStatKeeper(MatchModel match) {
     // In a real implementation, this would check against actual stat keeper assignments
     // For now, we'll simulate by checking specific conditions
-    return match.leagueName.contains('Rugby Championship') || 
-           match.leagueName.contains('Six Nations');
+    return match.leagueName.contains('Rugby Championship') ||
+        match.leagueName.contains('Six Nations');
   }
 
   /// Check if a match is assigned to the current referee
   bool _isAssignedToReferee(MatchModel match) {
     // In a real implementation, this would check against actual referee assignments
     // For now, we'll simulate by checking specific conditions
-    return match.leagueName.contains('World Cup') || 
-           match.leagueName.contains('European League');
+    return match.leagueName.contains('World Cup') ||
+        match.leagueName.contains('European League');
   }
 
   List<MatchModel> _filterByDate(String date, List<MatchModel> matches) {
@@ -197,17 +205,14 @@ class GamesProvider extends ChangeNotifier {
   /// Initialize provider by fetching leagues and matches
   Future<void> initialize() async {
     if (_isLoading) return; // Prevent multiple simultaneous initializations
-    
+
     _isLoading = true;
     _errorMessage = null;
     _safeNotifyListeners();
 
     try {
       // Fetch leagues and matches in parallel
-      await Future.wait([
-        fetchLeagues(),
-        fetchAllMatches(),
-      ]);
+      await Future.wait([fetchLeagues(), fetchAllMatches()]);
       _errorMessage = null;
     } catch (e) {
       debugPrint('❌ Error initializing GamesProvider: $e');
@@ -225,7 +230,7 @@ class GamesProvider extends ChangeNotifier {
 
   /// Check if user can edit games
   bool get canEdit {
-    return userRole == 'admin' || userRole == 'captain';
+    return userRole == 'admin';
   }
 
   /// Check if should show payment prompt (Captain with unpaid fee)

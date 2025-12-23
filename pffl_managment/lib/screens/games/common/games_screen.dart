@@ -11,9 +11,8 @@ class GamesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GamesProvider>(
       builder: (context, gamesProvider, child) {
-        // Initialize provider on first build
-        if (!gamesProvider.isLoading && 
-            gamesProvider.leagues.isEmpty && 
+        if (!gamesProvider.isLoading &&
+            gamesProvider.leagues.isEmpty &&
             gamesProvider.allMatches.isEmpty &&
             gamesProvider.errorMessage == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -27,8 +26,8 @@ class GamesScreen extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 16),
-                // Show filter tabs only if not loading and no error
-                if (!gamesProvider.isLoading && gamesProvider.errorMessage == null)
+                if (!gamesProvider.isLoading &&
+                    gamesProvider.errorMessage == null)
                   GameFilterTabs(
                     filters: gamesProvider.availableFilters,
                     selectedFilter: gamesProvider.selectedFilter,
@@ -37,14 +36,10 @@ class GamesScreen extends StatelessWidget {
                     },
                   ),
                 const SizedBox(height: 18),
-                // Loading state
                 if (gamesProvider.isLoading)
                   const Expanded(
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: Center(child: CircularProgressIndicator()),
                   )
-                // Error state
                 else if (gamesProvider.errorMessage != null)
                   Expanded(
                     child: Center(
@@ -68,7 +63,6 @@ class GamesScreen extends StatelessWidget {
                       ),
                     ),
                   )
-                // Empty state
                 else if (gamesProvider.filteredMatches.isEmpty)
                   Expanded(
                     child: Center(
@@ -83,12 +77,10 @@ class GamesScreen extends StatelessWidget {
                       ),
                     ),
                   )
-                // Games list
                 else
                   Expanded(
                     child: Column(
                       children: [
-                        // Team filter indicator (if active)
                         if (gamesProvider.selectedTeamId != null)
                           Container(
                             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -142,7 +134,9 @@ class GamesScreen extends StatelessWidget {
                                 onPayLeagueFee: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Navigate to payment screen'),
+                                      content: Text(
+                                        'Navigate to payment screen',
+                                      ),
                                     ),
                                   );
                                 },

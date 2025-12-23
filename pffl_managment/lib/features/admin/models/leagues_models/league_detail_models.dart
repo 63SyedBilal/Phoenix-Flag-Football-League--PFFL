@@ -49,19 +49,26 @@ class LeagueTeamStandingModel {
   final int rank;
   final String teamName;
   final String teamLogo;
+  final int matchesPlayed;
   final int wins;
   final int draws;
   final int losses;
+  final int pointsScored;
+  final int pointsAgainst;
 
   LeagueTeamStandingModel({
     required this.rank,
     required this.teamName,
     required this.teamLogo,
+    required this.matchesPlayed,
     required this.wins,
     required this.draws,
     required this.losses,
+    required this.pointsScored,
+    required this.pointsAgainst,
   });
 
+  int get pointsDifference => pointsScored - pointsAgainst;
   int get points => (wins * 3) + draws;
 }
 

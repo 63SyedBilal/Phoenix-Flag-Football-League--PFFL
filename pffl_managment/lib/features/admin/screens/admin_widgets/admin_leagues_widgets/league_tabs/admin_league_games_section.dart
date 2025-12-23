@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/admin_league_game_card.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/playoff_game_card.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_match_card.dart';
 import 'package:pffl_managment/features/admin/providers/league_games_provider.dart';
 import 'package:provider/provider.dart';
 
-/// Games section that always displays 3 fixed cards: Semi-Final 1, Semi-Final 2, and Final
-/// Teams are automatically populated based on points table
+/// Games section that displays playoff games first, then regular games
 class AdminLeagueGamesSection extends StatelessWidget {
   final LeagueCreationModel league;
 
-  const AdminLeagueGamesSection({
-    super.key,
-    required this.league,
-  });
+  const AdminLeagueGamesSection({super.key, required this.league});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +37,6 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
   @override
   void initState() {
     super.initState();
-    // Refresh when widget is first created
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<LeagueGamesProvider>(context, listen: false);
       provider.refresh();
@@ -52,169 +46,190 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
   @override
   Widget build(BuildContext context) {
     return Consumer<LeagueGamesProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-
-          if (provider.errorMessage != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Error loading games: ${provider.errorMessage}',
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => provider.refresh(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          // Get semi-final and final data
-          final semiFinal1 = provider.semiFinal1;
-          final semiFinal2 = provider.semiFinal2;
-          final finalMatch = provider.finalMatch;
-
-          // Calculate total games for game numbering
-          final allGames = provider.allGames;
-          int totalGames = allGames.length;
-          for (final game in allGames) {
-            if (game.gameNumber != null && game.gameNumber!.isNotEmpty) {
-              final total = _extractTotalFromGameNumber(game.gameNumber!, totalGames);
-              if (total > totalGames) {
-                totalGames = total;
-              }
-            }
-          }
-          // Ensure at least 12 games for display
-          if (totalGames < 12) totalGames = 12;
-
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Always show 3 fixed cards: Semi-Final 1, Semi-Final 2, Final
-                
-                // Semi-Final 1 Card - Always show, even if no teams yet
-                PlayoffGameCard(
-                  roundName: 'Semi - Final',
-                  gameNumber: 'Semi - Final - Game ${_getSemiFinal1GameNumber(allGames)} of $totalGames',
-                  game: semiFinal1?.game,
-                  team1Name: semiFinal1?.game?.homeTeam ?? semiFinal1?.team1.teamName,
-                  team1Logo: semiFinal1?.game?.homeTeamLogo ?? semiFinal1?.team1.teamLogo ?? '',
-                  team2Name: semiFinal1?.game?.awayTeam ?? semiFinal1?.team2.teamName,
-                  team2Logo: semiFinal1?.game?.awayTeamLogo ?? semiFinal1?.team2.teamLogo ?? '',
-                  team1Score: semiFinal1?.game?.homeScore,
-                  team2Score: semiFinal1?.game?.awayScore,
-                  gameDate: semiFinal1?.game?.matchDateTime,
-                  league: widget.league,
-                  isTBD: semiFinal1 == null,
-                ),
-
-                // Semi-Final 2 Card - Always show, even if no teams yet
-                PlayoffGameCard(
-                  roundName: 'Semi - Final',
-                  gameNumber: 'Semi - Final - Game ${_getSemiFinal2GameNumber(allGames)} of $totalGames',
-                  game: semiFinal2?.game,
-                  team1Name: semiFinal2?.game?.homeTeam ?? semiFinal2?.team1.teamName,
-                  team1Logo: semiFinal2?.game?.homeTeamLogo ?? semiFinal2?.team1.teamLogo ?? '',
-                  team2Name: semiFinal2?.game?.awayTeam ?? semiFinal2?.team2.teamName,
-                  team2Logo: semiFinal2?.game?.awayTeamLogo ?? semiFinal2?.team2.teamLogo ?? '',
-                  team1Score: semiFinal2?.game?.homeScore,
-                  team2Score: semiFinal2?.game?.awayScore,
-                  gameDate: semiFinal2?.game?.matchDateTime,
-                  league: widget.league,
-                  isTBD: semiFinal2 == null,
-                ),
-
-                // Final Card - Always show, with TBD if teams not determined
-                PlayoffGameCard(
-                  roundName: 'Final',
-                  game: finalMatch?.game,
-                  team1Name: finalMatch?.team1?.teamName ?? finalMatch?.game?.homeTeam,
-                  team1Logo: finalMatch?.team1?.teamLogo ?? finalMatch?.game?.homeTeamLogo ?? '',
-                  team2Name: finalMatch?.team2?.teamName ?? finalMatch?.game?.awayTeam,
-                  team2Logo: finalMatch?.team2?.teamLogo ?? finalMatch?.game?.awayTeamLogo ?? '',
-                  team1Score: finalMatch?.game?.homeScore,
-                  team2Score: finalMatch?.game?.awayScore,
-                  gameDate: finalMatch?.game?.matchDateTime,
-                  league: widget.league,
-                  isTBD: finalMatch == null || finalMatch.team1 == null || finalMatch.team2 == null,
-                ),
-
-                // Display other games (non-playoff games) below the 3 fixed cards
-                const SizedBox(height: 16),
-                ..._buildOtherGamesCards(allGames, widget.league, totalGames),
-              ],
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: CircularProgressIndicator(),
             ),
           );
-        },
-      
+        }
+
+        if (provider.errorMessage != null) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Error loading games: ${provider.errorMessage}',
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => provider.refresh(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final allGames = provider.allGames;
+        final semiFinal1 = provider.semiFinal1;
+        final semiFinal2 = provider.semiFinal2;
+        final finalMatch = provider.finalMatch;
+
+        // Calculate total games for numbering
+        int totalGames = allGames.length;
+        for (final game in allGames) {
+          if (game.gameNumber != null && game.gameNumber!.isNotEmpty) {
+            final total = _extractTotalFromGameNumber(
+              game.gameNumber!,
+              totalGames,
+            );
+            if (total > totalGames) totalGames = total;
+          }
+        }
+        if (totalGames < 12) totalGames = 12;
+
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Final card first
+              _buildPlayoffCard(
+                roundName: 'Final',
+                gameNumber:
+                    'Final - Game 1 of $totalGames', // Assuming final is game 1 of its round
+                gameDate: finalMatch?.game?.matchDateTime,
+                team1Name:
+                    finalMatch?.team1?.teamName ?? finalMatch?.game?.homeTeam,
+                team1Logo:
+                    finalMatch?.team1?.teamLogo ??
+                    finalMatch?.game?.homeTeamLogo ??
+                    '',
+                team2Name:
+                    finalMatch?.team2?.teamName ?? finalMatch?.game?.awayTeam,
+                team2Logo:
+                    finalMatch?.team2?.teamLogo ??
+                    finalMatch?.game?.awayTeamLogo ??
+                    '',
+                match: finalMatch?.game,
+                isTBD: finalMatch?.team1 == null || finalMatch?.team2 == null,
+              ),
+              const SizedBox(height: 16),
+
+              // Semi-Final 1
+              _buildPlayoffCard(
+                roundName: 'Semi - Final',
+                gameNumber:
+                    'Semi - Final - Game ${_getSemiFinal1GameNumber(allGames)} of $totalGames',
+                gameDate: semiFinal1?.game?.matchDateTime,
+                team1Name:
+                    semiFinal1?.game?.homeTeam ?? semiFinal1?.team1.teamName,
+                team1Logo:
+                    semiFinal1?.game?.homeTeamLogo ??
+                    semiFinal1?.team1.teamLogo ??
+                    '',
+                team2Name:
+                    semiFinal1?.game?.awayTeam ?? semiFinal1?.team2.teamName,
+                team2Logo:
+                    semiFinal1?.game?.awayTeamLogo ??
+                    semiFinal1?.team2.teamLogo ??
+                    '',
+                match: semiFinal1?.game,
+                isTBD: semiFinal1 == null,
+              ),
+              const SizedBox(height: 16),
+
+              // Semi-Final 2
+              _buildPlayoffCard(
+                roundName: 'Semi - Final',
+                gameNumber:
+                    'Semi - Final - Game ${_getSemiFinal2GameNumber(allGames)} of $totalGames',
+                gameDate: semiFinal2?.game?.matchDateTime,
+                team1Name:
+                    semiFinal2?.game?.homeTeam ?? semiFinal2?.team1.teamName,
+                team1Logo:
+                    semiFinal2?.game?.homeTeamLogo ??
+                    semiFinal2?.team1.teamLogo ??
+                    '',
+                team2Name:
+                    semiFinal2?.game?.awayTeam ?? semiFinal2?.team2.teamName,
+                team2Logo:
+                    semiFinal2?.game?.awayTeamLogo ??
+                    semiFinal2?.team2.teamLogo ??
+                    '',
+                match: semiFinal2?.game,
+                isTBD: semiFinal2 == null,
+              ),
+              const SizedBox(height: 16),
+
+              // Regular games section
+              ..._buildRegularGamesCards(allGames, totalGames),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  /// Build cards for non-playoff games
-  List<Widget> _buildOtherGamesCards(
+  List<Widget> _buildRegularGamesCards(
     List<MatchModel> allGames,
-    LeagueCreationModel league,
     int totalGames,
   ) {
     // Filter out playoff games
-    final otherGames = allGames.where((game) {
+    final regularGames = allGames.where((game) {
       final roundName = game.roundName?.toLowerCase() ?? '';
       return roundName != 'semi-final 1' &&
-             roundName != 'semi-final 2' &&
-             roundName != 'semi - final 1' &&
-             roundName != 'semi - final 2' &&
-             roundName != 'final';
+          roundName != 'semi-final 2' &&
+          roundName != 'semi - final 1' &&
+          roundName != 'semi - final 2' &&
+          roundName != 'final';
     }).toList();
 
-    // Sort by creation order
-    otherGames.sort((a, b) {
-      if (a.id != null && b.id != null) {
-        return a.id!.compareTo(b.id!);
-      }
-      if (a.id != null) return -1;
-      if (b.id != null) return 1;
+    // Sort by date (chronological order)
+    regularGames.sort((a, b) {
       if (a.matchDateTime != null && b.matchDateTime != null) {
         return a.matchDateTime!.compareTo(b.matchDateTime!);
       }
       return 0;
     });
 
-    return otherGames.asMap().entries.map((entry) {
+    // Use asMap to get index for sequential numbering
+    return regularGames.asMap().entries.map((entry) {
       final index = entry.key;
       final match = entry.value;
-      final sequenceNumber = index + 1;
-      
-      return AdminLeagueGameCard(
-        match: match,
-        league: league,
-        totalGames: totalGames,
-        sequenceNumber: sequenceNumber,
+      final roundName = match.roundName ?? 'Group Stage';
+
+      // Sequential game number (1, 2, 3, ...)
+      final gameSeq = index + 1;
+      // Total games count for this league
+      final totalCount = allGames.length;
+      final formattedGameNumber = '$roundName - Game $gameSeq of $totalCount';
+
+      // Always use CompletedMatchCard format for all group stage games
+      return CompletedMatchCard(
+        roundName: roundName,
+        gameNumber: formattedGameNumber,
+        gameDate: match.matchDateTime,
+        team1Name: match.homeTeam,
+        team1Logo: match.homeTeamLogo,
+        team2Name: match.awayTeam,
+        team2Logo: match.awayTeamLogo,
+        team1Score: match.homeScore,
+        team2Score: match.awayScore,
       );
     }).toList();
   }
 
-  /// Get game number for Semi-Final 1
   int _getSemiFinal1GameNumber(List<MatchModel> allGames) {
-    // Find semi-final 1 game number or calculate
     for (final game in allGames) {
       if (game.roundName?.toLowerCase() == 'semi-final 1' ||
           game.roundName?.toLowerCase() == 'semi - final 1') {
@@ -222,13 +237,10 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
         if (seq != null) return seq;
       }
     }
-    // Default to game 11 of 12 (assuming 12 total games)
     return 11;
   }
 
-  /// Get game number for Semi-Final 2
   int _getSemiFinal2GameNumber(List<MatchModel> allGames) {
-    // Find semi-final 2 game number or calculate
     for (final game in allGames) {
       if (game.roundName?.toLowerCase() == 'semi-final 2' ||
           game.roundName?.toLowerCase() == 'semi - final 2') {
@@ -236,12 +248,9 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
         if (seq != null) return seq;
       }
     }
-    // Default to game 12 of 12 (assuming 12 total games)
     return 12;
   }
 
-
-  /// Extract total number from gameNumber string like "Game 8 of 12"
   int _extractTotalFromGameNumber(String gameNumber, int defaultTotal) {
     try {
       final parts = gameNumber.split(' of ');
@@ -252,5 +261,196 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
       // If parsing fails, return default
     }
     return defaultTotal;
+  }
+
+  Widget _buildPlayoffCard({
+    required String roundName,
+    String? gameNumber,
+    DateTime? gameDate,
+    String? team1Name,
+    String? team1Logo,
+    String? team2Name,
+    String? team2Logo,
+    MatchModel? match,
+    bool isTBD = false,
+  }) {
+    final displayTeam1 = team1Name ?? 'TBD';
+    final displayTeam2 = team2Name ?? 'TBD';
+    final displayTeam1Logo = team1Logo ?? '';
+    final displayTeam2Logo = team2Logo ?? '';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                _buildPlayoffTeamSection(
+                  displayTeam1,
+                  displayTeam1Logo,
+                  isLeft: true,
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        roundName,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF000000),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      if (gameDate != null) ...[
+                        Text(
+                          _formatDate(gameDate),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          _formatTime(gameDate),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                _buildPlayoffTeamSection(
+                  displayTeam2,
+                  displayTeam2Logo,
+                  isLeft: false,
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: match != null
+                  ? () {
+                      // Edit game functionality can be added here
+                    }
+                  : null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edit Game',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey[400],
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayoffTeamSection(
+    String name,
+    String logo, {
+    required bool isLeft,
+  }) {
+    return Row(
+      children: [
+        if (isLeft) ...[
+          _buildPlayoffTeamLogo(logo),
+          const SizedBox(width: 8),
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF000000),
+            ),
+          ),
+        ] else ...[
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF000000),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildPlayoffTeamLogo(logo),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPlayoffTeamLogo(String logo) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: logo.isNotEmpty ? null : Colors.black,
+        shape: BoxShape.circle,
+      ),
+      child: logo.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                logo,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.shield, size: 16, color: Colors.white),
+              ),
+            )
+          : const Icon(Icons.shield, size: 16, color: Colors.white),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return '${days[date.weekday - 1]} ${date.day} ${months[date.month - 1]}';
+  }
+
+  String _formatTime(DateTime date) {
+    final hour = date.hour;
+    final minute = date.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    return '$displayHour:$minute $period PKT';
   }
 }

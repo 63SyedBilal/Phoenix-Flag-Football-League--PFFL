@@ -26,6 +26,9 @@ class LeagueDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<LeagueDetailProvider>(
       builder: (context, provider, child) {
+        // Initialize provider with real data
+        provider.initialize(league.id);
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final fabProvider = Provider.of<AnimatedFABProvider>(
             context,
@@ -76,14 +79,14 @@ class LeagueDetailView extends StatelessWidget {
                         if (provider.selectedTabIndex == 0) ...[
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: UpcommingGames(),
+                            child: UpcommingGames(leagueId: league.id),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: SponsorBannerScreen(),
                           ),
                           const LeagueLeaderboardSection(),
-                          SizedBox(height: 12,),
+                          SizedBox(height: 12),
                           const LeagueKeyPlayersSection(),
                           const LeagueTeamStatsSection(),
                         ] else if (provider.selectedTabIndex == 1) ...[
