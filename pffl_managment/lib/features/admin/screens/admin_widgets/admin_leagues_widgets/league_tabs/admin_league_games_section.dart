@@ -4,6 +4,8 @@ import 'package:pffl_managment/features/admin/models/leagues_models/league_creat
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_match_card.dart';
 import 'package:pffl_managment/features/admin/providers/league_games_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 /// Games section that displays playoff games first, then regular games
 class AdminLeagueGamesSection extends StatelessWidget {
@@ -278,6 +280,12 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
     final displayTeam2 = team2Name ?? 'TBD';
     final displayTeam1Logo = team1Logo ?? '';
     final displayTeam2Logo = team2Logo ?? '';
+    final isAdmin =
+        Provider.of<AuthProvider>(
+          context,
+          listen: false,
+        ).userRole.toLowerCase() ==
+        'admin';
 
     return Container(
       decoration: BoxDecoration(
@@ -336,37 +344,49 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: match != null
-                  ? () {
-                      // Edit game functionality can be added here
-                    }
-                  : null,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Edit Game',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey[400],
-                      size: 20,
-                    ),
-                  ],
+          if (isAdmin) ...[
+            const Divider(height: 1, color: Color(0xFFE5E7EB)),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: match != null
+                    ? () async {
+                        await Navigator.pushNamed(
+                          context,
+                          AppRoutes.adminEditMatch,
+                          arguments: match,
+                        );
+                        if (context.mounted) {
+                          Provider.of<LeagueGamesProvider>(
+                            context,
+                            listen: false,
+                          ).refresh();
+                        }
+                      }
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Edit Game',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey[400],
+                        size: 20,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

@@ -704,6 +704,20 @@ class MatchService {
                   statKeeperData['id']?.toString())
             : (json['statKeeperId']?.toString()));
 
+    // Parse actions
+    List<Map<String, dynamic>> actionsList = [];
+    final rawActions = json['actions'] ?? json['timeline'] ?? [];
+    if (rawActions is List) {
+      for (var item in rawActions) {
+        if (item is Map) {
+          actionsList.add(Map<String, dynamic>.from(item));
+        }
+      }
+    }
+
+    final tossWinnerId = json['tossWinner']?.toString();
+    final tossChoice = json['tossChoice']?.toString();
+
     return MatchModel(
       id: id,
       leagueName: leagueName,
@@ -728,6 +742,9 @@ class MatchService {
       format: json['format']?.toString(),
       homeTeamStats: _parseTeamStats(json['teamA'], teamAName),
       awayTeamStats: _parseTeamStats(json['teamB'], teamBName),
+      actions: actionsList,
+      tossWinnerId: tossWinnerId,
+      tossChoice: tossChoice,
     );
   }
 

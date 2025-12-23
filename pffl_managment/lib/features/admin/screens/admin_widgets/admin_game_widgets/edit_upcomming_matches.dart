@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/simple_dropdown_list.dart';
+import 'package:pffl_managment/features/admin/models/match_model.dart';
 
 class EditUpcommingMatches extends StatefulWidget {
-  const EditUpcommingMatches({super.key});
+  final MatchModel match;
+  const EditUpcommingMatches({super.key, required this.match});
 
   @override
   State<EditUpcommingMatches> createState() => _EditMatchViewState();
@@ -17,19 +21,137 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
   final TextEditingController dateController = TextEditingController();
   final TextEditingController timeController = TextEditingController();
 
-  final List<String> teams = [
-    'Team Alpha',
-    'Team Beta',
-    'Team Gamma',
-    'Team Delta',
+  List<String> teams = [];
+  bool isLoadingTeams = false;
+  bool isSaving = false;
+
+  final List<String> venues = [
+    'Phoenix Turf Arena - Field 1',
+    'Phoenix Turf Arena - Field 2',
+    'Phoenix Turf Arena - Field 3',
+    'City Stadium',
+    'Training Ground',
   ];
-  final List<String> venues = ['Stadium A', 'Stadium B', 'Ground C'];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Pre-fill date from matchDateTime if available
+    if (widget.match.matchDateTime != null) {
+      final d = widget.match.matchDateTime!;
+      dateController.text = "${d.day}/${d.month}/${d.year}";
+    } else {
+      dateController.text = widget
+          .match
+          .date; // Fallback to string if needed but likely incomplete
+    }
+
+    timeController.text = widget.match.time;
+    selectedTeamA = widget.match.homeTeam;
+    selectedTeamB = widget.match.awayTeam;
+
+    // Normalize venue
+    if (widget.match.venue != null && widget.match.venue!.isNotEmpty) {
+      if (!venues.contains(widget.match.venue)) {
+        venues.add(widget.match.venue!);
+      }
+      selectedVenue = widget.match.venue;
+    }
+
+    // Fetch teams
+    if (widget.match.leagueId != null) {
+      setState(() => isLoadingTeams = true);
+      try {
+        final league = await LeagueService.getLeagueById(
+          widget.match.leagueId!,
+        );
+        if (league != null) {
+          setState(() {
+            teams = league.teams.map((t) => t.teamName).toList();
+            // Ensure proper lookup
+            if (selectedTeamA != null && !teams.contains(selectedTeamA))
+              teams.add(selectedTeamA!);
+            if (selectedTeamB != null && !teams.contains(selectedTeamB))
+              teams.add(selectedTeamB!);
+          });
+        }
+      } catch (e) {
+        print("Error fetching teams: $e");
+        setState(() {
+          teams = [widget.match.homeTeam, widget.match.awayTeam];
+        });
+      } finally {
+        setState(() => isLoadingTeams = false);
+      }
+    } else {
+      teams = [widget.match.homeTeam, widget.match.awayTeam];
+    }
+  }
 
   @override
   void dispose() {
     dateController.dispose();
     timeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateMatch() async {
+    if (isSaving) return;
+
+    if (selectedTeamA == null ||
+        selectedTeamB == null ||
+        dateController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill required fields")),
+      );
+      return;
+    }
+
+    setState(() => isSaving = true);
+
+    try {
+      final Map<String, dynamic> updateData = {
+        'teamAName': selectedTeamA,
+        'teamBName': selectedTeamB,
+        'gameDate': _parseDateForBackend(dateController.text),
+        'gameTime': timeController.text,
+        'venue': selectedVenue,
+      };
+
+      await MatchService.updateMatch(widget.match.id!, updateData);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Match updated successfully")),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error updating match: $e")));
+      }
+    } finally {
+      if (mounted) setState(() => isSaving = false);
+    }
+  }
+
+  String _parseDateForBackend(String displayDate) {
+    // displayDate is dd/MM/yyyy
+    try {
+      final parts = displayDate.split('/');
+      final d = int.parse(parts[0]);
+      final m = int.parse(parts[1]);
+      final y = int.parse(parts[2]);
+      return DateTime(y, m, d).toIso8601String();
+    } catch (e) {
+      return DateTime.now().toIso8601String();
+    }
   }
 
   @override
@@ -64,6 +186,8 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
           ),
 
           const SizedBox(height: 24),
+
+          if (isLoadingTeams) const LinearProgressIndicator(),
 
           /// TEAM SELECTION
           Row(
@@ -142,9 +266,10 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             readOnly: true,
             suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
             onTap: () async {
+              final initial = widget.match.matchDateTime ?? DateTime.now();
               final DateTime? picked = await showDatePicker(
                 context: context,
-                initialDate: DateTime.now(),
+                initialDate: initial,
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2101),
               );
@@ -222,12 +347,12 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: CustomButton.primary(
-                  text: "Edit",
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
+                child: isSaving
+                    ? const Center(child: CircularProgressIndicator())
+                    : CustomButton.primary(
+                        text: "Edit",
+                        onPressed: _updateMatch,
+                      ),
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/services/api_service.dart';
 import 'package:pffl_managment/core/models/game_model.dart';
+import 'package:pffl_managment/core/services/match_service.dart';
+import 'package:pffl_managment/core/services/team_service.dart';
 
 class PlayerDashboardProvider extends ChangeNotifier {
   // User information
@@ -31,69 +32,67 @@ class PlayerDashboardProvider extends ChangeNotifier {
   Future<void> _initializeData() async {
     _setLoading(true);
     try {
-      // Fetch data from fake API
-      final apiService = ApiService();
-      _upcomingGames = await apiService.getUpcomingMatches('player_1', 'player');
+      // 1. Get current user's team
+      final teamData = await TeamService.getTeamByCaptain();
+      if (teamData == null) {
+        _upcomingGames = [];
+        return;
+      }
+
+      final teamId = teamData['_id']?.toString() ?? teamData['id']?.toString();
+      if (teamId == null) {
+        _upcomingGames = [];
+        return;
+      }
+
+      // 2. Get all matches
+      final allMatches = await MatchService.getAllMatches();
+
+      // 3. Filter matches for this team
+      final now = DateTime.now();
+      final myMatches = allMatches.where((m) {
+        final isMyTeam = m.homeTeamId == teamId || m.awayTeamId == teamId;
+        final isFuture =
+            m.matchDateTime != null && m.matchDateTime!.isAfter(now);
+        // Also consider 'upcoming' status just in case date is today but later time,
+        // though isAfter works for time too if matchDateTime includes time.
+        return isMyTeam && isFuture;
+      }).toList();
+
+      // 4. Sort by date
+      myMatches.sort(
+        (a, b) => (a.matchDateTime ?? DateTime(2100)).compareTo(
+          b.matchDateTime ?? DateTime(2100),
+        ),
+      );
+
+      // 5. Map to GameModel
+      _upcomingGames = myMatches
+          .map(
+            (m) => GameModel(
+              id: m.id ?? '',
+              leagueName: m.leagueName,
+              team1Name: m.homeTeam,
+              team1Logo: m.homeTeamLogo,
+              team2Name: m.awayTeam,
+              team2Logo: m.awayTeamLogo,
+              date: m.matchDateTime ?? DateTime.now(),
+              time: m.time,
+              isFeePaid: true, // Assuming true or logic unavailable
+              isMyGame: true,
+            ),
+          )
+          .toList();
     } catch (e) {
-      // Fallback to mock data if API fails
-      _initializeMockData();
+      debugPrint('Error loading player dashboard data: $e');
+      _upcomingGames = [];
     } finally {
       _setLoading(false);
     }
-  }
-
-  void _initializeMockData() {
-    // Initialize upcoming games
-    _upcomingGames = [
-      GameModel(
-        id: '1',
-        leagueName: 'The Rugby Championship',
-        team1Name: 'RC',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STA',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '01:05 AM PKT',
-        isFeePaid: true,
-        isMyGame: true,
-      ),
-      GameModel(
-        id: '2',
-        leagueName: 'The Rugby Championship',
-        team1Name: 'RC',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STA',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '01:05 AM PKT',
-        isFeePaid: true,
-        isMyGame: true,
-      ),
-      GameModel(
-        id: '3',
-        leagueName: 'The Rugby Championship',
-        team1Name: 'RC',
-        team1Logo: 'assets/images/image 12.png',
-        team2Name: 'STA',
-        team2Logo: 'assets/images/image 14.png',
-        date: DateTime(2025, 8, 11),
-        time: '01:05 AM PKT',
-        isFeePaid: true,
-        isMyGame: false,
-      ),
-    ];
   }
 
   Future<void> refreshData() async {
-    _setLoading(true);
-    try {
-      final apiService = ApiService();
-      _upcomingGames = await apiService.refreshMatches('player_1', 'player');
-    } catch (e) {
-      // Keep existing data if refresh fails
-    } finally {
-      _setLoading(false);
-    }
+    await _initializeData();
   }
 
   void clearNotification() {

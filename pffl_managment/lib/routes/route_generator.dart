@@ -92,7 +92,10 @@ class RouteGenerator {
         );
 
       case AppRoutes.adminEditMatch:
-        return MaterialPageRoute(builder: (_) => const EditUpcommingMatches());
+        final match = settings.arguments as MatchModel;
+        return MaterialPageRoute(
+          builder: (_) => EditUpcommingMatches(match: match),
+        );
 
       case AppRoutes.adminCreateMatch:
         final league = settings.arguments as LeagueCreationModel?;
@@ -123,9 +126,7 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const RefereeDashboard());
 
       case AppRoutes.refereeGameManagement:
-        return MaterialPageRoute(
-          builder: (_) => const GameManagementScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const GameManagementScreen());
 
       case AppRoutes.refereeGameDetail:
         final match = settings.arguments as MatchModel;
