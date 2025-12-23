@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/leagues/providers/league_detail_provider.dart';
 import 'package:provider/provider.dart';
-  
+
 class LeagueDetailTabBar extends StatelessWidget {
   const LeagueDetailTabBar({super.key});
 
