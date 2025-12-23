@@ -11,7 +11,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AuthService.configureDio();
 
-  // Initialize PreferenceService
   final preferenceService = await PreferenceService.getInstance();
 
   runApp(MyApp(preferenceService: preferenceService));

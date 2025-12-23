@@ -5,9 +5,10 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String getStarted = '/get-started';
   static const String completeProfile = '/complete-profile';
+  static const String completeCaptainProfile = '/complete-captain-profile';
 
   // Player Routes
-  static const String playerDashboard = '/player/dashboard';
+  static const String playerDashboard = '/player-dashboard';
   static const String playerProfile = '/player/profile';
   static const String playerTeams = '/player/teams';
   static const String playerGames = '/player/games';

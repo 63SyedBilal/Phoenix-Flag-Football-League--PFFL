@@ -125,7 +125,7 @@ class LoginScreen extends StatelessWidget {
                         case 'captain':
                           // Check if profile or team form is needed for Captain role
                           if (authProvider.needsProfileForm) {
-                            route = AppRoutes.completeProfile;
+                            route = AppRoutes.completeCaptainProfile;
                           } else if (authProvider.needsTeamForm) {
                             route = AppRoutes.captainCreateTeam;
                           } else {

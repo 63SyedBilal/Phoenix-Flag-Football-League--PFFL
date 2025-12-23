@@ -19,6 +19,19 @@ class UserPreferenceProvider extends ChangeNotifier {
   bool _isFirstLaunch = true;
   bool _onboardingCompleted = false;
   bool _isRefereeProfileComplete = false;
+  bool _isCaptainProfileComplete = false;
+  bool _isProfileComplete = false;
+  bool _hasCreatedTeam = false;
+
+  String? _firstName;
+  String? _lastName;
+  String? _userPhone;
+  String? _profileImage;
+  String? _experience;
+  String? _emergencyContactName;
+  String? _emergencyPhone;
+  String? _jerseyNumber;
+  String? _position;
 
   // Getters
   bool get isLoggedIn => _isLoggedIn;
@@ -32,6 +45,19 @@ class UserPreferenceProvider extends ChangeNotifier {
   bool get isFirstLaunch => _isFirstLaunch;
   bool get onboardingCompleted => _onboardingCompleted;
   bool get isRefereeProfileComplete => _isRefereeProfileComplete;
+  bool get isCaptainProfileComplete => _isCaptainProfileComplete;
+  bool get isProfileComplete => _isProfileComplete;
+  bool get hasCreatedTeam => _hasCreatedTeam;
+
+  String? get firstName => _firstName;
+  String? get lastName => _lastName;
+  String? get userPhone => _userPhone;
+  String? get profileImage => _profileImage;
+  String? get experience => _experience;
+  String? get emergencyContactName => _emergencyContactName;
+  String? get emergencyPhone => _emergencyPhone;
+  String? get jerseyNumber => _jerseyNumber;
+  String? get position => _position;
 
   void _loadAll() {
     _isLoggedIn = _preferenceService.isLoggedIn;
@@ -45,6 +71,19 @@ class UserPreferenceProvider extends ChangeNotifier {
     _isFirstLaunch = _preferenceService.isFirstLaunch;
     _onboardingCompleted = _preferenceService.onboardingCompleted;
     _isRefereeProfileComplete = _preferenceService.isRefereeProfileComplete;
+    _isCaptainProfileComplete = _preferenceService.isCaptainProfileComplete;
+    _isProfileComplete = _preferenceService.isProfileComplete;
+    _hasCreatedTeam = _preferenceService.hasCreatedTeam;
+
+    _firstName = _preferenceService.firstName;
+    _lastName = _preferenceService.lastName;
+    _userPhone = _preferenceService.userPhone;
+    _profileImage = _preferenceService.profileImage;
+    _experience = _preferenceService.experience;
+    _emergencyContactName = _preferenceService.emergencyContactName;
+    _emergencyPhone = _preferenceService.emergencyPhone;
+    _jerseyNumber = _preferenceService.jerseyNumber;
+    _position = _preferenceService.position;
   }
 
   Future<void> setLoggedIn(bool value) async {
@@ -113,6 +152,78 @@ class UserPreferenceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setCaptainProfileComplete(bool value) async {
+    _isCaptainProfileComplete = value;
+    await _preferenceService.setCaptainProfileComplete(value);
+    notifyListeners();
+  }
+
+  Future<void> setProfileComplete(bool value) async {
+    _isProfileComplete = value;
+    await _preferenceService.setProfileComplete(value);
+    notifyListeners();
+  }
+
+  Future<void> setFirstName(String? value) async {
+    _firstName = value;
+    await _preferenceService.setFirstName(value);
+    notifyListeners();
+  }
+
+  Future<void> setLastName(String? value) async {
+    _lastName = value;
+    await _preferenceService.setLastName(value);
+    notifyListeners();
+  }
+
+  Future<void> setUserPhone(String? value) async {
+    _userPhone = value;
+    await _preferenceService.setUserPhone(value);
+    notifyListeners();
+  }
+
+  Future<void> setProfileImage(String? value) async {
+    _profileImage = value;
+    await _preferenceService.setProfileImage(value);
+    notifyListeners();
+  }
+
+  Future<void> setExperience(String? value) async {
+    _experience = value;
+    await _preferenceService.setExperience(value);
+    notifyListeners();
+  }
+
+  Future<void> setEmergencyContactName(String? value) async {
+    _emergencyContactName = value;
+    await _preferenceService.setEmergencyContactName(value);
+    notifyListeners();
+  }
+
+  Future<void> setEmergencyPhone(String? value) async {
+    _emergencyPhone = value;
+    await _preferenceService.setEmergencyPhone(value);
+    notifyListeners();
+  }
+
+  Future<void> setJerseyNumber(String? value) async {
+    _jerseyNumber = value;
+    await _preferenceService.setJerseyNumber(value);
+    notifyListeners();
+  }
+
+  Future<void> setPosition(String? value) async {
+    _position = value;
+    await _preferenceService.setPosition(value);
+    notifyListeners();
+  }
+
+  Future<void> setHasCreatedTeam(bool value) async {
+    _hasCreatedTeam = value;
+    await _preferenceService.setHasCreatedTeam(value);
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     _isLoggedIn = false;
     _userRole = null;
@@ -123,6 +234,18 @@ class UserPreferenceProvider extends ChangeNotifier {
     _selectedLeagueId = null;
     _selectedTeamId = null;
     _isRefereeProfileComplete = false;
+    _isCaptainProfileComplete = false;
+    _isProfileComplete = false;
+    _hasCreatedTeam = false;
+    _firstName = null;
+    _lastName = null;
+    _userPhone = null;
+    _profileImage = null;
+    _experience = null;
+    _emergencyContactName = null;
+    _emergencyPhone = null;
+    _jerseyNumber = null;
+    _position = null;
 
     await _preferenceService.setLoggedIn(false);
     await _preferenceService.setUserRole(null);
@@ -133,6 +256,18 @@ class UserPreferenceProvider extends ChangeNotifier {
     await _preferenceService.setSelectedLeagueId(null);
     await _preferenceService.setSelectedTeamId(null);
     await _preferenceService.setRefereeProfileComplete(false);
+    await _preferenceService.setCaptainProfileComplete(false);
+    await _preferenceService.setProfileComplete(false);
+    await _preferenceService.setHasCreatedTeam(false);
+    await _preferenceService.setFirstName(null);
+    await _preferenceService.setLastName(null);
+    await _preferenceService.setUserPhone(null);
+    await _preferenceService.setProfileImage(null);
+    await _preferenceService.setExperience(null);
+    await _preferenceService.setEmergencyContactName(null);
+    await _preferenceService.setEmergencyPhone(null);
+    await _preferenceService.setJerseyNumber(null);
+    await _preferenceService.setPosition(null);
 
     notifyListeners();
   }

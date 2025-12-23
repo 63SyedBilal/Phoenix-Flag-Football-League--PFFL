@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
+import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/team_color_field.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/screen_header.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/team_logo_section.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/team_name_field.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/location_field.dart';
@@ -11,6 +12,7 @@ import 'package:pffl_managment/features/captain/view/captain_create_team/widgets
 import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/error_message_display.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/loading_overlay.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
+import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 
 /// Captain Create Team Screen
 /// Allows captain to create their team after completing profile
@@ -20,9 +22,18 @@ class CaptainCreateTeam extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => CreateTeamProvider(),
+      create: (context) => CreateTeamProvider(
+        Provider.of<UserPreferenceProvider>(context, listen: false),
+      ),
       child: Scaffold(
         backgroundColor: Colors.white,
+        appBar: AppBar(
+          leading: ArrowBackButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ),
         body: SafeArea(
           child: Stack(
             children: [
@@ -30,8 +41,6 @@ class CaptainCreateTeam extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const ScreenHeader(),
-                    const SizedBox(height: 24),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
@@ -43,11 +52,11 @@ class CaptainCreateTeam extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'Fill in the details below to create your team',
+                        'Build your team right here.',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -55,19 +64,94 @@ class CaptainCreateTeam extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                 
+                    const SizedBox(height: 16),
                     const TeamLogoSection(),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Team Logo (Optional)',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Please upload your team\'s logo in this section to ensure that we can represent your brand accurately.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const TeamNameField(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 2),
+                          const TeamColorField(), // Assuming you have a TeamColorField widget
+                          const SizedBox(height: 2),
                           const LocationField(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 2),
                           const SkillLevelDropdown(),
+                          const SizedBox(height: 2),
+                          // Terms and Privacy Checkbox
+                          Consumer<CreateTeamProvider>(
+                            builder: (context, provider, _) {
+                              return Row(
+                                children: [
+                                  Checkbox(
+                                    value: provider.agreedToTerms,
+                                    onChanged: (bool? value) {
+                                      provider.setAgreedToTerms(value ?? false);
+                                    },
+                                    activeColor: const Color(0xFF0F172A),
+                                  ),
+                                  Text(
+                                    'I agree to Terms & Privacy',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          Consumer<CreateTeamProvider>(
+                            builder: (context, provider, _) {
+                              if (provider.fieldErrors['terms'] != null) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 12.0, top: 4.0),
+                                  child: Text(
+                                    provider.fieldErrors['terms']!,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
                           const SizedBox(height: 32),
                           Consumer<CreateTeamProvider>(
                             builder: (context, provider, _) {

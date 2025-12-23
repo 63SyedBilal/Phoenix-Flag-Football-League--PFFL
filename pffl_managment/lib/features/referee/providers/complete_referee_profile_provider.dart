@@ -71,6 +71,51 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> initialize() async {
+    // Load from local cache
+    _experience = _userPrefs.experience;
+    _emergencyContactName = _userPrefs.emergencyContactName;
+    _emergencyPhone = _userPrefs.emergencyPhone;
+    _profileImagePath = _userPrefs.profileImage;
+    _agreedToTerms = _userPrefs
+        .isRefereeProfileComplete; // If complete, they probably agreed
+
+    // Sync with backend
+    _syncWithBackend();
+
+    notifyListeners();
+  }
+
+  Future<void> _syncWithBackend() async {
+    try {
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.get(AppConfig.completeProfileEndpoint);
+      if (response.statusCode == 200) {
+        final data = response.data['user'];
+        if (data != null) {
+          await _userPrefs.setExperience(data['experience']);
+          await _userPrefs.setEmergencyContactName(
+            data['emergencyContactName'],
+          );
+          await _userPrefs.setEmergencyPhone(data['emergencyPhone']);
+          await _userPrefs.setProfileImage(data['profileImage']);
+          await _userPrefs.setRefereeProfileComplete(
+            data['isRefereeProfileComplete'] ?? true,
+          );
+
+          _experience = data['experience'];
+          _emergencyContactName = data['emergencyContactName'];
+          _emergencyPhone = data['emergencyPhone'];
+          _profileImagePath = data['profileImage'];
+
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Referee backend sync failed: $e');
+    }
+  }
+
   Future<bool> submitProfile() async {
     if (!isFormValid) {
       _errorMessage =
@@ -110,8 +155,13 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // 3. Update local state
+        // 3. Update local cache
+        await _userPrefs.setExperience(_experience);
+        await _userPrefs.setEmergencyContactName(_emergencyContactName);
+        await _userPrefs.setEmergencyPhone(_emergencyPhone);
+        if (uploadedUrl != null) await _userPrefs.setProfileImage(uploadedUrl);
         await _userPrefs.setRefereeProfileComplete(true);
+
         _isLoading = false;
         notifyListeners();
         return true;

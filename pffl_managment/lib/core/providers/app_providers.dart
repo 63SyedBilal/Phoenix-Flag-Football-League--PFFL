@@ -106,8 +106,23 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StatKeeperDashboardProvider()),
         ChangeNotifierProvider(create: (_) => FreeAgentDashboardProvider()),
         ChangeNotifierProvider(create: (_) => CreateLeagueViewModel()),
-        ChangeNotifierProvider(create: (_) => CompleteProfileProvider()),
-        ChangeNotifierProvider(create: (_) => CreateTeamProvider()),
+        ChangeNotifierProxyProvider<
+          UserPreferenceProvider,
+          CompleteProfileProvider
+        >(
+          create: (context) => CompleteProfileProvider(
+            Provider.of<UserPreferenceProvider>(context, listen: false),
+          ),
+          update: (context, userPrefs, provider) =>
+              provider ?? CompleteProfileProvider(userPrefs),
+        ),
+        ChangeNotifierProxyProvider<UserPreferenceProvider, CreateTeamProvider>(
+          create: (context) => CreateTeamProvider(
+            Provider.of<UserPreferenceProvider>(context, listen: false),
+          ),
+          update: (context, userPrefs, provider) =>
+              provider ?? CreateTeamProvider(userPrefs),
+        ),
         ChangeNotifierProvider(create: (_) => CaptainInviteProvider()),
         ChangeNotifierProvider(create: (_) => PlayerTeamProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),

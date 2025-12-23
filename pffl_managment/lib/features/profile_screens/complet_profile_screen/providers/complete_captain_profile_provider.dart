@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/config/app_config.dart';
+import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'dart:io';
 
 /// Provider for Complete Captain Profile screen state and business logic
 class CompleteCaptainProfileProvider extends ChangeNotifier {
-  // Basic user info fields
-  String? _firstName;
-  String? _lastName;
-  String? _email;
-  String? _phone;
+  // TextEditingControllers for inputs
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final UserPreferenceProvider _userPrefs;
+
+  CompleteCaptainProfileProvider(this._userPrefs);
 
   // Profile fields
   String? _profileImagePath;
@@ -26,11 +28,10 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   // Validation state
   final Map<String, String?> _fieldErrors = {};
 
-  // Getters - Basic info
-  String? get firstName => _firstName;
-  String? get lastName => _lastName;
-  String? get email => _email;
-  String? get phone => _phone;
+  // Getters - Controllers
+  String get firstName => firstNameController.text;
+  String get lastName => lastNameController.text;
+  String get phone => phoneController.text;
 
   // Getters - Profile fields
   String? get profileImagePath => _profileImagePath;
@@ -41,14 +42,19 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Map<String, String?> get fieldErrors => Map.unmodifiable(_fieldErrors);
 
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
   /// Check if form is valid
   bool get isFormValid {
-    return _firstName != null &&
-        _firstName!.isNotEmpty &&
-        _lastName != null &&
-        _lastName!.isNotEmpty &&
-        _phone != null &&
-        _phone!.isNotEmpty &&
+    return firstName.isNotEmpty &&
+        lastName.isNotEmpty &&
+        phone.isNotEmpty &&
         _agreedToTerms &&
         _fieldErrors.isEmpty;
   }
@@ -56,32 +62,57 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   /// Initialize provider - load user data
   Future<void> initialize() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _firstName = prefs.getString('firstName');
-      _lastName = prefs.getString('lastName');
-      _email = prefs.getString('userEmail');
-      _phone = prefs.getString('userPhone');
+      // Load from local cache
+      firstNameController.text = _userPrefs.firstName ?? '';
+      lastNameController.text = _userPrefs.lastName ?? '';
+      phoneController.text = _userPrefs.userPhone ?? '';
+      _profileImagePath = _userPrefs.profileImage;
+
+      // Asynchronously fetch from backend to sync
+      _syncWithBackend();
+
       notifyListeners();
     } catch (e) {
       debugPrint('❌ Error initializing provider: $e');
     }
   }
 
+  Future<void> _syncWithBackend() async {
+    try {
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.get(AppConfig.completeProfileEndpoint);
+      if (response.statusCode == 200) {
+        final data =
+            response.data['user']; // Adjust based on actual API response
+        if (data != null) {
+          await _userPrefs.setFirstName(data['firstName']);
+          await _userPrefs.setLastName(data['lastName']);
+          await _userPrefs.setUserPhone(data['phone']);
+          await _userPrefs.setProfileImage(data['profileImage']);
+          await _userPrefs.setCaptainProfileComplete(
+            data['isCaptainProfileComplete'] ?? true,
+          );
+
+          // Update controllers if they are still empty or if data changed significantly
+          if (firstNameController.text.isEmpty)
+            firstNameController.text = data['firstName'] ?? '';
+          if (lastNameController.text.isEmpty)
+            lastNameController.text = data['lastName'] ?? '';
+          if (phoneController.text.isEmpty)
+            phoneController.text = data['phone'] ?? '';
+          _profileImagePath = data['profileImage'];
+
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Backend sync failed: $e');
+    }
+  }
+
   // Setters
-  void setFirstName(String value) {
-    _firstName = value;
-    _fieldErrors.remove('firstName');
-    notifyListeners();
-  }
-
-  void setLastName(String value) {
-    _lastName = value;
-    _fieldErrors.remove('lastName');
-    notifyListeners();
-  }
-
   void setPhone(String value) {
-    _phone = value;
+    phoneController.text = value;
     _fieldErrors.remove('phone');
     notifyListeners();
   }
@@ -93,6 +124,7 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
 
   void toggleTermsAgreement(bool value) {
     _agreedToTerms = value;
+    _fieldErrors.remove('terms');
     notifyListeners();
   }
 
@@ -101,15 +133,15 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
     _fieldErrors.clear();
     bool isValid = true;
 
-    if (_firstName == null || _firstName!.isEmpty) {
+    if (firstName.isEmpty) {
       _fieldErrors['firstName'] = 'First name is required';
       isValid = false;
     }
-    if (_lastName == null || _lastName!.isEmpty) {
+    if (lastName.isEmpty) {
       _fieldErrors['lastName'] = 'Last name is required';
       isValid = false;
     }
-    if (_phone == null || _phone!.isEmpty) {
+    if (phone.isEmpty) {
       _fieldErrors['phone'] = 'Phone number is required';
       isValid = false;
     }
@@ -151,9 +183,9 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
 
       // Prepare profile data
       final profileData = <String, dynamic>{
-        'firstName': _firstName,
-        'lastName': _lastName,
-        'phone': _phone,
+        'firstName': firstName,
+        'lastName': lastName,
+        'phone': phone,
         'isCaptainProfileComplete': true,
       };
 
@@ -168,11 +200,12 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final prefs = await SharedPreferences.getInstance();
-        final userId = prefs.getString('userId');
-        if (userId != null) {
-          await prefs.setBool('profile_completed_$userId', true);
-        }
+        // Update local cache
+        await _userPrefs.setFirstName(firstName);
+        await _userPrefs.setLastName(lastName);
+        await _userPrefs.setUserPhone(phone);
+        if (imageUrl != null) await _userPrefs.setProfileImage(imageUrl);
+        await _userPrefs.setCaptainProfileComplete(true);
 
         _showSuccessSheet = true;
         _isLoading = false;
@@ -194,5 +227,10 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   void hideSuccessSheet() {
     _showSuccessSheet = false;
     notifyListeners();
+  }
+
+  Future<void> skipForNow() async {
+    // Mark as incomplete but allowed to proceed
+    await _userPrefs.setCaptainProfileComplete(false);
   }
 }

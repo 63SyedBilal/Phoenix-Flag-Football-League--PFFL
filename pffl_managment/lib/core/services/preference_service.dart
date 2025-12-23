@@ -7,11 +7,25 @@ class PreferenceService {
   static const String keyUserToken = 'token';
   static const String keyUserEmail = 'userEmail';
   static const String keyUserName = 'userName';
+  static const String keyFirstName = 'firstName';
+  static const String keyLastName = 'lastName';
+  static const String keyUserPhone = 'userPhone';
+  static const String keyProfileImage = 'profileImage';
   static const String keySelectedLeagueId = 'selectedLeagueId';
   static const String keySelectedTeamId = 'selectedTeamId';
   static const String keyIsFirstLaunch = 'isFirstLaunch';
   static const String keyOnboardingCompleted = 'onboardingCompleted';
   static const String keyIsRefereeProfileComplete = 'isRefereeProfileComplete';
+  static const String keyIsCaptainProfileComplete = 'isCaptainProfileComplete';
+  static const String keyIsProfileComplete = 'isProfileComplete';
+  static const String keyHasCreatedTeam = 'hasCreatedTeam';
+
+  // Role specific fields
+  static const String keyExperience = 'experience';
+  static const String keyEmergencyContactName = 'emergencyContactName';
+  static const String keyEmergencyPhone = 'emergencyPhone';
+  static const String keyJerseyNumber = 'jerseyNumber';
+  static const String keyPosition = 'position';
 
   static PreferenceService? _instance;
   late SharedPreferences _prefs;
@@ -85,4 +99,57 @@ class PreferenceService {
       getBool(keyIsRefereeProfileComplete) ?? false;
   Future<void> setRefereeProfileComplete(bool value) =>
       setBool(keyIsRefereeProfileComplete, value);
+
+  bool get isCaptainProfileComplete =>
+      getBool(keyIsCaptainProfileComplete) ?? false;
+  Future<void> setCaptainProfileComplete(bool value) =>
+      setBool(keyIsCaptainProfileComplete, value);
+
+  bool get isProfileComplete => getBool(keyIsProfileComplete) ?? false;
+  Future<void> setProfileComplete(bool value) =>
+      setBool(keyIsProfileComplete, value);
+
+  String? get firstName => getString(keyFirstName);
+  Future<void> setFirstName(String? value) =>
+      value != null ? setString(keyFirstName, value) : remove(keyFirstName);
+
+  String? get lastName => getString(keyLastName);
+  Future<void> setLastName(String? value) =>
+      value != null ? setString(keyLastName, value) : remove(keyLastName);
+
+  String? get userPhone => getString(keyUserPhone);
+  Future<void> setUserPhone(String? value) =>
+      value != null ? setString(keyUserPhone, value) : remove(keyUserPhone);
+
+  String? get profileImage => getString(keyProfileImage);
+  Future<void> setProfileImage(String? value) => value != null
+      ? setString(keyProfileImage, value)
+      : remove(keyProfileImage);
+
+  String? get experience => getString(keyExperience);
+  Future<void> setExperience(String? value) =>
+      value != null ? setString(keyExperience, value) : remove(keyExperience);
+
+  String? get emergencyContactName => getString(keyEmergencyContactName);
+  Future<void> setEmergencyContactName(String? value) => value != null
+      ? setString(keyEmergencyContactName, value)
+      : remove(keyEmergencyContactName);
+
+  String? get emergencyPhone => getString(keyEmergencyPhone);
+  Future<void> setEmergencyPhone(String? value) => value != null
+      ? setString(keyEmergencyPhone, value)
+      : remove(keyEmergencyPhone);
+
+  String? get jerseyNumber => getString(keyJerseyNumber);
+  Future<void> setJerseyNumber(String? value) => value != null
+      ? setString(keyJerseyNumber, value)
+      : remove(keyJerseyNumber);
+
+  String? get position => getString(keyPosition);
+  Future<void> setPosition(String? value) =>
+      value != null ? setString(keyPosition, value) : remove(keyPosition);
+
+  bool get hasCreatedTeam => getBool(keyHasCreatedTeam) ?? false;
+  Future<void> setHasCreatedTeam(bool value) =>
+      setBool(keyHasCreatedTeam, value);
 }
