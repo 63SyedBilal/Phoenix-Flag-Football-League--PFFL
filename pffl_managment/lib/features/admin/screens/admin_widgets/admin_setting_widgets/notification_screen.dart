@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_card.dart';
@@ -13,53 +14,75 @@ class NotificationsScreen extends StatelessWidget {
     // Access the global NotificationProvider
     final provider = Provider.of<NotificationProvider>(context);
 
-    // Filter notifications for Admin view (ensure we don't show irrelevant ones if any)
-    // For now, show all since backend handles filtering
-    final notifications = provider.notifications;
+    // Filter notifications based on role if necessary
+    List<NotificationModel> notifications = provider.notifications;
 
-    // Mark as read when opening
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      provider.markAllAsRead();
-    });
+    return FutureBuilder<SharedPreferences>(
+      future: SharedPreferences.getInstance(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final userRole =
+              snapshot.data!.getString('userRole')?.toLowerCase() ?? '';
+          if (userRole == 'referee') {
+            // Referees only care about these types
+            final refereeTypes = [
+              'LEAGUE_REFEREE_INVITE',
+              'GAME_ASSIGNED',
+              'INVITE_ACCEPTED_REFEREE',
+              'STATS_PUBLISHED',
+              'STATS_APPROVAL_REQUEST',
+            ];
+            notifications = notifications
+                .where((n) => refereeTypes.contains(n.type))
+                .toList();
+          }
+        }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        leading: ArrowBackButton(onPressed: () => Navigator.pop(context)),
-        title: const Text(
-          "Notifications",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: provider.isLoading ? null : () => provider.refresh(),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              Text(
-                "Stay updated with important alerts and reminders.",
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+        // Mark as read when opening
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          provider.markAllAsRead();
+        });
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            leading: ArrowBackButton(onPressed: () => Navigator.pop(context)),
+            title: const Text(
+              "Notifications",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
               ),
-              const SizedBox(height: 20),
-
-              /// NOTIFICATIONS LIST
-              Expanded(child: _buildList(context, provider, notifications)),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: provider.isLoading ? null : () => provider.refresh(),
+              ),
             ],
           ),
-        ),
-      ),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  Text(
+                    "Stay updated with important alerts and reminders.",
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 20),
+
+                  /// NOTIFICATIONS LIST
+                  Expanded(child: _buildList(context, provider, notifications)),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -9,6 +9,7 @@ import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/player_navigation_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
 
@@ -32,7 +33,16 @@ class PlayerDashboard extends StatelessWidget {
                   children: [
                     const PlayerHome(),
                     ChangeNotifierProvider(
-                      create: (_) => GamesProvider(userRole: 'player'),
+                      create: (context) {
+                        final auth = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        return GamesProvider(
+                          userRole: auth.userRole,
+                          userId: auth.userId,
+                        );
+                      },
                       child: const GamesScreen(),
                     ),
                     const PlayerMyTeam(),

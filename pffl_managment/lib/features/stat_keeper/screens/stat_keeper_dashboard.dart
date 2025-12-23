@@ -10,6 +10,7 @@ import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/stat_stats_screen.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_stats_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
@@ -41,7 +42,16 @@ class StatKeeperDashboard extends StatelessWidget {
                     children: [
                       const StatKeeperHomeScreen(),
                       ChangeNotifierProvider(
-                        create: (_) => GamesProvider(userRole: 'stat keeper'),
+                        create: (context) {
+                          final auth = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
+                          return GamesProvider(
+                            userRole: auth.userRole,
+                            userId: auth.userId,
+                          );
+                        },
                         child: const GamesScreen(),
                       ),
                       const StatAddScreen(),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 
 /// Profile image upload section widget
@@ -20,33 +21,35 @@ class ProfileImageSection extends StatelessWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFD1D5DB),
-                          width: 2,
-                          style: BorderStyle.solid,
-                        ),
-                        image: provider.profileImagePath != null
-                            ? DecorationImage(
-                                image: FileImage(File(provider.profileImagePath!)),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                        color: provider.profileImagePath == null
-                            ? Colors.grey[100]
-                            : null,
+                    DottedBorder(
+                      options: CircularDottedBorderOptions(
+                        dashPattern: const [5, 5],
+                        strokeWidth: 1,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : const Color.fromRGBO(0, 0, 0, 0.4),
                       ),
-                      child: provider.profileImagePath == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Color(0xFFD1D5DB),
-                            )
-                          : null,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: const BoxDecoration(shape: BoxShape.circle),
+                        child: ClipOval(
+                          child: Center(
+                            child: provider.profileImagePath != null
+                                ? Image.file(
+                                    File(provider.profileImagePath!),
+                                    fit: BoxFit.cover,
+                                    width: 120,
+                                    height: 120,
+                                  )
+                                : Icon(
+                                    Icons.person_outline,
+                                    size: 60,
+                                    color: Colors.grey[300],
+                                  ),
+                          ),
+                        ),
+                      ),
                     ),
                     Positioned(
                       bottom: -9,
@@ -55,24 +58,28 @@ class ProfileImageSection extends StatelessWidget {
                         onTap: () => _pickImage(context, provider),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
-                            borderRadius: BorderRadius.circular(20),
+                          decoration: ShapeDecoration(
+                            color: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.88),
+                            ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.upload, size: 16, color: Colors.white),
+                            children: const [
+                              Icon(Icons.upload, size: 12, color: Colors.white),
                               SizedBox(width: 6),
                               Text(
                                 'Upload',
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
                                   color: Colors.white,
+                                  fontSize: 8,
+                                  fontFamily: 'Satoshi Variable',
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.37,
                                 ),
                               ),
                             ],
@@ -133,4 +140,3 @@ class ProfileImageSection extends StatelessWidget {
     }
   }
 }
-

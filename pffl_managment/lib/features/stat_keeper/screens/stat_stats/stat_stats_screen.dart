@@ -29,7 +29,7 @@ class _StatStatsScreenState extends State<StatStatsScreen> {
     final provider = context.watch<StatStatsProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(

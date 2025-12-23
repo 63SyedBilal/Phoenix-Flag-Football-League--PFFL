@@ -96,7 +96,10 @@ class FreeAgentDashboard extends StatelessWidget {
           children: [
             const FreeAgentHomeScreen(),
             ChangeNotifierProvider(
-              create: (_) => GamesProvider(userRole: 'free agent'),
+              create: (context) => GamesProvider(
+                userRole: authProvider.userRole,
+                userId: authProvider.userId,
+              ),
               child: const GamesScreen(),
             ),
             ChangeNotifierProvider(

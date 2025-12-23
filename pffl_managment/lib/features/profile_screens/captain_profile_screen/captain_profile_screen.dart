@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
-import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
+import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
+import 'package:intl_phone_field/phone_number.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
@@ -22,10 +23,7 @@ class CaptainProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'My Profile',
-                style: theme.textTheme.headlineLarge,
-              ),
+              Text('My Profile', style: theme.textTheme.headlineLarge),
               const SizedBox(height: 8),
               Text(
                 'Manage your personal details & update\nyour player information.',
@@ -38,7 +36,7 @@ class CaptainProfileScreen extends StatelessWidget {
                   children: [
                     DottedBorder(
                       options: CircularDottedBorderOptions(
-                        dashPattern: [5, 5],
+                        dashPattern: const [5, 5],
                         strokeWidth: 1,
                         color: theme.brightness == Brightness.dark
                             ? Colors.white70
@@ -48,6 +46,15 @@ class CaptainProfileScreen extends StatelessWidget {
                         width: 120,
                         height: 120,
                         decoration: const BoxDecoration(shape: BoxShape.circle),
+                        child: ClipOval(
+                          child: Center(
+                            child: Icon(
+                              Icons.person_outline,
+                              size: 60,
+                              color: Colors.grey[300],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     Positioned(
@@ -96,7 +103,7 @@ class CaptainProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-                         Row(
+              Row(
                 children: [
                   Expanded(
                     child: Column(
@@ -104,9 +111,7 @@ class CaptainProfileScreen extends StatelessWidget {
                       children: [
                         Text("First Name", style: theme.textTheme.labelLarge),
                         const SizedBox(height: 4),
-                        CustomTextField(
-                          hintText: 'First Name',
-                        ),
+                        CustomTextField(hintText: 'First Name'),
                       ],
                     ),
                   ),
@@ -117,9 +122,7 @@ class CaptainProfileScreen extends StatelessWidget {
                       children: [
                         Text("Last Name", style: theme.textTheme.labelLarge),
                         const SizedBox(height: 4),
-                        CustomTextField(
-                          hintText: 'Last Name',
-                        ),
+                        CustomTextField(hintText: 'Last Name'),
                       ],
                     ),
                   ),
@@ -128,9 +131,7 @@ class CaptainProfileScreen extends StatelessWidget {
               const SizedBox(height: 18),
               Text("Email Address", style: theme.textTheme.labelLarge),
               const SizedBox(height: 4),
-              CustomTextField(
-                hintText: 'Email Address',
-              ),
+              CustomTextField(hintText: 'Email Address'),
               const SizedBox(height: 12),
               const SizedBox(height: 4),
               Column(
@@ -138,13 +139,20 @@ class CaptainProfileScreen extends StatelessWidget {
                 children: [
                   Text("Phone Number", style: theme.textTheme.labelLarge),
                   const SizedBox(height: 4),
-                  CustomPhoneField(
+                  ImprovedPhoneField(
+                    onInputChanged: (PhoneNumber number) {
+                      // Handle phone number input
+                    },
+                    onInputValidated: (bool value) {
+                      // Handle phone number validation
+                    },
+                    initialCountryCode: 'US',
                     hintText: 'Enter your phone number',
                   ),
                 ],
               ),
               const SizedBox(height: 30),
-              
+
               CustomButton(
                 textColor: AppColors.lightAppBarBackground,
                 text: 'Save',
@@ -152,7 +160,6 @@ class CaptainProfileScreen extends StatelessWidget {
                   Navigator.pushNamed(context, AppRoutes.adminDashboard);
                 },
               ),
-           
             ],
           ),
         ),

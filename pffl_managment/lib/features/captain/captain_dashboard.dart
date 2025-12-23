@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/captain_navigation_provider.dart';
 import 'package:pffl_managment/screens/games/common/games_screen.dart';
 import 'package:pffl_managment/screens/games/common/games_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:pffl_managment/features/captain/providers/captain_team_provider.dart';
@@ -40,11 +41,19 @@ class CaptainDashboard extends StatelessWidget {
                         child: const LeaguesScreen(),
                       ),
                       ChangeNotifierProvider(
-                        create: (_) => GamesProvider(
-                          userRole: 'captain',
-                          assignedLeague: 'Six Nations',
-                          isLeagueFeeUnpaid: true,
-                        ),
+                        create: (context) {
+                          final auth = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
+                          return GamesProvider(
+                            userRole: auth.userRole,
+                            userId: auth.userId,
+                            assignedLeague:
+                                'Six Nations', // TODO: Get from profile
+                            isLeagueFeeUnpaid: true, // TODO: Get from profile
+                          );
+                        },
                         child: const GamesScreen(),
                       ),
                       const TeamManagementScreen(),

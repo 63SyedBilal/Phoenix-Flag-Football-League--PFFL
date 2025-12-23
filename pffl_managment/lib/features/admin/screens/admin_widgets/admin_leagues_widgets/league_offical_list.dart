@@ -298,7 +298,7 @@ class _AddOfficialPageState extends State<AddOfficialPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF9FAFB),
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
