@@ -18,7 +18,7 @@ jobs:
         with:
           host: 3.236.28.26
           username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_STAGING }}
           port: 22
           script: |
             cd /home/ubuntu/pfflbackendbilal
@@ -37,9 +37,9 @@ jobs:
       - name: SSH into Main Server
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: 1.2.3.4
+          host: 100.24.126.221
           username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_PROD }}
           port: 22
           script: |
             # --- MAIN DEPLOYMENT LOGIC ---
