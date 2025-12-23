@@ -22,7 +22,7 @@ jobs:
           port: 22
           script: |
             cd /home/ubuntu/pfflbackendbilal
-            git pull origin bilalphoenix
+            git pull origin staging
             npm install --save-dev typescript @types/react @types/node
             npm run build
             pm2 delete pffl-backend || true
@@ -44,15 +44,15 @@ jobs:
           script: |
             # --- MAIN DEPLOYMENT LOGIC ---
             # Update this path to your production folder
-            cd /home/ubuntu/pfflbackend-main 
+            cd /home/ubuntu/pfflbackendbilal
             
             git pull origin main
             
             # Standard install for main (usually --production)
-            npm install 
+            npm install --save-dev typescript @types/react @types/node
             npm run build
             
             # Ensure the PM2 name is distinct if on the same server
-            pm2 delete pffl-backend-main || true
-            pm2 start "npm run start" --name pffl-backend-main
+            pm2 delete pffl-backend || true
+            pm2 start "npm run start" --name pffl-backend
             pm2 save
