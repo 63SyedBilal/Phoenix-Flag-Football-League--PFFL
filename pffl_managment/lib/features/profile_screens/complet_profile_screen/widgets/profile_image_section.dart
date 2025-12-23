@@ -23,6 +23,22 @@ class ProfileImageSection extends StatelessWidget {
                 onTap: () => _pickImage(context, provider),
                 child: Stack(
                   children: [
+ mustafa
+                    // 🔴 Yahin dotted border hai, design same rakha
+                    CustomPaint(
+                      foregroundPainter: DottedCircleBorderPainter(
+                        color: const Color(0xFFD1D5DB),
+                        strokeWidth: 1,
+                      ),
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          // Border.all hata diya, kyunki ab custom dotted use ho raha
+                          color: Colors.grey[100],
+                        ),
+
 
                     DottedBorder(
                       options: CircularDottedBorderOptions(
@@ -67,6 +83,7 @@ class ProfileImageSection extends StatelessWidget {
                           // Border.all hata diya, kyunki ab custom dotted use ho raha
                           color: Colors.grey[100],
                         ),
+ bilalphoenix
                         child: provider.profileImagePath != null
                             ? ClipOval(
                                 child: Image.file(
@@ -81,12 +98,17 @@ class ProfileImageSection extends StatelessWidget {
                                 size: 50,
                                 color: Color(0xFFD1D5DB),
                               ),
+ mustafa
 
+
+ bilalphoenix
                       ),
                     ),
 
                     // upload button bilkul same
                     Positioned(
+ mustafa
+
 
                       bottom: -9,
                       left: 30,
@@ -118,6 +140,7 @@ class ProfileImageSection extends StatelessWidget {
                                   height: 1.37,
                                 ),
 
+ bilalphoenix
                       bottom: 0,
                       right: 25,
                       child: Container(
@@ -144,7 +167,10 @@ class ProfileImageSection extends StatelessWidget {
                                 fontSize: 7.93,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
+ mustafa
 
+
+bilalphoenix
                               ),
                             ),
                           ],
@@ -205,8 +231,10 @@ class ProfileImageSection extends StatelessWidget {
   }
 }
 
+ mustafa
 
 
+ bilalphoenix
 /// Sirf circle ke around dotted border draw karne ke liye
 class DottedCircleBorderPainter extends CustomPainter {
   final Color color;
@@ -256,5 +284,9 @@ class DottedCircleBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+ mustafa
 }
 
+}
+
+ bilalphoenix

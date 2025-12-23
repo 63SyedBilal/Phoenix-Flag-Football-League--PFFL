@@ -37,7 +37,7 @@ class StatKeeperHomeScreen extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: Color(0xFF111827),
                       ),
                     ),
                     if (assignedGames.isNotEmpty)
@@ -58,15 +58,15 @@ class StatKeeperHomeScreen extends StatelessWidget {
                             Text(
                               'View more',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 14,
+                                color: Color(0xFF0F173E),
+                                fontSize: 12,
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
                             Icon(
                               Icons.arrow_forward_ios,
                               size: 12,
-                              color: Colors.grey,
+                              color:Color(0xFF0F173E),
                             ),
                           ],
                         ),
@@ -77,15 +77,15 @@ class StatKeeperHomeScreen extends StatelessWidget {
                           Text(
                             'View more',
                             style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
+                              color: Color(0xFF0F173E),
+                              fontSize: 12,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
                           Icon(
                             Icons.arrow_forward_ios,
                             size: 12,
-                            color: Colors.grey,
+                            color: Color(0xFF0F173E),
                           ),
                         ],
                       ),

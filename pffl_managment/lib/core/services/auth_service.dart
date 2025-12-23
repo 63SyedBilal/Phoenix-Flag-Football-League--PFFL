@@ -94,6 +94,15 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
+ mustafa
+      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
+
+      // Then try Network IP (reliable for both physical device and emulator)
+      urlsToTry.add(AppConfig.networkBaseUrl);
+
+      // Fallback to emulator specific IP
+
       // For Android physical device, prioritize network IP
       // Network IP works best for physical devices on same WiFi
       urlsToTry.add(
@@ -114,7 +123,7 @@ class AuthService {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
       urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
-
+ bilalphoenix
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
       urlsToTry.add(
@@ -275,6 +284,16 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
+ mustafa
+      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
+
+      // Then try Network IP (reliable for both physical device and emulator)
+      urlsToTry.add(AppConfig.networkBaseUrl);
+
+      // Fallback to emulator specific IP
+      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
+
       // For Android physical device, prioritize network IP
       urlsToTry.add(
         AppConfig.networkBaseUrl,
@@ -295,6 +314,7 @@ class AuthService {
       urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
 
+ bilalphoenix
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
       urlsToTry.add(

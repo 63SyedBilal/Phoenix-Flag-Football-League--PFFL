@@ -19,7 +19,11 @@ class AppConfig {
  mustafa
   static const String networkIp = '192.168.18.174'; // Current system IP
 
+ mustafa
+  static const String networkIp = '192.168.18.174'; // Current system IP
+
   static const String networkIp = '192.168.18.32'; // Current system IP
+ bilalphoenix
  bilalphoenix
   static const String localhost = 'localhost';
   static const String androidEmulatorIp = '10.0.2.2';
@@ -120,10 +124,17 @@ class AppConfig {
   static const String testRoleMappingEndpoint = '/test-role-mapping';
   static const String testUpdateRoleEndpoint = '/test-update-role';
 
+ mustafa
+  // Timeouts - Optimized for faster failover
+  static const Duration connectTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration sendTimeout = Duration(seconds: 30);
+
   // Timeouts - Increased for better network reliability
   static const Duration connectTimeout = Duration(seconds: 300);
   static const Duration receiveTimeout = Duration(seconds: 300);
   static const Duration sendTimeout = Duration(seconds: 300);
+ bilalphoenix
 
   // Get full API URL
   static String getApiUrl(String endpoint) {
