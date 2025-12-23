@@ -3,7 +3,6 @@ import 'package:pffl_managment/screens/settings/common/settings_section_model.da
 import 'package:pffl_managment/screens/settings/roles/admin_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/captain_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/player_settings.dart';
-import 'package:pffl_managment/screens/settings/roles/free_agent_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/referee_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/stat_keeper_settings.dart';
 
@@ -19,22 +18,34 @@ class RoleBasedSettingsProvider extends ChangeNotifier {
 
   /// Get the list of settings sections based on user role
   List<SettingsSectionModel> get settingsSections {
-    switch (userRole.toLowerCase()) {
+    // Normalize role: remove spaces and underscores, lowercase
+    final normalizedRole = userRole
+        .toLowerCase()
+        .replaceAll(' ', '')
+        .replaceAll('_', '')
+        .trim();
+
+    print(
+      'RoleBasedSettingsProvider: Loading settings for role "$userRole" -> Normalized: "$normalizedRole"',
+    );
+
+    switch (normalizedRole) {
       case 'admin':
         return getAdminSettings();
       case 'captain':
         return getCaptainSettings();
       case 'player':
         return getPlayerSettings();
-      case 'free agent':
-      case 'freeagent':
-        return getFreeAgentSettings();
+      // case 'freeagent':
+      //   return getFreeAgentSettings();
       case 'referee':
         return getRefereeSettings();
-      case 'stat keeper':
       case 'statkeeper':
         return getStatKeeperSettings();
       default:
+        print(
+          'Warning: Unknown role "$userRole" (normalized: "$normalizedRole"), defaulting to Player Settings',
+        );
         return getPlayerSettings(); // Default fallback
     }
   }

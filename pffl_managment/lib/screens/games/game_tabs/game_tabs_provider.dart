@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
+import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 
 class GameTabsProvider extends ChangeNotifier {
@@ -9,11 +10,29 @@ class GameTabsProvider extends ChangeNotifier {
   List<MatchModel> _upcomingGames = [];
   bool _isLoading = false;
 
+  Map<String, dynamic>? _homeTeamDetails;
+  Map<String, dynamic>? _awayTeamDetails;
+
   GameTabsProvider({required this.match});
 
   int get selectedTabIndex => _selectedTabIndex;
   List<MatchModel> get upcomingGames => _upcomingGames;
   bool get isLoading => _isLoading;
+
+  Map<String, dynamic>? get homeTeamDetails => _homeTeamDetails;
+  Map<String, dynamic>? get awayTeamDetails => _awayTeamDetails;
+
+  final Set<String> _expandedPlayerIds = {};
+  bool isPlayerExpanded(String id) => _expandedPlayerIds.contains(id);
+
+  void togglePlayerExpansion(String id) {
+    if (_expandedPlayerIds.contains(id)) {
+      _expandedPlayerIds.remove(id);
+    } else {
+      _expandedPlayerIds.add(id);
+    }
+    notifyListeners();
+  }
 
   void setTabIndex(int index) {
     if (_selectedTabIndex != index) {
@@ -27,8 +46,15 @@ class GameTabsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Fetch team details
+      if (match.homeTeamId != null && match.homeTeamId!.isNotEmpty) {
+        _homeTeamDetails = await TeamService.getTeamById(match.homeTeamId!);
+      }
+      if (match.awayTeamId != null && match.awayTeamId!.isNotEmpty) {
+        _awayTeamDetails = await TeamService.getTeamById(match.awayTeamId!);
+      }
+
       // Fetch all matches to find upcoming ones for these teams
-      // Ideally this would be an API call like /match?teamId=...
       final allMatches = await MatchService.getAllMatches();
 
       final now = DateTime.now();

@@ -61,7 +61,6 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Logout button at the bottom
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: SizedBox(
@@ -74,7 +73,6 @@ class SettingsScreen extends StatelessWidget {
                           listen: false,
                         );
                         await authProvider.logout(context);
-                        // Navigate to login screen after logout
                         if (context.mounted) {
                           Navigator.of(context).pushNamedAndRemoveUntil(
                             AppRoutes.login,
