@@ -45,12 +45,28 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
   Widget build(BuildContext context) {
     return Consumer<LeagueDetailProvider>(
       builder: (context, provider, child) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final userRole = authProvider.userRole;
+        final normalizedRole = userRole.toLowerCase();
         final isAdmin =
-            Provider.of<AuthProvider>(
-              context,
-              listen: false,
-            ).userRole.toLowerCase() ==
-            'admin';
+            normalizedRole == 'admin' || normalizedRole == 'superadmin';
+
+        // Comprehensive debug logging
+        debugPrint('');
+        debugPrint('═══════════════════════════════════════');
+        debugPrint('LeagueDetailView FAB DEBUG:');
+        debugPrint('  Raw userRole: "$userRole"');
+        debugPrint('  userRole.toLowerCase(): "${userRole.toLowerCase()}"');
+        debugPrint('  isAdmin: $isAdmin');
+        debugPrint('  selectedTabIndex: ${provider.selectedTabIndex}');
+        debugPrint(
+          '  Tab is Games (index 1): ${provider.selectedTabIndex == 1}',
+        );
+        debugPrint(
+          '  shouldShowFAB: ${provider.selectedTabIndex == 1 && isAdmin}',
+        );
+        debugPrint('═══════════════════════════════════════');
+        debugPrint('');
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
@@ -64,23 +80,35 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
           }
         });
 
+        final shouldShowFAB = provider.selectedTabIndex == 1 && isAdmin;
+
+        if (shouldShowFAB) {
+          debugPrint('✅ FAB SHOULD BE VISIBLE NOW!');
+        } else {
+          debugPrint('❌ FAB HIDDEN - Reason:');
+          if (!isAdmin)
+            debugPrint('   - User is not admin (role: "$userRole")');
+          if (provider.selectedTabIndex != 1)
+            debugPrint(
+              '   - Not on Games tab (current tab: ${provider.selectedTabIndex})',
+            );
+        }
+
         return Scaffold(
           backgroundColor: const Color(0xFFF9FAFB),
           appBar: AppBar(
             leading: ArrowBackButton(onPressed: () => Navigator.pop(context)),
           ),
-          floatingActionButton: (provider.selectedTabIndex == 1 && isAdmin)
+          floatingActionButton: shouldShowFAB
               ? AnimatedFAB(
                   onPressed: () async {
+                    debugPrint('🎯 FAB PRESSED - Navigating to create match');
                     await Navigator.pushNamed(
                       context,
                       AppRoutes.adminCreateMatch,
                       arguments: widget.league,
                     );
-                    // Refresh games section when returning from create game
                     if (context.mounted) {
-                      // The provider will refresh automatically when the widget rebuilds
-                      // or we can explicitly refresh
                       provider.initialize(widget.league.id);
                     }
                   },

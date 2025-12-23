@@ -85,7 +85,6 @@ class SharedGameCard extends StatelessWidget {
             const SizedBox(height: 18),
             Row(
               children: [
-                // Team 1 - Expanded
                 Expanded(
                   flex: 3,
                   child: Row(
