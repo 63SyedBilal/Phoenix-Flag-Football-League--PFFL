@@ -430,6 +430,20 @@ class UpcommingGamesCardWidget extends StatelessWidget {
             color: Color(0xFF000000),
             fontFamily: 'Lato',
           ),
+ mustafa
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 8),
+          // Keeping the edit functionality simpler without the dialog
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Edit Game',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0x33000000),
+
         ),
         const SizedBox(height: 8),
         child,
@@ -476,9 +490,14 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                       ? Colors.grey[400]
                       : Colors.black,
                   fontFamily: 'Lato',
+ bilalphoenix
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
+ mustafa
+              Icon(Icons.keyboard_arrow_right, size: 16, color: Color(0x33000000)),
+            ],
+
             ),
             Icon(Icons.keyboard_arrow_down, color: Colors.grey[400], size: 20),
           ],
@@ -507,6 +526,7 @@ class UpcommingGamesCardWidget extends StatelessWidget {
               fontFamily: 'Lato',
               color: Colors.black,
             ),
+ bilalphoenix
           ),
         );
       }).toList(),
@@ -627,6 +647,9 @@ class UpcommingGames extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Upcoming Games', style: AppTextStyles.headlineSmall),
+ mustafa
+                // Removed the "View more" text and arrow icon
+
                 if (leagueId != null && matches.isNotEmpty)
                   InkWell(
                     onTap: () {
@@ -653,6 +676,7 @@ class UpcommingGames extends StatelessWidget {
                       ],
                     ),
                   ),
+ bilalphoenix
               ],
             ),
             const SizedBox(height: 18),

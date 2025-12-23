@@ -49,18 +49,21 @@ class LeaguePaymentCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Payment Reminder',
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        'Payment Reminder',
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
+                        // ignore: deprecated_member_use
+                        color: Colors.red.withOpacity(0.03),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -71,10 +74,9 @@ class LeaguePaymentCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 2),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Column(
@@ -83,7 +85,7 @@ class LeaguePaymentCard extends StatelessWidget {
                           Text(
                             amount,
                             style: const TextStyle(
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.w700,
                               color: Colors.black,
                             ),
@@ -100,25 +102,28 @@ class LeaguePaymentCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: onPayNow,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F172A),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        elevation: 0,
+                    const SizedBox(width: 10), // Gap of 10px
+                    Container(
+                      width: 60,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFF0F172A),
                       ),
-                      child: const Text(
-                        'Pay Now',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                      child: TextButton(
+                        onPressed: onPayNow,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.all(6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Pay Now',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -138,12 +143,14 @@ class LeaguePaymentCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'View League Details',
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      'View League Details',
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   Icon(
@@ -174,12 +181,14 @@ class LeaguePaymentCard extends StatelessWidget {
                         child: const Icon(Icons.sports_soccer, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -200,7 +209,7 @@ class LeaguePaymentCard extends StatelessWidget {
                         width: 1,
                         height: 16,
                         color: colorScheme.outlineVariant,
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
                       ),
                       Expanded(
                         child: _buildDetailItem(
@@ -214,18 +223,19 @@ class LeaguePaymentCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Text(
-                        'Show more',
-                        style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: 14,
+                      Expanded(
+                        child: Text(
+                          'Show more',
+                          style: TextStyle(
+                          color: Colors.black38,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
-                      const Spacer(),
                       Icon(
                         Icons.chevron_right,
-                        size: 20,
-                        color: colorScheme.onSurfaceVariant,
+                        size: 18,
+                        color: Colors.black38,
                       ),
                     ],
                   ),
@@ -241,18 +251,23 @@ class LeaguePaymentCard extends StatelessWidget {
   Widget _buildDetailRow(String label, String value, ColorScheme colorScheme) {
     return Row(
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: colorScheme.onSurfaceVariant,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
-        const SizedBox(width: 8),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        
+        Expanded(
+          flex: 4,
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+          ),
         ),
       ],
     );
@@ -262,18 +277,23 @@ class LeaguePaymentCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: colorScheme.onSurfaceVariant,
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         const SizedBox(width: 4),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+        Expanded(
+          flex: 2,
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+          ),
         ),
       ],
     );
