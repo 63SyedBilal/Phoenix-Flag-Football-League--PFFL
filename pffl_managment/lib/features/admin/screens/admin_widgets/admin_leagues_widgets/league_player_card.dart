@@ -111,7 +111,7 @@ class LeaguePlayerCard extends StatelessWidget {
     return Container(
       width: 95,
       height: 90,
-      color: Colors.white.withOpacity(0.1),
+      color: Colors.white.withValues(alpha: 0.1),
       child: const Icon(Icons.person, size: 50, color: Colors.white54),
     );
   }

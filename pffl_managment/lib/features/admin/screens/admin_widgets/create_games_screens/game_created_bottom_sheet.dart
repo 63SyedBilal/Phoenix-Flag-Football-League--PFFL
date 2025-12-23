@@ -74,7 +74,6 @@ class GameCreatedBottomSheet extends StatelessWidget {
               Expanded(
                 child: _buildFilledButton('View Game Details', () {
                   Navigator.pop(context); // Close sheet
-                  // TODO: Navigate to game details
                 }),
               ),
             ],

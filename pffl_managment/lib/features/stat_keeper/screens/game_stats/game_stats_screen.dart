@@ -397,7 +397,7 @@ class _GameStatsScreenContent extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(26),
           onTap: () {
-            final isWinner = false; // TODO: Logic
+            final isWinner = false;
 
             Navigator.push(
               context,

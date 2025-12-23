@@ -6,6 +6,7 @@ import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/left_alaign_button.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
+import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
@@ -113,7 +114,13 @@ class LoginScreen extends StatelessWidget {
                           route = AppRoutes.adminDashboard;
                           break;
                         case 'referee':
-                          route = AppRoutes.refereeDashboard;
+                          final userPrefs = Provider.of<UserPreferenceProvider>(
+                            context,
+                            listen: false,
+                          );
+                          route = userPrefs.isRefereeProfileComplete
+                              ? AppRoutes.refereeDashboard
+                              : AppRoutes.completeRefereeProfile;
                           break;
                         case 'captain':
                           // Check if profile or team form is needed for Captain role

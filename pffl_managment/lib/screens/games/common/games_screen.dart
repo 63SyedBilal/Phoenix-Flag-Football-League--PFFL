@@ -21,7 +21,7 @@ class GamesScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(
               children: [

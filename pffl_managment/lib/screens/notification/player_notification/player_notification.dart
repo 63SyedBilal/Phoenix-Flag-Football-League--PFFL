@@ -201,8 +201,10 @@ class _PlayerNotificationState extends State<PlayerNotification> {
       if (success && context.mounted) {
         // If role was changed (free-agent to player), logout user
         if (roleChanged) {
-          print('🔄 Role changed from free-agent to $newRole. Logging out user...');
-          
+          print(
+            '🔄 Role changed from free-agent to $newRole. Logging out user...',
+          );
+
           // Show message to user
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -215,21 +217,20 @@ class _PlayerNotificationState extends State<PlayerNotification> {
               ),
             );
           }
-          
+
           // Wait a bit for user to see the message
           await Future.delayed(const Duration(seconds: 1));
-          
+
           // Logout user
           await authProvider.logout(context);
-          
+
           // Navigate to login screen
           if (context.mounted) {
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              '/login',
-              (route) => false,
-            );
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/login', (route) => false);
           }
-          
+
           return; // Exit early since we've logged out
         }
         // Get PlayerTeamProvider from context if available
@@ -305,7 +306,6 @@ class _PlayerNotificationState extends State<PlayerNotification> {
     BuildContext context,
     String notificationId,
   ) async {
-    // TODO: Implement decline functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Decline functionality coming soon'),
@@ -315,7 +315,6 @@ class _PlayerNotificationState extends State<PlayerNotification> {
   }
 
   void _handlePayNow(BuildContext context, notification) {
-    // TODO: Navigate to payment screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Payment functionality coming soon'),

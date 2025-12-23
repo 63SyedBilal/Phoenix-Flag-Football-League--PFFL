@@ -17,10 +17,10 @@ class ImprovedPhoneFieldProvider extends ChangeNotifier {
   ValueChanged<bool>? onInputValidated;
 
   ImprovedPhoneFieldProvider({String initialCountryCode = 'US'})
-      : _selectedCountry = countries.firstWhere(
-          (c) => c.code == initialCountryCode,
-          orElse: () => countries.firstWhere((c) => c.code == 'US'),
-        ) {
+    : _selectedCountry = countries.firstWhere(
+        (c) => c.code == initialCountryCode,
+        orElse: () => countries.firstWhere((c) => c.code == 'US'),
+      ) {
     _focusNode = FocusNode();
     _controller = TextEditingController();
     _focusNode.addListener(_onFocusChange);
@@ -68,7 +68,8 @@ class ImprovedPhoneFieldProvider extends ChangeNotifier {
     onInputChanged?.call(phoneNumber);
 
     // Validate
-    final isValid = _controller.text.isNotEmpty &&
+    final isValid =
+        _controller.text.isNotEmpty &&
         _controller.text.length >= _selectedCountry.minLength &&
         _controller.text.length <= _selectedCountry.maxLength;
     onInputValidated?.call(isValid);
@@ -76,10 +77,10 @@ class ImprovedPhoneFieldProvider extends ChangeNotifier {
 
   /// Get complete phone number
   PhoneNumber get phoneNumber => PhoneNumber(
-        countryCode: '+${_selectedCountry.dialCode}',
-        countryISOCode: _selectedCountry.code,
-        number: _controller.text,
-      );
+    countryCode: '+${_selectedCountry.dialCode}',
+    countryISOCode: _selectedCountry.code,
+    number: _controller.text,
+  );
 
   @override
   void dispose() {
@@ -143,8 +144,8 @@ class ImprovedPhoneField extends StatelessWidget {
                     color: errorText != null
                         ? Colors.red
                         : (provider.isFocused
-                            ? AppColors.primary
-                            : AppColors.borderDefault),
+                              ? AppColors.primary
+                              : AppColors.borderDefault),
                     width: errorText != null ? 1.5 : 1,
                   ),
                   borderRadius: BorderRadius.circular(6),
@@ -162,9 +163,7 @@ class ImprovedPhoneField extends StatelessWidget {
                     ),
 
                     // Phone number input
-                    Expanded(
-                      child: _buildPhoneInput(context, provider, theme),
-                    ),
+                    Expanded(child: _buildPhoneInput(context, provider, theme)),
                   ],
                 ),
               ),
@@ -206,10 +205,7 @@ class ImprovedPhoneField extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Flag emoji
-            Text(
-              provider.flagEmoji,
-              style: const TextStyle(fontSize: 20),
-            ),
+            Text(provider.flagEmoji, style: const TextStyle(fontSize: 20)),
             const SizedBox(width: 6),
             // Country code
             Expanded(
@@ -378,8 +374,8 @@ class _CountryPickerSheet extends StatelessWidget {
                     child: Text(
                       'Select Country',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
 
@@ -430,20 +426,26 @@ class _CountryPickerSheet extends StatelessWidget {
                           title: Text(
                             country.name,
                             style: TextStyle(
-                              fontWeight:
-                                  isSelected ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                           trailing: Text(
                             '+${country.dialCode}',
                             style: TextStyle(
-                              color: isSelected ? AppColors.primary : Colors.grey[600],
-                              fontWeight:
-                                  isSelected ? FontWeight.w600 : FontWeight.normal,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey[600],
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                           selected: isSelected,
-                          selectedTileColor: AppColors.primary.withOpacity(0.1),
+                          selectedTileColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           onTap: () => onCountrySelected(country),
                         );
                       },
@@ -458,4 +460,3 @@ class _CountryPickerSheet extends StatelessWidget {
     );
   }
 }
-

@@ -24,7 +24,7 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
       child: Consumer<CaptainLeagueDetailProvider>(
         builder: (context, provider, child) {
           return Scaffold(
-            backgroundColor: const Color(0xFFF9FAFB),
+            backgroundColor: Colors.white,
             appBar: AppBar(
               leading: ArrowBackButton(onPressed: () => Navigator.pop(context)),
             ),

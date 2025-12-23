@@ -31,6 +31,7 @@ import 'package:pffl_managment/screens/notification/admin_notification/admin_not
 import 'package:pffl_managment/screens/notification/referee_notification/referee_notification.dart';
 import 'package:pffl_managment/screens/notification/statkeeper_notification/statkeeper_notification.dart';
 import 'package:pffl_managment/screens/notification/freeagent_notification/freeagent_notification.dart';
+import 'package:pffl_managment/features/referee/screens/complete_profile/complete_referee_profile_screen.dart';
 
 import 'app_routes.dart';
 
@@ -131,6 +132,11 @@ class RouteGenerator {
         final match = settings.arguments as MatchModel;
         return MaterialPageRoute(
           builder: (_) => RefereeGameDetailScreen(match: match),
+        );
+
+      case AppRoutes.completeRefereeProfile:
+        return MaterialPageRoute(
+          builder: (_) => const CompleteRefereeProfileScreen(),
         );
 
       case AppRoutes.statKeeperDashboard:

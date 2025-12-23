@@ -35,7 +35,32 @@ class SharedGameCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+ mustafa
                 // Removed league name section
+
+                Opacity(
+                  opacity: 0.6,
+                  child: Row(
+                    children: [
+                      Text(
+                        game.leagueName,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Lato',
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 9,
+                        color: Colors.grey,
+                      ),
+                    ],
+                  ),
+                ),
+ bilalphoenix
                 if (showYourGameTag && game.isMyGame)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -84,7 +109,7 @@ class SharedGameCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Date/Time - Centered
+
                 Expanded(
                   flex: 2,
                   child: Column(

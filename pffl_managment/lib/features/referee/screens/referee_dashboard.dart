@@ -9,7 +9,10 @@ import 'package:pffl_managment/features/admin/screens/admin_leagues/leagues_scre
 import 'package:pffl_managment/screens/leagues/common/league_provider.dart';
 import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+
+import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
 
 class RefereeDashboard extends StatelessWidget {
   const RefereeDashboard({super.key});
@@ -18,41 +21,48 @@ class RefereeDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<RefereeNavigationProvider>(context);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            const RafereeHeaderWidget(),
-            Expanded(child: _buildContent(navigationProvider.selectedIndex)),
-            const RefereeBottomNevigation(),
-          ],
+    return BackButtonWrapper(
+      isRoot: true,
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              const RafereeHeaderWidget(),
+              Expanded(
+                child: IndexedStack(
+                  index: navigationProvider.selectedIndex,
+                  children: [
+                    const RefereeHomeScreen(),
+                    ChangeNotifierProvider(
+                      create: (context) {
+                        final auth = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        return GamesProvider(
+                          userRole: auth.userRole,
+                          userId: auth.userId,
+                        );
+                      },
+                      child: const GamesScreen(),
+                    ),
+                    ChangeNotifierProvider(
+                      create: (_) => LeagueProvider(userRole: 'referee'),
+                      child: const LeaguesScreen(),
+                    ),
+                    ChangeNotifierProvider(
+                      create: (_) =>
+                          RoleBasedSettingsProvider(userRole: 'referee'),
+                      child: const SettingsScreen(),
+                    ),
+                  ],
+                ),
+              ),
+              const RefereeBottomNevigation(),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Widget _buildContent(int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return const RefereeHomeScreen();
-      case 1:
-        return ChangeNotifierProvider(
-          create: (_) => GamesProvider(userRole: 'referee'),
-          child: const GamesScreen(),
-        );
-      case 2:
-        return ChangeNotifierProvider(
-          create: (_) => LeagueProvider(userRole: 'referee'),
-          child: const LeaguesScreen(),
-        );
-      case 3:
-        return ChangeNotifierProvider(
-          create: (_) => RoleBasedSettingsProvider(userRole: 'referee'),
-          child: const SettingsScreen(),
-        );
-
-      default:
-        return const Center(child: Text('Referee Dashboard'));
-    }
   }
 }

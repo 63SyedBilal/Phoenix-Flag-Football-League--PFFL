@@ -117,7 +117,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
       create: (context) => RefundReasonProvider(),
       child: Builder(
         builder: (context) => Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(
               children: [

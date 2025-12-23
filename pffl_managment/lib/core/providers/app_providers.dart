@@ -33,22 +33,52 @@ import 'package:pffl_managment/features/captain/view/captain_create_team/provide
 import 'package:pffl_managment/invite_screens/captain_invite_screen/providers/captain_invite_provider.dart';
 import 'package:pffl_managment/features/player/providers/player_team_provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/core/providers/back_button_provider.dart';
+import 'package:pffl_managment/core/providers/user_preference_provider.dart';
+import 'package:pffl_managment/core/services/preference_service.dart';
+import 'package:pffl_managment/features/referee/providers/complete_referee_profile_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
+  final PreferenceService preferenceService;
 
-  const AppProviders({super.key, required this.child});
+  const AppProviders({
+    super.key,
+    required this.child,
+    required this.preferenceService,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // SINGLE SOURCE OF TRUTH for all games data
+        // Local Storage Service Provider
+        Provider<PreferenceService>.value(value: preferenceService),
+
+        // Use Preference Provider
         ChangeNotifierProvider(
-          create: (_) => UnifiedGamesProvider(),
+          create: (context) => UserPreferenceProvider(preferenceService),
         ),
+        ChangeNotifierProxyProvider<
+          UserPreferenceProvider,
+          CompleteRefereeProfileProvider
+        >(
+          create: (context) => CompleteRefereeProfileProvider(
+            Provider.of<UserPreferenceProvider>(context, listen: false),
+          ),
+          update: (context, userPrefs, provider) =>
+              provider ?? CompleteRefereeProfileProvider(userPrefs),
+        ),
+
+        // SINGLE SOURCE OF TRUTH for all games data
+        ChangeNotifierProvider(create: (_) => UnifiedGamesProvider()),
         ChangeNotifierProvider(create: (_) => BaseProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProxyProvider<UserPreferenceProvider, AuthProvider>(
+          create: (context) => AuthProvider(
+            Provider.of<UserPreferenceProvider>(context, listen: false),
+          ),
+          update: (context, userPrefs, auth) => auth ?? AuthProvider(userPrefs),
+        ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => DashboardViewModel()),
         // Navigation providers should be initialized early
@@ -81,6 +111,7 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CaptainInviteProvider()),
         ChangeNotifierProvider(create: (_) => PlayerTeamProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => BackButtonProvider()),
       ],
       child: child,
     );

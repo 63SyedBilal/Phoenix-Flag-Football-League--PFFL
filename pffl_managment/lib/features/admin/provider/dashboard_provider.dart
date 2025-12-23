@@ -10,7 +10,6 @@ import 'package:pffl_managment/core/services/dashboard_stats_service.dart';
 class DashboardViewModel extends ChangeNotifier {
   final String _userName = "Tyler";
   final String _leagueName = "Phoenix Flag Football League";
-  bool _hasNotifications = true;
 
   // Dashboard stats state
   DashboardStatsModel? _stats;
@@ -21,7 +20,6 @@ class DashboardViewModel extends ChangeNotifier {
   // Getters for basic info
   String get userName => _userName;
   String get leagueName => _leagueName;
-  bool get hasNotifications => _hasNotifications;
 
   // Getters for stats state
   DashboardStatsModel? get stats => _stats;
@@ -244,10 +242,5 @@ class DashboardViewModel extends ChangeNotifier {
 
   void _handleViewReports() {
     debugPrint('View Reports tapped');
-  }
-
-  void toggleNotifications() {
-    _hasNotifications = !_hasNotifications;
-    notifyListeners();
   }
 }

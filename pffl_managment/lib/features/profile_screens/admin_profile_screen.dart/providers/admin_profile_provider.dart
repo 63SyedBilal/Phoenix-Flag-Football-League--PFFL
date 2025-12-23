@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
+import 'package:pffl_managment/core/services/user_service.dart';
 
 /// Provider for Admin Profile Screen
 class AdminProfileProvider extends ChangeNotifier {
@@ -15,7 +16,8 @@ class AdminProfileProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   String? _phoneError; // Phone-specific error
-  String? _adminId;
+  String? _userId;
+  String? _userRole;
 
   // Getters
   String get firstName => _firstName;
@@ -41,12 +43,13 @@ class AdminProfileProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      // Get admin ID from SharedPreferences (stored during login)
+      // Get user ID and role from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      _adminId = prefs.getString('userId');
-      
-      if (_adminId == null) {
-        debugPrint('Warning: Admin ID not found. Profile update may fail.');
+      _userId = prefs.getString('userId');
+      _userRole = prefs.getString('userRole');
+
+      if (_userId == null) {
+        debugPrint('Warning: User ID not found. Profile update may fail.');
         _isLoading = false;
         notifyListeners();
         return;
@@ -58,7 +61,7 @@ class AdminProfileProvider extends ChangeNotifier {
       final storedEmail = prefs.getString('userEmail');
       final storedPhone = prefs.getString('admin_phone');
       final storedImage = prefs.getString('admin_image');
-      
+
       if (storedFirstName != null) _firstName = storedFirstName;
       if (storedLastName != null) _lastName = storedLastName;
       if (storedEmail != null) _email = storedEmail;
@@ -148,7 +151,7 @@ class AdminProfileProvider extends ChangeNotifier {
       notifyListeners();
 
       final uploadedUrl = await AdminService.uploadImage(_selectedImageFile!);
-      
+
       if (uploadedUrl != null) {
         _imageUrl = uploadedUrl;
         _selectedImageFile = null; // Clear selected file after upload
@@ -171,8 +174,8 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Save profile to backend
   Future<bool> saveProfile() async {
-    if (_adminId == null) {
-      _errorMessage = 'Admin ID not found. Please login again.';
+    if (_userId == null) {
+      _errorMessage = 'User ID not found. Please login again.';
       notifyListeners();
       return false;
     }
@@ -203,13 +206,23 @@ class AdminProfileProvider extends ChangeNotifier {
         if (finalImageUrl != null) 'image': finalImageUrl,
       };
 
-      // Update profile via API
-      final updatedData = await AdminService.updateAdminProfile(_adminId!, profileData);
+      // Update profile via API based on role
+      Map<String, dynamic>? updatedData;
+      if (_userRole == 'superadmin' || _userRole == 'admin') {
+        updatedData = await AdminService.updateAdminProfile(
+          _userId!,
+          profileData,
+        );
+      } else {
+        updatedData = await UserService.updateProfile(_userId!, profileData);
+      }
 
       if (updatedData != null) {
         // Update local state with response
-        if (updatedData['firstName'] != null) _firstName = updatedData['firstName'] ?? '';
-        if (updatedData['lastName'] != null) _lastName = updatedData['lastName'] ?? '';
+        if (updatedData['firstName'] != null)
+          _firstName = updatedData['firstName'] ?? '';
+        if (updatedData['lastName'] != null)
+          _lastName = updatedData['lastName'] ?? '';
         if (updatedData['email'] != null) _email = updatedData['email'] ?? '';
         if (updatedData['phone'] != null) _phone = updatedData['phone'] ?? '';
         if (updatedData['image'] != null) _imageUrl = updatedData['image'];
@@ -218,7 +231,7 @@ class AdminProfileProvider extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('admin_firstName', _firstName);
         await prefs.setString('admin_lastName', _lastName);
-        await prefs.setString('admin_email', _email);
+        await prefs.setString('userEmail', _email);
         if (_phone.isNotEmpty) {
           await prefs.setString('admin_phone', _phone);
         }
@@ -244,9 +257,9 @@ class AdminProfileProvider extends ChangeNotifier {
     }
   }
 
-  /// Set admin ID (should be called after login)
-  Future<void> setAdminId(String id) async {
-    _adminId = id;
+  /// Set user ID (should be called after login)
+  Future<void> setUserId(String id) async {
+    _userId = id;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('userId', id);
   }
