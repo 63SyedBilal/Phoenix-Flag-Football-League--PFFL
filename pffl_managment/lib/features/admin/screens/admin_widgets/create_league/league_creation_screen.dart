@@ -21,7 +21,7 @@ class LeagueCreationScreen extends StatelessWidget {
         builder: (context, viewModel, child) {
           return PopScope(
             canPop: viewModel.currentStep == 0,
-            onPopInvoked: (didPop) {
+            onPopInvokedWithResult: (didPop, result) {
               if (!didPop) {
                 // Handle back button press
                 if (viewModel.currentStep > 0) {
@@ -35,7 +35,8 @@ class LeagueCreationScreen extends StatelessWidget {
             },
             child: Scaffold(
               backgroundColor: const Color(0xFFF9FAFB),
-              resizeToAvoidBottomInset: true, // Allow content to resize but keep button fixed
+              resizeToAvoidBottomInset:
+                  true, // Allow content to resize but keep button fixed
               appBar: AppBar(
                 backgroundColor: const Color(0xFFF9FAFB),
                 elevation: 0,
@@ -58,9 +59,7 @@ class LeagueCreationScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     const StepIndicatorWidget(),
                     const SizedBox(height: 24),
-                    Expanded(
-                      child: _buildStep(viewModel.currentStep),
-                    ),
+                    Expanded(child: _buildStep(viewModel.currentStep)),
                     // Next button stays fixed at bottom
                     const LeagueCreationActionButton(),
                   ],

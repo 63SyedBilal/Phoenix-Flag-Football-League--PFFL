@@ -22,9 +22,10 @@ class PlayerNotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPaymentNotification = notification.type.contains('PAYMENT') || 
-                                   notification.displayMessage.toLowerCase().contains('payment') ||
-                                   notification.displayMessage.toLowerCase().contains('fee');
+    final isPaymentNotification =
+        notification.type.contains('PAYMENT') ||
+        notification.displayMessage.toLowerCase().contains('payment') ||
+        notification.displayMessage.toLowerCase().contains('fee');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -32,10 +33,7 @@ class PlayerNotificationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade200,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +54,10 @@ class PlayerNotificationCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF3B82F6),
                   borderRadius: BorderRadius.circular(20),
@@ -84,12 +85,9 @@ class PlayerNotificationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // View League Details (expandable)
           if (notification.league != null || notification.team != null)
             InkWell(
-              onTap: () {
-                // TODO: Navigate to league/team details
-              },
+              onTap: () {},
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -131,7 +129,9 @@ class PlayerNotificationCard extends StatelessWidget {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text(
@@ -143,7 +143,8 @@ class PlayerNotificationCard extends StatelessWidget {
                       ),
               ),
             )
-          else if (notification.isPending && (onAccept != null || onDecline != null))
+          else if (notification.isPending &&
+              (onAccept != null || onDecline != null))
             Row(
               children: [
                 if (onDecline != null)
@@ -187,7 +188,9 @@ class PlayerNotificationCard extends StatelessWidget {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -230,4 +233,3 @@ class PlayerNotificationCard extends StatelessWidget {
     return DateFormat('dd MMM yyyy').format(dateTime);
   }
 }
-

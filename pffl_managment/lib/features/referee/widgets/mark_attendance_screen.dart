@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/referee/providers/referee_game_detail_provider.dart';
@@ -9,10 +10,7 @@ import 'package:pffl_managment/features/captain/model/player_model.dart';
 class MarkAttendanceScreen extends StatefulWidget {
   final MatchModel match;
 
-  const MarkAttendanceScreen({
-    super.key,
-    required this.match,
-  });
+  const MarkAttendanceScreen({super.key, required this.match});
 
   @override
   State<MarkAttendanceScreen> createState() => _MarkAttendanceScreenState();
@@ -22,12 +20,13 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Set default team selection after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<RefereeGameDetailProvider>(context, listen: false);
-      
-      // Select first team (home team) by default if not already selected
+      final provider = Provider.of<RefereeGameDetailProvider>(
+        context,
+        listen: false,
+      );
       if (provider.selectedAttendanceTeamId == null) {
         final defaultTeamId = _extractTeamId(widget.match.homeTeamId);
         if (defaultTeamId.isNotEmpty) {
@@ -45,9 +44,11 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 children: [
-                  // Select Team heading
                   const Text(
                     'Select Team',
                     style: TextStyle(
@@ -56,9 +57,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                       color: Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  
-                  // Team selection buttons
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
@@ -69,7 +68,9 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                           teamName: widget.match.homeTeam,
                           teamLogo: widget.match.homeTeamLogo,
                           teamColor: null,
-                          isSelected: provider.selectedAttendanceTeamId == _extractTeamId(widget.match.homeTeamId),
+                          isSelected:
+                              provider.selectedAttendanceTeamId ==
+                              _extractTeamId(widget.match.homeTeamId),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -81,15 +82,13 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                           teamName: widget.match.awayTeam,
                           teamLogo: widget.match.awayTeamLogo,
                           teamColor: null,
-                          isSelected: provider.selectedAttendanceTeamId == _extractTeamId(widget.match.awayTeamId),
+                          isSelected:
+                              provider.selectedAttendanceTeamId ==
+                              _extractTeamId(widget.match.awayTeamId),
                         ),
                       ),
                     ],
                   ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Player list
                   if (provider.selectedAttendanceTeamId != null)
                     _buildPlayerList(context, provider)
                   else
@@ -98,7 +97,11 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                         padding: const EdgeInsets.all(32.0),
                         child: Column(
                           children: [
-                            Icon(Icons.people_outline, size: 48, color: Colors.grey[300]),
+                            Icon(
+                              Icons.people_outline,
+                              size: 48,
+                              color: Colors.grey[300],
+                            ),
                             const SizedBox(height: 8),
                             Text(
                               'Select a team to mark attendance',
@@ -111,25 +114,14 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                 ],
               ),
             ),
-            
-            // Confirm button at bottom - always visible
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
+              decoration: BoxDecoration(color: Colors.white),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: provider.isLoading || provider.isAttendanceLocked
-                      ? null 
+                      ? null
                       : () => _confirmAttendance(context, provider),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E3A5F),
@@ -146,7 +138,9 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
@@ -166,8 +160,11 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
       },
     );
   }
-  
-  Future<void> _confirmAttendance(BuildContext context, RefereeGameDetailProvider provider) async {
+
+  Future<void> _confirmAttendance(
+    BuildContext context,
+    RefereeGameDetailProvider provider,
+  ) async {
     final success = await provider.confirmAttendance();
 
     if (!context.mounted) return;
@@ -209,19 +206,20 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
               await provider.setAttendanceTeam(teamId);
             },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1E3A5F) : const Color(0xFFE5E7EB),
+            color: isSelected
+                ? const Color(0xFF1E3A5F)
+                : const Color(0xFFE5E7EB),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Team logo or color indicator
             if (teamLogo != null && teamLogo.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -237,10 +235,8 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
               )
             else
               _buildColorIndicator(teamColor, isSelected),
-            
+
             const SizedBox(width: 8),
-            
-            // Team name
             Flexible(
               child: Text(
                 teamName,
@@ -262,7 +258,6 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
     Color color;
     try {
       if (teamColor != null && teamColor.isNotEmpty) {
-        // Remove # if present
         final colorHex = teamColor.replaceAll('#', '');
         color = Color(int.parse('FF$colorHex', radix: 16));
       } else {
@@ -286,14 +281,15 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
     );
   }
 
-  Widget _buildPlayerList(BuildContext context, RefereeGameDetailProvider provider) {
+  Widget _buildPlayerList(
+    BuildContext context,
+    RefereeGameDetailProvider provider,
+  ) {
     final selectedTeamId = provider.selectedAttendanceTeamId;
-    
+
     if (selectedTeamId == null) {
       return const SizedBox.shrink();
     }
-    
-    // Show loading indicator while fetching players
     if (provider.isLoadingPlayers) {
       return const Center(
         child: Padding(
@@ -302,10 +298,8 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
         ),
       );
     }
-    
-    // Get players for the selected team from provider
     final List<PlayerModel> players = provider.getTeamPlayers(selectedTeamId);
-    
+
     if (players.isEmpty) {
       return Center(
         child: Padding(
@@ -324,7 +318,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
         ),
       );
     }
-    
+
     return Column(
       children: [
         // Header row with title and add button
@@ -372,7 +366,8 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: player.imageUrl != null && player.imageUrl!.isNotEmpty
+                    child:
+                        player.imageUrl != null && player.imageUrl!.isNotEmpty
                         ? Image.network(
                             player.imageUrl!,
                             width: 40,
@@ -415,16 +410,12 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: !isPresent ? Colors.red[50] : Colors.grey[100],
+                            color: !isPresent ? Colors.red : Colors.grey[100],
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: !isPresent ? Colors.red : Colors.grey[300]!,
-                              width: !isPresent ? 2 : 1,
-                            ),
                           ),
                           child: Icon(
                             Icons.close,
-                            color: !isPresent ? Colors.red : Colors.grey[400],
+                            color: !isPresent ? Colors.white : Colors.grey[400],
                             size: 20,
                           ),
                         ),
@@ -437,16 +428,14 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: isPresent ? Colors.green[50] : Colors.grey[100],
+                            color: isPresent
+                                ? AppColors.primaryColor
+                                : Colors.grey[100],
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isPresent ? Colors.green : Colors.grey[300]!,
-                              width: isPresent ? 2 : 1,
-                            ),
                           ),
                           child: Icon(
                             Icons.check,
-                            color: isPresent ? Colors.green : Colors.grey[400],
+                            color: isPresent ? Colors.white : Colors.grey[400],
                             size: 20,
                           ),
                         ),
@@ -470,26 +459,22 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Icon(
-        Icons.person,
-        color: Colors.grey,
-        size: 24,
-      ),
+      child: const Icon(Icons.person, color: Colors.grey, size: 24),
     );
   }
 
   /// Extract team ID from team object or string
   String _extractTeamId(dynamic teamData) {
     if (teamData == null) return '';
-    
+
     // If it's already a string, return it
     if (teamData is String) return teamData;
-    
+
     // If it's a Map (team object), extract _id
     if (teamData is Map) {
       return teamData['_id']?.toString() ?? teamData['id']?.toString() ?? '';
     }
-    
+
     // Fallback: convert to string
     return teamData.toString();
   }

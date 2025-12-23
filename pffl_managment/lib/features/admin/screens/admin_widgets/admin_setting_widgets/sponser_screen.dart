@@ -105,7 +105,7 @@ class SponserScreen extends StatelessWidget {
                                 elevation: 0,
                                 disabledBackgroundColor: const Color(
                                   0xFF0F173E,
-                                ).withOpacity(0.5),
+                                ).withValues(alpha: 0.5),
                               ),
                               child: provider.isSaving
                                   ? const SizedBox(
@@ -312,7 +312,9 @@ class ThumbnailUploadWidget extends StatelessWidget {
                           onPressed: onClear,
                           icon: const Icon(Icons.close, color: Colors.white),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.black.withOpacity(0.6),
+                            backgroundColor: Colors.black.withValues(
+                              alpha: 0.6,
+                            ),
                             padding: const EdgeInsets.all(4),
                           ),
                         ),

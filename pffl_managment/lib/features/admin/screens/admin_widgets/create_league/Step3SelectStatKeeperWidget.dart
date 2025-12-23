@@ -10,7 +10,7 @@ import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.d
 import 'package:provider/provider.dart';
 
 /// Step 3 - Stat Keeper Invitation Widget
-/// 
+///
 /// Requirements:
 /// - No selection validation
 /// - Tiles must be unselectable (no tap response)
@@ -47,7 +47,7 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
                   border: Border.all(color: AppColors.borderDefault),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.shadowDefault.withOpacity(0.05),
+                      color: AppColors.shadowDefault.withValues(alpha: 0.05),
                       offset: const Offset(0, 1),
                       blurRadius: 2,
                     ),
@@ -65,7 +65,7 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-                            
+
               // Loading state
               if (viewModel.isLoadingStatKeepers)
                 const Center(
@@ -119,7 +119,9 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
     CreateLeagueViewModel viewModel,
   ) {
     // Get profile image URL from viewModel (if available)
-    final profileImageUrl = viewModel.getStatKeeperProfileImageUrl(statKeeper.id);
+    final profileImageUrl = viewModel.getStatKeeperProfileImageUrl(
+      statKeeper.id,
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -127,13 +129,10 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundWhite,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.borderLight,
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.borderLight, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -151,28 +150,22 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
             iconColor: AppColors.textDisabled,
           ),
           const SizedBox(width: 12),
-          
+
           // Name and email
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  statKeeper.displayName,
-                  style: AppTextStyles.titleMedium,
-                ),
+                Text(statKeeper.displayName, style: AppTextStyles.titleMedium),
                 const SizedBox(height: 2),
                 Text(
                   statKeeper.email,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textDisabled,
-                  ),
+                  style: TextStyle(fontSize: 12, color: AppColors.textDisabled),
                 ),
               ],
             ),
           ),
-          
+
           // Invitation icon - ONLY way to invite
           Consumer<CreateLeagueViewModel>(
             builder: (context, vm, child) {
@@ -191,25 +184,25 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
   ) {
     // Check invitation status directly from viewModel to ensure latest state
     final bool isInviteSent = viewModel.isStatKeeperInviteSent(statKeeperId);
-    
+
     // Icon color: grey initially, red when invitation is sent
-    final iconColor = isInviteSent ? AppColors.buttonBackground : AppColors.borderDefault;
+    final iconColor = isInviteSent
+        ? AppColors.buttonBackground
+        : AppColors.borderDefault;
 
     return IconButton(
       icon: isInviteSent
           ? SvgIcons.emailAfterInvitation(size: 22, color: iconColor)
-          : Icon(
-              AppIcons.emailOutlined,
-              color: iconColor,
-              size: 22,
-            ),
+          : Icon(AppIcons.emailOutlined, color: iconColor, size: 22),
       onPressed: isInviteSent
           ? null
           : () {
               // Send invitation - no validation, fire-and-forget
               viewModel.sendInvitationToStatKeeperIcon(statKeeperId);
             },
-      tooltip: isInviteSent ? 'Invitation sent' : 'Send invitation to stat keeper',
+      tooltip: isInviteSent
+          ? 'Invitation sent'
+          : 'Send invitation to stat keeper',
     );
   }
 }

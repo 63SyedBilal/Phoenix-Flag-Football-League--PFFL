@@ -4,24 +4,20 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/game_created_bottom_sheet.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/core/services/league_service.dart' show TeamModel;
+import 'package:pffl_managment/core/services/league_service.dart'
+    show TeamModel;
 import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
 
 class CreateUpcomingGamesScreen extends StatelessWidget {
   final LeagueCreationModel league;
 
-  const CreateUpcomingGamesScreen({
-    super.key,
-    required this.league,
-  });
+  const CreateUpcomingGamesScreen({super.key, required this.league});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: ArrowBackButton(),
-      ),
+      appBar: AppBar(leading: ArrowBackButton()),
       body: SafeArea(
         child: ChangeNotifierProvider(
           create: (_) {
@@ -36,9 +32,7 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
               if (provider.isLoadingTeams ||
                   provider.isLoadingReferees ||
                   provider.isLoadingStatKeepers) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
+                return const Center(child: CircularProgressIndicator());
               }
 
               // Show error state
@@ -56,7 +50,8 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () => provider.initializeWithLeague(league),
+                          onPressed: () =>
+                              provider.initializeWithLeague(league),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -155,8 +150,6 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildDropdownField({
     required String label,
     required String? value,
@@ -231,8 +224,11 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
           onTap: () async {
             final firstDate = provider.leagueStartDate ?? DateTime.now();
             final lastDate = provider.leagueEndDate ?? DateTime(2030);
-            final initialDate = provider.selectedDate ??
-                (firstDate.isAfter(DateTime.now()) ? firstDate : DateTime.now());
+            final initialDate =
+                provider.selectedDate ??
+                (firstDate.isAfter(DateTime.now())
+                    ? firstDate
+                    : DateTime.now());
 
             final DateTime? picked = await showDatePicker(
               context: context,
@@ -246,7 +242,10 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
               } catch (e) {
                 if (context.mounted) {
                   // Display user-friendly error message
-                  final errorMessage = e.toString().replaceAll('Exception: ', '');
+                  final errorMessage = e.toString().replaceAll(
+                    'Exception: ',
+                    '',
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(errorMessage),
@@ -318,7 +317,10 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
               } catch (e) {
                 if (context.mounted) {
                   // Display user-friendly error message
-                  final errorMessage = e.toString().replaceAll('Exception: ', '');
+                  final errorMessage = e.toString().replaceAll(
+                    'Exception: ',
+                    '',
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(errorMessage),
@@ -366,7 +368,6 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
   }
 
   /// Build team dropdown field
-  /// TODO: Teams are currently using dummy data
   /// In the future, teams will be fetched from the backend API
   /// Teams will be created by captains during team creation process
   Widget _buildTeamDropdownField({
@@ -550,6 +551,7 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
       ],
     );
   }
+
   Widget _buildCreateButton(
     BuildContext context,
     UpcomingGamesProvider provider,

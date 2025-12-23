@@ -16,10 +16,7 @@ import 'package:pffl_managment/features/referee/widgets/select_players_screen.da
 class RefereeGameDetailScreen extends StatelessWidget {
   final MatchModel match;
 
-  const RefereeGameDetailScreen({
-    super.key,
-    required this.match,
-  });
+  const RefereeGameDetailScreen({super.key, required this.match});
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +48,7 @@ class _RefereeGameDetailView extends StatelessWidget {
                     selectedIndex: provider.selectedTabIndex,
                     onTabSelected: provider.setSelectedTab,
                   ),
-                  Expanded(
-                    child: _buildTabContent(context, provider),
-                  ),
+                  Expanded(child: _buildTabContent(context, provider)),
                 ],
               ),
               if (provider.isFabExpanded)
@@ -76,13 +71,11 @@ class _RefereeGameDetailView extends StatelessWidget {
     RefereeGameDetailProvider provider,
   ) {
     final match = provider.match;
-    
+
     if (match == null) {
-      return const Center(
-        child: Text('Match data not available'),
-      );
+      return const Center(child: Text('Match data not available'));
     }
-    
+
     switch (provider.selectedTabIndex) {
       case 0:
         return RefereeGameActionsTab(
@@ -112,7 +105,10 @@ class _RefereeGameDetailView extends StatelessWidget {
     );
   }
 
-  void _showTossDialog(BuildContext context, RefereeGameDetailProvider provider) {
+  void _showTossDialog(
+    BuildContext context,
+    RefereeGameDetailProvider provider,
+  ) {
     if (provider.match == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -130,14 +126,12 @@ class _RefereeGameDetailView extends StatelessWidget {
         match: provider.match!,
         onConfirm: (winnerTeamId, winnerSide) async {
           try {
-            // Complete the toss
             await provider.completeToss(winnerTeamId, winnerSide);
-            
-            // Close the toss dialog
+
             if (context.mounted) {
               Navigator.of(context).pop();
             }
-            
+
             // Show the Start Game dialog after toss is completed
             if (context.mounted) {
               _showStartGameDialog(context);
@@ -166,7 +160,10 @@ class _RefereeGameDetailView extends StatelessWidget {
     );
   }
 
-  void _showAddGameActionDialog(BuildContext context, RefereeGameDetailProvider provider) {
+  void _showAddGameActionDialog(
+    BuildContext context,
+    RefereeGameDetailProvider provider,
+  ) {
     if (provider.match == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -180,44 +177,51 @@ class _RefereeGameDetailView extends StatelessWidget {
     // Prepare selected players data for the dialog
     // Convert PlayerModel list to Map format expected by dialog
     final selectedPlayersByTeam = <String, List<Map<String, dynamic>>>{};
-    
+
     // Helper function to extract team ID
     String? extractTeamId(dynamic teamIdData) {
       if (teamIdData == null) return null;
       if (teamIdData is String) return teamIdData;
       if (teamIdData is Map) {
-        return teamIdData['_id']?.toString() ?? 
-               teamIdData['id']?.toString();
+        return teamIdData['_id']?.toString() ?? teamIdData['id']?.toString();
       }
       return teamIdData.toString();
     }
-    
+
     // Get team IDs
     final teamAId = extractTeamId(provider.match!.homeTeamId);
     final teamBId = extractTeamId(provider.match!.awayTeamId);
-    
+
     if (teamAId != null && teamAId.isNotEmpty) {
       final selectedPlayers = provider.getSelectedPlayersForTeam(teamAId);
-      selectedPlayersByTeam[teamAId] = selectedPlayers.map((player) => {
-        'id': player.id,
-        'name': player.name,
-        'jerseyNumber': player.number,
-        'position': player.position,
-        'image': player.imageUrl,
-        'email': player.email,
-      }).toList();
+      selectedPlayersByTeam[teamAId] = selectedPlayers
+          .map(
+            (player) => {
+              'id': player.id,
+              'name': player.name,
+              'jerseyNumber': player.number,
+              'position': player.position,
+              'image': player.imageUrl,
+              'email': player.email,
+            },
+          )
+          .toList();
     }
-    
+
     if (teamBId != null && teamBId.isNotEmpty) {
       final selectedPlayers = provider.getSelectedPlayersForTeam(teamBId);
-      selectedPlayersByTeam[teamBId] = selectedPlayers.map((player) => {
-        'id': player.id,
-        'name': player.name,
-        'jerseyNumber': player.number,
-        'position': player.position,
-        'image': player.imageUrl,
-        'email': player.email,
-      }).toList();
+      selectedPlayersByTeam[teamBId] = selectedPlayers
+          .map(
+            (player) => {
+              'id': player.id,
+              'name': player.name,
+              'jerseyNumber': player.number,
+              'position': player.position,
+              'image': player.imageUrl,
+              'email': player.email,
+            },
+          )
+          .toList();
     }
 
     showDialog(
@@ -233,7 +237,7 @@ class _RefereeGameDetailView extends StatelessWidget {
               playerId: playerId,
               actionType: actionType,
             );
-            
+
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -258,12 +262,17 @@ class _RefereeGameDetailView extends StatelessWidget {
     );
   }
 
-  void _showForfeitDialog(BuildContext context, RefereeGameDetailProvider provider) {
+  void _showForfeitDialog(
+    BuildContext context,
+    RefereeGameDetailProvider provider,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Forfeit Game'),
-        content: const Text('Are you sure you want to forfeit this game? This action cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to forfeit this game? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -282,9 +291,7 @@ class _RefereeGameDetailView extends StatelessWidget {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Forfeit', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -292,4 +299,3 @@ class _RefereeGameDetailView extends StatelessWidget {
     );
   }
 }
-

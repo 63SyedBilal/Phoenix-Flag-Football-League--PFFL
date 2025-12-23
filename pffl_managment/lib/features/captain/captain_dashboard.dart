@@ -49,8 +49,8 @@ class CaptainDashboard extends StatelessWidget {
         return ChangeNotifierProvider(
           create: (_) => GamesProvider(
             userRole: 'captain',
-            assignedLeague: 'Six Nations', // TODO: Get from user profile
-            isLeagueFeeUnpaid: true, // TODO: Get from payment status
+            assignedLeague: 'Six Nations',
+            isLeagueFeeUnpaid: true,
           ),
           child: const GamesScreen(),
         );

@@ -16,22 +16,28 @@ class RefereeGameTabBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _RefereeTabButton(
-            label: 'Game actions',
-            isSelected: selectedIndex == 0,
-            onTap: () => onTabSelected(0),
+          Expanded(
+            child: _RefereeTabButton(
+              label: 'Game actions',
+              isSelected: selectedIndex == 0,
+              onTap: () => onTabSelected(0),
+            ),
           ),
           const SizedBox(width: 8),
-          _RefereeTabButton(
-            label: 'Mark Attendance',
-            isSelected: selectedIndex == 1,
-            onTap: () => onTabSelected(1),
+          Expanded(
+            child: _RefereeTabButton(
+              label: 'Mark Attendance',
+              isSelected: selectedIndex == 1,
+              onTap: () => onTabSelected(1),
+            ),
           ),
           const SizedBox(width: 8),
-          _RefereeTabButton(
-            label: 'Select Players',
-            isSelected: selectedIndex == 2,
-            onTap: () => onTabSelected(2),
+          Expanded(
+            child: _RefereeTabButton(
+              label: 'Select Players',
+              isSelected: selectedIndex == 2,
+              onTap: () => onTabSelected(2),
+            ),
           ),
         ],
       ),
@@ -55,20 +61,27 @@ class _RefereeTabButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1E3A5F) : const Color(0xFFE5E7EB),
+            color: isSelected
+                ? const Color(0xFF1E3A5F)
+                : const Color(0xFFE5E7EB),
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : Colors.black,
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isSelected ? Colors.white : Colors.black,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ),
       ),

@@ -18,7 +18,7 @@ class RefereeGameFabOverlay extends StatelessWidget {
     return GestureDetector(
       onTap: provider.closeFab,
       child: Container(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withValues(alpha: 0.3),
         child: Align(
           alignment: Alignment.bottomRight,
           child: Padding(
@@ -67,7 +67,8 @@ class RefereeGameFabOverlay extends StatelessWidget {
                   label: 'Toss',
                   icon: Icons.sports_football,
                   color: const Color(0xFF1E3A5F),
-                  isCompleted: provider.isTossCompleted ||
+                  isCompleted:
+                      provider.isTossCompleted ||
                       provider.match?.status == MatchStatus.live ||
                       provider.match?.status == MatchStatus.completed,
                   onTap: onTossTap,
@@ -103,7 +104,7 @@ class _RefereeFabOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isCompleted ? color.withOpacity(0.7) : color,
+          color: isCompleted ? color.withValues(alpha: 0.7) : color,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Row(

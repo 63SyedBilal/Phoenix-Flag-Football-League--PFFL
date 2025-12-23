@@ -33,6 +33,7 @@ import 'package:pffl_managment/features/captain/view/captain_create_team/provide
 import 'package:pffl_managment/invite_screens/captain_invite_screen/providers/captain_invite_provider.dart';
 import 'package:pffl_managment/features/player/providers/player_team_provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/core/providers/back_button_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -44,9 +45,7 @@ class AppProviders extends StatelessWidget {
     return MultiProvider(
       providers: [
         // SINGLE SOURCE OF TRUTH for all games data
-        ChangeNotifierProvider(
-          create: (_) => UnifiedGamesProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => UnifiedGamesProvider()),
         ChangeNotifierProvider(create: (_) => BaseProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -81,6 +80,7 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CaptainInviteProvider()),
         ChangeNotifierProvider(create: (_) => PlayerTeamProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => BackButtonProvider()),
       ],
       child: child,
     );

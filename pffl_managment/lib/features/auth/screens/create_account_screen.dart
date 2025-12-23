@@ -288,7 +288,7 @@ class CreateAccountScreen extends StatelessWidget {
                             signupProvider.isFormValid &&
                                 !signupProvider.isLoading
                             ? AppColors.primaryColor
-                            : AppColors.primaryColor.withOpacity(0.5),
+                            : AppColors.primaryColor.withValues(alpha: 0.5),
                         textColor: Colors.white,
                         isLoading: signupProvider.isLoading,
                         onPressed:
@@ -323,7 +323,7 @@ class CreateAccountScreen extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8.0),
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8.0),
         border: Border.all(color: Colors.red, width: 1.0),
       ),

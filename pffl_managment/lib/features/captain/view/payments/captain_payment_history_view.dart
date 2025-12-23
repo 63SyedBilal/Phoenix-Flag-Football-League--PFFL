@@ -4,7 +4,8 @@ class CaptainPaymentHistoryView extends StatefulWidget {
   const CaptainPaymentHistoryView({Key? key}) : super(key: key);
 
   @override
-  State<CaptainPaymentHistoryView> createState() => _CaptainPaymentHistoryViewState();
+  State<CaptainPaymentHistoryView> createState() =>
+      _CaptainPaymentHistoryViewState();
 }
 
 class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
@@ -108,15 +109,12 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                   const SizedBox(height: 8),
                   Text(
                     'View and manage all your team payments',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
-            
+
             // Search bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -135,9 +133,9 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Filter chips
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -170,9 +168,9 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Tab bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -190,9 +188,9 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Payment list
             Expanded(
               child: Padding(
@@ -238,7 +236,7 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
 
   Widget _buildPaymentList() {
     List<Map<String, dynamic>> payments;
-    
+
     switch (selectedTabIndex) {
       case 0:
         payments = completedPayments;
@@ -252,17 +250,13 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
       default:
         payments = completedPayments;
     }
-    
+
     if (payments.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.payment_outlined,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.payment_outlined, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No ${['Completed', 'Pending', 'Refunded'][selectedTabIndex]} Payments',
@@ -275,17 +269,14 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
             const SizedBox(height: 8),
             Text(
               'All your ${['completed', 'pending', 'refunded'][selectedTabIndex]} payments will appear here',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
         ),
       );
     }
-    
+
     return ListView.builder(
       itemCount: payments.length,
       itemBuilder: (context, index) {
@@ -303,7 +294,7 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -326,7 +317,10 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(payment['status']),
                     borderRadius: BorderRadius.circular(20),
@@ -342,21 +336,21 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Payment details
             _buildDetailRow('Date', payment['date']),
             _buildDetailRow('League', payment['league']),
             _buildDetailRow('Team', payment['team']),
             _buildDetailRow('Amount', payment['amount'], isAmount: true),
             _buildDetailRow('Method', payment['method']),
-            
+
             if (payment.containsKey('refundDate'))
               _buildDetailRow('Refund Date', payment['refundDate']),
-            
+
             const SizedBox(height: 16),
-            
+
             // Action button
             SizedBox(
               width: double.infinity,
@@ -374,10 +368,10 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                   ),
                 ),
                 child: Text(
-                  selectedTabIndex == 0 
-                    ? 'View Receipt' 
-                    : selectedTabIndex == 1 
-                      ? 'Pay Now' 
+                  selectedTabIndex == 0
+                      ? 'View Receipt'
+                      : selectedTabIndex == 1
+                      ? 'Pay Now'
                       : 'View Refund Details',
                 ),
               ),
@@ -394,13 +388,7 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           Text(
             value,
             style: TextStyle(
@@ -446,10 +434,7 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                 children: [
                   const Text(
                     'Payment Details',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -457,9 +442,9 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Payment info
               Center(
                 child: Container(
@@ -475,9 +460,9 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Details
               _buildDetailRow('Payment ID', payment['id']),
               _buildDetailRow('Date', payment['date']),
@@ -486,12 +471,12 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
               _buildDetailRow('Amount', payment['amount'], isAmount: true),
               _buildDetailRow('Method', payment['method']),
               _buildDetailRow('Status', payment['status']),
-              
+
               if (payment.containsKey('refundDate'))
                 _buildDetailRow('Refund Date', payment['refundDate']),
-              
+
               const SizedBox(height: 20),
-              
+
               // Action buttons
               Row(
                 children: [
@@ -521,12 +506,16 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                         } else if (payment['status'] == 'Pending') {
                           // Process payment
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing payment...')),
+                            const SnackBar(
+                              content: Text('Processing payment...'),
+                            ),
                           );
                         } else if (payment['status'] == 'Refunded') {
                           // Show refund details
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Refund details displayed')),
+                            const SnackBar(
+                              content: Text('Refund details displayed'),
+                            ),
                           );
                         }
                       },
@@ -539,10 +528,10 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                         ),
                       ),
                       child: Text(
-                        payment['status'] == 'Completed' 
-                          ? 'Download Receipt' 
-                          : payment['status'] == 'Pending' 
-                            ? 'Pay Now' 
+                        payment['status'] == 'Completed'
+                            ? 'Download Receipt'
+                            : payment['status'] == 'Pending'
+                            ? 'Pay Now'
                             : 'Refund Info',
                       ),
                     ),
