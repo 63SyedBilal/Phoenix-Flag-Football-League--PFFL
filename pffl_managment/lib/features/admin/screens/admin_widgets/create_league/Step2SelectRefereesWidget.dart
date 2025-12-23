@@ -10,7 +10,7 @@ import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.d
 import 'package:provider/provider.dart';
 
 /// Step 2 - Referee Invitation Widget
-/// 
+///
 /// Requirements:
 /// - No selection validation
 /// - Tiles must be unselectable (no tap response)
@@ -49,10 +49,10 @@ class Step2SelectRefereesWidget extends StatelessWidget {
                 onChanged: (query) {
                   viewModel.setRefereeSearchQuery(query);
                 },
-              ),              
+              ),
 
               const SizedBox(height: 16),
-              
+
               // Loading state
               if (viewModel.isLoadingReferees)
                 const Center(
@@ -114,13 +114,10 @@ class Step2SelectRefereesWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundWhite,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.borderLight,
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.borderLight, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -138,28 +135,22 @@ class Step2SelectRefereesWidget extends StatelessWidget {
             iconColor: AppColors.textDisabled,
           ),
           const SizedBox(width: 12),
-          
+
           // Name and email
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  referee.displayName,
-                  style: AppTextStyles.titleMedium,
-                ),
+                Text(referee.displayName, style: AppTextStyles.titleMedium),
                 const SizedBox(height: 2),
                 Text(
                   referee.email,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textDisabled,
-                  ),
+                  style: TextStyle(fontSize: 12, color: AppColors.textDisabled),
                 ),
               ],
             ),
           ),
-          
+
           // Invitation icon - ONLY way to invite
           Consumer<CreateLeagueViewModel>(
             builder: (context, vm, child) {
@@ -178,31 +169,23 @@ class Step2SelectRefereesWidget extends StatelessWidget {
   ) {
     // Check invitation status directly from viewModel to ensure latest state
     final bool isInviteSent = viewModel.isRefereeInviteSent(refereeId);
-    
+
     // Icon color: grey initially, red when invitation is sent
-    final iconColor = isInviteSent ? AppColors.buttonBackground : AppColors.borderDefault;
+    final iconColor = isInviteSent
+        ? AppColors.buttonBackground
+        : AppColors.borderDefault;
 
     return IconButton(
       icon: isInviteSent
-          ? SvgIcons.emailAfterInvitation(
-              size: 22,
-              color: iconColor,
-            )
-          : Icon(
-              AppIcons.emailOutlined,
-              color: iconColor,
-              size: 22,
-            ),
+          ? SvgIcons.emailAfterInvitation(size: 22, color: iconColor)
+          : Icon(AppIcons.emailOutlined, color: iconColor, size: 22),
       onPressed: isInviteSent
           ? null
           : () {
               // Send invitation - no validation, fire-and-forget
               viewModel.sendInvitationToReferee(refereeId);
             },
-      tooltip: isInviteSent
-          ? 'Invitation sent'
-          : 'Send invitation to referee',
+      tooltip: isInviteSent ? 'Invitation sent' : 'Send invitation to referee',
     );
   }
-
 }

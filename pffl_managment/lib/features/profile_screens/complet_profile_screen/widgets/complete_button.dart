@@ -18,7 +18,7 @@ class CompleteButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: isEnabled
                 ? const Color(0xFF0F172A)
-                : const Color(0xFF0F172A).withOpacity(0.5),
+                : const Color(0xFF0F172A).withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(26),
           ),
           child: Material(
@@ -40,7 +40,9 @@ class CompleteButton extends StatelessWidget {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text(
@@ -59,4 +61,3 @@ class CompleteButton extends StatelessWidget {
     );
   }
 }
-

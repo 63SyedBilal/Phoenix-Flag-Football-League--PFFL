@@ -21,7 +21,9 @@ class TeamColorField extends StatelessWidget {
             if (!colorHex.startsWith('#')) {
               colorHex = '#$colorHex';
             }
-            selectedColor = Color(int.parse(colorHex.replaceFirst('#', ''), radix: 16) + 0xFF000000);
+            selectedColor = Color(
+              int.parse(colorHex.replaceFirst('#', ''), radix: 16) + 0xFF000000,
+            );
           } catch (e) {
             // Invalid color format, ignore
             selectedColor = null;
@@ -49,10 +51,7 @@ class TeamColorField extends StatelessWidget {
                   ),
                   decoration: InputDecoration(
                     hintText: 'Tap to select color',
-                    hintStyle: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[400],
-                    ),
+                    hintStyle: TextStyle(fontSize: 14, color: Colors.grey[400]),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -152,7 +151,8 @@ class TeamColorField extends StatelessWidget {
               child: const Text('Select'),
               onPressed: () {
                 // Convert color to hex string
-                String hexColor = '#${pickerColor.value.toRadixString(16).substring(2).toUpperCase()}';
+                String hexColor =
+                    '#${pickerColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
                 provider.setTeamColor(hexColor);
                 Navigator.of(context).pop();
               },
@@ -163,4 +163,3 @@ class TeamColorField extends StatelessWidget {
     );
   }
 }
-

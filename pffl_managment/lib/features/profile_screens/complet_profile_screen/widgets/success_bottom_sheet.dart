@@ -22,7 +22,7 @@ class SuccessBottomSheet extends StatelessWidget {
           child: GestureDetector(
             onTap: () {}, // Prevent dismissing on background tap
             child: Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
@@ -86,12 +86,18 @@ class SuccessBottomSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(26),
                             onTap: () async {
                               provider.hideSuccessSheet();
-                              
+
                               // Check user role to determine next screen
-                              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                              final prefs = await SharedPreferences.getInstance();
-                              final role = prefs.getString('role') ?? authProvider.userRole;
-                              
+                              final authProvider = Provider.of<AuthProvider>(
+                                context,
+                                listen: false,
+                              );
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              final role =
+                                  prefs.getString('role') ??
+                                  authProvider.userRole;
+
                               // Determine route based on user role
                               String route;
                               switch (role.toLowerCase()) {
@@ -109,7 +115,9 @@ class SuccessBottomSheet extends StatelessWidget {
                                     }
                                   } catch (e) {
                                     // If check fails, default to create team screen
-                                    debugPrint('⚠️ Error checking team existence: $e');
+                                    debugPrint(
+                                      '⚠️ Error checking team existence: $e',
+                                    );
                                     route = AppRoutes.captainCreateTeam;
                                   }
                                   break;
@@ -126,9 +134,10 @@ class SuccessBottomSheet extends StatelessWidget {
                                   route = AppRoutes.statKeeperDashboard;
                                   break;
                                 default:
-                                  route = AppRoutes.playerDashboard; // Default fallback
+                                  route = AppRoutes
+                                      .playerDashboard; // Default fallback
                               }
-                              
+
                               Navigator.pushNamedAndRemoveUntil(
                                 context,
                                 route,
@@ -160,4 +169,3 @@ class SuccessBottomSheet extends StatelessWidget {
     );
   }
 }
-

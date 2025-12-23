@@ -6,9 +6,7 @@ import 'package:pffl_managment/routes/route_generator.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
 void main() {
-  // Configure Dio interceptors for authentication
   AuthService.configureDio();
-
   runApp(const MyApp());
 }
 
@@ -29,4 +27,4 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -132,25 +132,32 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                           final notification = provider.notifications[index];
                           final isProcessing =
                               _processingNotificationId == notification.id;
-                          
+
                           // Show buttons for LEAGUE_TEAM_INVITE and TEAM_INVITE when pending
                           // TEAM_INVITE_ACCEPTED is informational only (no buttons needed)
                           final isPending = notification.isPending;
-                          final isInviteType = notification.type == 'LEAGUE_TEAM_INVITE' ||
+                          final isInviteType =
+                              notification.type == 'LEAGUE_TEAM_INVITE' ||
                               notification.type == 'TEAM_INVITE';
                           final shouldShowButtons = isPending && isInviteType;
-                          
+
                           // If TEAM_INVITE_ACCEPTED, refresh team data when notification is viewed
-                          if (notification.type == 'TEAM_INVITE_ACCEPTED' && !isProcessing) {
+                          if (notification.type == 'TEAM_INVITE_ACCEPTED' &&
+                              !isProcessing) {
                             // Refresh team data in background when notification is displayed
-                            WidgetsBinding.instance.addPostFrameCallback((_) async {
+                            WidgetsBinding.instance.addPostFrameCallback((
+                              _,
+                            ) async {
                               try {
-                                final captainTeamProvider = Provider.of<CaptainTeamProvider>(
-                                  context,
-                                  listen: false,
-                                );
+                                final captainTeamProvider =
+                                    Provider.of<CaptainTeamProvider>(
+                                      context,
+                                      listen: false,
+                                    );
                                 await captainTeamProvider.refresh();
-                                print('✅ Team data refreshed after viewing TEAM_INVITE_ACCEPTED');
+                                print(
+                                  '✅ Team data refreshed after viewing TEAM_INVITE_ACCEPTED',
+                                );
                               } catch (e) {
                                 print('⚠️ Could not refresh team data: $e');
                               }
@@ -198,13 +205,13 @@ class _CaptainNotificationState extends State<CaptainNotification> {
           color: notification.isPending
               ? Colors.blue.shade200
               : (notification.isAccepted
-                  ? Colors.green.shade200
-                  : Colors.grey.shade300),
+                    ? Colors.green.shade200
+                    : Colors.grey.shade300),
           width: notification.isPending ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -229,13 +236,14 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                           fit: BoxFit.cover,
                         )
                       : notification.leagueLogo != null
-                          ? DecorationImage(
-                              image: NetworkImage(notification.leagueLogo!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+                      ? DecorationImage(
+                          image: NetworkImage(notification.leagueLogo!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: notification.teamImage == null &&
+                child:
+                    notification.teamImage == null &&
                         notification.leagueLogo == null
                     ? Icon(
                         notification.type == 'TEAM_INVITE'
@@ -304,14 +312,16 @@ class _CaptainNotificationState extends State<CaptainNotification> {
               ),
               // Status badge
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: notification.isPending
                       ? Colors.blue.shade50
                       : (notification.isAccepted
-                          ? Colors.green.shade50
-                          : Colors.grey.shade100),
+                            ? Colors.green.shade50
+                            : Colors.grey.shade100),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -322,8 +332,8 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                     color: notification.isPending
                         ? Colors.blue.shade700
                         : (notification.isAccepted
-                            ? Colors.green.shade700
-                            : Colors.grey.shade700),
+                              ? Colors.green.shade700
+                              : Colors.grey.shade700),
                   ),
                 ),
               ),
@@ -341,7 +351,10 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                       onPressed: isProcessing ? null : onReject,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red.shade700,
-                        side: BorderSide(color: Colors.red.shade700, width: 1.5),
+                        side: BorderSide(
+                          color: Colors.red.shade700,
+                          width: 1.5,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -379,8 +392,9 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -417,26 +431,32 @@ class _CaptainNotificationState extends State<CaptainNotification> {
     }
   }
 
-  Future<void> _handleAccept(BuildContext context, String notificationId) async {
+  Future<void> _handleAccept(
+    BuildContext context,
+    String notificationId,
+  ) async {
     setState(() {
       _processingNotificationId = notificationId;
     });
 
     try {
-      final provider = Provider.of<NotificationProvider>(context, listen: false);
+      final provider = Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      );
       final result = await provider.acceptNotification(notificationId);
       final success = result['success'] == true;
 
       if (success && context.mounted) {
         // Refresh notifications to update status
         await provider.refresh();
-        
+
         // If this is a TEAM_INVITE_ACCEPTED notification, refresh team data
         final notification = provider.notifications.firstWhere(
           (n) => n.id == notificationId,
           orElse: () => provider.notifications.first,
         );
-        
+
         if (notification.type == 'TEAM_INVITE_ACCEPTED') {
           // Refresh captain team data to show new player
           try {
@@ -451,7 +471,7 @@ class _CaptainNotificationState extends State<CaptainNotification> {
             print('⚠️ CaptainTeamProvider not available in context: $e');
           }
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invitation accepted successfully!'),
@@ -463,7 +483,8 @@ class _CaptainNotificationState extends State<CaptainNotification> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                provider.errorMessage ?? 'Failed to accept invitation'),
+              provider.errorMessage ?? 'Failed to accept invitation',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -473,7 +494,9 @@ class _CaptainNotificationState extends State<CaptainNotification> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+              'Error: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -488,13 +511,19 @@ class _CaptainNotificationState extends State<CaptainNotification> {
     }
   }
 
-  Future<void> _handleReject(BuildContext context, String notificationId) async {
+  Future<void> _handleReject(
+    BuildContext context,
+    String notificationId,
+  ) async {
     setState(() {
       _processingNotificationId = notificationId;
     });
 
     try {
-      final provider = Provider.of<NotificationProvider>(context, listen: false);
+      final provider = Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      );
       final success = await provider.rejectNotification(notificationId);
 
       if (success && context.mounted) {
@@ -509,7 +538,8 @@ class _CaptainNotificationState extends State<CaptainNotification> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                provider.errorMessage ?? 'Failed to reject invitation'),
+              provider.errorMessage ?? 'Failed to reject invitation',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -519,7 +549,9 @@ class _CaptainNotificationState extends State<CaptainNotification> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+              'Error: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),

@@ -156,8 +156,7 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
   ) {
     // Determine required players per team based on match format
     // For now, assume 5v5 format. You can add format detection logic later.
-    final int requiredPlayersPerTeam =
-        5; // TODO: Get from match.format or similar
+    final int requiredPlayersPerTeam = 5;
 
     // Get player counts for both teams
     final homeTeamId = _extractTeamId(widget.match.homeTeamId);
