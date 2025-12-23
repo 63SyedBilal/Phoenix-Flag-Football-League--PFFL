@@ -25,6 +25,9 @@ class MatchModel {
   final String? gameNumber;
   final TeamStatModel? homeTeamStats;
   final TeamStatModel? awayTeamStats;
+  final List<Map<String, dynamic>> actions;
+  final String? tossWinnerId;
+  final String? tossChoice;
 
   // Filtering fields
   final String? leagueId;
@@ -55,6 +58,9 @@ class MatchModel {
     this.format,
     this.homeTeamStats,
     this.awayTeamStats,
+    this.actions = const [],
+    this.tossWinnerId,
+    this.tossChoice,
   });
 
   MatchModel copyWith({
@@ -81,6 +87,9 @@ class MatchModel {
     String? format,
     TeamStatModel? homeTeamStats,
     TeamStatModel? awayTeamStats,
+    List<Map<String, dynamic>>? actions,
+    String? tossWinnerId,
+    String? tossChoice,
   }) {
     return MatchModel(
       id: id ?? this.id,
@@ -106,6 +115,9 @@ class MatchModel {
       format: format ?? this.format,
       homeTeamStats: homeTeamStats ?? this.homeTeamStats,
       awayTeamStats: awayTeamStats ?? this.awayTeamStats,
+      actions: actions ?? this.actions,
+      tossWinnerId: tossWinnerId ?? this.tossWinnerId,
+      tossChoice: tossChoice ?? this.tossChoice,
     );
   }
 

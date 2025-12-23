@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
+import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/services/team_service.dart';
+import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_detail_models.dart';
 
@@ -9,7 +12,9 @@ class LeagueDetailProvider extends ChangeNotifier {
   bool _isEditing = false;
 
   String? _leagueId;
+  String _leagueName = '';
   List<MatchModel> _allMatches = [];
+  List<TeamModel> _leagueTeams = []; // From LeagueService
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -20,7 +25,9 @@ class LeagueDetailProvider extends ChangeNotifier {
   LeagueGameModel? get editingGame => _editingGame;
   bool get isEditing => _isEditing;
   String? get leagueId => _leagueId;
+  String get leagueName => _leagueName;
   List<MatchModel> get allMatches => _allMatches;
+  List<TeamModel> get leagueTeams => _leagueTeams;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -31,9 +38,43 @@ class LeagueDetailProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _allMatches = await MatchService.getMatchesByLeague(leagueId);
+      // Parallel fetch: Matches and League Details (which includes teams)
+      final results = await Future.wait([
+        MatchService.getMatchesByLeague(leagueId),
+        LeagueService.getLeagueById(leagueId),
+      ]);
+
+      _allMatches = results[0] as List<MatchModel>;
+
+      final leagueDetail = results[1] as LeagueDetailModel?;
+      if (leagueDetail != null) {
+        _leagueName = leagueDetail.leagueName;
+
+        // Fetch detailed info for each team to ensure players are populated
+        if (leagueDetail.teams.isNotEmpty) {
+          final futures = leagueDetail.teams.map((team) async {
+            try {
+              final teamData = await TeamService.getTeamById(team.id);
+              if (teamData != null) {
+                return TeamModel.fromJson(teamData);
+              }
+              return team;
+            } catch (e) {
+              print('⚠️ Failed to fetch details for team ${team.teamName}: $e');
+              return team;
+            }
+          });
+
+          _leagueTeams = await Future.wait(futures);
+        } else {
+          _leagueTeams = [];
+        }
+      } else {
+        _leagueTeams = [];
+      }
     } catch (e) {
       _errorMessage = e.toString();
+      print('❌ Error initializing league detail: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -294,6 +335,22 @@ class LeagueDetailProvider extends ChangeNotifier {
         backgroundColor: color,
       );
     }).toList();
+  }
+
+  // Send payment reminder
+  Future<void> sendPaymentReminder(String playerId) async {
+    if (_leagueId == null) return;
+
+    final message =
+        "You have not completed payment for this league: $_leagueName. Please complete your payment.";
+
+    // We don't await this to block UI, but we do want to trigger it.
+    // Actually, good practice to await but we won't show loader.
+    await NotificationService.sendPaymentReminder(
+      playerId: playerId,
+      leagueId: _leagueId!,
+      message: message,
+    );
   }
 }
 
