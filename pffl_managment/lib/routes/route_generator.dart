@@ -9,6 +9,7 @@ import 'package:pffl_managment/features/auth/screens/create_account_screen.dart'
 import 'package:pffl_managment/features/auth/screens/get_started_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_profile_screen.dart';
+import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_captain_profile_screen.dart';
 import 'package:pffl_managment/features/admin/users/views/my_team.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_receipt_screen.dart';
@@ -49,6 +50,11 @@ class RouteGenerator {
 
       case AppRoutes.completeProfile:
         return MaterialPageRoute(builder: (_) => const CompleteProfileScreen());
+
+      case AppRoutes.completeCaptainProfile:
+        return MaterialPageRoute(
+          builder: (_) => const CompleteCaptainProfileScreen(),
+        );
 
       case AppRoutes.playerDashboard:
         return MaterialPageRoute(builder: (_) => const PlayerDashboard());

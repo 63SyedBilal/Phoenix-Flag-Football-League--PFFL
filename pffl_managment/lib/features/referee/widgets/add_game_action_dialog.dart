@@ -240,8 +240,7 @@ class _AddGameActionDialogState extends State<AddGameActionDialog> {
                     const SizedBox(height: 12),
 
                     // Player Selection Section
-                    if (_selectedTeam != null)
-                      SizedBox(height: 220, child: _buildPlayerSelection()),
+                    if (_selectedTeam != null) _buildPlayerSelection(),
                   ],
                 ),
               ),

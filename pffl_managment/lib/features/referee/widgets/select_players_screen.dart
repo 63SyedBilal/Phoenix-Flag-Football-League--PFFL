@@ -114,10 +114,7 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
                     ),
 
                     const SizedBox(height: 12),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      child: _buildPresentPlayersList(context, provider),
-                    ),
+                    ..._buildPresentPlayersListItems(context, provider),
                   ] else
                     Center(
                       child: Padding(
@@ -303,22 +300,24 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
     );
   }
 
-  Widget _buildPresentPlayersList(
+  List<Widget> _buildPresentPlayersListItems(
     BuildContext context,
     RefereeGameDetailProvider provider,
   ) {
     final selectedTeamId = provider.selectedPlayersTeamId;
 
     if (selectedTeamId == null) {
-      return const SizedBox.shrink();
+      return [];
     }
     if (provider.isLoadingPlayers) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: CircularProgressIndicator(),
+      return [
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: CircularProgressIndicator(),
+          ),
         ),
-      );
+      ];
     }
     final List<PlayerModel> allPlayers = provider.getTeamPlayers(
       selectedTeamId,
@@ -329,123 +328,117 @@ class _SelectPlayersScreenState extends State<SelectPlayersScreen> {
     }).toList();
 
     if (presentPlayers.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      return [
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.people_outline, size: 40, color: Colors.grey[300]),
+                const SizedBox(height: 8),
+                Text(
+                  'No players marked as present',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Please mark attendance first',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return presentPlayers.map((player) {
+      final playerId = player.id;
+      final isSelected = provider.isPlayerSelected(playerId);
+
+      return GestureDetector(
+        onTap: () => provider.togglePlayerSelection(playerId),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!, width: 1),
+          ),
+          child: Row(
             children: [
-              Icon(Icons.people_outline, size: 40, color: Colors.grey[300]),
-              const SizedBox(height: 8),
-              Text(
-                'No players marked as present',
-                style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                textAlign: TextAlign.center,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: player.imageUrl != null && player.imageUrl!.isNotEmpty
+                    ? Image.network(
+                        player.imageUrl!,
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildDefaultAvatar(32);
+                        },
+                      )
+                    : _buildDefaultAvatar(32),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Please mark attendance first',
-                style: TextStyle(color: Colors.grey[400], fontSize: 11),
-                textAlign: TextAlign.center,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '#${player.number} ${player.name}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: isSelected
+                            ? const Color(0xFF1E3A5F)
+                            : Colors.black,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      player.position,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Selection checkbox - smaller
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF1E3A5F)
+                        : const Color(0xFFE5E7EB),
+                    width: 2,
+                  ),
+                  color: isSelected
+                      ? const Color(0xFF1E3A5F)
+                      : Colors.transparent,
+                ),
+                child: isSelected
+                    ? const Icon(Icons.check, size: 12, color: Colors.white)
+                    : null,
               ),
             ],
           ),
         ),
       );
-    }
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: presentPlayers.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final player = presentPlayers[index];
-        final playerId = player.id;
-        final isSelected = provider.isPlayerSelected(playerId);
-
-        return GestureDetector(
-          onTap: () => provider.togglePlayerSelection(playerId),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!, width: 1),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: player.imageUrl != null && player.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          player.imageUrl!,
-                          width: 32,
-                          height: 32,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildDefaultAvatar(32);
-                          },
-                        )
-                      : _buildDefaultAvatar(32),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '#${player.number} ${player.name}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: isSelected
-                              ? const Color(0xFF1E3A5F)
-                              : Colors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        player.position,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                // Selection checkbox - smaller
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF1E3A5F)
-                          : const Color(0xFFE5E7EB),
-                      width: 2,
-                    ),
-                    color: isSelected
-                        ? const Color(0xFF1E3A5F)
-                        : Colors.transparent,
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, size: 12, color: Colors.white)
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    }).toList();
   }
 
   Widget _buildDefaultAvatar([double size = 40]) {

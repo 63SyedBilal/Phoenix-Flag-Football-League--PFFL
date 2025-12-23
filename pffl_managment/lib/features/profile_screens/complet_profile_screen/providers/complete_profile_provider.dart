@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pffl_managment/core/services/admin_service.dart';
+import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/core/services/admin_service.dart';
 import 'package:pffl_managment/config/app_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 /// Provider for Complete Profile screen state and business logic
@@ -31,6 +32,9 @@ class CompleteProfileProvider extends ChangeNotifier {
 
   // Validation state
   final Map<String, String?> _fieldErrors = {};
+  final UserPreferenceProvider _userPrefs;
+
+  CompleteProfileProvider(this._userPrefs);
 
   // Getters - Basic info
   String? get firstName => _firstName;
@@ -71,30 +75,77 @@ class CompleteProfileProvider extends ChangeNotifier {
         _fieldErrors.isEmpty;
   }
 
-  /// Initialize provider - load user data and check if profile already exists
+  /// Initialize provider - load user data and sync with backend
   Future<void> initialize() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
+      // Load from local cache
+      _firstName = _userPrefs.firstName;
+      _lastName = _userPrefs.lastName;
+      _email = _userPrefs.userEmail;
+      _phone = _userPrefs.userPhone;
 
-      if (userId == null) {
-        debugPrint('⚠️ No userId found in SharedPreferences');
-        return;
+      final savedPositions = _userPrefs.position;
+      if (savedPositions != null && savedPositions.isNotEmpty) {
+        _selectedPositions.clear();
+        _selectedPositions.addAll(savedPositions.split(', '));
       }
 
-      // Load saved user data
-      _firstName = prefs.getString('firstName');
-      _lastName = prefs.getString('lastName');
-      _email = prefs.getString('userEmail');
+      _jerseyNumber = _userPrefs.jerseyNumber;
+      _emergencyContactName = _userPrefs.emergencyContactName;
+      _emergencyPhone = _userPrefs.emergencyPhone;
+      _profileImagePath = _userPrefs.profileImage;
 
-      // Check if profile already completed
-      final isCompleted = prefs.getBool('profile_completed_$userId');
-      if (isCompleted == true) {
-        debugPrint('✅ Profile already completed');
-        return;
-      }
+      // Sync with backend
+      _syncWithBackend();
+
+      notifyListeners();
     } catch (e) {
       debugPrint('❌ Error initializing provider: $e');
+    }
+  }
+
+  Future<void> _syncWithBackend() async {
+    try {
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.get(AppConfig.completeProfileEndpoint);
+      if (response.statusCode == 200) {
+        final data = response.data['user'];
+        if (data != null) {
+          await _userPrefs.setFirstName(data['firstName']);
+          await _userPrefs.setLastName(data['lastName']);
+          await _userPrefs.setUserPhone(data['phone']);
+          await _userPrefs.setProfileImage(data['profileImage']);
+          await _userPrefs.setPosition(data['position']);
+          await _userPrefs.setJerseyNumber(data['jerseyNumber']?.toString());
+          await _userPrefs.setEmergencyContactName(
+            data['emergencyContactName'],
+          );
+          await _userPrefs.setEmergencyPhone(data['emergencyPhone']);
+          await _userPrefs.setProfileComplete(
+            data['isProfileComplete'] ?? true,
+          );
+
+          _firstName = data['firstName'];
+          _lastName = data['lastName'];
+          _email = data['email'];
+          _phone = data['phone'];
+
+          final pos = data['position'] as String?;
+          if (pos != null) {
+            _selectedPositions.clear();
+            _selectedPositions.addAll(pos.split(', '));
+          }
+
+          _jerseyNumber = data['jerseyNumber']?.toString();
+          _emergencyContactName = data['emergencyContactName'];
+          _emergencyPhone = data['emergencyPhone'];
+          _profileImagePath = data['profileImage'];
+
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Profile backend sync failed: $e');
     }
   }
 
@@ -326,13 +377,14 @@ class CompleteProfileProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // Save completion status to SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        final userId = prefs.getString('userId');
-        if (userId != null) {
-          await prefs.setBool('profile_completed_$userId', true);
-          debugPrint('✅ Profile completion saved to SharedPreferences');
-        }
+        // Update local cache
+        await _userPrefs.setPosition(positionString);
+        await _userPrefs.setEmergencyContactName(_emergencyContactName);
+        await _userPrefs.setEmergencyPhone(_emergencyPhone);
+        if (_jerseyNumber != null)
+          await _userPrefs.setJerseyNumber(_jerseyNumber);
+        if (imageUrl != null) await _userPrefs.setProfileImage(imageUrl);
+        await _userPrefs.setProfileComplete(true);
 
         // Show success sheet
         _showSuccessSheet = true;
@@ -356,6 +408,11 @@ class CompleteProfileProvider extends ChangeNotifier {
   void hideSuccessSheet() {
     _showSuccessSheet = false;
     notifyListeners();
+  }
+
+  Future<void> skipForNow() async {
+    // Mark as incomplete but allows proceeding to dashboard
+    await _userPrefs.setProfileComplete(false);
   }
 
   /// Static method to check if profile is completed

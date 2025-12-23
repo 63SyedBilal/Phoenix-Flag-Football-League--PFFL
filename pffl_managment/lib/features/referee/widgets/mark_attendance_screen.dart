@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/referee/providers/referee_game_detail_provider.dart';
@@ -89,8 +88,9 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
                   if (provider.selectedAttendanceTeamId != null)
-                    _buildPlayerList(context, provider)
+                    ..._buildPlayerListItems(context, provider)
                   else
                     Center(
                       child: Padding(
@@ -281,174 +281,177 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
     );
   }
 
-  Widget _buildPlayerList(
+  List<Widget> _buildPlayerListItems(
     BuildContext context,
     RefereeGameDetailProvider provider,
   ) {
     final selectedTeamId = provider.selectedAttendanceTeamId;
 
     if (selectedTeamId == null) {
-      return const SizedBox.shrink();
+      return [];
     }
     if (provider.isLoadingPlayers) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(),
+      return [
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(),
+          ),
         ),
-      );
+      ];
     }
     final List<PlayerModel> players = provider.getTeamPlayers(selectedTeamId);
 
     if (players.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            children: [
-              Icon(Icons.people_outline, size: 48, color: Colors.grey[300]),
-              const SizedBox(height: 8),
-              Text(
-                'No players found for this team',
-                style: TextStyle(color: Colors.grey[500]),
-                textAlign: TextAlign.center,
-              ),
-            ],
+      return [
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              children: [
+                Icon(Icons.people_outline, size: 48, color: Colors.grey[300]),
+                const SizedBox(height: 8),
+                Text(
+                  'No players found for this team',
+                  style: TextStyle(color: Colors.grey[500]),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
-      );
+      ];
     }
 
-    return Column(
-      children: [
-        // Header row with title and add button
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Mark Attendance',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
+    return [
+      // Header row with title and add button
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Mark Attendance',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
             ),
-            IconButton(
-              onPressed: provider.isAttendanceLocked
-                  ? null
-                  : () {
-                      for (final player in players) {
-                        provider.markAttendance(player.id, true);
-                      }
-                    },
-              tooltip: 'Mark all as present',
-              icon: const Icon(Icons.done_all),
-              color: Colors.green,
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ...players.map((player) {
-          final playerId = player.id;
-          final isPresent = provider.isPlayerPresent(playerId);
+          ),
+          IconButton(
+            onPressed: provider.isAttendanceLocked
+                ? null
+                : () {
+                    for (final player in players) {
+                      provider.markAttendance(player.id, true);
+                    }
+                  },
+            tooltip: 'Mark all as present',
+            icon: const Icon(Icons.done_all),
+            color: Colors.green,
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      ...players.map((player) {
+        final playerId = player.id;
+        final isPresent = provider.isPlayerPresent(playerId);
 
-          return Opacity(
-            opacity: provider.isAttendanceLocked ? 0.6 : 1,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child:
-                        player.imageUrl != null && player.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            player.imageUrl!,
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return _buildDefaultAvatar();
-                            },
-                          )
-                        : _buildDefaultAvatar(),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '#${player.number} ${player.name}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          'Position: ${player.position}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
+        return Opacity(
+          opacity: provider.isAttendanceLocked ? 0.6 : 1,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: player.imageUrl != null && player.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          player.imageUrl!,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildDefaultAvatar();
+                          },
+                        )
+                      : _buildDefaultAvatar(),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: provider.isAttendanceLocked
-                            ? null
-                            : () => provider.markAttendance(playerId, false),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: !isPresent ? Colors.red : Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            color: !isPresent ? Colors.white : Colors.grey[400],
-                            size: 20,
-                          ),
+                      Text(
+                        '#${player.number} ${player.name}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: provider.isAttendanceLocked
-                            ? null
-                            : () => provider.markAttendance(playerId, true),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: isPresent
-                                ? AppColors.primaryColor
-                                : Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.check,
-                            color: isPresent ? Colors.white : Colors.grey[400],
-                            size: 20,
-                          ),
-                        ),
+                      Text(
+                        'Position: ${player.position}',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: provider.isAttendanceLocked
+                          ? null
+                          : () => provider.markAttendance(playerId, false),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: !isPresent ? Colors.red : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          color: !isPresent ? Colors.white : Colors.grey[400],
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: provider.isAttendanceLocked
+                          ? null
+                          : () => provider.markAttendance(playerId, true),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isPresent
+                              ? const Color(0xFF1E3A5F)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          color: isPresent ? Colors.white : Colors.grey[400],
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          );
-        }).toList(),
-      ],
-    );
+          ),
+        );
+      }),
+    ];
   }
 
   Widget _buildDefaultAvatar() {

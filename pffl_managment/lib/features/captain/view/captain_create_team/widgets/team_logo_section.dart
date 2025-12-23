@@ -1,105 +1,115 @@
 import 'dart:io';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
 
-/// Team logo upload section widget
 class TeamLogoSection extends StatelessWidget {
   const TeamLogoSection({super.key});
+
+  Future<void> _pickImage(
+    BuildContext context,
+    CreateTeamProvider provider,
+  ) async {
+    try {
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      final String? path = result?.files.single.path;
+      if (path == null) return;
+
+      final file = File(path);
+      if (!await file.exists()) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(content: Text('Selected image could not be found')),
+        );
+        return;
+      }
+
+      provider.setTeamLogo(path);
+    } catch (_) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('Failed to pick image')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<CreateTeamProvider>(
       builder: (context, provider, _) {
+        final theme = Theme.of(context);
         return Center(
-          child: Column(
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              GestureDetector(
-                onTap: () => _pickImage(context, provider),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFD1D5DB),
-                          width: 2,
-                          style: BorderStyle.solid,
-                        ),
-                        image: provider.teamLogoPath != null
-                            ? DecorationImage(
-                                image: FileImage(File(provider.teamLogoPath!)),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                        color: provider.teamLogoPath == null
-                            ? Colors.grey[100]
-                            : null,
-                      ),
-                      child: provider.teamLogoPath == null
-                          ? const Icon(
-                              Icons.image,
-                              size: 60,
-                              color: Color(0xFFD1D5DB),
+              DottedBorder(
+                options: CircularDottedBorderOptions(
+                  dashPattern: const <double>[5, 5],
+                  strokeWidth: 1,
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.white70
+                      : const Color.fromRGBO(0, 0, 0, 0.4),
+                ),
+                child: Container(
+                  width: 125,
+                  height: 125,
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  child: ClipOval(
+                    child: Center(
+                      child: provider.teamLogoPath != null
+                          ? Image.file(
+                              File(provider.teamLogoPath!),
+                              fit: BoxFit.cover,
+                              width: 125,
+                              height: 125,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _buildPlaceholderIcon(theme);
+                              },
                             )
-                          : null,
+                          : _buildPlaceholderIcon(theme),
                     ),
-                    Positioned(
-                      bottom: -9,
-                      left: 30,
-                      child: GestureDetector(
-                        onTap: () => _pickImage(context, provider),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.upload, size: 16, color: Colors.white),
-                              SizedBox(width: 6),
-                              Text(
-                                'Upload',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -10,
+                left: 40,
+                child: GestureDetector(
+                  onTap: () => _pickImage(context, provider),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: ShapeDecoration(
+                      color: AppColors.darkScaffoldBackground,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.88),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Team Logo (Optional)',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF000000),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Please upload your team\'s logo in this section to ensure that\nwe can represent your brand accurately.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[600],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.upload, size: 10, color: Colors.white),
+                        SizedBox(width: 2),
+                        Text(
+                          'Upload',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontFamily: 'Satoshi Variable',
+                            fontWeight: FontWeight.w700,
+                            height: 1.37,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -109,28 +119,13 @@ class TeamLogoSection extends StatelessWidget {
     );
   }
 
-  Future<void> _pickImage(
-    BuildContext context,
-    CreateTeamProvider provider,
-  ) async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-
-      if (result != null && result.files.single.path != null) {
-        provider.setTeamLogo(result.files.single.path);
-      }
-    } catch (e) {
-      print('❌ Error picking image: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error picking image: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+  Widget _buildPlaceholderIcon(ThemeData theme) {
+    return Icon(
+      Icons.image,
+      size: 60,
+      color: theme.brightness == Brightness.dark 
+          ? Colors.grey[700] 
+          : Colors.grey[300],
+    );
   }
 }
-

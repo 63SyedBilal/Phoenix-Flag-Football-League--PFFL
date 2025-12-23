@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
+import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/profile_image_section.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/position_dropdown.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/emergency_contact_fields.dart';
@@ -22,7 +23,9 @@ class CompleteProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => CompleteProfileProvider()..initialize(),
+      create: (context) => CompleteProfileProvider(
+        Provider.of<UserPreferenceProvider>(context, listen: false),
+      )..initialize(),
       child: const _CompleteProfileView(),
     );
   }
