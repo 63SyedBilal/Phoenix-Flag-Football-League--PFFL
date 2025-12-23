@@ -12,6 +12,7 @@ import 'package:pffl_managment/screens/games/common/games_provider.dart';
 import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:pffl_managment/features/captain/providers/captain_team_provider.dart';
+import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
 
 class CaptainDashboard extends StatelessWidget {
   const CaptainDashboard({super.key});
@@ -20,49 +21,47 @@ class CaptainDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<CaptainNavigationProvider>(context);
 
-    return ChangeNotifierProvider(
-      create: (_) => CaptainTeamProvider(),
-      child: Scaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              const CaptainHeaderWidget(),
-              Expanded(child: _buildContent(navigationProvider.selectedIndex)),
-              const CaptainBottomNevigation(),
-            ],
+    return BackButtonWrapper(
+      isRoot: true,
+      child: ChangeNotifierProvider(
+        create: (_) => CaptainTeamProvider(),
+        child: Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                const CaptainHeaderWidget(),
+                Expanded(
+                  child: IndexedStack(
+                    index: navigationProvider.selectedIndex,
+                    children: [
+                      const CaptainHomeScreen(),
+                      ChangeNotifierProvider(
+                        create: (_) => LeagueProvider(userRole: 'captain'),
+                        child: const LeaguesScreen(),
+                      ),
+                      ChangeNotifierProvider(
+                        create: (_) => GamesProvider(
+                          userRole: 'captain',
+                          assignedLeague: 'Six Nations',
+                          isLeagueFeeUnpaid: true,
+                        ),
+                        child: const GamesScreen(),
+                      ),
+                      const TeamManagementScreen(),
+                      ChangeNotifierProvider(
+                        create: (_) =>
+                            RoleBasedSettingsProvider(userRole: 'captain'),
+                        child: const SettingsScreen(),
+                      ),
+                    ],
+                  ),
+                ),
+                const CaptainBottomNevigation(),
+              ],
+            ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildContent(int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return const CaptainHomeScreen();
-      case 1:
-        return ChangeNotifierProvider(
-          create: (_) => LeagueProvider(userRole: 'captain'),
-          child: const LeaguesScreen(),
-        );
-      case 2:
-        return ChangeNotifierProvider(
-          create: (_) => GamesProvider(
-            userRole: 'captain',
-            assignedLeague: 'Six Nations',
-            isLeagueFeeUnpaid: true,
-          ),
-          child: const GamesScreen(),
-        );
-      case 3:
-        return const TeamManagementScreen();
-      case 4:
-        return ChangeNotifierProvider(
-          create: (_) => RoleBasedSettingsProvider(userRole: 'captain'),
-          child: const SettingsScreen(),
-        );
-      default:
-        return const Center(child: Text('Captain Dashboard'));
-    }
   }
 }

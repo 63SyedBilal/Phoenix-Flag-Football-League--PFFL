@@ -12,6 +12,8 @@ import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:provider/provider.dart';
 
+import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
+
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
@@ -23,48 +25,43 @@ class AdminDashboard extends StatelessWidget {
       ],
       child: Consumer<AdminNavigationProvider>(
         builder: (context, navigationProvider, _) {
-          return Scaffold(
-            body: SafeArea(
-              child: Column(
-                children: [
-                  const AdminHeaderWidget(),
-                  Expanded(
-                    child: _buildContent(navigationProvider.selectedIndex),
-                  ),
-                  const AdminBottomNevigation(),
-                ],
+          return BackButtonWrapper(
+            isRoot: true,
+            child: Scaffold(
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    const AdminHeaderWidget(),
+                    Expanded(
+                      child: IndexedStack(
+                        index: navigationProvider.selectedIndex,
+                        children: [
+                          const AdminHomeScreen(),
+                          const LeaguesScreen(),
+                          ChangeNotifierProvider(
+                            create: (_) => GamesProvider(userRole: 'admin'),
+                            child: const GamesScreen(),
+                          ),
+                          ChangeNotifierProvider(
+                            create: (_) => UsersProvider(),
+                            child: const AdminUsersScreen(),
+                          ),
+                          ChangeNotifierProvider(
+                            create: (_) =>
+                                RoleBasedSettingsProvider(userRole: 'admin'),
+                            child: const SettingsScreen(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const AdminBottomNevigation(),
+                  ],
+                ),
               ),
             ),
           );
         },
       ),
     );
-  }
-
-  Widget _buildContent(int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return const AdminHomeScreen();
-      case 1:
-        return const LeaguesScreen();
-      case 2:
-        return ChangeNotifierProvider(
-          create: (_) => GamesProvider(userRole: 'admin'),
-          child: const GamesScreen(),
-        );
-      case 3:
-        return ChangeNotifierProvider(
-          create: (_) => UsersProvider(),
-          child: const AdminUsersScreen(),
-        );
-      case 4:
-        return ChangeNotifierProvider(
-          create: (_) => RoleBasedSettingsProvider(userRole: 'admin'),
-          child: const SettingsScreen(),
-        );
-
-      default:
-        return const Center(child: Text('Free Agent Dashboard'));
-    }
   }
 }

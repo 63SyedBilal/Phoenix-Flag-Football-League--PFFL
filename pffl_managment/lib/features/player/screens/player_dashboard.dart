@@ -10,6 +10,8 @@ import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/player_navigation_provider.dart';
 
+import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
+
 class PlayerDashboard extends StatelessWidget {
   const PlayerDashboard({super.key});
 
@@ -17,37 +19,36 @@ class PlayerDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<PlayerNavigationProvider>(context);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            PlayerHeaderWidget(),
-            Expanded(child: _buildContent(navigationProvider.selectedIndex)),
-            const PlayerBottomNevigation(),
-          ],
+    return BackButtonWrapper(
+      isRoot: true,
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              PlayerHeaderWidget(),
+              Expanded(
+                child: IndexedStack(
+                  index: navigationProvider.selectedIndex,
+                  children: [
+                    const PlayerHome(),
+                    ChangeNotifierProvider(
+                      create: (_) => GamesProvider(userRole: 'player'),
+                      child: const GamesScreen(),
+                    ),
+                    const PlayerMyTeam(),
+                    ChangeNotifierProvider(
+                      create: (_) =>
+                          RoleBasedSettingsProvider(userRole: 'player'),
+                      child: const SettingsScreen(),
+                    ),
+                  ],
+                ),
+              ),
+              const PlayerBottomNevigation(),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Widget _buildContent(int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return const PlayerHome();
-      case 1:
-        return ChangeNotifierProvider(
-          create: (_) => GamesProvider(userRole: 'player'),
-          child: const GamesScreen(),
-        );
-      case 2:
-        return const PlayerMyTeam();
-      case 3:
-        return ChangeNotifierProvider(
-          create: (_) => RoleBasedSettingsProvider(userRole: 'player'),
-          child: const SettingsScreen(),
-        );
-      default:
-        return const Center(child: Text('Player Dashboard'));
-    }
   }
 }

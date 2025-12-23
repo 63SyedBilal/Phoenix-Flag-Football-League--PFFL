@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/back_button_provider.dart';
 
@@ -33,24 +34,25 @@ class BackButtonWrapper extends StatelessWidget {
         if (shouldExit) {
           // Allow exit/pop
           if (isRoot) {
-            // Root screen - allow app to close
-            // In modern Flutter, we can't easily "allow" via PopScope once canPop is false
-            // without a rebuild or manual Navigator pop.
-            // For root screens, we might need a slightly different strategy or manual pop.
-            Navigator.of(context).pop();
+            // Root screen - Close the app
+            await SystemNavigator.pop();
           } else {
             // Normal screen - pop
-            Navigator.of(context).pop();
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
           }
         } else {
           // First press - show message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Press back again to exit'),
-              duration: Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Press back again to exit'),
+                duration: Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       },
       child: child,
