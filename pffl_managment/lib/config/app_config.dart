@@ -116,9 +116,9 @@ class AppConfig {
   static const String testUpdateRoleEndpoint = '/test-update-role';
 
   // Timeouts - Increased for better network reliability
-  static const Duration connectTimeout = Duration(seconds: 120);
-  static const Duration receiveTimeout = Duration(seconds: 120);
-  static const Duration sendTimeout = Duration(seconds: 120);
+  static const Duration connectTimeout = Duration(seconds: 300);
+  static const Duration receiveTimeout = Duration(seconds: 300);
+  static const Duration sendTimeout = Duration(seconds: 300);
 
   // Get full API URL
   static String getApiUrl(String endpoint) {

@@ -57,9 +57,9 @@ class AuthService {
     final dio = Dio(
       BaseOptions(
         baseUrl: workingBaseUrl,
-        connectTimeout: const Duration(seconds: 120),
-        receiveTimeout: const Duration(seconds: 120),
-        sendTimeout: const Duration(seconds: 120),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
         headers: {'Content-Type': 'application/json'},
       ),
     );
@@ -133,8 +133,8 @@ class AuthService {
             connectTimeout: const Duration(
               seconds: 120,
             ), // Increased timeout to handle network delays
-            receiveTimeout: const Duration(seconds: 120),
-            sendTimeout: const Duration(seconds: 120),
+            receiveTimeout: const Duration(seconds: 300),
+            sendTimeout: const Duration(seconds: 300),
             headers: {'Content-Type': 'application/json'},
             // Additional options for better connectivity
             followRedirects: true,
@@ -294,9 +294,9 @@ class AuthService {
         final dio = Dio(
           BaseOptions(
             baseUrl: url,
-            connectTimeout: const Duration(seconds: 120),
-            receiveTimeout: const Duration(seconds: 120),
-            sendTimeout: const Duration(seconds: 120),
+            connectTimeout: const Duration(seconds: 300),
+            receiveTimeout: const Duration(seconds: 300),
+            sendTimeout: const Duration(seconds: 300),
             headers: {'Content-Type': 'application/json'},
             followRedirects: true,
             maxRedirects: 5,
@@ -462,8 +462,8 @@ class AuthService {
       final response = await _dio.get(
         '/test-db',
         options: Options(
-          receiveTimeout: const Duration(seconds: 120),
-          sendTimeout: const Duration(seconds: 120),
+          receiveTimeout: const Duration(seconds: 300),
+          sendTimeout: const Duration(seconds: 300),
         ),
       );
       print('Connection test successful: ${response.statusCode}');

@@ -26,6 +26,9 @@ class EmergencyContactFields extends StatelessWidget {
             const SizedBox(height: 8),
             TextField(
               onChanged: provider.setEmergencyContactName,
+              style: const TextStyle(
+                fontSize: 12, // Reduced font size for text inside the field
+              ),
               decoration: InputDecoration(
                 hintText: 'e.g Tyler',
                 hintStyle: TextStyle(
@@ -103,4 +106,3 @@ class EmergencyContactFields extends StatelessWidget {
     );
   }
 }
-

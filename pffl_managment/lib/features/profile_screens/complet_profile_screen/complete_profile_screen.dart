@@ -69,8 +69,7 @@ class _CompleteProfileView extends StatelessWidget {
                           const ProfileImageSection(),
                           const SizedBox(height: 32),
                           const PositionDropdown(),
-                          const SizedBox(height: 20),
-                          const JerseyNumberField(),
+                          
                           const SizedBox(height: 20),
                           const EmergencyContactFields(),
                           const SizedBox(height: 24),
