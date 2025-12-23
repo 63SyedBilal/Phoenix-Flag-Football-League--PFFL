@@ -1,14 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl_phone_field/phone_number.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/core/utils/helpers.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
-import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
+import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
 import 'package:pffl_managment/core/widgets/simple_dropdown_list.dart';
 import 'package:pffl_managment/core/widgets/text_with_text_field.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
+import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 
 class CompleteProfile extends StatelessWidget {
   const CompleteProfile({super.key});
@@ -21,177 +24,268 @@ class CompleteProfile extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(leading: ArrowBackButton()),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Complete Your Profile',
-                style: theme.textTheme.headlineLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'This helps teams find you',
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: 30),
-              Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    DottedBorder(
-                      options: CircularDottedBorderOptions(
-                        dashPattern: [5, 5],
-                        strokeWidth: 1,
-                        color: theme.brightness == Brightness.dark
-                            ? Colors.white70
-                            : const Color.fromRGBO(0, 0, 0, 0.4),
-                      ),
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: const BoxDecoration(shape: BoxShape.circle),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -9,
-                      left: 30,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: ShapeDecoration(
-                          color: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.88),
+        child: Consumer<CompleteProfileProvider>(
+          builder: (context, provider, child) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Complete Your Profile',
+                    style: theme.textTheme.headlineLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This helps teams find you',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 30),
+                  Center(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        DottedBorder(
+                          options: CircularDottedBorderOptions(
+                            dashPattern: const [5, 5],
+                            strokeWidth: 1,
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.white70
+                                : const Color.fromRGBO(0, 0, 0, 0.4),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.upload, size: 12, color: Colors.white),
-                            SizedBox(width: 6),
-                            Text(
-                              'Upload',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
-                                fontFamily: 'Satoshi Variable',
-                                fontWeight: FontWeight.w700,
-                                height: 1.37,
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                            ),
+                            child: ClipOval(
+                              child: Center(
+                                child: provider.profileImagePath != null
+                                    ? Image.file(
+                                        File(provider.profileImagePath!),
+                                        fit: BoxFit.cover,
+                                        width: 120,
+                                        height: 120,
+                                      )
+                                    : Icon(
+                                        Icons.person_outline,
+                                        size: 60,
+                                        color: Colors.grey[300],
+                                      ),
                               ),
                             ),
-                          ],
+                          ),
                         ),
+                        Positioned(
+                          bottom: -9,
+                          left: 30,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: ShapeDecoration(
+                              color: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.88),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.upload,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Upload',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontFamily: 'Satoshi Variable',
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.37,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      'Profile Pic',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Opacity(
+                    opacity: 0.70,
+                    child: Text(
+                      'Submit this image if you think it\'s readable or tap on re-upload button to upload another one',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Input Fields
+                  Text('Position', style: theme.textTheme.bodyMedium),
+                  const SizedBox(height: 4),
+                  SimpleDropdownList(
+                    items: const [
+                      'Quarterback',
+                      'Receiver',
+                      'Running Back',
+                      'Linebacker',
+                      'Cornerback',
+                      'Safety',
+                    ],
+                    onSelected: (val) => provider.togglePosition(val),
+                  ),
+                  if (provider.fieldErrors['position'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        provider.fieldErrors['position']!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  const SizedBox(height: 18),
 
-              const SizedBox(height: 20),
-              Center(
-                child: Text(
-                  'Profile Pic',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelLarge,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Opacity(
-                opacity: 0.70,
-                child: Text(
-                  'Submit this image if you think it\'s readable or tap on re-upload button to upload another one',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              // Input Fields using TextWithTextField
-              Text('Position', style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 4),
-              SimpleDropdownList(items: [], onSelected: (_) {}),
-              const SizedBox(height: 18),
-
-              Text('Jersy Number', style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 4),
-              TextWithTextField(hintText: 'e.g. Center Forward'),
-              const SizedBox(height: 18),
-
-              Text('Emergency Contact Name', style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 4),
-              TextWithTextField(hintText: 'e.g. Tyler'),
-              const SizedBox(height: 18),
-
-              Text('Emergency Phone Number', style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 4),
-              CustomPhoneField(
-                onInputChanged: (PhoneNumber number) {
-                  // Handle phone number input
-                },
-                onInputValidated: (bool value) {
-                  // Handle phone number validation
-                },
-                initialValue: PhoneNumber(
-                  countryISOCode: 'US',
-                  countryCode: '+1',
-                  number: '',
-                ),
-                hintText: 'e.g +1 123 456 7890',
-              ),
-              const SizedBox(height: 20),
-
-              // Terms & Conditions
-              Row(
-                children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF9CA3AF)),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                  Text('Jersey Number', style: theme.textTheme.bodyMedium),
+                  const SizedBox(height: 4),
+                  TextWithTextField(
+                    hintText: 'e.g. 12',
+                    onChanged: (val) => provider.setJerseyNumber(val),
                   ),
-                  const SizedBox(width: 8),
+                  if (provider.fieldErrors['jerseyNumber'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        provider.fieldErrors['jerseyNumber']!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  const SizedBox(height: 18),
+
                   Text(
-                    'I agree to Terms & Privacy',
+                    'Emergency Contact Name',
                     style: theme.textTheme.bodyMedium,
                   ),
+                  const SizedBox(height: 4),
+                  TextWithTextField(
+                    hintText: 'e.g. Tyler',
+                    onChanged: (val) => provider.setEmergencyContactName(val),
+                  ),
+                  if (provider.fieldErrors['emergencyContactName'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        provider.fieldErrors['emergencyContactName']!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  const SizedBox(height: 18),
+
+                  Text(
+                    'Emergency Phone Number',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  ImprovedPhoneField(
+                    onInputChanged: (PhoneNumber number) {
+                      provider.setEmergencyPhone(number.completeNumber);
+                    },
+                    onInputValidated: (bool value) {
+                      // Validation handled in provider
+                    },
+                    initialCountryCode: 'US',
+                    hintText: 'e.g +1 123 456 7890',
+                    errorText: provider.phoneError,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Terms & Conditions
+                  GestureDetector(
+                    onTap: () =>
+                        provider.toggleTermsAgreement(!provider.agreedToTerms),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: provider.agreedToTerms,
+                          onChanged: (val) =>
+                              provider.toggleTermsAgreement(val),
+                          activeColor: Colors.black,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'I agree to Terms & Privacy',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (provider.fieldErrors['terms'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Text(
+                        provider.fieldErrors['terms']!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  const SizedBox(height: 30),
+
+                  // Complete Button
+                  if (provider.errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        provider.errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+
+                  provider.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : CustomButton(
+                          textColor: AppColors.lightAppBarBackground,
+                          text: 'Complete',
+                          onPressed: () async {
+                            final success = await provider.submitProfile();
+                            if (success && context.mounted) {
+                              showCustomBottomSheet(
+                                context: context,
+                                title: 'Profile Created',
+                                subtitle:
+                                    "Welcome to PFFL.!\nLet's see some games.",
+                                buttonText: 'Continue',
+                                onButtonPressed: () {
+                                  Navigator.of(context).pop();
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    AppRoutes.adminDashboard,
+                                    (route) => false,
+                                  );
+                                },
+                                content: Container(),
+                              );
+                            }
+                          },
+                        ),
                 ],
               ),
-              const SizedBox(height: 30),
-
-              // Complete Button
-              CustomButton(
-                textColor: AppColors.lightAppBarBackground,
-                text: 'Complete',
-                onPressed: () {
-                  final parentContext = context;
-                  showCustomBottomSheet(
-                    context: context,
-                    title: 'Profile Created',
-                    subtitle: "Welcome to PFFL.!\nLet's see some games.",
-                    buttonText: 'Continue',
-                    onButtonPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.pushNamed(
-                        parentContext,
-                        AppRoutes.adminDashboard,
-                      );
-                    },
-                    content: Container(),
-                  );
-                },
-                // onPressed: () {
-                //   Navigator.pushNamed(context, AppRoutes.adminDashboard);
-                // },
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

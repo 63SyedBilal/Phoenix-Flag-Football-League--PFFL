@@ -22,7 +22,7 @@ class CaptainCreateTeam extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => CreateTeamProvider(),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF9FAFB),
+        backgroundColor: Colors.white,
         body: SafeArea(
           child: Stack(
             children: [

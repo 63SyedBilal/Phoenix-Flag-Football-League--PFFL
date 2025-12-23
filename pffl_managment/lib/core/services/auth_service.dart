@@ -94,15 +94,32 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
+      // For Android physical device, prioritize network IP
+      // Network IP works best for physical devices on same WiFi
+      urlsToTry.add(
+        AppConfig.networkBaseUrl,
+      ); // Network IP (first priority for physical device)
+      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      urlsToTry.add(
+        AppConfig.iosSimulatorUrl,
+      ); // ADB port forwarding (localhost)
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // 127.0.0.1 (ADB port forwarding)
+      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP
+
       // For Android, try emulator URL first
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
       // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
       urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
       urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
+
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // Fallback
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // Fallback
     } else {
       urlsToTry.add(AppConfig.baseUrl); // Default
     }
@@ -258,15 +275,31 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
+      // For Android physical device, prioritize network IP
+      urlsToTry.add(
+        AppConfig.networkBaseUrl,
+      ); // Network IP (first priority for physical device)
+      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      urlsToTry.add(
+        AppConfig.iosSimulatorUrl,
+      ); // ADB port forwarding (localhost)
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // 127.0.0.1 (ADB port forwarding)
+      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP
+
       // For Android, try emulator URL first
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
       // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
       urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
       urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
+
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // Fallback
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // Fallback
     } else {
       urlsToTry.add(AppConfig.baseUrl); // Default
     }
@@ -471,6 +504,37 @@ class AuthService {
     } catch (e) {
       print('Connection test failed: $e');
       return false;
+    }
+  }
+
+  /// Change password
+  /// PUT /api/user/change-password
+  static Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    try {
+      final dio = await getWorkingDio();
+      final response = await dio.put(
+        '/user/change-password',
+        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        final error = response.data['error'] ?? 'Failed to change password';
+        throw Exception(error);
+      }
+    } on DioException catch (e) {
+      print('Error changing password: ${e.message}');
+      if (e.response != null) {
+        final error = e.response?.data['error'] ?? 'Failed to change password';
+        throw Exception(error);
+      }
+      throw Exception('Failed to connect to server');
+    } catch (e) {
+      rethrow;
     }
   }
 }

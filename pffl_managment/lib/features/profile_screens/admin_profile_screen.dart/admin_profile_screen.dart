@@ -6,7 +6,7 @@ import 'package:intl_phone_field/phone_number.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
-import 'package:pffl_managment/core/widgets/custom_phone_field.dart';
+import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
@@ -93,7 +93,11 @@ class _AdminProfileScreenContentState
                   const SizedBox(height: 8),
                   Text(
                     'Manage your personal details & update\nyour player information.',
-                    style: widget.theme.textTheme.titleSmall,
+                    style: widget.theme.textTheme.titleSmall!.copyWith(
+                      color: widget.theme.brightness == Brightness.dark
+                          ? Colors.white70
+                          : const Color.fromRGBO(0, 0, 0, 0.4),
+                    ),
                   ),
                   const SizedBox(height: 30),
                   Center(
@@ -116,7 +120,7 @@ class _AdminProfileScreenContentState
                           },
                           child: DottedBorder(
                             options: CircularDottedBorderOptions(
-                              dashPattern: [5, 5],
+                              dashPattern: const [5, 5],
                               strokeWidth: 1,
                               color: widget.theme.brightness == Brightness.dark
                                   ? Colors.white70
@@ -264,42 +268,16 @@ class _AdminProfileScreenContentState
                         style: widget.theme.textTheme.labelLarge,
                       ),
                       const SizedBox(height: 4),
-                      CustomPhoneField(
-                        hintText: 'Enter your phone number',
-                        initialValue: provider.phone.isNotEmpty
-                            ? _parsePhoneNumber(provider.phone)
-                            : null,
-                        errorText:
-                            provider.phoneError, // Show phone-specific error
+                      ImprovedPhoneField(
                         onInputChanged: (PhoneNumber number) {
-                          // Store the full phone number with country code
-                          // completeNumber already includes country code (e.g., +1234567890)
-                          String fullNumber;
-                          
-                          if (number.completeNumber.isNotEmpty) {
-                            // Use completeNumber which already has country code + number
-                            fullNumber = number.completeNumber;
-                          } else if (number.number.isNotEmpty) {
-                            // If completeNumber is empty but number exists, construct it
-                            fullNumber = '${number.countryCode}${number.number}';
-                          } else {
-                            // No phone number entered yet - just store country code
-                            fullNumber = number.countryCode;
-                          }
-                          
-                          debugPrint('📞 Phone input changed');
-                          debugPrint('📞 Country code: ${number.countryCode}');
-                          debugPrint('📞 ISO code: ${number.countryISOCode}');
-                          debugPrint('📞 Phone number (digits only): ${number.number}');
-                          debugPrint('📞 Complete number (with country code): ${number.completeNumber}');
-                          debugPrint('📞 Final full number stored: $fullNumber');
-                          
-                          provider.updatePhone(fullNumber);
+                          provider.updatePhone(number.completeNumber);
                         },
                         onInputValidated: (bool isValid) {
-                          // Update phone validation state
                           provider.setPhoneValid(isValid);
                         },
+                        initialCountryCode: 'US',
+                        hintText: 'Enter your phone number',
+                        errorText: provider.phoneError,
                       ),
                     ],
                   ),
@@ -387,48 +365,5 @@ class _AdminProfileScreenContentState
       }
     }
     return const Icon(Icons.person, size: 60);
-  }
-
-  /// Parse phone number string to PhoneNumber object
-  /// Handles various formats: +1234567890, 1234567890, etc.
-  PhoneNumber? _parsePhoneNumber(String phoneString) {
-    if (phoneString.isEmpty) return null;
-
-    try {
-      // Remove any spaces, dashes, or parentheses
-      final cleaned = phoneString.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-
-      // If it starts with +, it includes country code
-      if (cleaned.startsWith('+')) {
-        // Try to detect country from the number
-        if (cleaned.length >= 11 && cleaned.startsWith('+1')) {
-          // US number
-          return PhoneNumber(
-            countryISOCode: 'US',
-            countryCode: '+1',
-            number: cleaned.substring(2), // Remove +1
-          );
-        } else {
-          // For other countries, try to extract country code
-          // Default: try to parse with first 1-3 digits as country code
-          // For simplicity, default to US if we can't determine
-          return PhoneNumber(
-            countryISOCode: 'US',
-            countryCode: '+1',
-            number: cleaned.substring(1), // Remove +
-          );
-        }
-      } else {
-        // Assume US number if no country code
-        return PhoneNumber(
-          countryISOCode: 'US',
-          countryCode: '+1',
-          number: cleaned,
-        );
-      }
-    } catch (e) {
-      // If parsing fails, return null to let the field handle it
-      return null;
-    }
   }
 }

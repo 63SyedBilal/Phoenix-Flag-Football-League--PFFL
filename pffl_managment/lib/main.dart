@@ -5,17 +5,26 @@ import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/routes/route_generator.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
-void main() {
+import 'package:pffl_managment/core/services/preference_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   AuthService.configureDio();
-  runApp(const MyApp());
+
+  // Initialize PreferenceService
+  final preferenceService = await PreferenceService.getInstance();
+
+  runApp(MyApp(preferenceService: preferenceService));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final PreferenceService preferenceService;
+  const MyApp({super.key, required this.preferenceService});
 
   @override
   Widget build(BuildContext context) {
     return AppProviders(
+      preferenceService: preferenceService,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Phoenix Flag Football League',

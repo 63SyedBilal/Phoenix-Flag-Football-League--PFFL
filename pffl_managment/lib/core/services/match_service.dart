@@ -162,27 +162,33 @@ class MatchService {
               .whereType<MatchModel>()
               .toList();
 
-          // Build a cache of league teams to resolve team names
+          // Identify unique league IDs that need resolution
+          final leagueIds = parsed
+              .map((m) => m.leagueId)
+              .where((lid) => lid != null && lid.isNotEmpty)
+              .toSet()
+              .cast<String>();
+
+          // Build a cache of league teams to resolve team names in parallel
           final Map<String, Map<String, String>> leagueTeamNameCache = {};
-          for (final m in parsed) {
-            final lid = m.leagueId;
-            if (lid != null &&
-                lid.isNotEmpty &&
-                !leagueTeamNameCache.containsKey(lid)) {
-              try {
-                final league = await LeagueService.getLeagueById(lid);
-                final Map<String, String> map = {};
-                if (league != null) {
-                  for (final t in league.teams) {
-                    if (t.id.isNotEmpty) {
-                      map[t.id] = t.teamName;
-                    }
+          if (leagueIds.isNotEmpty) {
+            final leagueFutures = leagueIds.map(
+              (lid) => LeagueService.getLeagueById(lid),
+            );
+            final leagues = await Future.wait(leagueFutures);
+
+            for (int i = 0; i < leagueIds.length; i++) {
+              final lid = leagueIds.elementAt(i);
+              final league = leagues[i];
+              final Map<String, String> teamMap = {};
+              if (league != null) {
+                for (final t in league.teams) {
+                  if (t.id.isNotEmpty) {
+                    teamMap[t.id] = t.teamName;
                   }
                 }
-                leagueTeamNameCache[lid] = map;
-              } catch (e) {
-                leagueTeamNameCache[lid] = {};
               }
+              leagueTeamNameCache[lid] = teamMap;
             }
           }
 
@@ -195,36 +201,62 @@ class MatchService {
             return m;
           }).toList();
 
-          // Final fallback: resolve names directly via TeamService by ID if still unknown
-          for (int i = 0; i < fixed.length; i++) {
-            final m = fixed[i];
+          // Build a set of team IDs that need resolution
+          final Set<String> teamIdsToResolve = {};
+          for (final m in fixed) {
             bool needHome =
                 (m.homeTeam.isEmpty || m.homeTeam == 'Unknown Team') &&
                 (m.homeTeamId != null && m.homeTeamId!.isNotEmpty);
             bool needAway =
                 (m.awayTeam.isEmpty || m.awayTeam == 'Unknown Team') &&
                 (m.awayTeamId != null && m.awayTeamId!.isNotEmpty);
-            if (needHome) {
-              try {
-                final team = await TeamService.getTeamById(m.homeTeamId!);
-                final String? name =
-                    (team?['teamName']?.toString() ??
-                    team?['enterCode']?.toString());
-                if (name != null && name.isNotEmpty) {
-                  fixed[i] = fixed[i].copyWith(homeTeam: name);
-                }
-              } catch (_) {}
+
+            if (needHome) teamIdsToResolve.add(m.homeTeamId!);
+            if (needAway) teamIdsToResolve.add(m.awayTeamId!);
+          }
+
+          // Fetch team names in parallel
+          final Map<String, String> teamNameCache = {};
+          if (teamIdsToResolve.isNotEmpty) {
+            final teamFutures = teamIdsToResolve.map(
+              (tid) => TeamService.getTeamById(tid),
+            );
+            final teams = await Future.wait(teamFutures);
+
+            for (int i = 0; i < teamIdsToResolve.length; i++) {
+              final tid = teamIdsToResolve.elementAt(i);
+              final teamData = teams[i];
+              final String? name =
+                  (teamData?['teamName']?.toString() ??
+                  teamData?['enterCode']?.toString());
+              if (name != null) {
+                teamNameCache[tid] = name;
+              }
             }
-            if (needAway) {
-              try {
-                final team = await TeamService.getTeamById(m.awayTeamId!);
-                final String? name =
-                    (team?['teamName']?.toString() ??
-                    team?['enterCode']?.toString());
-                if (name != null && name.isNotEmpty) {
-                  fixed[i] = fixed[i].copyWith(awayTeam: name);
-                }
-              } catch (_) {}
+          }
+
+          // Apply team names from cache
+          for (int i = 0; i < fixed.length; i++) {
+            final m = fixed[i];
+            String resolvedHome = m.homeTeam;
+            String resolvedAway = m.awayTeam;
+
+            if ((resolvedHome.isEmpty || resolvedHome == 'Unknown Team') &&
+                m.homeTeamId != null &&
+                teamNameCache.containsKey(m.homeTeamId)) {
+              resolvedHome = teamNameCache[m.homeTeamId]!;
+            }
+            if ((resolvedAway.isEmpty || resolvedAway == 'Unknown Team') &&
+                m.awayTeamId != null &&
+                teamNameCache.containsKey(m.awayTeamId)) {
+              resolvedAway = teamNameCache[m.awayTeamId]!;
+            }
+
+            if (resolvedHome != m.homeTeam || resolvedAway != m.awayTeam) {
+              fixed[i] = m.copyWith(
+                homeTeam: resolvedHome,
+                awayTeam: resolvedAway,
+              );
             }
           }
 

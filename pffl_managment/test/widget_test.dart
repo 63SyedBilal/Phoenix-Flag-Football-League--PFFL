@@ -9,13 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:pffl_managment/main.dart';
+import 'package:pffl_managment/core/services/preference_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('App loads correctly smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    // We wrap it in a try-catch because it might require providers/dependencies
-    // but the goal is to see if it even initializes.
-    await tester.pumpWidget(const MyApp());
+    // Provide an empty/mocked preference service for testing
+    SharedPreferences.setMockInitialValues({});
+    final preferenceService = await PreferenceService.getInstance();
+
+    await tester.pumpWidget(MyApp(preferenceService: preferenceService));
 
     // Check if the MateriaApp or some basic widget exists
     expect(find.byType(MaterialApp), findsOneWidget);

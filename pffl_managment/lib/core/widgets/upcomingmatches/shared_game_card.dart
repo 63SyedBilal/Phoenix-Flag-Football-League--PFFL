@@ -49,13 +49,10 @@ class SharedGameCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF111827),
-                        ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 9,
+                        color: Colors.grey,
                       ),
                     ],
                   ),
@@ -108,7 +105,7 @@ class SharedGameCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Date/Time - Centered
+
                 Expanded(
                   flex: 2,
                   child: Column(
@@ -146,6 +143,8 @@ class SharedGameCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      _buildTeamLogo(game.team2Logo),
+                      const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           game.team2Name,
@@ -160,8 +159,6 @@ class SharedGameCard extends StatelessWidget {
                           textAlign: TextAlign.right,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      _buildTeamLogo(game.team2Logo),
                     ],
                   ),
                 ),

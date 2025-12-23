@@ -16,11 +16,8 @@ class UserService {
       print('📡 Fetching users with role: $role');
       final dio = await _getAuthenticatedDio();
       print('📡 API URL: ${dio.options.baseUrl}/user?role=$role');
-      
-      final response = await dio.get(
-        '/user',
-        queryParameters: {'role': role},
-      );
+
+      final response = await dio.get('/user', queryParameters: {'role': role});
 
       print('📡 Response status: ${response.statusCode}');
 
@@ -139,10 +136,7 @@ class UserService {
   static Future<bool> updateUserRole(String userId, String newRole) async {
     try {
       final dio = await _getAuthenticatedDio();
-      final response = await dio.put(
-        '/user/$userId',
-        data: {'role': newRole},
-      );
+      final response = await dio.put('/user/$userId', data: {'role': newRole});
 
       if (response.statusCode == 200) {
         return true;
@@ -159,6 +153,38 @@ class UserService {
     } catch (e) {
       print('General error updating user role: $e');
       return false;
+    }
+  }
+
+  /// Update user profile
+  /// PUT /api/user/:id
+  static Future<Map<String, dynamic>?> updateProfile(
+    String userId,
+    Map<String, dynamic> profileData,
+  ) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.put('/user/$userId', data: profileData);
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['data'] != null) {
+          return data['data'] as Map<String, dynamic>;
+        }
+        return data as Map<String, dynamic>;
+      } else {
+        print('Failed to update user profile: ${response.statusMessage}');
+        return null;
+      }
+    } on DioException catch (e) {
+      print('Error updating user profile: ${e.message}');
+      if (e.response != null) {
+        final error = e.response?.data['error'] ?? 'Failed to update profile';
+        throw Exception(error);
+      }
+      throw Exception('Failed to update profile');
+    } catch (e) {
+      rethrow;
     }
   }
 }
@@ -184,7 +210,7 @@ class UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     // Handle both _id and id fields
     final id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
-    
+
     return UserModel(
       id: id,
       firstName: json['firstName'],
@@ -225,13 +251,10 @@ class InviteService {
       print('📧 Sending invite to: $email with role: $role');
       final dio = await _getAuthenticatedDio();
       print('📧 API URL: ${dio.options.baseUrl}/invite');
-      
+
       final response = await dio.post(
         '/invite',
-        data: {
-          'email': email.trim(),
-          'role': role,
-        },
+        data: {'email': email.trim(), 'role': role},
       );
 
       print('📧 Response status: ${response.statusCode}');
@@ -241,11 +264,13 @@ class InviteService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = response.data;
         final emailSent = responseData['emailSent'] ?? true;
-        
+
         if (emailSent) {
           print('✅ Invite sent successfully');
         } else {
-          print('⚠️ Invite processed successfully, but email was not sent (SMTP not configured)');
+          print(
+            '⚠️ Invite processed successfully, but email was not sent (SMTP not configured)',
+          );
         }
         return true;
       } else {
@@ -259,10 +284,12 @@ class InviteService {
       if (e.response != null) {
         print('❌ Error status: ${e.response?.statusCode}');
         print('❌ Error response: ${e.response?.data}');
-        
+
         // Handle 409 Conflict - user already exists, but we can still send role invitation
         if (e.response?.statusCode == 409) {
-          print('⚠️ User already exists. This might be expected for role invitations.');
+          print(
+            '⚠️ User already exists. This might be expected for role invitations.',
+          );
           // For existing users, we might need a different endpoint or handle differently
           // For now, return false but log the issue
           return false;
@@ -275,4 +302,3 @@ class InviteService {
     }
   }
 }
-

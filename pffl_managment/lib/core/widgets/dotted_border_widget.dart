@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+
+enum DottedBorderShape { circle, rectangle }
 
 class DottedBorderWidget extends StatelessWidget {
   final Widget child;
@@ -9,6 +12,7 @@ class DottedBorderWidget extends StatelessWidget {
   final BorderRadius borderRadius;
   final double? width;
   final double? height;
+  final DottedBorderShape shape;
 
   const DottedBorderWidget({
     super.key,
@@ -20,6 +24,7 @@ class DottedBorderWidget extends StatelessWidget {
     this.borderRadius = BorderRadius.zero,
     this.width,
     this.height,
+    this.shape = DottedBorderShape.rectangle,
   });
 
   @override
@@ -32,6 +37,7 @@ class DottedBorderWidget extends StatelessWidget {
         dashSpace: dashSpace,
         color: color,
         borderRadius: borderRadius,
+        shape: shape,
       ),
       child: child,
     );
@@ -44,6 +50,7 @@ class _DottedBorderPainter extends CustomPainter {
   final double dashSpace;
   final Color color;
   final BorderRadius borderRadius;
+  final DottedBorderShape shape;
 
   _DottedBorderPainter({
     required this.strokeWidth,
@@ -51,6 +58,7 @@ class _DottedBorderPainter extends CustomPainter {
     required this.dashSpace,
     required this.color,
     required this.borderRadius,
+    required this.shape,
   });
 
   @override
@@ -60,6 +68,35 @@ class _DottedBorderPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
+    if (shape == DottedBorderShape.circle) {
+      _paintCircle(canvas, size, paint);
+    } else {
+      _paintRectangle(canvas, size, paint);
+    }
+  }
+
+  void _paintCircle(Canvas canvas, Size size, Paint paint) {
+    final double radius = math.min(size.width, size.height) / 2;
+    final center = Offset(size.width / 2, size.height / 2);
+    final circumference = 2 * math.pi * radius;
+    final int dashCount = (circumference / (dashWidth + dashSpace)).floor();
+    final double angleIncrement = (2 * math.pi) / dashCount;
+
+    for (int i = 0; i < dashCount; i++) {
+      double startAngle = i * angleIncrement;
+      double sweepAngle = (dashWidth / circumference) * 2 * math.pi;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        paint,
+      );
+    }
+  }
+
+  void _paintRectangle(Canvas canvas, Size size, Paint paint) {
     final Path path = Path();
 
     // Top border
@@ -113,7 +150,8 @@ class _DottedBorderPainter extends CustomPainter {
 
     for (int i = 0; i < dashCount; i++) {
       final double startFraction = i * (dashWidth + dashSpace) / totalLength;
-      final double endFraction = (i * (dashWidth + dashSpace) + dashWidth) / totalLength;
+      final double endFraction =
+          (i * (dashWidth + dashSpace) + dashWidth) / totalLength;
 
       final Offset dashStart = Offset.lerp(start, end, startFraction)!;
       final Offset dashEnd = Offset.lerp(start, end, endFraction)!;

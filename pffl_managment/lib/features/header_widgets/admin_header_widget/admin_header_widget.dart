@@ -3,6 +3,7 @@ import 'package:pffl_managment/core/providers/bottom_nevigation_provider/admin_n
 import 'package:pffl_managment/features/admin/provider/dashboard_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
+import 'package:pffl_managment/core/providers/notification_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
 class AdminHeaderWidget extends StatelessWidget {
@@ -46,7 +47,7 @@ class AdminHeaderWidget extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -86,7 +87,7 @@ class AdminHeaderWidget extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        padding:  EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
                         ),
@@ -122,7 +123,7 @@ class NotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<DashboardViewModel>(context);
+    final notificationProvider = Provider.of<NotificationProvider>(context);
     final brightness = Theme.of(context).brightness;
     final scaffoldBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
 
@@ -153,13 +154,13 @@ class NotificationButton extends StatelessWidget {
                     : AppColors.textPrimary,
               ),
             ),
-            if (viewModel.hasNotifications)
+            if (notificationProvider.hasNotifications)
               Positioned(
                 top: 12,
                 right: 12,
                 child: Container(
-                  width: 6,
-                  height: 6,
+                  width: 8,
+                  height: 8,
                   decoration: const BoxDecoration(
                     color: AppColors.red,
                     shape: BoxShape.circle,

@@ -18,6 +18,7 @@ class GamesProvider extends ChangeNotifier {
   List<LeagueModel> _leagues = [];
   List<MatchModel> _allMatches = [];
   bool _isLoading = false;
+  final String? userId; // Current user's ID
   String? _errorMessage;
   String? _selectedTeamId;
 
@@ -34,6 +35,7 @@ class GamesProvider extends ChangeNotifier {
 
   GamesProvider({
     required this.userRole,
+    this.userId,
     this.assignedLeague,
     this.isLeagueFeeUnpaid = false,
   });
@@ -47,7 +49,8 @@ class GamesProvider extends ChangeNotifier {
 
   /// Get available filters based on user role
   List<Map<String, String>> get availableFilters {
-    if (userRole == 'admin') {
+    final role = userRole.toLowerCase().replaceAll(' ', '');
+    if (role == 'admin' || role == 'superadmin') {
       // Admin sees league filters - dynamically generated from fetched leagues
       final filters = <Map<String, String>>[
         {'id': 'all', 'label': 'All Games'},
@@ -103,27 +106,28 @@ class GamesProvider extends ChangeNotifier {
   /// Get filtered matches based on selected filter and user role
   List<MatchModel> get filteredMatches {
     var filtered = allMatches;
+    final role = userRole.toLowerCase().replaceAll(' ', '');
 
     // Apply role-based filtering first
-    if (userRole == 'stat keeper') {
+    if (role == 'statkeeper') {
       filtered = filtered
           .where((match) => _isAssignedToStatKeeper(match))
           .toList();
-    } else if (userRole == 'referee') {
+    } else if (role == 'referee') {
       filtered = filtered
           .where((match) => _isAssignedToReferee(match))
           .toList();
     }
 
-    // Apply league filter (for admin)
-    if (userRole == 'admin' && _selectedFilter != 'all') {
+    // Apply league filter (for admin/superadmin)
+    if ((role == 'admin' || role == 'superadmin') && _selectedFilter != 'all') {
       filtered = filtered
           .where((match) => match.leagueId == _selectedFilter)
           .toList();
     }
 
     // Apply date filter (for non-admin roles)
-    if (userRole != 'admin' && _selectedFilter != 'all') {
+    if (role != 'admin' && role != 'superadmin' && _selectedFilter != 'all') {
       filtered = _filterByDate(_selectedFilter, filtered);
     }
 
@@ -138,23 +142,38 @@ class GamesProvider extends ChangeNotifier {
           .toList();
     }
 
-    return filtered;
+    // Sort by date and time (matchDateTime)
+    final sorted = List<MatchModel>.from(filtered);
+    sorted.sort((a, b) {
+      if (a.matchDateTime == null && b.matchDateTime == null) return 0;
+      if (a.matchDateTime == null) return 1;
+      if (b.matchDateTime == null) return -1;
+      return a.matchDateTime!.compareTo(b.matchDateTime!);
+    });
+
+    return sorted;
   }
 
   /// Check if a match is assigned to the current stat keeper
   bool _isAssignedToStatKeeper(MatchModel match) {
-    // In a real implementation, this would check against actual stat keeper assignments
-    // For now, we'll simulate by checking specific conditions
-    return match.leagueName.contains('Rugby Championship') ||
-        match.leagueName.contains('Six Nations');
+    if (userId == null || userId!.isEmpty) return false;
+
+    // Standardize IDs for comparison
+    final currentUserId = userId!.trim();
+    final matchStatKeeperId = match.statKeeperId?.toString().trim();
+
+    return matchStatKeeperId == currentUserId;
   }
 
   /// Check if a match is assigned to the current referee
   bool _isAssignedToReferee(MatchModel match) {
-    // In a real implementation, this would check against actual referee assignments
-    // For now, we'll simulate by checking specific conditions
-    return match.leagueName.contains('World Cup') ||
-        match.leagueName.contains('European League');
+    if (userId == null || userId!.isEmpty) return false;
+
+    // Standardize IDs for comparison
+    final currentUserId = userId!.trim();
+    final matchRefereeId = match.refereeId?.toString().trim();
+
+    return matchRefereeId == currentUserId;
   }
 
   List<MatchModel> _filterByDate(String date, List<MatchModel> matches) {
@@ -230,7 +249,8 @@ class GamesProvider extends ChangeNotifier {
 
   /// Check if user can edit games
   bool get canEdit {
-    return userRole == 'admin';
+    final role = userRole.toLowerCase().replaceAll(' ', '');
+    return role == 'admin' || role == 'superadmin';
   }
 
   /// Check if should show payment prompt (Captain with unpaid fee)

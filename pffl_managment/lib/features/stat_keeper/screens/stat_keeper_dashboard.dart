@@ -10,7 +10,10 @@ import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/stat_stats_screen.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_stats_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+
+import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
 
 class StatKeeperDashboard extends StatelessWidget {
   const StatKeeperDashboard({super.key});
@@ -21,46 +24,52 @@ class StatKeeperDashboard extends StatelessWidget {
       context,
     );
 
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => StatStatsProvider()),
-        // Add other global stats providers here if needed
-      ],
-      child: Scaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              const StatKeeperHeaderWidget(),
-              Expanded(child: _buildContent(navigationProvider.selectedIndex)),
-              const StatsKeeperNevigation(),
-            ],
+    return BackButtonWrapper(
+      isRoot: true,
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => StatStatsProvider()),
+          // Add other global stats providers here if needed
+        ],
+        child: Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                const StatKeeperHeaderWidget(),
+                Expanded(
+                  child: IndexedStack(
+                    index: navigationProvider.selectedIndex,
+                    children: [
+                      const StatKeeperHomeScreen(),
+                      ChangeNotifierProvider(
+                        create: (context) {
+                          final auth = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
+                          return GamesProvider(
+                            userRole: auth.userRole,
+                            userId: auth.userId,
+                          );
+                        },
+                        child: const GamesScreen(),
+                      ),
+                      const StatAddScreen(),
+                      const StatStatsScreen(),
+                      ChangeNotifierProvider(
+                        create: (_) =>
+                            RoleBasedSettingsProvider(userRole: 'stat keeper'),
+                        child: const SettingsScreen(),
+                      ),
+                    ],
+                  ),
+                ),
+                const StatsKeeperNevigation(),
+              ],
+            ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildContent(int selectedIndex) {
-    switch (selectedIndex) {
-      case 0:
-        return const StatKeeperHomeScreen();
-      case 1:
-        return ChangeNotifierProvider(
-          create: (_) => GamesProvider(userRole: 'stat keeper'),
-          child: const GamesScreen(),
-        );
-      case 2:
-        return const StatAddScreen();
-      case 3:
-        return const StatStatsScreen();
-      case 4:
-        return ChangeNotifierProvider(
-          create: (_) => RoleBasedSettingsProvider(userRole: 'stat keeper'),
-          child: const SettingsScreen(),
-        );
-
-      default:
-        return const Center(child: Text('Captain Dashboard'));
-    }
   }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 
 class AuthProvider extends ChangeNotifier {
+  final UserPreferenceProvider _userPreferenceProvider;
+
   bool _isLoggedIn = false;
   String _userToken = '';
   String _userRole = '';
@@ -44,8 +46,18 @@ class AuthProvider extends ChangeNotifier {
   String? get loginEmailError => _loginEmailError;
   String? get loginPasswordError => _loginPasswordError;
 
-  AuthProvider() {
-    checkLoginStatus();
+  AuthProvider(this._userPreferenceProvider) {
+    _syncWithPreferences();
+  }
+
+  void _syncWithPreferences() {
+    _isLoggedIn = _userPreferenceProvider.isLoggedIn;
+    _userToken = _userPreferenceProvider.userToken ?? '';
+    _userRole = _userPreferenceProvider.userRole ?? '';
+    _userId = _userPreferenceProvider.userId ?? '';
+    _userEmail = _userPreferenceProvider.userEmail ?? '';
+    _userName = _userPreferenceProvider.userName ?? '';
+    notifyListeners();
   }
 
   // Client-side validation helper methods
@@ -57,7 +69,8 @@ class AuthProvider extends ChangeNotifier {
     // Simple email validation
     final emailRegex = RegExp(r'^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(email)) {
-      _loginEmailError = 'Please enter a valid email address (e.g. user@example.com)';
+      _loginEmailError =
+          'Please enter a valid email address (e.g. user@example.com)';
       return false;
     }
     return true;
@@ -76,33 +89,37 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Login method with real backend integration using AuthService
-  Future<bool> login(String email, String password, BuildContext context) async {
+  Future<bool> login(
+    String email,
+    String password,
+    BuildContext context,
+  ) async {
     print('Attempting login with email: $email');
     // Clear previous errors
     clearLoginErrors();
-    
+
     // Perform client-side validation
     final isEmailValid = _validateEmail(email);
     final isPasswordValid = _validatePassword(password);
-    
+
     // If validation fails, update UI and return
     if (!isEmailValid || !isPasswordValid) {
       notifyListeners();
       return false;
     }
-    
+
     // Set loading state
     _isLoggingIn = true;
     notifyListeners();
-    
+
     try {
       // Use AuthService to make the API call
       final authResponse = await AuthService.login(email, password);
-      
+
       if (authResponse != null) {
         // Extract user data from response
         final userData = authResponse.data;
-        
+
         _isLoggedIn = true;
         _userToken = authResponse.token;
         _userRole = userData.role; // Already mapped by AuthService
@@ -113,15 +130,15 @@ class AuthProvider extends ChangeNotifier {
             : userData.email;
         _needsProfileForm = userData.needsProfileForm;
         _needsTeamForm = userData.needsTeamForm;
-        
-        // Save to shared preferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _userToken);
-        await prefs.setString('role', _userRole);
-        await prefs.setString('userId', _userId);
-        await prefs.setString('userEmail', _userEmail);
-        await prefs.setString('userName', _userName);
-        
+
+        // Save to UserPreferenceProvider
+        await _userPreferenceProvider.setUserToken(_userToken);
+        await _userPreferenceProvider.setUserRole(_userRole);
+        await _userPreferenceProvider.setUserId(_userId);
+        await _userPreferenceProvider.setUserEmail(_userEmail);
+        await _userPreferenceProvider.setUserName(_userName);
+        await _userPreferenceProvider.setLoggedIn(true);
+
         _isLoggingIn = false;
         notifyListeners();
         return true;
@@ -135,33 +152,32 @@ class AuthProvider extends ChangeNotifier {
     } on DioException catch (e) {
       // Handle network errors with field-specific error messages
       print('Login API error: ${e.message}');
-      
+
       if (e.response?.statusCode == 401) {
         // Authentication error - check errorType from backend
         final errorData = e.response?.data;
         print('🔴 401 Error Data: $errorData');
-        
-        final errorType = errorData is Map 
+
+        final errorType = errorData is Map
             ? (errorData['errorType'] ?? '').toString()
             : '';
-        final errorMessage = errorData is Map 
+        final errorMessage = errorData is Map
             ? (errorData['error'] ?? '').toString()
             : '';
-        
+
         print('🔴 errorType: $errorType');
         print('🔴 errorMessage: $errorMessage');
-        
+
         // Handle specific error types from backend
         if (errorType == 'email_not_found') {
           _loginEmailError = 'Email does not exist.';
           print('✅ Setting email error: Email does not exist.');
-        } 
-        else if (errorType == 'invalid_password') {
+        } else if (errorType == 'invalid_password') {
           _loginPasswordError = 'Password is wrong';
           print('✅ Setting password error: Password is wrong');
-        }
-        else if (errorType == 'password_not_set') {
-          _loginPasswordError = 'Account setup incomplete. Please reset your password.';
+        } else if (errorType == 'password_not_set') {
+          _loginPasswordError =
+              'Account setup incomplete. Please reset your password.';
         }
         // Fallback: parse error message for password
         else if (errorMessage.toLowerCase().contains('password')) {
@@ -180,37 +196,43 @@ class AuthProvider extends ChangeNotifier {
         }
       } else if (e.response?.statusCode == 404) {
         // Service not found - show connection error
-        _loginPasswordError = 'Cannot connect to server. Please check:\n1. Backend server is running\n2. Both devices are on same WiFi\n3. Firewall allows port 3000';
+        _loginPasswordError =
+            'Cannot connect to server. Please check:\n1. Backend server is running\n2. Both devices are on same WiFi\n3. Firewall allows port 3000';
       } else if (e.response?.statusCode == 400) {
         // Bad request - parse error to determine field
         final errorData = e.response?.data;
-        final errorMessage = errorData is Map 
+        final errorMessage = errorData is Map
             ? (errorData['error'] ?? errorData['message'] ?? '').toString()
             : '';
-        
-        if (errorMessage.toLowerCase().contains('email') && 
+
+        if (errorMessage.toLowerCase().contains('email') &&
             !errorMessage.toLowerCase().contains('password')) {
           _loginEmailError = 'Email does not exist.';
-        } else if (errorMessage.toLowerCase().contains('password') && 
-                   !errorMessage.toLowerCase().contains('email')) {
+        } else if (errorMessage.toLowerCase().contains('password') &&
+            !errorMessage.toLowerCase().contains('email')) {
           _loginPasswordError = 'Password is wrong';
         } else {
-          _loginPasswordError = errorMessage.isNotEmpty ? errorMessage : 'Invalid request. Please check your input.';
+          _loginPasswordError = errorMessage.isNotEmpty
+              ? errorMessage
+              : 'Invalid request. Please check your input.';
         }
       } else if (e.response?.statusCode == 500) {
         // Server error - show error message
         _loginPasswordError = 'Server error. Please try again later.';
       } else if (e.type == DioExceptionType.connectionTimeout ||
-                 e.type == DioExceptionType.sendTimeout ||
-                 e.type == DioExceptionType.receiveTimeout) {
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
         // Timeout - show error message
-        _loginPasswordError = 'Connection timeout. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
+        _loginPasswordError =
+            'Connection timeout. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
       } else if (e.type == DioExceptionType.connectionError) {
         // Connection error - show error message
-        _loginPasswordError = 'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Firewall allows port 3000';
+        _loginPasswordError =
+            'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Firewall allows port 3000';
       } else {
         // Other network errors - show generic error
-        _loginPasswordError = 'Network error. Please check your connection and try again.';
+        _loginPasswordError =
+            'Network error. Please check your connection and try again.';
       }
       _isLoggingIn = false;
       notifyListeners();
@@ -236,37 +258,17 @@ class AuthProvider extends ChangeNotifier {
     _needsProfileForm = false;
     _needsTeamForm = false;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
-    await prefs.remove('role');
-    await prefs.remove('userId');
-    await prefs.remove('userEmail');
-    await prefs.remove('userName');
-    
+    await _userPreferenceProvider.logout();
+
     // Also clear token from AuthService
     await AuthService.clearToken();
 
     notifyListeners();
   }
 
-  // Check if user is already logged in
+  // Check if user is already logged in (deprecated, using constructor sync)
   Future<void> checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    final role = prefs.getString('role');
-    final userId = prefs.getString('userId');
-    final userEmail = prefs.getString('userEmail');
-    final userName = prefs.getString('userName');
-
-    if (token != null && role != null && userId != null && userEmail != null) {
-      _isLoggedIn = true;
-      _userToken = token;
-      _userRole = role;
-      _userId = userId;
-      _userEmail = userEmail;
-      _userName = userName ?? '';
-      notifyListeners();
-    }
+    _syncWithPreferences();
   }
 
   // Password visibility toggle methods

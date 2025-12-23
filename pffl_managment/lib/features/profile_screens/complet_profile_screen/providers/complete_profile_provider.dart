@@ -13,7 +13,7 @@ class CompleteProfileProvider extends ChangeNotifier {
   String? _lastName;
   String? _email;
   String? _phone;
-  
+
   // Profile fields
   final List<String> _selectedPositions = [];
   String? _jerseyNumber;
@@ -21,23 +21,23 @@ class CompleteProfileProvider extends ChangeNotifier {
   String? _emergencyPhone;
   String? _profileImagePath;
   String? _profileImageUrl;
-  
+
   // UI state
   bool _isLoading = false;
   bool _showPositionDropdown = false;
   bool _showSuccessSheet = false;
   bool _agreedToTerms = false;
   String? _errorMessage;
-  
+
   // Validation state
   final Map<String, String?> _fieldErrors = {};
-  
+
   // Getters - Basic info
   String? get firstName => _firstName;
   String? get lastName => _lastName;
   String? get email => _email;
   String? get phone => _phone;
-  
+
   // Getters - Profile fields
   List<String> get selectedPositions => List.unmodifiable(_selectedPositions);
   String get positionsDisplayText {
@@ -46,6 +46,7 @@ class CompleteProfileProvider extends ChangeNotifier {
     }
     return _selectedPositions.join(', ');
   }
+
   String? get jerseyNumber => _jerseyNumber;
   String? get emergencyContactName => _emergencyContactName;
   String? get emergencyPhone => _emergencyPhone;
@@ -57,7 +58,8 @@ class CompleteProfileProvider extends ChangeNotifier {
   bool get agreedToTerms => _agreedToTerms;
   String? get errorMessage => _errorMessage;
   Map<String, String?> get fieldErrors => Map.unmodifiable(_fieldErrors);
-  
+  String? get phoneError => _fieldErrors['emergencyPhone'];
+
   /// Check if form is valid
   bool get isFormValid {
     return _selectedPositions.isNotEmpty &&
@@ -68,23 +70,23 @@ class CompleteProfileProvider extends ChangeNotifier {
         _agreedToTerms &&
         _fieldErrors.isEmpty;
   }
-  
+
   /// Initialize provider - load user data and check if profile already exists
   Future<void> initialize() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('userId');
-      
+
       if (userId == null) {
         debugPrint('⚠️ No userId found in SharedPreferences');
         return;
       }
-      
+
       // Load saved user data
       _firstName = prefs.getString('firstName');
       _lastName = prefs.getString('lastName');
       _email = prefs.getString('userEmail');
-      
+
       // Check if profile already completed
       final isCompleted = prefs.getBool('profile_completed_$userId');
       if (isCompleted == true) {
@@ -95,32 +97,32 @@ class CompleteProfileProvider extends ChangeNotifier {
       debugPrint('❌ Error initializing provider: $e');
     }
   }
-  
+
   // Setters for basic info
   void setFirstName(String? value) {
     _firstName = value;
     _clearFieldError('firstName');
     notifyListeners();
   }
-  
+
   void setLastName(String? value) {
     _lastName = value;
     _clearFieldError('lastName');
     notifyListeners();
   }
-  
+
   void setEmail(String? value) {
     _email = value;
     _clearFieldError('email');
     notifyListeners();
   }
-  
+
   void setPhone(String? value) {
     _phone = value;
     _clearFieldError('phone');
     notifyListeners();
   }
-  
+
   /// Toggle position selection (add if not selected, remove if selected)
   void togglePosition(String position) {
     if (_selectedPositions.contains(position)) {
@@ -131,46 +133,52 @@ class CompleteProfileProvider extends ChangeNotifier {
     _clearFieldError('position');
     notifyListeners();
   }
-  
+
   /// Check if position is selected
   bool isPositionSelected(String position) {
     return _selectedPositions.contains(position);
   }
-  
+
   /// Set jersey number and validate
   void setJerseyNumber(String? number) {
     _jerseyNumber = number;
     _clearFieldError('jerseyNumber');
-    
+
     // Validate if provided
     if (number != null && number.isNotEmpty) {
       final jerseyNum = int.tryParse(number);
       if (jerseyNum == null || jerseyNum < 1 || jerseyNum > 99) {
-        _setFieldError('jerseyNumber', 'Jersey number must be between 1 and 99');
+        _setFieldError(
+          'jerseyNumber',
+          'Jersey number must be between 1 and 99',
+        );
       }
     }
-    
+
     notifyListeners();
   }
-  
+
   /// Set emergency contact name and validate
   void setEmergencyContactName(String? name) {
     _emergencyContactName = name;
     _clearFieldError('emergencyContactName');
-    
+
     // Validate if provided
     if (name != null && name.isNotEmpty && name.length < 2) {
-      _setFieldError('emergencyContactName', 'Name must be at least 2 characters');
+      _setFieldError(
+        'emergencyContactName',
+        'Name must be at least 2 characters',
+      );
     }
-    
+
     notifyListeners();
   }
-  
+
   /// Set emergency phone
   void setEmergencyPhone(String? phone) {
     _emergencyPhone = phone;
     _clearFieldError('emergencyPhone');
-    
+
     // Basic validation
     if (phone != null && phone.isNotEmpty) {
       final cleaned = phone.replaceAll(RegExp(r'\s+'), '');
@@ -178,57 +186,66 @@ class CompleteProfileProvider extends ChangeNotifier {
         _setFieldError('emergencyPhone', 'Please enter a valid phone number');
       }
     }
-    
+
     notifyListeners();
   }
-  
+
   /// Set profile image path
   void setProfileImage(String? imagePath) {
     _profileImagePath = imagePath;
     notifyListeners();
   }
-  
+
   /// Toggle position dropdown
   void togglePositionDropdown() {
     _showPositionDropdown = !_showPositionDropdown;
     notifyListeners();
   }
-  
+
   /// Toggle terms agreement
   void toggleTermsAgreement(bool? value) {
     _agreedToTerms = value ?? false;
     notifyListeners();
   }
-  
+
   /// Validate entire form
   bool _validateForm() {
     _fieldErrors.clear();
     bool isValid = true;
-    
+
     // Position validation - at least one position must be selected
     if (_selectedPositions.isEmpty) {
       _setFieldError('position', 'Please select at least one position');
       isValid = false;
     }
-    
+
     // Jersey number validation (optional but must be valid if provided)
     if (_jerseyNumber != null && _jerseyNumber!.isNotEmpty) {
       final jerseyNum = int.tryParse(_jerseyNumber!);
       if (jerseyNum == null || jerseyNum < 1 || jerseyNum > 99) {
-        _setFieldError('jerseyNumber', 'Jersey number must be between 1 and 99');
+        _setFieldError(
+          'jerseyNumber',
+          'Jersey number must be between 1 and 99',
+        );
         isValid = false;
       }
     }
-    
+
     // Emergency contact name validation
     if (_emergencyContactName == null || _emergencyContactName!.isEmpty) {
-      _setFieldError('emergencyContactName', 'Emergency contact name is required');
+      _setFieldError(
+        'emergencyContactName',
+        'Emergency contact name is required',
+      );
       isValid = false;
     } else if (_emergencyContactName!.length < 2) {
-      _setFieldError('emergencyContactName', 'Name must be at least 2 characters');
+      _setFieldError(
+        'emergencyContactName',
+        'Name must be at least 2 characters',
+      );
       isValid = false;
     }
-    
+
     // Emergency phone validation
     if (_emergencyPhone == null || _emergencyPhone!.isEmpty) {
       _setFieldError('emergencyPhone', 'Emergency phone number is required');
@@ -240,17 +257,17 @@ class CompleteProfileProvider extends ChangeNotifier {
         isValid = false;
       }
     }
-    
+
     // Terms agreement validation
     if (!_agreedToTerms) {
       _setFieldError('terms', 'You must agree to Terms & Privacy');
       isValid = false;
     }
-    
+
     notifyListeners();
     return isValid;
   }
-  
+
   /// Submit profile to backend - saves directly to User model
   Future<bool> submitProfile() async {
     // Validate form
@@ -259,11 +276,11 @@ class CompleteProfileProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    
+
     try {
       // Upload image if provided
       String? imageUrl;
@@ -280,7 +297,7 @@ class CompleteProfileProvider extends ChangeNotifier {
           // Continue without image - it's optional
         }
       }
-      
+
       // Prepare profile data - all stored in User model
       final positionString = _selectedPositions.join(', ');
       final profileData = <String, dynamic>{
@@ -288,7 +305,7 @@ class CompleteProfileProvider extends ChangeNotifier {
         'emergencyContactName': _emergencyContactName!,
         'emergencyPhone': _emergencyPhone!,
       };
-      
+
       // Add optional fields
       if (_jerseyNumber != null && _jerseyNumber!.isNotEmpty) {
         final jerseyNum = int.tryParse(_jerseyNumber!);
@@ -296,18 +313,18 @@ class CompleteProfileProvider extends ChangeNotifier {
           profileData['jerseyNumber'] = jerseyNum;
         }
       }
-      
+
       if (imageUrl != null && imageUrl.isNotEmpty) {
         profileData['profileImage'] = imageUrl;
       }
-      
+
       // Submit to complete-profile endpoint (updates User model directly)
       final dio = await AuthService.getWorkingDio();
       final response = await dio.put(
         AppConfig.completeProfileEndpoint,
         data: profileData,
       );
-      
+
       if (response.statusCode == 200) {
         // Save completion status to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
@@ -316,12 +333,12 @@ class CompleteProfileProvider extends ChangeNotifier {
           await prefs.setBool('profile_completed_$userId', true);
           debugPrint('✅ Profile completion saved to SharedPreferences');
         }
-        
+
         // Show success sheet
         _showSuccessSheet = true;
         _isLoading = false;
         notifyListeners();
-        
+
         return true;
       } else {
         throw Exception(response.data['error'] ?? 'Failed to complete profile');
@@ -334,24 +351,24 @@ class CompleteProfileProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   /// Hide success sheet and prepare for navigation
   void hideSuccessSheet() {
     _showSuccessSheet = false;
     notifyListeners();
   }
-  
+
   /// Static method to check if profile is completed
   static Future<bool> checkProfileCompletion(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Check SharedPreferences first
       final isCompleted = prefs.getBool('profile_completed_$userId');
       if (isCompleted == true) {
         return true;
       }
-      
+
       // Could also check via API if needed
       return false;
     } catch (e) {
@@ -359,17 +376,17 @@ class CompleteProfileProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   /// Set field error
   void _setFieldError(String field, String error) {
     _fieldErrors[field] = error;
   }
-  
+
   /// Clear field error
   void _clearFieldError(String field) {
     _fieldErrors.remove(field);
   }
-  
+
   @override
   void dispose() {
     super.dispose();

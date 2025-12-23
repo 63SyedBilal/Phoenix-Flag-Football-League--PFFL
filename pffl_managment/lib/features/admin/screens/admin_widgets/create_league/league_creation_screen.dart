@@ -34,11 +34,11 @@ class LeagueCreationScreen extends StatelessWidget {
               }
             },
             child: Scaffold(
-              backgroundColor: const Color(0xFFF9FAFB),
+              backgroundColor: Colors.white,
               resizeToAvoidBottomInset:
                   true, // Allow content to resize but keep button fixed
               appBar: AppBar(
-                backgroundColor: const Color(0xFFF9FAFB),
+                backgroundColor: Colors.white,
                 elevation: 0,
                 leading: ArrowBackButton(
                   onPressed: () {

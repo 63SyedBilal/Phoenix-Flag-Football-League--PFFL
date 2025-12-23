@@ -14,34 +14,39 @@ import 'package:pffl_managment/features/free_agent/providers/free_agent_dashboar
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
+import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
+
 class FreeAgentDashboard extends StatelessWidget {
   const FreeAgentDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => FreeAgentDashboardProvider()),
-      ],
-      child: Consumer<FreeAgentNavigationProvider>(
-        builder: (context, navigationProvider, _) {
-          return Scaffold(
-            body: SafeArea(
-              child: Column(
-                children: [
-                  const FreeAgentHeaderWidget(),
-                  Expanded(
-                    child: _buildContent(
-                      context,
-                      navigationProvider.selectedIndex,
+    return BackButtonWrapper(
+      isRoot: true,
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => FreeAgentDashboardProvider()),
+        ],
+        child: Consumer<FreeAgentNavigationProvider>(
+          builder: (context, navigationProvider, _) {
+            return Scaffold(
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    const FreeAgentHeaderWidget(),
+                    Expanded(
+                      child: _buildContent(
+                        context,
+                        navigationProvider.selectedIndex,
+                      ),
                     ),
-                  ),
-                  const FreeAgentBottomNevigation(),
-                ],
+                    const FreeAgentBottomNevigation(),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -85,29 +90,28 @@ class FreeAgentDashboard extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // User is still a free-agent, show dashboard
-        switch (selectedIndex) {
-          case 0:
-            return const FreeAgentHomeScreen();
-          case 1:
-            return ChangeNotifierProvider(
-              create: (_) => GamesProvider(userRole: 'free agent'),
+        // User is still a free-agent, show dashboard using IndexedStack
+        return IndexedStack(
+          index: selectedIndex,
+          children: [
+            const FreeAgentHomeScreen(),
+            ChangeNotifierProvider(
+              create: (context) => GamesProvider(
+                userRole: authProvider.userRole,
+                userId: authProvider.userId,
+              ),
               child: const GamesScreen(),
-            );
-          case 2:
-            return ChangeNotifierProvider(
+            ),
+            ChangeNotifierProvider(
               create: (_) => LeagueProvider(userRole: 'free agent'),
               child: const LeaguesScreen(),
-            );
-          case 3:
-            return ChangeNotifierProvider(
+            ),
+            ChangeNotifierProvider(
               create: (_) => RoleBasedSettingsProvider(userRole: 'freeagent'),
               child: const SettingsScreen(),
-            );
-
-          default:
-            return const Center(child: Text('Free Agent Dashboard'));
-        }
+            ),
+          ],
+        );
       },
     );
   }
