@@ -174,6 +174,7 @@ class PaymentService {
   /// POST /api/payments/process
   static Future<Map<String, dynamic>> processPayment({
     required String paymentId,
+    required String paymentMethod,
     required Map<String, dynamic> cardDetails,
   }) async {
     try {
@@ -181,14 +182,16 @@ class PaymentService {
 
       final data = {
         'paymentId': paymentId,
-        'paymentMethod': 'stripe',
+        'paymentMethod': paymentMethod,
         'cardNumber': cardDetails['cardNumber'],
         'expiryDate': cardDetails['expiryDate'],
         'cvv': cardDetails['cvv'],
+        'zipCode': cardDetails['zipCode'], // Added zipCode
       };
 
       print('💳 Sending payment request to /payments/process');
       print('   - Payment ID: $paymentId');
+      print('   - Payment Method: $paymentMethod'); // Log payment method
 
       final response = await dio.post('/payments/process', data: data);
 
