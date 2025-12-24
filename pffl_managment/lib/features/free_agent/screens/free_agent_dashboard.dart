@@ -89,8 +89,6 @@ class FreeAgentDashboard extends StatelessWidget {
           });
           return const Center(child: CircularProgressIndicator());
         }
-
-        // User is still a free-agent, show dashboard using IndexedStack
         return IndexedStack(
           index: selectedIndex,
           children: [
