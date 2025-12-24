@@ -4,12 +4,10 @@ import 'package:pffl_managment/core/utils/date_formatter.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_details_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-/// Game card widget matching the design from the provided image
-/// Displays game number, date, teams with flags, and scores
 class GameListCard extends StatelessWidget {
   final MatchModel match;
   final int totalGames;
-  final int? sequenceNumber; // Position in the sorted list (1-based)
+  final int? sequenceNumber;
 
   const GameListCard({
     super.key,
@@ -20,7 +18,6 @@ class GameListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate game number based on sequence position
     final gameNumber = _getGameNumber();
     final formattedDate = match.matchDateTime != null
         ? DateFormatter.formatGameDate(match.matchDateTime!)
@@ -28,7 +25,6 @@ class GameListCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        // Navigate to game details screen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -50,7 +46,6 @@ class GameListCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top row: Game number and date
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -75,7 +70,6 @@ class GameListCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            // Team 1 row (Home team - gray text)
             _buildTeamRow(
               flagUrl: match.homeTeamLogo,
               teamName: match.homeTeam,
@@ -83,7 +77,6 @@ class GameListCard extends StatelessWidget {
               isHomeTeam: true,
             ),
             const SizedBox(height: 12),
-            // Team 2 row (Away team - black text)
             _buildTeamRow(
               flagUrl: match.awayTeamLogo,
               teamName: match.awayTeam,
@@ -103,9 +96,11 @@ class GameListCard extends StatelessWidget {
     required bool isHomeTeam,
   }) {
     // Home team has gray text, Away team has black text (matching image)
-    final textColor = isHomeTeam ? const Color(0xFF6B7280) : const Color(0xFF111827);
+    final textColor = isHomeTeam
+        ? const Color(0xFF6B7280)
+        : const Color(0xFF111827);
     final scoreColor = const Color(0xFF374151);
-    
+
     return Row(
       children: [
         // Flag icon (rectangular like in image)
@@ -114,10 +109,7 @@ class GameListCard extends StatelessWidget {
           height: 24,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(1.6),
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 0.5,
-            ),
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(1.6),
@@ -125,9 +117,8 @@ class GameListCard extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: flagUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: const Color(0xFFF3F4F6),
-                    ),
+                    placeholder: (context, url) =>
+                        Container(color: const Color(0xFFF3F4F6)),
                     errorWidget: (context, url, error) => Container(
                       color: const Color(0xFFF3F4F6),
                       child: const Icon(

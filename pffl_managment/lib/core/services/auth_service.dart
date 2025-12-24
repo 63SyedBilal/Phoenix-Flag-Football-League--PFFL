@@ -91,49 +91,7 @@ class AuthService {
   // Login API with automatic URL fallback
   static Future<AuthResponse?> login(String email, String password) async {
     // List of URLs to try (in order)
-    final urlsToTry = <String>[];
-
-    if (Platform.isAndroid) {
-      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
-
-      // Then try Network IP (reliable for both physical device and emulator)
-      urlsToTry.add(AppConfig.networkBaseUrl);
-
-      // Fallback to emulator specific IP
-
-      // For Android physical device, prioritize network IP
-      // Network IP works best for physical devices on same WiFi
-      urlsToTry.add(
-        AppConfig.networkBaseUrl,
-      ); // Network IP (first priority for physical device)
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(
-        AppConfig.iosSimulatorUrl,
-      ); // ADB port forwarding (localhost)
-      urlsToTry.add(
-        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
-      ); // 127.0.0.1 (ADB port forwarding)
-      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP
-
-      // For Android, try emulator URL first
-      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(
-        AppConfig.iosSimulatorUrl,
-      ); // ADB port forwarding (localhost)
-      urlsToTry.add(
-        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
-      ); // 127.0.0.1 (ADB port forwarding)
-      urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
-    } else if (Platform.isIOS) {
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
-      urlsToTry.add(
-        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
-      ); // Fallback
-    } else {
-      urlsToTry.add(AppConfig.baseUrl); // Default
-    }
+    final urlsToTry = <String>[AppConfig.baseUrl];
 
     DioException? lastError;
 
@@ -283,49 +241,7 @@ class AuthService {
   // Register API with automatic URL fallback (same as login)
   static Future<AuthResponse?> register(Map<String, dynamic> userData) async {
     // List of URLs to try (in order) - same as login
-    final urlsToTry = <String>[];
-
-    if (Platform.isAndroid) {
-      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
-
-      // Then try Network IP (reliable for both physical device and emulator)
-      urlsToTry.add(AppConfig.networkBaseUrl);
-
-      // Fallback to emulator specific IP
-      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
-
-      // For Android physical device, prioritize network IP
-      urlsToTry.add(
-        AppConfig.networkBaseUrl,
-      ); // Network IP (first priority for physical device)
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(
-        AppConfig.iosSimulatorUrl,
-      ); // ADB port forwarding (localhost)
-      urlsToTry.add(
-        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
-      ); // 127.0.0.1 (ADB port forwarding)
-      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP
-
-      // For Android, try emulator URL first
-      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
-      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(
-        AppConfig.iosSimulatorUrl,
-      ); // ADB port forwarding (localhost)
-      urlsToTry.add(
-        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
-      ); // 127.0.0.1 (ADB port forwarding)
-      urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
-    } else if (Platform.isIOS) {
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
-      urlsToTry.add(
-        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
-      ); // Fallback
-    } else {
-      urlsToTry.add(AppConfig.baseUrl); // Default
-    }
+    final urlsToTry = <String>[AppConfig.baseUrl];
 
     DioException? lastError;
 

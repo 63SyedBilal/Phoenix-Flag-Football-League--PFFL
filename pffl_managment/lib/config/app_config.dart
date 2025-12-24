@@ -25,19 +25,7 @@ class AppConfig {
   // NOTE: Android Emulator sometimes can't reach 10.0.2.2
   // If 10.0.2.2 doesn't work, try using the network IP instead
   static String get baseUrl {
-    if (kIsWeb) {
-      // Web platform
-      return 'http://$localhost:$serverPort$apiPath';
-    } else if (Platform.isAndroid) {
-      // Android - Try network IP first (works for both emulator and physical device)
-      return 'http://$networkIp:$serverPort$apiPath';
-    } else if (Platform.isIOS) {
-      // iOS Simulator
-      return 'http://$localhost:$serverPort$apiPath';
-    } else {
-      // Default to network IP for other platforms (Windows, Linux, macOS)
-      return 'http://$networkIp:$serverPort$apiPath';
-    }
+    return 'https://api-staging.phoenixflagfootballleague.com/api';
   }
 
   // Alternative: Use network IP for physical devices

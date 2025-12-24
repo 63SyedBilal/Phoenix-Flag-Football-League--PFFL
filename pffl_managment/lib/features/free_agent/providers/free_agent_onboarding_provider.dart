@@ -174,6 +174,7 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
       debugPrint('💳 Step 2: Processing payment with Stripe...');
       final response = await PaymentService.processPayment(
         paymentId: paymentId,
+        paymentMethod: _selectedPaymentMethod, // Pass selected payment method
         cardDetails: {
           'cardNumber': _cardNumber,
           'expiryDate': _expiryDate,

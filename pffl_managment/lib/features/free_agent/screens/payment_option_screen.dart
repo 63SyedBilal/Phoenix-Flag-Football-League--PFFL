@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/free_agent/providers/free_agent_onboarding_provider.dart';
-import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 class PaymentOptionScreen extends StatelessWidget {
   const PaymentOptionScreen({super.key});
@@ -26,8 +26,9 @@ class PaymentOptionScreen extends StatelessWidget {
       body: SafeArea(
         child: Consumer<FreeAgentOnboardingProvider>(
           builder: (context, provider, child) {
-            final league = provider.selectedLeague;
-            if (league == null) {
+            final selectedLeague = provider.selectedLeague;
+            if (selectedLeague == null) {
+              // Should not happen if navigated from LeagueSelectionScreen correctly
               return const Center(child: Text('No league selected.'));
             }
 
@@ -37,80 +38,52 @@ class PaymentOptionScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Payment Option',
+                    'Complete Your Payment',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0F172A),
+                      height: 1.2,
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Choose how you want to pay for your league registration.',
+                    'Choose your preferred method to pay your league fee.',
                     style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                   ),
-                  const SizedBox(height: 32),
-
-                  // League Summary Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Selected League',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF64748B),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              league.leagueName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Divider(color: Color(0xFFE2E8F0)),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Total Initial Fee',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                            Text(
-                              '\$${league.perPlayerLeagueFee.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF3B82F6),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                  const SizedBox(height: 30),
+                  // Selected League Details (optional, can be expanded if needed)
+                  Text(
+                    'Selected League: ${selectedLeague.leagueName}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 32),
-
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total Amount',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      Text(
+                        '\$${selectedLeague.perPlayerLeagueFee.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
                   const Text(
                     'Select Payment Method',
                     style: TextStyle(
@@ -120,27 +93,33 @@ class PaymentOptionScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  _buildPaymentMethodTile(
-                    context,
-                    provider,
-                    'stripe',
-                    'Credit / Debit Card',
-                    'Pay with Visa, Master, and more',
-                    Icons.credit_card,
+                  // Payment Method Options
+                  _PaymentMethodOption(
+                    label: 'PayPal',
+                    iconPath: 'assets/icons/paypal.svg', // Assuming SVG icon exists
+                    value: 'paypal',
+                    groupValue: provider.selectedPaymentMethod,
+                    onChanged: provider.setPaymentMethod,
                   ),
-                  const SizedBox(height: 12),
-                  _buildPaymentMethodTile(
-                    context,
-                    provider,
-                    'paypal',
-                    'PayPal',
-                    'Fast and secure payment',
-                    Icons.account_balance_wallet,
+                  const SizedBox(height: 16),
+                  _PaymentMethodOption(
+                    label: 'Stripe',
+                    iconPath: 'assets/icons/stripe.svg', // Assuming SVG icon exists
+                    value: 'stripe',
+                    groupValue: provider.selectedPaymentMethod,
+                    onChanged: provider.setPaymentMethod,
                   ),
-
+                  // Error message display
+                  if (provider.errorMessage != null &&
+                      provider.errorMessage!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Text(
+                        provider.errorMessage!,
+                        style: const TextStyle(color: Colors.red, fontSize: 14),
+                      ),
+                    ),
                   const Spacer(),
-
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pushNamed(
@@ -156,7 +135,7 @@ class PaymentOptionScreen extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      'Proceed',
+                      'Proceed to Payment',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -164,7 +143,7 @@ class PaymentOptionScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                 ],
               ),
             );
@@ -173,76 +152,78 @@ class PaymentOptionScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildPaymentMethodTile(
-    BuildContext context,
-    FreeAgentOnboardingProvider provider,
-    String method,
-    String title,
-    String subtitle,
-    IconData icon,
-  ) {
-    final isSelected = provider.selectedPaymentMethod == method;
+class _PaymentMethodOption extends StatelessWidget {
+  final String label;
+  final String iconPath;
+  final String value;
+  final String groupValue;
+  final ValueChanged<String> onChanged;
 
+  const _PaymentMethodOption({
+    required this.label,
+    required this.iconPath,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Assuming you have flutter_svg for SVG images
+    // import 'package:flutter_svg/flutter_svg.dart';
     return GestureDetector(
-      onTap: () => provider.setPaymentMethod(method),
+      onTap: () => onChanged(value),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
+            color: groupValue == value
                 ? const Color(0xFF3B82F6)
                 : const Color(0xFFE2E8F0),
-            width: isSelected ? 2 : 1,
+            width: groupValue == value ? 2 : 1,
           ),
           boxShadow: [
-            if (isSelected)
+            if (groupValue == value)
               BoxShadow(
-                color: const Color(0xFF3B82F6).withOpacity(0.05),
-                blurRadius: 8,
+                color: const Color(0xFF3B82F6).withOpacity(0.1),
+                blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
           ],
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: const Color(0xFF0F172A), size: 24),
-            ),
+            // SvgPicture.asset(iconPath, width: 24, height: 24), // Uncomment if using SVG
+            // Fallback for placeholder if SVG is not used or asset missing
+            Text(label[0],
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                )),
             const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ],
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF0F172A),
+                ),
               ),
             ),
             Radio<String>(
-              value: method,
-              groupValue: provider.selectedPaymentMethod,
-              onChanged: (value) => provider.setPaymentMethod(value!),
+              value: value,
+              groupValue: groupValue,
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  onChanged(newValue);
+                }
+              },
               activeColor: const Color(0xFF3B82F6),
             ),
           ],
