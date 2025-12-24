@@ -10,6 +10,7 @@ class LeagueKeyPlayersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<LeagueDetailProvider>();
     final players = provider.getKeyPlayers();
+    if (players.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -27,7 +28,7 @@ class LeagueKeyPlayersSection extends StatelessWidget {
             height: 90,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: players.length, // This will now be 4 instead of 2
+              itemCount: players.length,
               separatorBuilder: (context, index) => const SizedBox(width: 6),
               itemBuilder: (context, index) {
                 return LeaguePlayerCard(player: players[index], index: index);

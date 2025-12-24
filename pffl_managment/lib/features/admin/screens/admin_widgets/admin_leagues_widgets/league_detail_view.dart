@@ -152,6 +152,11 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
                           const LeagueTeamList(),
                         ] else if (provider.selectedTabIndex == 4) ...[
                           LeagueOfficialsList(leagueId: widget.league.id),
+                        ] else if (provider.selectedTabIndex == 5) ...[
+                          const Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: SponsorBannerScreen(),
+                          ),
                         ],
                       ],
                     ),

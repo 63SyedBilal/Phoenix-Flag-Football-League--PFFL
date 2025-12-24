@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/unified_games_provider.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.dart';
 import 'package:pffl_managment/core/models/game_model.dart';
@@ -625,8 +624,16 @@ class UpcommingGames extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Upcoming Games', style: AppTextStyles.headlineSmall),
-                if (leagueId != null && matches.isNotEmpty)
+                Text(
+                  'Upcoming Games',
+                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                    color: const Color(0xff0F173E),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Lato',
+                  ),
+                ),
+                if (leagueId != null)
                   InkWell(
                     onTap: () {
                       Navigator.push(
@@ -689,38 +696,18 @@ class UpcommingGames extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.sports_soccer_outlined,
-            size: 64,
-            color: Colors.grey.shade400,
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Text(
+          'No upcoming games scheduled',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF6B7280),
+            fontFamily: 'Lato',
           ),
-          const SizedBox(height: 16),
-          Text(
-            'No Upcoming Games',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'There are no upcoming games scheduled at the moment.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-          ),
-        ],
+        ),
       ),
     );
   }

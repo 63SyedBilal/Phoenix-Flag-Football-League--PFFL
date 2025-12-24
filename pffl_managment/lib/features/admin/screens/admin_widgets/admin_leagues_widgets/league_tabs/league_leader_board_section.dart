@@ -9,7 +9,6 @@ class LeagueLeaderboardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<LeagueDetailProvider>();
     final standings = provider.getLeaderboard();
-    if (standings.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -54,329 +53,350 @@ class LeagueLeaderboardSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Scrollbar(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6.25),
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-                ),
-                child: Column(
-                  children: [
-                    // Header row
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: const BoxDecoration(
-                        color: Color(0xffe3ecfb), // Light gray background
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Color(0xFFE5E7EB),
-                            width: 1,
-                          ),
-                        ),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(6.25),
-                          topRight: Radius.circular(6.25),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 40,
-                            child: Text(
-                              'Rank',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 120,
-                            child: Text(
-                              'Team',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const SizedBox(
-                            width: 30,
-                            child: Text(
-                              'W',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const SizedBox(
-                            width: 30,
-                            child: Text(
-                              'D',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const SizedBox(
-                            width: 30,
-                            child: Text(
-                              'L',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const SizedBox(
-                            width: 30,
-                            child: Text(
-                              'PD',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const SizedBox(
-                            width: 30,
-                            child: Text(
-                              'PS',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const SizedBox(
-                            width: 30,
-                            child: Text(
-                              'PA',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const SizedBox(
-                            width: 40,
-                            child: Text(
-                              'PTS',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
+          standings.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                      'No Leaderboard Available',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF6B7280),
+                        fontFamily: 'Lato',
                       ),
                     ),
-                    // Team rows
-                    ...standings.map(
-                      (standing) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                  ),
+                )
+              : Scrollbar(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6.25),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 1,
                         ),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: const Color(
-                                0xFFE5E7EB,
-                              ).withValues(alpha: 0.5),
-                              width: 1,
+                      ),
+                      child: Column(
+                        children: [
+                          // Header row
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
                             ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 40,
-                              child: Text(
-                                '${standing.rank.toString().padLeft(2, '0')}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
+                            decoration: const BoxDecoration(
+                              color: Color(0xffe3ecfb), // Light gray background
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
                                 ),
                               ),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(6.25),
+                                topRight: Radius.circular(6.25),
+                              ),
                             ),
-                            SizedBox(
-                              width: 120,
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 40,
+                                  child: Text(
+                                    'Rank',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 120,
+                                  child: Text(
+                                    'Team',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const SizedBox(
+                                  width: 30,
+                                  child: Text(
+                                    'W',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const SizedBox(
+                                  width: 30,
+                                  child: Text(
+                                    'D',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const SizedBox(
+                                  width: 30,
+                                  child: Text(
+                                    'L',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const SizedBox(
+                                  width: 30,
+                                  child: Text(
+                                    'PD',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const SizedBox(
+                                  width: 30,
+                                  child: Text(
+                                    'PS',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const SizedBox(
+                                  width: 30,
+                                  child: Text(
+                                    'PA',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const SizedBox(
+                                  width: 40,
+                                  child: Text(
+                                    'PTS',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Team rows
+                          ...standings.map(
+                            (standing) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: const Color(
+                                      0xFFE5E7EB,
+                                    ).withOpacity(0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
                               child: Row(
                                 children: [
-                                  Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.grey[200],
+                                  SizedBox(
+                                    width: 40,
+                                    child: Text(
+                                      '${standing.rank.toString().padLeft(2, '0')}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF111827),
+                                      ),
                                     ),
-                                    child: ClipOval(
-                                      child: standing.teamLogo.isNotEmpty
-                                          ? Image.network(
-                                              standing.teamLogo,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) => const Icon(
+                                  ),
+                                  SizedBox(
+                                    width: 120,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey[200],
+                                          ),
+                                          child: ClipOval(
+                                            child: standing.teamLogo.isNotEmpty
+                                                ? Image.network(
+                                                    standing.teamLogo,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) => const Icon(
+                                                          Icons.group,
+                                                          size: 14,
+                                                        ),
+                                                  )
+                                                : const Icon(
                                                     Icons.group,
                                                     size: 14,
                                                   ),
-                                            )
-                                          : const Icon(Icons.group, size: 14),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            standing.teamName,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Color(0xFF111827),
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 30,
                                     child: Text(
-                                      standing.teamName,
+                                      standing.wins.toString(),
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         color: Color(0xFF111827),
                                       ),
-                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 30,
+                                    child: Text(
+                                      standing.draws.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF111827),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 30,
+                                    child: Text(
+                                      standing.losses.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF111827),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 30,
+                                    child: Text(
+                                      standing.pointsDifference.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF111827),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 30,
+                                    child: Text(
+                                      standing.pointsScored.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF111827),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 30,
+                                    child: Text(
+                                      standing.pointsAgainst.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF111827),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 40,
+                                    child: Text(
+                                      ((standing.wins * 3) + standing.draws)
+                                          .toString(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF111827),
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 30,
-                              child: Text(
-                                standing.wins.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 30,
-                              child: Text(
-                                standing.draws.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 30,
-                              child: Text(
-                                standing.losses.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 30,
-                              child: Text(
-                                standing.pointsDifference.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 30,
-                              child: Text(
-                                standing.pointsScored.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 30,
-                              child: Text(
-                                standing.pointsAgainst.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 40,
-                              child: Text(
-                                ((standing.wins * 3) + standing.draws)
-                                    .toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ),
         ],
       ),
     );

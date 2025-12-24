@@ -10,6 +10,7 @@ class LeagueTeamStatsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<LeagueDetailProvider>();
     final stats = provider.getTeamStats();
+    if (stats.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -20,9 +21,9 @@ class LeagueTeamStatsSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               'Team Stats',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFF6B7280),
-                ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: const Color(0xFF6B7280)),
             ),
           ),
           const SizedBox(height: 8),
