@@ -140,14 +140,14 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: SponsorBannerScreen(),
                           ),
-                          const LeagueLeaderboardSection(),
+                          const LeagueLeaderboardSection(showViewButton: true),
                           SizedBox(height: 12),
                           const LeagueKeyPlayersSection(),
                           const LeagueTeamStatsSection(),
                         ] else if (provider.selectedTabIndex == 1) ...[
                           AdminLeagueGamesSection(league: widget.league),
                         ] else if (provider.selectedTabIndex == 2) ...[
-                          const LeagueLeaderboardSection(),
+                          const LeagueLeaderboardSection(showViewButton: false),
                         ] else if (provider.selectedTabIndex == 3) ...[
                           const LeagueTeamList(),
                         ] else if (provider.selectedTabIndex == 4) ...[

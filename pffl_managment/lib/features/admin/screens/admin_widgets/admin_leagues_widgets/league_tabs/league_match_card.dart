@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_game_widgets/edit_upcomming_matches.dart';
+import 'package:pffl_managment/core/providers/unified_games_provider.dart';
+import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
+import 'package:pffl_managment/features/admin/providers/league_games_provider.dart';
 
 /// Card for upcoming/scheduled matches
 class UpcomingMatchCard extends StatelessWidget {
@@ -30,6 +36,12 @@ class UpcomingMatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userRole = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).userRole.toLowerCase();
+    final isAdmin = userRole == 'admin' || userRole == 'superadmin';
+
     final displayTeam1 = team1Name ?? 'TBD';
     final displayTeam2 = team2Name ?? 'TBD';
 
@@ -75,33 +87,73 @@ class UpcomingMatchCard extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onEditTap,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Edit Game',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey[400],
-                      size: 20,
-                    ),
-                  ],
+          if (isAdmin) ...[
+            const Divider(
+              height: 1,
+              color: Color(0xFFE5E7EB),
+              indent: 12,
+              endIndent: 12,
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: match != null
+                    ? () async {
+                        final updated = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => Dialog(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: EditUpcommingMatches(match: match!),
+                          ),
+                        );
+                        if (updated == true && context.mounted) {
+                          try {
+                            Provider.of<UnifiedGamesProvider>(
+                              context,
+                              listen: false,
+                            ).fetchAllMatches();
+                            Provider.of<LeagueDetailProvider>(
+                              context,
+                              listen: false,
+                            ).refresh();
+                            Provider.of<LeagueGamesProvider>(
+                              context,
+                              listen: false,
+                            ).refresh();
+                          } catch (_) {}
+                        }
+                      }
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Edit Game',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xff0F173E),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Color(0xff0F173E),
+                        size: 6,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

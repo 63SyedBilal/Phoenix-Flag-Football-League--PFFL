@@ -3,10 +3,13 @@ import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/utils/date_formatter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/edit_upcoming_games_screen.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_game_widgets/edit_upcomming_matches.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_details_screen.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/core/providers/unified_games_provider.dart';
+import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
+import 'package:pffl_managment/features/admin/providers/league_games_provider.dart';
 
 /// Game card widget for Semi-Final and Final matches
 /// Matches the exact design from the provided image
@@ -22,7 +25,8 @@ class PlayoffGameCard extends StatelessWidget {
   final int? team2Score;
   final DateTime? gameDate;
   final LeagueCreationModel league;
-  final bool isTBD; // True if teams are TBD (for Final before semi-finals complete)
+  final bool
+  isTBD; // True if teams are TBD (for Final before semi-finals complete)
 
   const PlayoffGameCard({
     super.key,
@@ -42,7 +46,14 @@ class PlayoffGameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompleted = game != null &&
+    final userRole = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).userRole.toLowerCase();
+    final isAdmin = userRole == 'admin' || userRole == 'superadmin';
+
+    final bool isCompleted =
+        game != null &&
         game!.status == MatchStatus.completed &&
         team1Score != null &&
         team2Score != null;
@@ -50,7 +61,7 @@ class PlayoffGameCard extends StatelessWidget {
     if (isCompleted) {
       return _buildCompletedCard(context);
     } else {
-      return _buildUpcomingCard(context);
+      return _buildUpcomingCard(context, isAdmin);
     }
   }
 
@@ -58,17 +69,30 @@ class PlayoffGameCard extends StatelessWidget {
     final formattedDate = gameDate != null
         ? DateFormatter.formatGameDate(gameDate!)
         : (game?.date ?? '');
-    
+
     // Format date as "Sun 29 Oct" style
     String displayDate = formattedDate;
     if (gameDate != null) {
       final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       // weekday is 1-7 (Monday=1, Sunday=7), convert to 0-6 for array index
       // Monday=1 -> index 0, Sunday=7 -> index 6
       final weekdayIndex = gameDate!.weekday - 1;
-      displayDate = '${weekdays[weekdayIndex]} ${gameDate!.day} ${months[gameDate!.month - 1]}';
+      displayDate =
+          '${weekdays[weekdayIndex]} ${gameDate!.day} ${months[gameDate!.month - 1]}';
     }
 
     return GestureDetector(
@@ -151,23 +175,36 @@ class PlayoffGameCard extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingCard(BuildContext context) {
+  Widget _buildUpcomingCard(BuildContext context, bool isAdmin) {
     final formattedDate = gameDate != null
         ? DateFormatter.formatGameDate(gameDate!)
         : (game?.date ?? '');
-    
+
     // Format date as "Sun 29 Oct" style
     String displayDate = formattedDate;
     String displayTime = game?.time ?? '';
-    
+
     if (gameDate != null) {
       final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       // weekday is 1-7 (Monday=1, Sunday=7), convert to 0-6 for array index
       final weekdayIndex = gameDate!.weekday - 1;
-      displayDate = '${weekdays[weekdayIndex]} ${gameDate!.day} ${months[gameDate!.month - 1]}';
-      
+      displayDate =
+          '${weekdays[weekdayIndex]} ${gameDate!.day} ${months[gameDate!.month - 1]}';
+
       // Format time if available
       if (game?.matchDateTime != null) {
         final hour = game!.matchDateTime!.hour > 12
@@ -283,61 +320,96 @@ class PlayoffGameCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            height: 1,
-            color: const Color(0xFFE0E0E0),
-            margin: const EdgeInsets.symmetric(horizontal: 12),
-          ),
-          Material(
-            color: Colors.black.withAlpha(5),
-            child: InkWell(
-              onTap: () {
-                // Allow editing even if game doesn't exist yet (for creating new playoff games)
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Dialog(
-                      backgroundColor: Colors.transparent,
-                      insetPadding: const EdgeInsets.all(16),
-                      child: ChangeNotifierProvider(
-                        create: (_) {
-                          final provider = UpcomingGamesProvider();
-                          provider.initializeWithLeague(league);
-                          if (game != null && game!.id != null) {
-                            provider.loadMatch(game!);
-                          }
-                          return provider;
-                        },
-                        child: EditUpcomingGamesScreen(league: league),
+          if (isAdmin) ...[
+            Container(
+              height: 1,
+              color: const Color(0xFFE0E0E0),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () async {
+                  // Create a placeholder match for TBD games
+                  final matchToEdit =
+                      game ??
+                      MatchModel(
+                        leagueName: league.leagueName,
+                        homeTeam: team1Name ?? 'TBD',
+                        homeTeamLogo: team1Logo ?? '',
+                        awayTeam: team2Name ?? 'TBD',
+                        awayTeamLogo: team2Logo ?? '',
+                        date: gameDate != null
+                            ? '${gameDate!.day}/${gameDate!.month}/${gameDate!.year}'
+                            : 'TBD',
+                        time: gameDate != null
+                            ? '${gameDate!.hour}:${gameDate!.minute.toString().padLeft(2, '0')}'
+                            : 'TBD',
+                        matchDateTime: gameDate,
+                        roundName: roundName,
+                        gameNumber: gameNumber,
+                        leagueId: league.id,
+                      );
+
+                  final updated = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Dialog(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: EditUpcommingMatches(
+                          match: matchToEdit,
+                          hideTeamSelection: true,
+                        ),
+                      );
+                    },
+                  );
+                  if (updated == true && context.mounted) {
+                    try {
+                      Provider.of<UnifiedGamesProvider>(
+                        context,
+                        listen: false,
+                      ).fetchAllMatches();
+                      Provider.of<LeagueDetailProvider>(
+                        context,
+                        listen: false,
+                      ).refresh();
+                      Provider.of<LeagueGamesProvider>(
+                        context,
+                        listen: false,
+                      ).refresh();
+                    } catch (_) {}
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Edit Game',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xff0F173E),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    );
-                  },
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Edit Game',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF999999),
-                        fontFamily: 'Lato',
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Color(0xff0F173E),
+                        size: 6,
                       ),
-                    ),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: Color(0xFFCCCCCC),
-                      size: 18,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -350,9 +422,11 @@ class PlayoffGameCard extends StatelessWidget {
     required bool isHomeTeam,
   }) {
     // Home team has gray text, Away team has black text
-    final textColor = isHomeTeam ? const Color(0xFF6B7280) : const Color(0xFF111827);
+    final textColor = isHomeTeam
+        ? const Color(0xFF6B7280)
+        : const Color(0xFF111827);
     final scoreColor = const Color(0xFF374151);
-    
+
     return Row(
       children: [
         // Flag icon (rectangular like in image)
@@ -361,10 +435,7 @@ class PlayoffGameCard extends StatelessWidget {
           height: 24,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(1.6),
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 0.5,
-            ),
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(1.6),
@@ -372,9 +443,8 @@ class PlayoffGameCard extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: flagUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: const Color(0xFFF3F4F6),
-                    ),
+                    placeholder: (context, url) =>
+                        Container(color: const Color(0xFFF3F4F6)),
                     errorWidget: (context, url, error) => Container(
                       color: const Color(0xFFF3F4F6),
                       child: const Icon(
@@ -428,10 +498,7 @@ class PlayoffGameCard extends StatelessWidget {
       height: 24,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(1.6),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 0.5,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(1.6),
@@ -439,9 +506,8 @@ class PlayoffGameCard extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: flagUrl,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: const Color(0xFFF3F4F6),
-                ),
+                placeholder: (context, url) =>
+                    Container(color: const Color(0xFFF3F4F6)),
                 errorWidget: (context, url, error) => Container(
                   color: const Color(0xFFF3F4F6),
                   child: const Icon(
@@ -473,11 +539,7 @@ class PlayoffGameCard extends StatelessWidget {
             color: Color(0xFF1A1A1A),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.shield,
-            size: 14,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.shield, size: 14, color: Colors.white),
         ),
         const SizedBox(width: 8),
         const Text(

@@ -8,7 +8,13 @@ import 'package:pffl_managment/features/admin/models/match_model.dart';
 
 class EditUpcommingMatches extends StatefulWidget {
   final MatchModel match;
-  const EditUpcommingMatches({super.key, required this.match});
+  final bool hideTeamSelection;
+
+  const EditUpcommingMatches({
+    super.key,
+    required this.match,
+    this.hideTeamSelection = false,
+  });
 
   @override
   State<EditUpcommingMatches> createState() => _EditMatchViewState();
@@ -189,66 +195,67 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
 
           if (isLoadingTeams) const LinearProgressIndicator(),
 
-          /// TEAM SELECTION
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Edit Team A",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
+          /// TEAM SELECTION (hidden for playoff games)
+          if (!widget.hideTeamSelection) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Edit Team A",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    SimpleDropdownList(
-                      hintText: "Select Team",
-                      selectedValue: selectedTeamA,
-                      items: teams,
-                      onSelected: (value) {
-                        setState(() {
-                          selectedTeamA = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Edit Team B",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                      const SizedBox(height: 4),
+                      SimpleDropdownList(
+                        hintText: "Select Team",
+                        selectedValue: selectedTeamA,
+                        items: teams,
+                        onSelected: (value) {
+                          setState(() {
+                            selectedTeamA = value;
+                          });
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    SimpleDropdownList(
-                      hintText: "Select Team",
-                      selectedValue: selectedTeamB,
-                      items: teams,
-                      onSelected: (value) {
-                        setState(() {
-                          selectedTeamB = value;
-                        });
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 6),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Edit Team B",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      SimpleDropdownList(
+                        hintText: "Select Team",
+                        selectedValue: selectedTeamB,
+                        items: teams,
+                        onSelected: (value) {
+                          setState(() {
+                            selectedTeamB = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
 
           /// GAME DATE
           const Text(

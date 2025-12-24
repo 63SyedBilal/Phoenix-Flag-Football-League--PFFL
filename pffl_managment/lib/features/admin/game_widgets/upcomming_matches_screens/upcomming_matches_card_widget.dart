@@ -4,8 +4,8 @@ import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/svg_icons.dart';
 // Assuming AppAdminIcons is here or exported
 import 'package:pffl_managment/features/admin/models/match_model.dart';
-import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/edit_upcoming_games_screen.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_game_widgets/edit_upcomming_matches.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 class UpcommingMatchesCardWidget extends StatelessWidget {
   final MatchModel match;
@@ -16,6 +16,11 @@ class UpcommingMatchesCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final userRole = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).userRole.toLowerCase();
+    final isAdmin = userRole == 'admin' || userRole == 'superadmin';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -74,46 +79,49 @@ class UpcommingMatchesCardWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Divider(),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return Dialog(
-                    backgroundColor: Colors.transparent,
-                    insetPadding: const EdgeInsets.all(16),
-                    child: ChangeNotifierProvider(
-                      create: (_) {
-                        final provider = UpcomingGamesProvider();
-                        // Initialize without league first, then load match
-                        provider.initializeWithoutLeague();
-                        provider.loadMatch(match);
-                        return provider;
-                      },
-                      child: const EditUpcomingGamesScreen(),
+          if (isAdmin) ...[
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () async {
+                final updated = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => Dialog(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  );
-                },
-              );
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Edit Game',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
+                    child: EditUpcommingMatches(match: match),
                   ),
-                ),
-                const SizedBox(width: 6),
-                SvgIcons.icon1(size: 12, color: colorScheme.primary),
-              ],
+                );
+                if (updated == true && context.mounted) {
+                  // Since this uses UpcomingGamesProvider in its original code,
+                  // but EditUpcommingMatches uses MatchService directly,
+                  // we might need to refresh whatever provider is managing the main view.
+                  // Usually these screens are wrapped in a provider.
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Edit Game',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xff0F173E),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Color(0xff0F173E),
+                    size: 6,
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

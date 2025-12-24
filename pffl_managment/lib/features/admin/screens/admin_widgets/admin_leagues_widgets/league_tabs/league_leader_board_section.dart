@@ -3,7 +3,9 @@ import 'package:pffl_managment/features/admin/provider/league_detail_provider.da
 import 'package:provider/provider.dart';
 
 class LeagueLeaderboardSection extends StatelessWidget {
-  const LeagueLeaderboardSection({super.key});
+  final bool showViewButton;
+
+  const LeagueLeaderboardSection({super.key, this.showViewButton = true});
 
   @override
   Widget build(BuildContext context) {
@@ -26,30 +28,32 @@ class LeagueLeaderboardSection extends StatelessWidget {
                   fontFamily: 'Lato',
                 ),
               ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  provider.selectTab(2);
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      'View Leaderboard',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Color(0xff0F173E),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
+              if (showViewButton) ...[
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    provider.selectTab(2);
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        'View Leaderboard',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Color(0xff0F173E),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 8.72,
-                      color: Color(0xff0F173E),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 8.72,
+                        color: Color(0xff0F173E),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 16),
