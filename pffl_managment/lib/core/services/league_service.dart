@@ -489,8 +489,9 @@ class LeagueService {
 
       if (response.statusCode == 200) {
         final data = response.data;
+        final responseStr = data.toString();
         print(
-          '✅ API Response received: ${data.toString().substring(0, 200)}...',
+          '✅ API Response received: ${responseStr.length > 200 ? '${responseStr.substring(0, 200)}...' : responseStr}',
         );
 
         if (data['data'] != null) {

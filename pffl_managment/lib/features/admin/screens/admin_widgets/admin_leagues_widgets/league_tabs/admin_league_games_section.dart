@@ -83,6 +83,19 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
         }
 
         final allGames = provider.allGames;
+
+        // Show empty state when no games exist
+        if (allGames.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                'No games created yet',
+                style: TextStyle(fontSize: 16, color: Color(0xFF666666)),
+              ),
+            ),
+          );
+        }
         final semiFinal1 = provider.semiFinal1;
         final semiFinal2 = provider.semiFinal2;
         final finalMatch = provider.finalMatch;
