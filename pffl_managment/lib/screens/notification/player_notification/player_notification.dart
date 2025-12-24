@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/core/models/notification_model.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/features/player/providers/player_team_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/player_notification_card.dart';

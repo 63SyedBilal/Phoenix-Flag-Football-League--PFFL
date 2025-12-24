@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/core/models/notification_model.dart';
 
 /// Service for notification-related API calls
 class NotificationService {
@@ -11,7 +12,7 @@ class NotificationService {
 
   /// Get all notifications for logged-in user
   /// GET /api/notification/all
-  static Future<List<Map<String, dynamic>>> getAllNotifications() async {
+  static Future<List<NotificationModel>> getAllNotifications() async {
     try {
       print('📡 [NotificationService] Fetching all notifications...');
       final dio = await _getAuthenticatedDio();
@@ -19,41 +20,37 @@ class NotificationService {
       final response = await dio.get('/notification/all');
 
       print('📡 [NotificationService] Response status: ${response.statusCode}');
-      print(
-        '📡 [NotificationService] Response data keys: ${response.data?.keys}',
-      );
 
       if (response.statusCode == 200) {
         final data = response.data;
-        print('📡 [NotificationService] Response success: ${data['success']}');
+
+        List<dynamic> rawList = [];
+        if (data is Map && data.containsKey('data')) {
+          rawList = data['data'] as List? ?? [];
+        } else if (data is List) {
+          rawList = data;
+        }
+
         print(
-          '📡 [NotificationService] Response data type: ${data['data']?.runtimeType}',
-        );
-        print(
-          '📡 [NotificationService] Response data length: ${(data['data'] as List?)?.length ?? 0}',
+          '📡 [NotificationService] Found ${rawList.length} raw notifications',
         );
 
-        if (data['success'] == true && data['data'] != null) {
-          final notifications = (data['data'] as List)
-              .cast<Map<String, dynamic>>();
-          print(
-            '✅ [NotificationService] Returning ${notifications.length} notifications',
-          );
-          notifications.forEach((n) {
-            print('  📋 Notification: ${n['type']} - ${n['_id']}');
-          });
-          return notifications;
-        } else if (data['data'] != null) {
-          // Handle case where success field might not be present
-          final notifications = (data['data'] as List)
-              .cast<Map<String, dynamic>>();
-          print(
-            '✅ [NotificationService] Returning ${notifications.length} notifications (no success field)',
-          );
-          return notifications;
-        }
-        print('⚠️ [NotificationService] No notifications found in response');
-        return [];
+        final notifications = rawList
+            .map((json) {
+              try {
+                return NotificationModel.fromJson(json as Map<String, dynamic>);
+              } catch (e) {
+                print('⚠️ Error parsing notification: $e');
+                return null;
+              }
+            })
+            .whereType<NotificationModel>()
+            .toList();
+
+        print(
+          '✅ [NotificationService] Returning ${notifications.length} valid notifications',
+        );
+        return notifications;
       } else {
         print(
           '❌ [NotificationService] Failed to fetch notifications: ${response.statusMessage}',

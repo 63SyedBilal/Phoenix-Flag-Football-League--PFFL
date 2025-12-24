@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/core/models/notification_model.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_card.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
@@ -26,7 +27,9 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
               builder: (context, provider, _) {
                 return IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: provider.isLoading ? null : () => provider.refresh(),
+                  onPressed: provider.isLoading
+                      ? null
+                      : () => provider.refresh(),
                 );
               },
             ),
@@ -45,7 +48,11 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         provider.errorMessage!,
@@ -76,14 +83,16 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
                   final notification = provider.notifications[index];
                   return NotificationCard(
                     notification: notification,
-                    onAccept: notification.isPending &&
+                    onAccept:
+                        notification.isPending &&
                             (notification.type == 'LEAGUE_REFEREE_INVITE' ||
-                             notification.type == 'TEAM_INVITE')
+                                notification.type == 'TEAM_INVITE')
                         ? () => _handleAccept(context, notification.id)
                         : null,
-                    onReject: notification.isPending &&
+                    onReject:
+                        notification.isPending &&
                             (notification.type == 'LEAGUE_REFEREE_INVITE' ||
-                             notification.type == 'TEAM_INVITE')
+                                notification.type == 'TEAM_INVITE')
                         ? () => _handleReject(context, notification.id)
                         : null,
                   );
@@ -96,7 +105,10 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
     );
   }
 
-  Future<void> _handleAccept(BuildContext context, String notificationId) async {
+  Future<void> _handleAccept(
+    BuildContext context,
+    String notificationId,
+  ) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
     final result = await provider.acceptNotification(notificationId);
     final success = result['success'] == true;
@@ -106,8 +118,10 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
     if (success && context.mounted) {
       // If role was changed (free-agent to player), logout user
       if (roleChanged) {
-        print('🔄 Role changed from free-agent to $newRole. Logging out user...');
-        
+        print(
+          '🔄 Role changed from free-agent to $newRole. Logging out user...',
+        );
+
         // Show message to user
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,28 +134,27 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
             ),
           );
         }
-        
+
         // Wait a bit for user to see the message
         await Future.delayed(const Duration(seconds: 1));
-        
+
         // Get auth provider and logout
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         await authProvider.logout(context);
-        
+
         // Navigate to login screen
         if (context.mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/login',
-            (route) => false,
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/login', (route) => false);
         }
-        
+
         return; // Exit early since we've logged out
       }
-      
+
       // Refresh notifications to update status
       await provider.refresh();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invitation accepted successfully!'),
@@ -158,7 +171,10 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
     }
   }
 
-  Future<void> _handleReject(BuildContext context, String notificationId) async {
+  Future<void> _handleReject(
+    BuildContext context,
+    String notificationId,
+  ) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
     final success = await provider.rejectNotification(notificationId);
 
@@ -179,4 +195,3 @@ class _FreeAgentNotificationState extends State<FreeAgentNotification> {
     }
   }
 }
-

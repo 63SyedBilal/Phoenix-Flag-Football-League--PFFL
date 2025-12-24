@@ -1,16 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
+import 'package:pffl_managment/core/models/notification_model.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
 
 /// Model for notification display
-class NotificationModel {
+class AdminNotificationDisplayModel {
   final String id;
   final String title;
   final String message;
   final String date;
-  final String type; // 'payment_received', 'payment_refunded', 'payment_processed', 'payment_pending', 'league_created', 'team_invite', 'league_invite'
+  final String type;
 
-  NotificationModel({
+  AdminNotificationDisplayModel({
     required this.id,
     required this.title,
     required this.message,
@@ -22,12 +23,12 @@ class NotificationModel {
 /// Provider for Notifications Screen
 class NotificationsProvider extends ChangeNotifier {
   // State variables
-  List<NotificationModel> _notifications = [];
+  List<AdminNotificationDisplayModel> _notifications = [];
   bool _isLoading = false;
   String? _errorMessage;
 
   // Getters
-  List<NotificationModel> get notifications => _notifications;
+  List<AdminNotificationDisplayModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -52,13 +53,18 @@ class NotificationsProvider extends ChangeNotifier {
         _fetchPaymentNotifications(),
       ]);
 
-      final regularNotifications = results[0] as List<Map<String, dynamic>>;
-      final paymentNotifications = results[1] as List<NotificationModel>;
+      final regularNotifications = results[0] as List<NotificationModel>;
+      final paymentNotifications =
+          results[1] as List<AdminNotificationDisplayModel>;
 
-      debugPrint('✅ Fetched ${regularNotifications.length} regular notifications');
-      debugPrint('✅ Fetched ${paymentNotifications.length} payment notifications');
+      debugPrint(
+        '✅ Fetched ${regularNotifications.length} regular notifications',
+      );
+      debugPrint(
+        '✅ Fetched ${paymentNotifications.length} payment notifications',
+      );
 
-      // Convert regular notifications to NotificationModel
+      // Convert regular notifications (NotificationModel) to AdminNotificationDisplayModel
       final convertedNotifications = regularNotifications.map((n) {
         return _convertNotificationToModel(n);
       }).toList();
@@ -79,20 +85,24 @@ class NotificationsProvider extends ChangeNotifier {
   }
 
   /// Fetch payment notifications from payment data
-  Future<List<NotificationModel>> _fetchPaymentNotifications() async {
+  Future<List<AdminNotificationDisplayModel>>
+  _fetchPaymentNotifications() async {
     try {
       // Fetch all payments to generate payment notifications
       final payments = await PaymentService.getAllPayments('all');
-      
-      final paymentNotifications = <NotificationModel>[];
+
+      final paymentNotifications = <AdminNotificationDisplayModel>[];
 
       for (var payment in payments) {
         final status = payment['status'] as String? ?? 'pending';
-        final createdAt = payment['createdAt'] as String? ?? payment['updatedAt'] as String? ?? DateTime.now().toIso8601String();
+        final createdAt =
+            payment['createdAt'] as String? ??
+            payment['updatedAt'] as String? ??
+            DateTime.now().toIso8601String();
         final amount = payment['amount'] as num? ?? 0;
         final userId = payment['userId'];
         final leagueId = payment['leagueId'];
-        
+
         String playerName = 'A player';
         if (userId != null && userId is Map) {
           final firstName = userId['firstName'] as String? ?? '';
@@ -115,37 +125,47 @@ class NotificationsProvider extends ChangeNotifier {
         switch (status.toLowerCase()) {
           case 'paid':
             title = 'Payment Received';
-            message = '$playerName has successfully paid \$${amount.toStringAsFixed(2)} for $leagueName. Please review the payment details.';
+            message =
+                '$playerName has successfully paid \$${amount.toStringAsFixed(2)} for $leagueName. Please review the payment details.';
             type = 'payment_received';
             break;
           case 'refunded':
             title = 'Payment Refunded';
-            message = '$playerName\'s payment of \$${amount.toStringAsFixed(2)} for $leagueName has been successfully refunded. Please review the refund details if needed.';
+            message =
+                '$playerName\'s payment of \$${amount.toStringAsFixed(2)} for $leagueName has been successfully refunded. Please review the refund details if needed.';
             type = 'payment_refunded';
             break;
           case 'pending':
           case 'unpaid':
             title = 'Payment Pending';
-            message = '$playerName\'s payment of \$${amount.toStringAsFixed(2)} for $leagueName is currently pending. We are awaiting confirmation from the payment provider.';
+            message =
+                '$playerName\'s payment of \$${amount.toStringAsFixed(2)} for $leagueName is currently pending. We are awaiting confirmation from the payment provider.';
             type = 'payment_pending';
             break;
           default:
             title = 'Payment Processed';
-            message = '$playerName\'s payment of \$${amount.toStringAsFixed(2)} for $leagueName has been successfully processed. Please check your account for the updated balance.';
+            message =
+                '$playerName\'s payment of \$${amount.toStringAsFixed(2)} for $leagueName has been successfully processed. Please check your account for the updated balance.';
             type = 'payment_processed';
         }
 
         // Only add paid and pending payments as notifications (to avoid duplicates)
         // Refunded payments can be added if status field supports it
-        if (status.toLowerCase() == 'paid' || status.toLowerCase() == 'unpaid' || status.toLowerCase() == 'pending') {
-
-          paymentNotifications.add(NotificationModel(
-            id: payment['_id']?.toString() ?? payment['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-            title: title,
-            message: message,
-            date: _formatDate(createdAt),
-            type: type,
-          ));
+        if (status.toLowerCase() == 'paid' ||
+            status.toLowerCase() == 'unpaid' ||
+            status.toLowerCase() == 'pending') {
+          paymentNotifications.add(
+            AdminNotificationDisplayModel(
+              id:
+                  payment['_id']?.toString() ??
+                  payment['id']?.toString() ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
+              title: title,
+              message: message,
+              date: _formatDate(createdAt),
+              type: type,
+            ),
+          );
         }
       }
 
@@ -156,11 +176,13 @@ class NotificationsProvider extends ChangeNotifier {
     }
   }
 
-  /// Convert backend notification to NotificationModel
-  NotificationModel _convertNotificationToModel(Map<String, dynamic> notification) {
-    final type = notification['type'] as String? ?? '';
-    final createdAt = notification['createdAt'] as String? ?? DateTime.now().toIso8601String();
-    
+  /// Convert backend notification to AdminNotificationDisplayModel
+  AdminNotificationDisplayModel _convertNotificationToModel(
+    NotificationModel notification,
+  ) {
+    final type = notification.type;
+    final createdAt = notification.createdAt.toIso8601String();
+
     String title;
     String message;
     String notificationType;
@@ -169,10 +191,10 @@ class NotificationsProvider extends ChangeNotifier {
       case 'LEAGUE_TEAM_INVITE':
       case 'LEAGUE_REFEREE_INVITE':
       case 'LEAGUE_STATKEEPER_INVITE':
-        final league = notification['league'];
-        final leagueName = league != null && league is Map ? league['leagueName'] as String? : 'a league';
+        final leagueName = notification.league?.leagueName ?? 'a league';
         title = 'League Created Successfully';
-        message = 'Your new league "$leagueName" has been created successfully.\nYou can now manage teams, and schedules from your league dashboard.';
+        message =
+            'Your new league "$leagueName" has been created successfully.\nYou can now manage teams, and schedules from your league dashboard.';
         notificationType = 'league_created';
         break;
       case 'TEAM_INVITE':
@@ -191,8 +213,8 @@ class NotificationsProvider extends ChangeNotifier {
         notificationType = 'other';
     }
 
-    return NotificationModel(
-      id: notification['_id']?.toString() ?? notification['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+    return AdminNotificationDisplayModel(
+      id: notification.id,
       title: title,
       message: message,
       date: _formatDate(createdAt),
@@ -204,7 +226,20 @@ class NotificationsProvider extends ChangeNotifier {
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${date.day} ${months[date.month - 1]} ${date.year}';
     } catch (e) {
       return DateTime.now().toString().substring(0, 10);
