@@ -172,11 +172,6 @@ class UpcommingGamesCardWidget extends StatelessWidget {
   }
 
   void _showEditGameDialog(BuildContext context, MatchModel match) {
- mustafa
-    // Placeholder for edit dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit functionality not implemented yet')),
-
     final provider = Provider.of<UnifiedGamesProvider>(context, listen: false);
 
     // Initial values
@@ -437,20 +432,6 @@ class UpcommingGamesCardWidget extends StatelessWidget {
             color: Color(0xFF000000),
             fontFamily: 'Lato',
           ),
- mustafa
-          const SizedBox(height: 8),
-          const Divider(),
-          const SizedBox(height: 8),
-          // Keeping the edit functionality simpler without the dialog
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Edit Game',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0x33000000),
-
         ),
         const SizedBox(height: 8),
         child,
@@ -497,14 +478,9 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                       ? Colors.grey[400]
                       : Colors.black,
                   fontFamily: 'Lato',
- bilalphoenix
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
- mustafa
-              Icon(Icons.keyboard_arrow_right, size: 16, color: Color(0x33000000)),
-            ],
-
             ),
             Icon(Icons.keyboard_arrow_down, color: Colors.grey[400], size: 20),
           ],
@@ -533,7 +509,6 @@ class UpcommingGamesCardWidget extends StatelessWidget {
               fontFamily: 'Lato',
               color: Colors.black,
             ),
- bilalphoenix
           ),
         );
       }).toList(),
@@ -556,18 +531,20 @@ class UpcommingGamesCardWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black,
-              fontFamily: 'Lato',
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black,
+                fontFamily: 'Lato',
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Icon(icon, color: Colors.grey[400], size: 18),
         ],
       ),
- bilalphoenix
     );
   }
 
@@ -655,16 +632,8 @@ class UpcommingGames extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Upcoming Games', style: AppTextStyles.headlineSmall),
- mustafa
-                if (matches.isNotEmpty)
-                  GestureDetector(
-
- mustafa
-                // Removed the "View more" text and arrow icon
-
                 if (leagueId != null && matches.isNotEmpty)
                   InkWell(
- bilalphoenix
                     onTap: () {
                       Navigator.push(
                         context,
@@ -699,7 +668,7 @@ class UpcommingGames extends StatelessWidget {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        Icon(
+                        const Icon(
                           Icons.arrow_forward_ios,
                           size: 12,
                           color: Colors.grey,
@@ -707,7 +676,6 @@ class UpcommingGames extends StatelessWidget {
                       ],
                     ),
                   ),
- bilalphoenix
               ],
             ),
             const SizedBox(height: 18),

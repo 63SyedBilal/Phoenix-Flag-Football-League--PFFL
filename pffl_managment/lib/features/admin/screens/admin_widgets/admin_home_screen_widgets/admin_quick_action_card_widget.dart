@@ -32,25 +32,6 @@ class AdminQuickActionCardWidget extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: Card(
         shadowColor: Colors.transparent,
- mustafa
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outlineVariant),
-          ),
-          child: Column(
-            children: [
-              Icon(action.icon, size: 24, color: colorScheme.onSurface),
-              const SizedBox(height: 10),
-              Text(
-                action.title,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.labelSmall,
-              ),
-            ],
-
         child: ImageFiltered(
           imageFilter: isBlurred
               ? ImageFilter.blur(sigmaX: 1.8, sigmaY: 1.8)
@@ -75,7 +56,6 @@ class AdminQuickActionCardWidget extends StatelessWidget {
                 ),
               ],
             ),
- bilalphoenix
           ),
         ),
       ),
