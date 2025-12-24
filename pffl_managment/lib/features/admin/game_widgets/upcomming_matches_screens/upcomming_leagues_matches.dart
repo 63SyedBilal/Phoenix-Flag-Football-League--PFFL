@@ -27,14 +27,14 @@ class UpcommingGamesCardWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 16, top: 12, right: 16),
+            padding: const EdgeInsets.only(left: 16, top: 8, right: 16),
             child: Row(
               children: [
                 Text(
                   match.leagueName,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
                     color: Colors.grey[600],
                     letterSpacing: 0.3,
                   ),
@@ -49,7 +49,7 @@ class UpcommingGamesCardWidget extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 _buildTeamSection(
@@ -61,22 +61,13 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        match.roundName ?? 'Match',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF000000),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
                         match.date,
-                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 1),
                       Text(
                         match.time,
-                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -89,7 +80,12 @@ class UpcommingGamesCardWidget extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          const Divider(
+            indent: 12,
+            endIndent: 12,
+            height: 1,
+            color: Color(0xFFE5E7EB),
+          ),
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -104,7 +100,7 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                   children: [
                     Text(
                       'Edit Game',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                     Icon(
                       Icons.chevron_right,
@@ -153,8 +149,8 @@ class UpcommingGamesCardWidget extends StatelessWidget {
 
   Widget _buildTeamLogo(String logo) {
     return Container(
-      width: 28,
-      height: 28,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
         color: logo.isNotEmpty ? null : Colors.grey[300],
         shape: BoxShape.circle,
@@ -594,8 +590,6 @@ class UpcommingGames extends StatelessWidget {
     return Consumer<UnifiedGamesProvider>(
       builder: (context, gamesProvider, child) {
         final leagueDetailProvider = Provider.of<LeagueDetailProvider>(context);
-
-        // If leagueId is provided, use LeagueDetailProvider, otherwise use UnifiedGamesProvider
         final matches = leagueId != null
             ? leagueDetailProvider.getUpcomingGames()
             : gamesProvider.upcomingGamesPerLeague;
@@ -612,7 +606,6 @@ class UpcommingGames extends StatelessWidget {
           }
         });
 
-        // Debug print to check data
         debugPrint('🔍 UpcommingGames Widget Build:');
         debugPrint(
           '   - Total games in provider: ${gamesProvider.allGames.length}',

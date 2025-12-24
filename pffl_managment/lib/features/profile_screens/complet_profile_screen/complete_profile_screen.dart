@@ -6,7 +6,6 @@ import 'package:pffl_managment/features/profile_screens/complet_profile_screen/w
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/position_dropdown.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/emergency_contact_fields.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/success_bottom_sheet.dart';
-import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/jersey_number_field.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/terms_checkbox.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/complete_button.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/skip_button.dart';
@@ -72,7 +71,7 @@ class _CompleteProfileView extends StatelessWidget {
                           const ProfileImageSection(),
                           const SizedBox(height: 32),
                           const PositionDropdown(),
-                          
+
                           const SizedBox(height: 20),
                           const EmergencyContactFields(),
                           const SizedBox(height: 24),

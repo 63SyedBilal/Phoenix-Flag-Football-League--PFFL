@@ -52,7 +52,13 @@ class AdminQuickActionCardWidget extends StatelessWidget {
                 Text(
                   action.title,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.labelSmall,
+                  style: action.title == 'Create League'
+                      ? AppTextStyles.labelSmall.copyWith(
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Lato',
+                        )
+                      : AppTextStyles.labelSmall,
                 ),
               ],
             ),

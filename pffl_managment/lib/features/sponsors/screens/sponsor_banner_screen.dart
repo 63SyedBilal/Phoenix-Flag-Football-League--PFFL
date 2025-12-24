@@ -14,7 +14,7 @@ class SponsorBannerScreen extends StatelessWidget {
       case 'file':
         return Image.file(
           File(path),
-          width: 380,
+          width: 370,
           height: 110,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
@@ -25,7 +25,7 @@ class SponsorBannerScreen extends StatelessWidget {
       case 'network':
         return Image.network(
           path,
-          width: 380,
+          width: 370,
           height: 110,
           fit: BoxFit.cover,
           loadingBuilder: (context, child, loadingProgress) {
@@ -49,7 +49,7 @@ class SponsorBannerScreen extends StatelessWidget {
       default:
         return Image.asset(
           path,
-          width: 380,
+          width: 370,
           height: 110,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
@@ -77,7 +77,7 @@ class SponsorBannerScreen extends StatelessWidget {
           builder: (context, provider, child) {
             if (provider.isLoading) {
               return Container(
-                width: 380,
+                width: 370,
                 height: 110,
                 margin: const EdgeInsets.only(bottom: 12.0),
                 decoration: BoxDecoration(
@@ -92,7 +92,7 @@ class SponsorBannerScreen extends StatelessWidget {
 
             if (provider.sponsorImages.isEmpty) {
               return Container(
-                width: 380,
+                width: 370,
                 height: 110,
                 margin: const EdgeInsets.only(bottom: 12.0),
                 decoration: BoxDecoration(
@@ -104,7 +104,7 @@ class SponsorBannerScreen extends StatelessWidget {
             }
 
             return Container(
-              width: 380,
+              width: 370,
               height: 110,
               margin: const EdgeInsets.only(bottom: 8.0),
               decoration: BoxDecoration(
