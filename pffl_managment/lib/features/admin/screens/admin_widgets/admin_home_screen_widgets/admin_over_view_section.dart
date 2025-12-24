@@ -32,11 +32,19 @@ class AdminOverViewSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Overview', style: AppTextStyles.headlineSmall),
- mustafa
-                  // Refresh button
-                
-
- bilalphoenix
+                  IconButton(
+                    onPressed: viewModel.isLoading
+                        ? null
+                        : () => viewModel.fetchDashboardStats(),
+                    icon: viewModel.isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh, size: 20),
+                    tooltip: 'Refresh Stats',
+                  ),
                 ],
               ),
             ),
