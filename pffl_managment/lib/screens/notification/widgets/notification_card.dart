@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/models/notification_model.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
 
 /// Widget for displaying a single notification card

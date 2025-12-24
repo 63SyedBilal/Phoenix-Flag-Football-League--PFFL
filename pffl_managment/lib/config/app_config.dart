@@ -16,6 +16,9 @@ class AppConfig {
   static const String apiPath = '/api'; // API base path
 
   // Network IP Configuration
+
+  static const String networkIp = '192.168.1.3'; // Current system IP
+
  mustafa
   static const String networkIp = '192.168.18.174'; // Current system IP
 
@@ -23,8 +26,7 @@ class AppConfig {
   static const String networkIp = '192.168.18.174'; // Current system IP
 
   static const String networkIp = '192.168.18.32'; // Current system IP
- bilalphoenix
- bilalphoenix
+
   static const String localhost = 'localhost';
   static const String androidEmulatorIp = '10.0.2.2';
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/core/models/notification_model.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_card.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
 
@@ -20,7 +21,9 @@ class RefereeNotification extends StatelessWidget {
               builder: (context, provider, _) {
                 return IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: provider.isLoading ? null : () => provider.refresh(),
+                  onPressed: provider.isLoading
+                      ? null
+                      : () => provider.refresh(),
                 );
               },
             ),
@@ -39,7 +42,11 @@ class RefereeNotification extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         provider.errorMessage!,
@@ -70,11 +77,13 @@ class RefereeNotification extends StatelessWidget {
                   final notification = provider.notifications[index];
                   return NotificationCard(
                     notification: notification,
-                    onAccept: notification.isPending &&
+                    onAccept:
+                        notification.isPending &&
                             notification.type == 'LEAGUE_REFEREE_INVITE'
                         ? () => _handleAccept(context, notification.id)
                         : null,
-                    onReject: notification.isPending &&
+                    onReject:
+                        notification.isPending &&
                             notification.type == 'LEAGUE_REFEREE_INVITE'
                         ? () => _handleReject(context, notification.id)
                         : null,
@@ -88,7 +97,10 @@ class RefereeNotification extends StatelessWidget {
     );
   }
 
-  Future<void> _handleAccept(BuildContext context, String notificationId) async {
+  Future<void> _handleAccept(
+    BuildContext context,
+    String notificationId,
+  ) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
     final result = await provider.acceptNotification(notificationId);
     final success = result['success'] == true;
@@ -96,7 +108,7 @@ class RefereeNotification extends StatelessWidget {
     if (success && context.mounted) {
       // Refresh notifications to update status
       await provider.refresh();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invitation accepted successfully!'),
@@ -113,7 +125,10 @@ class RefereeNotification extends StatelessWidget {
     }
   }
 
-  Future<void> _handleReject(BuildContext context, String notificationId) async {
+  Future<void> _handleReject(
+    BuildContext context,
+    String notificationId,
+  ) async {
     final provider = Provider.of<NotificationProvider>(context, listen: false);
     final success = await provider.rejectNotification(notificationId);
 
@@ -134,4 +149,3 @@ class RefereeNotification extends StatelessWidget {
     }
   }
 }
-
