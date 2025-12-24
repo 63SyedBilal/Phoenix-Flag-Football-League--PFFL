@@ -57,6 +57,11 @@ class UsersProvider extends ChangeNotifier {
   List<UserModel> get filteredUsers {
     var users = allUsers;
 
+    // Filter out Free Agents (Players without a team)
+    users = users
+        .where((user) => !(user.role == UserRole.player && user.team.isEmpty))
+        .toList();
+
     // Apply filter
     if (_selectedFilter != 'all') {
       users = users.where((user) {
