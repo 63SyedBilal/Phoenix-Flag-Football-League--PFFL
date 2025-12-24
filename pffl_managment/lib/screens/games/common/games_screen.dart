@@ -11,14 +11,14 @@ class GamesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GamesProvider>(
       builder: (context, gamesProvider, child) {
-        if (!gamesProvider.isLoading &&
-            gamesProvider.leagues.isEmpty &&
-            gamesProvider.allMatches.isEmpty &&
-            gamesProvider.errorMessage == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!gamesProvider.isLoading &&
+              gamesProvider.leagues.isEmpty &&
+              gamesProvider.allMatches.isEmpty &&
+              gamesProvider.errorMessage == null) {
             gamesProvider.initialize();
-          });
-        }
+          }
+        });
 
         return Scaffold(
           backgroundColor: Colors.white,

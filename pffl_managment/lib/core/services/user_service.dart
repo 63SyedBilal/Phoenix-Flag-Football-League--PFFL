@@ -83,6 +83,7 @@ class UserService {
           final users = (data['data'] as List)
               .map((json) => UserModel.fromJson(json))
               .toList();
+
           return users;
         }
         return [];
@@ -134,25 +135,51 @@ class UserService {
   /// Update user role
   /// PUT /api/user/:id
   static Future<bool> updateUserRole(String userId, String newRole) async {
+    final trimmedId = userId.trim();
     try {
+      print('🔄 API Request: PUT role=$newRole for user=$trimmedId');
+      print(
+        '🔄 ID Length: ${trimmedId.length}, CodeUnits: ${trimmedId.codeUnits}',
+      );
+
       final dio = await _getAuthenticatedDio();
-      final response = await dio.put('/user/$userId', data: {'role': newRole});
+
+      final path = '/user/$trimmedId';
+      print('🔄 Request Path: ${dio.options.baseUrl}$path');
+
+      final response = await dio.put(path, data: {'role': newRole});
+
+      print('✅ Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return true;
-      } else {
-        print('Failed to update user role: ${response.statusMessage}');
-        return false;
       }
+
+      throw Exception(
+        'Failed to update user role: Status ${response.statusCode}',
+      );
     } on DioException catch (e) {
-      print('Error updating user role: ${e.message}');
+      print('❌ Error updating user role: ${e.message}');
+      print('❌ Request URI: ${e.requestOptions.uri}');
+
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
+        print('❌ Error response: ${e.response?.data}');
+
+        if (e.response?.statusCode == 404) {
+          throw Exception(
+            'User ID not found on server. ID: $trimmedId (Len: ${trimmedId.length})',
+          );
+        }
+
+        // Extract helpful error message if available
+        if (e.response?.data is Map && e.response?.data['error'] != null) {
+          throw Exception(e.response?.data['error']);
+        }
       }
-      return false;
+      rethrow;
     } catch (e) {
       print('General error updating user role: $e');
-      return false;
+      rethrow;
     }
   }
 

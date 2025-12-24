@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/models/filter_model.dart';
 import 'package:pffl_managment/core/models/user_model.dart';
 import 'package:pffl_managment/core/services/user_service.dart' as user_service;
-import 'package:pffl_managment/core/services/league_service.dart' show LeagueService, LeagueModel, TeamModel;
+import 'package:pffl_managment/core/services/league_service.dart'
+    show LeagueService, LeagueModel, TeamModel;
 import 'dart:async';
 
 class UsersProvider extends ChangeNotifier {
@@ -14,8 +15,9 @@ class UsersProvider extends ChangeNotifier {
   // State management
   List<UserModel> _allUsers = [];
   bool _isLoading = false;
+
   String? _errorMessage;
-  
+
   // Helper method to safely notify listeners
   void _safeNotifyListeners() {
     if (!hasListeners) return; // Check if disposed
@@ -36,6 +38,7 @@ class UsersProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   bool get hasNotifications => _hasNotifications;
   bool get isLoading => _isLoading;
+
   String? get errorMessage => _errorMessage;
 
   // Filter options
@@ -170,7 +173,9 @@ class UsersProvider extends ChangeNotifier {
 
     // Get profile image URL (null if not available)
     String? imageUrl;
-    if (profile != null && profile['image'] != null && profile['image'].toString().isNotEmpty) {
+    if (profile != null &&
+        profile['image'] != null &&
+        profile['image'].toString().isNotEmpty) {
       final img = profile['image'].toString();
       // Only use valid http URLs
       if (img.startsWith('http')) {
@@ -184,8 +189,9 @@ class UsersProvider extends ChangeNotifier {
       // Find team where this user is captain
       try {
         final team = teams.firstWhere(
-          (t) => t.captain != null && 
-                 (t.captain!['_id']?.toString() == backendUser.id || 
+          (t) =>
+              t.captain != null &&
+              (t.captain!['_id']?.toString() == backendUser.id ||
                   t.captain!['id']?.toString() == backendUser.id),
         );
         teamName = team.teamName;
@@ -195,12 +201,30 @@ class UsersProvider extends ChangeNotifier {
     } else if (role == UserRole.player) {
       // Find team where this user is in squad5v5, squad7v7, or players
       for (var team in teams) {
-        final squad5v5Ids = (team.squad5v5 ?? []).map((p) => p is Map ? (p['_id']?.toString() ?? p['id']?.toString()) : p.toString()).toList();
-        final squad7v7Ids = (team.squad7v7 ?? []).map((p) => p is Map ? (p['_id']?.toString() ?? p['id']?.toString()) : p.toString()).toList();
-        final playersIds = (team.players ?? []).map((p) => p is Map ? (p['_id']?.toString() ?? p['id']?.toString()) : p.toString()).toList();
-        
-        if (squad5v5Ids.contains(backendUser.id) || 
-            squad7v7Ids.contains(backendUser.id) || 
+        final squad5v5Ids = (team.squad5v5 ?? [])
+            .map(
+              (p) => p is Map
+                  ? (p['_id']?.toString() ?? p['id']?.toString())
+                  : p.toString(),
+            )
+            .toList();
+        final squad7v7Ids = (team.squad7v7 ?? [])
+            .map(
+              (p) => p is Map
+                  ? (p['_id']?.toString() ?? p['id']?.toString())
+                  : p.toString(),
+            )
+            .toList();
+        final playersIds = (team.players ?? [])
+            .map(
+              (p) => p is Map
+                  ? (p['_id']?.toString() ?? p['id']?.toString())
+                  : p.toString(),
+            )
+            .toList();
+
+        if (squad5v5Ids.contains(backendUser.id) ||
+            squad7v7Ids.contains(backendUser.id) ||
             playersIds.contains(backendUser.id)) {
           teamName = team.teamName;
           break;
@@ -234,7 +258,7 @@ class UsersProvider extends ChangeNotifier {
   Future<void> fetchAllUsers() async {
     try {
       debugPrint('🔄 Fetching all users data...');
-      
+
       // Fetch all data in parallel
       final results = await Future.wait([
         user_service.UserService.getAllUsers(),
@@ -248,14 +272,17 @@ class UsersProvider extends ChangeNotifier {
       _teams = results[2] as List<TeamModel>;
       _leagues = results[3] as List<LeagueModel>;
 
-      debugPrint('✅ Fetched ${backendUsers.length} users, ${_profiles.length} profiles, ${_teams.length} teams, ${_leagues.length} leagues');
+      debugPrint(
+        '✅ Fetched ${backendUsers.length} users, ${_profiles.length} profiles, ${_teams.length} teams, ${_leagues.length} leagues',
+      );
 
       // Create profile map by userId
       final profileMap = <String, Map<String, dynamic>>{};
       for (var profile in _profiles) {
-        final userId = profile['userId']?.toString() ?? 
-                      profile['userId']?['_id']?.toString() ?? 
-                      profile['userId']?['id']?.toString();
+        final userId =
+            profile['userId']?.toString() ??
+            profile['userId']?['_id']?.toString() ??
+            profile['userId']?['id']?.toString();
         if (userId != null) {
           profileMap[userId] = profile;
         }
@@ -276,91 +303,10 @@ class UsersProvider extends ChangeNotifier {
     }
   }
 
-  /// Update user role
-  Future<bool> updateUserRole(String userId, String newRole) async {
-    try {
-      debugPrint('🔄 Updating user role: userId=$userId, newRole=$newRole');
-      
-      // Map UI role to backend role string
-      String backendRole;
-      switch (newRole.toLowerCase()) {
-        case 'player':
-          backendRole = 'player';
-          break;
-        case 'captain':
-          backendRole = 'captain';
-          break;
-        case 'referee':
-          backendRole = 'referee';
-          break;
-        case 'stat keeper':
-        case 'statkeeper':
-        case 'stat-keeper':
-          backendRole = 'stat-keeper';
-          break;
-        default:
-          backendRole = newRole;
-      }
-
-      final success = await user_service.UserService.updateUserRole(userId, backendRole);
-      
-      if (success) {
-        // Update user in local list
-        final userIndex = _allUsers.indexWhere((u) => u.id == userId);
-        if (userIndex != -1) {
-          final user = _allUsers[userIndex];
-          
-          // Map new role to UserRole enum
-          UserRole newUserRole;
-          switch (backendRole.toLowerCase()) {
-            case 'player':
-              newUserRole = UserRole.player;
-              break;
-            case 'captain':
-              newUserRole = UserRole.captain;
-              break;
-            case 'referee':
-              newUserRole = UserRole.referee;
-              break;
-            case 'stat-keeper':
-            case 'stat keeper':
-            case 'statkeeper':
-              newUserRole = UserRole.statKeeper;
-              break;
-            default:
-              newUserRole = user.role;
-          }
-
-          // Create updated user
-          final updatedUser = UserModel(
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: newUserRole,
-            team: user.team,
-            status: user.status,
-            imageUrl: user.imageUrl,
-          );
-
-          _allUsers[userIndex] = updatedUser;
-          _safeNotifyListeners();
-          debugPrint('✅ User role updated successfully');
-        }
-        return true;
-      } else {
-        debugPrint('❌ Failed to update user role');
-        return false;
-      }
-    } catch (e) {
-      debugPrint('❌ Error updating user role: $e');
-      return false;
-    }
-  }
-
   /// Initialize provider by fetching all data
   Future<void> initialize() async {
     if (_isLoading) return; // Prevent multiple simultaneous initializations
-    
+
     _isLoading = true;
     _errorMessage = null;
     _safeNotifyListeners();

@@ -13,19 +13,14 @@ class AdminGamesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // In MongoDB, ObjectIds contain timestamp, so sorting by id gives creation order
     final sortedMatches = List<MatchModel>.from(matches);
     sortedMatches.sort((a, b) {
-      // Primary sort: by creation order (using id)
       if (a.id != null && b.id != null) {
-        // MongoDB ObjectIds are sortable by creation time
         return a.id!.compareTo(b.id!);
       }
-      // Fallback: if one has id and other doesn't, prioritize the one with id
       if (a.id != null) return -1;
       if (b.id != null) return 1;
 
-      // Secondary fallback: use matchDateTime if available
       if (a.matchDateTime != null && b.matchDateTime != null) {
         return a.matchDateTime!.compareTo(b.matchDateTime!);
       }
@@ -35,7 +30,6 @@ class AdminGamesScreen extends StatelessWidget {
       return 0;
     });
 
-    // Calculate total games from sorted matches list
     int totalGames = sortedMatches.length;
     for (final match in sortedMatches) {
       if (match.gameNumber != null && match.gameNumber!.isNotEmpty) {
@@ -68,8 +62,6 @@ class AdminGamesScreen extends StatelessWidget {
               child: ListView.builder(
                 itemCount: sortedMatches.length,
                 itemBuilder: (context, index) {
-                  // Calculate sequence number based on position (1-based)
-                  // Games are sorted by creation order
                   final sequenceNumber = index + 1;
                   return GameListCard(
                     match: sortedMatches[index],

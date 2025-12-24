@@ -109,8 +109,9 @@ class LoginScreen extends StatelessWidget {
                   if (success) {
                     if (authProvider.isLoggedIn) {
                       String route;
-                      switch (authProvider.userRole) {
+                      switch (authProvider.userRole.toLowerCase()) {
                         case 'superadmin':
+                        case 'admin':
                           route = AppRoutes.adminDashboard;
                           break;
                         case 'referee':
@@ -143,10 +144,14 @@ class LoginScreen extends StatelessWidget {
                               : AppRoutes.completeProfile;
                           break;
                         case 'statkeeper':
+                        case 'stat keeper':
+                        case 'stat-keeper':
                           route = AppRoutes.statKeeperDashboard;
                           break;
                         case 'freeagent':
-                          route = AppRoutes.freeAgentActiveLeagues;
+                        case 'free-agent':
+                        case 'free agent':
+                          route = AppRoutes.freeAgentDashboard;
                           break;
                         default:
                           route = AppRoutes.playerDashboard;
