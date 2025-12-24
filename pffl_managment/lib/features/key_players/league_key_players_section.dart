@@ -11,28 +11,31 @@ class LeagueKeyPlayersSection extends StatelessWidget {
     final provider = context.watch<LeagueDetailProvider>();
     final players = provider.getKeyPlayers();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Key Players',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: const Color(0xFF6B7280),
-              ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 90,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: players.length, // This will now be 4 instead of 2
-            separatorBuilder: (context, index) => const SizedBox(width: 6),
-            itemBuilder: (context, index) {
-              return LeaguePlayerCard(player: players[index], index: index);
-            },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Key Players',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: const Color(0xFF6B7280)),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 90,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: players.length, // This will now be 4 instead of 2
+              separatorBuilder: (context, index) => const SizedBox(width: 6),
+              itemBuilder: (context, index) {
+                return LeaguePlayerCard(player: players[index], index: index);
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

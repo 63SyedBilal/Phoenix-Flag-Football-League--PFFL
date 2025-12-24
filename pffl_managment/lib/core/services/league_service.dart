@@ -690,6 +690,7 @@ class LeagueModel {
   final double perPlayerLeagueFee;
   final String? logo;
   final String status;
+  final DateTime? createdAt;
 
   LeagueModel({
     required this.id,
@@ -701,6 +702,7 @@ class LeagueModel {
     required this.perPlayerLeagueFee,
     this.logo,
     required this.status,
+    this.createdAt,
   });
 
   factory LeagueModel.fromJson(Map<String, dynamic> json) {
@@ -727,6 +729,9 @@ class LeagueModel {
       perPlayerLeagueFee: (json['perPlayerLeagueFee'] ?? 0).toDouble(),
       logo: json['logo'],
       status: json['status'] ?? 'pending',
+      createdAt: json['createdAt'] != null
+          ? parseDate(json['createdAt'])
+          : null,
     );
   }
 }

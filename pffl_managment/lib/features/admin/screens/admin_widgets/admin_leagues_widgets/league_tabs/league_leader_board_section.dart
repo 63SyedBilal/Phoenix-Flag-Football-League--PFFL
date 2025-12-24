@@ -9,6 +9,7 @@ class LeagueLeaderboardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<LeagueDetailProvider>();
     final standings = provider.getLeaderboard();
+    if (standings.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -17,20 +18,38 @@ class LeagueLeaderboardSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('Leaderboard', style: Theme.of(context).textTheme.bodyLarge),
-              const Spacer(),
               Text(
-                'View Leaderboard',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                'Leaderboard',
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                   color: Color(0xff0F173E),
-                  fontSize: 10,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Lato',
                 ),
               ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 12,
-                color: Color(0xff0F173E),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  provider.selectTab(2);
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      'View Leaderboard',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Color(0xff0F173E),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 8.72,
+                      color: Color(0xff0F173E),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
