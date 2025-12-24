@@ -16,15 +16,6 @@ class AppConfig {
   static const String apiPath = '/api'; // API base path
 
   // Network IP Configuration
-
-  static const String networkIp = '192.168.1.3'; // Current system IP
-
- mustafa
-  static const String networkIp = '192.168.18.174'; // Current system IP
-
- mustafa
-  static const String networkIp = '192.168.18.174'; // Current system IP
-
   static const String networkIp = '192.168.18.32'; // Current system IP
 
   static const String localhost = 'localhost';
@@ -39,10 +30,7 @@ class AppConfig {
       return 'http://$localhost:$serverPort$apiPath';
     } else if (Platform.isAndroid) {
       // Android - Try network IP first (works for both emulator and physical device)
-      // If this doesn't work, try 10.0.2.2 for emulator
-      return 'http://$networkIp:$serverPort$apiPath'; // Network IP (works for emulator and device)
-      // Alternative for Android Emulator only (if network IP doesn't work):
-      // return 'http://$androidEmulatorIp:$serverPort$apiPath';
+      return 'http://$networkIp:$serverPort$apiPath';
     } else if (Platform.isIOS) {
       // iOS Simulator
       return 'http://$localhost:$serverPort$apiPath';
@@ -53,7 +41,6 @@ class AppConfig {
   }
 
   // Alternative: Use network IP for physical devices
-  // Change this if you're using a physical Android device
   static String get networkBaseUrl => 'http://$networkIp:$serverPort$apiPath';
 
   // Emulator/Simulator URLs
@@ -126,58 +113,8 @@ class AppConfig {
   static const String testRoleMappingEndpoint = '/test-role-mapping';
   static const String testUpdateRoleEndpoint = '/test-update-role';
 
- mustafa
-  // Timeouts - Optimized for faster failover
-  static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
-  static const Duration sendTimeout = Duration(seconds: 30);
-
   // Timeouts - Increased for better network reliability
   static const Duration connectTimeout = Duration(seconds: 300);
   static const Duration receiveTimeout = Duration(seconds: 300);
   static const Duration sendTimeout = Duration(seconds: 300);
- bilalphoenix
-
-  // Get full API URL
-  static String getApiUrl(String endpoint) {
-    // Remove leading slash if present to avoid double slashes
-    final cleanEndpoint = endpoint.startsWith('/')
-        ? endpoint.substring(1)
-        : endpoint;
-    return '$baseUrl/$cleanEndpoint';
-  }
-
-  // Helper method to get user-specific endpoint
-  static String getUserEndpoint(String userId) {
-    return getApiUrl('$userEndpoint/$userId');
-  }
-
-  // Helper method to get profile-specific endpoint
-  static String getProfileEndpoint(String profileId) {
-    return getApiUrl('$profileEndpoint/$profileId');
-  }
-
-  // Helper method to get league-specific endpoint
-  static String getLeagueEndpoint(String leagueId) {
-    return getApiUrl('$leagueEndpoint/$leagueId');
-  }
-
-  // Helper method to get team-specific endpoint
-  static String getTeamEndpoint(String teamId) {
-    return getApiUrl('$teamEndpoint/$teamId');
-  }
-
-  // Helper method to get match-specific endpoint
-  static String getMatchEndpoint(String matchId) {
-    return getApiUrl('$matchEndpoint/$matchId');
-  }
-
-  // Helper method to get notification-specific endpoint
-  static String getNotificationAcceptEndpoint(String notificationId) {
-    return getApiUrl('$notificationAcceptEndpoint/$notificationId');
-  }
-
-  static String getNotificationRejectEndpoint(String notificationId) {
-    return getApiUrl('$notificationRejectEndpoint/$notificationId');
-  }
 }
