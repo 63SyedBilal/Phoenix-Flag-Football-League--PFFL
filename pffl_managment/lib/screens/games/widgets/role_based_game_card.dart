@@ -302,8 +302,6 @@ class RoleBasedGameCard extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.edit, size: 12, color: Colors.blueGrey),
-                SizedBox(width: 4),
                 Text(
                   'Edit Game',
                   style: TextStyle(
