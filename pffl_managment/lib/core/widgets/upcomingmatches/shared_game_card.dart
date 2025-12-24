@@ -35,6 +35,9 @@ class SharedGameCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+ mustafa
+                // Removed league name section
+
                 Opacity(
                   opacity: 0.6,
                   child: Row(
@@ -57,6 +60,7 @@ class SharedGameCard extends StatelessWidget {
                     ],
                   ),
                 ),
+ bilalphoenix
                 if (showYourGameTag && game.isMyGame)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -136,7 +140,7 @@ class SharedGameCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Team 2 - Expanded
+                // Team 2 - Expanded (icon first, then text)
                 Expanded(
                   flex: 3,
                   child: Row(

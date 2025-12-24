@@ -57,9 +57,9 @@ class AuthService {
     final dio = Dio(
       BaseOptions(
         baseUrl: workingBaseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        sendTimeout: const Duration(seconds: 15),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
         headers: {'Content-Type': 'application/json'},
       ),
     );
@@ -94,6 +94,15 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
+ mustafa
+      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
+
+      // Then try Network IP (reliable for both physical device and emulator)
+      urlsToTry.add(AppConfig.networkBaseUrl);
+
+      // Fallback to emulator specific IP
+
       // For Android physical device, prioritize network IP
       // Network IP works best for physical devices on same WiFi
       urlsToTry.add(
@@ -107,6 +116,14 @@ class AuthService {
         'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
       ); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP
+
+      // For Android, try emulator URL first
+      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
+      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
+      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
+      urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
+ bilalphoenix
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
       urlsToTry.add(
@@ -140,10 +157,10 @@ class AuthService {
           BaseOptions(
             baseUrl: url,
             connectTimeout: const Duration(
-              seconds: 10,
-            ), // Reduced timeout to fail faster and try next URL
-            receiveTimeout: const Duration(seconds: 10),
-            sendTimeout: const Duration(seconds: 10),
+              seconds: 120,
+            ), // Increased timeout to handle network delays
+            receiveTimeout: const Duration(seconds: 300),
+            sendTimeout: const Duration(seconds: 300),
             headers: {'Content-Type': 'application/json'},
             // Additional options for better connectivity
             followRedirects: true,
@@ -267,6 +284,16 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
+ mustafa
+      // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
+
+      // Then try Network IP (reliable for both physical device and emulator)
+      urlsToTry.add(AppConfig.networkBaseUrl);
+
+      // Fallback to emulator specific IP
+      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
+
       // For Android physical device, prioritize network IP
       urlsToTry.add(
         AppConfig.networkBaseUrl,
@@ -279,6 +306,15 @@ class AuthService {
         'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
       ); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP
+
+      // For Android, try emulator URL first
+      urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
+      // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
+      urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
+      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
+      urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
+
+ bilalphoenix
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
       urlsToTry.add(
@@ -307,13 +343,13 @@ class AuthService {
         print('===================');
 
         // Create a fresh Dio instance for this attempt
-        // Use shorter timeout for faster fallback (5 seconds per URL for faster switching)
+        // Use adequate timeout for reliable connections
         final dio = Dio(
           BaseOptions(
             baseUrl: url,
-            connectTimeout: const Duration(seconds: 5),
-            receiveTimeout: const Duration(seconds: 10),
-            sendTimeout: const Duration(seconds: 10),
+            connectTimeout: const Duration(seconds: 300),
+            receiveTimeout: const Duration(seconds: 300),
+            sendTimeout: const Duration(seconds: 300),
             headers: {'Content-Type': 'application/json'},
             followRedirects: true,
             maxRedirects: 5,
@@ -479,8 +515,8 @@ class AuthService {
       final response = await _dio.get(
         '/test-db',
         options: Options(
-          receiveTimeout: const Duration(seconds: 10),
-          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 300),
+          sendTimeout: const Duration(seconds: 300),
         ),
       );
       print('Connection test successful: ${response.statusCode}');

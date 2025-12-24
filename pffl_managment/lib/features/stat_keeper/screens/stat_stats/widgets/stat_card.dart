@@ -23,7 +23,7 @@ class StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // League header
+          // League header (NO divider here now)
           _buildLeagueHeader(),
 
           // Game info
@@ -42,10 +42,11 @@ class StatCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Team 1
-                      _buildTeam(gameStat.team1Logo, gameStat.team1Name),
+                      _buildTeam(
+                        gameStat.team1Logo,
+                        gameStat.team1Name,
+                      ),
 
-                      // Date and time
                       Column(
                         children: [
                           Text(
@@ -67,18 +68,28 @@ class StatCard extends StatelessWidget {
                         ],
                       ),
 
-                      // Team 2
-                      _buildTeam(gameStat.team2Logo, gameStat.team2Name),
+                      _buildTeam(
+                        gameStat.team2Logo,
+                        gameStat.team2Name,
+                      ),
                     ],
                   ),
 
-                  // Assigned game label
+                  // Divider + Assigned game label
                   if (gameStat.isAssignedToMe) ...[
                     const SizedBox(height: 12),
+
+                    // ✅ Divider moved here
+                    const Divider(
+                      color: AppColors.borderLight,
+                      thickness: 1,
+                    ),
+
+                    const SizedBox(height: 8),
                     Text(
                       'Your Assigned Game',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Color(0xFF000000),
                         fontSize: 12,
                       ),
                     ),
@@ -92,14 +103,10 @@ class StatCard extends StatelessWidget {
     );
   }
 
+  /// League header WITHOUT bottom divider
   Widget _buildLeagueHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderLight, width: 1),
-        ),
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -141,14 +148,18 @@ class StatCard extends StatelessWidget {
   }
 
   Widget _buildTeam(String logo, String name) {
-    return Column(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppColors.borderLight, width: 1),
+            border: Border.all(
+              color: AppColors.borderLight,
+              width: 1,
+            ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5.5),
@@ -164,18 +175,13 @@ class StatCard extends StatelessWidget {
                   ),
           ),
         ),
-        const SizedBox(height: 6),
-        SizedBox(
-          width: 80,
-          child: Text(
-            name,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
+        const SizedBox(width: 6),
+        Text(
+          name,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],

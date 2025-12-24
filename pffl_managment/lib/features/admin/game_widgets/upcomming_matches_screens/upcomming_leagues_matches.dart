@@ -3,7 +3,9 @@ import 'package:pffl_managment/core/providers/unified_games_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
-import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.dart';
+import 'package:pffl_managment/core/models/game_model.dart';
+
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 
 // Card widget with league name display
@@ -170,6 +172,11 @@ class UpcommingGamesCardWidget extends StatelessWidget {
   }
 
   void _showEditGameDialog(BuildContext context, MatchModel match) {
+ mustafa
+    // Placeholder for edit dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit functionality not implemented yet')),
+
     final provider = Provider.of<UnifiedGamesProvider>(context, listen: false);
 
     // Initial values
@@ -430,6 +437,20 @@ class UpcommingGamesCardWidget extends StatelessWidget {
             color: Color(0xFF000000),
             fontFamily: 'Lato',
           ),
+ mustafa
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 8),
+          // Keeping the edit functionality simpler without the dialog
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Edit Game',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0x33000000),
+
         ),
         const SizedBox(height: 8),
         child,
@@ -476,9 +497,14 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                       ? Colors.grey[400]
                       : Colors.black,
                   fontFamily: 'Lato',
+ bilalphoenix
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
+ mustafa
+              Icon(Icons.keyboard_arrow_right, size: 16, color: Color(0x33000000)),
+            ],
+
             ),
             Icon(Icons.keyboard_arrow_down, color: Colors.grey[400], size: 20),
           ],
@@ -507,6 +533,7 @@ class UpcommingGamesCardWidget extends StatelessWidget {
               fontFamily: 'Lato',
               color: Colors.black,
             ),
+ bilalphoenix
           ),
         );
       }).toList(),
@@ -540,6 +567,7 @@ class UpcommingGamesCardWidget extends StatelessWidget {
           Icon(icon, color: Colors.grey[400], size: 18),
         ],
       ),
+ bilalphoenix
     );
   }
 
@@ -627,32 +655,59 @@ class UpcommingGames extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Upcoming Games', style: AppTextStyles.headlineSmall),
+ mustafa
+                if (matches.isNotEmpty)
+                  GestureDetector(
+
+ mustafa
+                // Removed the "View more" text and arrow icon
+
                 if (leagueId != null && matches.isNotEmpty)
                   InkWell(
+ bilalphoenix
                     onTap: () {
-                      // Navigate to all matches for this league
-                      // For now, we can just switch the tab in the provider
-                      leagueDetailProvider.selectTab(1);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AllMatchesScreen(
+                            matches: matches
+                                .map(
+                                  (m) => GameModel(
+                                    id: m.id ?? '',
+                                    leagueName: m.leagueName,
+                                    team1Name: m.homeTeam,
+                                    team1Logo: m.homeTeamLogo,
+                                    team2Name: m.awayTeam,
+                                    team2Logo: m.awayTeamLogo,
+                                    date: m.matchDateTime ?? DateTime.now(),
+                                    time: m.time,
+                                    isFeePaid: false,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      );
                     },
                     child: Row(
                       children: [
                         Text(
-                          'View More',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: const Color(0xff0F173E),
-                                fontSize: 10,
-                              ),
+                          'View more',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_ios,
                           size: 12,
-                          color: Color(0xff0F173E),
+                          color: Colors.grey,
                         ),
                       ],
                     ),
                   ),
+ bilalphoenix
               ],
             ),
             const SizedBox(height: 18),
