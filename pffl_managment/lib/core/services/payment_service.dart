@@ -11,7 +11,9 @@ class PaymentService {
 
   /// Get all payments for superadmin
   /// GET /api/superadmin/payments/all?status=paid|unpaid|all
-  static Future<List<Map<String, dynamic>>> getAllPayments(String status) async {
+  static Future<List<Map<String, dynamic>>> getAllPayments(
+    String status,
+  ) async {
     try {
       final dio = await _getAuthenticatedDio();
       final response = await dio.get(
@@ -37,8 +39,60 @@ class PaymentService {
         print('Error response: ${e.response?.data}');
       }
       return [];
+    }
+  }
+
+  /// Get or create payment for logged-in user and specific league
+  /// GET /api/payments/my?leagueId=xxx
+  static Future<Map<String, dynamic>?> getOrCreatePayment(
+    String leagueId,
+  ) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get(
+        '/payments/my',
+        queryParameters: {'leagueId': leagueId},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true && data['data'] != null) {
+          return data['data'] as Map<String, dynamic>;
+        }
+      }
+      return null;
+    } on DioException catch (e) {
+      print('Error getting/creating payment: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return null;
     } catch (e) {
-      print('General error fetching payments: $e');
+      print('General error getting/creating payment: $e');
+      return null;
+    }
+  }
+
+  /// Get unpaid payments for current user
+  /// GET /api/payments/unpaid
+  static Future<List<Map<String, dynamic>>> fetchUnpaidPayments() async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/payments/unpaid');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true && data['data'] != null) {
+          return (data['data'] as List).cast<Map<String, dynamic>>();
+        }
+        return [];
+      }
+      return [];
+    } on DioException catch (e) {
+      print('Error fetching unpaid payments: ${e.message}');
+      return [];
+    } catch (e) {
+      print('General error fetching unpaid payments: $e');
       return [];
     }
   }
@@ -89,7 +143,8 @@ class PaymentService {
           }
           final lowerQuery = query.toLowerCase();
           return allUsers.where((user) {
-            final firstName = (user['firstName'] as String? ?? '').toLowerCase();
+            final firstName = (user['firstName'] as String? ?? '')
+                .toLowerCase();
             final lastName = (user['lastName'] as String? ?? '').toLowerCase();
             final email = (user['email'] as String? ?? '').toLowerCase();
             return firstName.contains(lowerQuery) ||
@@ -112,6 +167,59 @@ class PaymentService {
     } catch (e) {
       print('General error searching users: $e');
       return [];
+    }
+  }
+
+  /// Process payment (Stripe)
+  /// POST /api/payments/process
+  static Future<Map<String, dynamic>> processPayment({
+    required String paymentId,
+    required Map<String, dynamic> cardDetails,
+  }) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+
+      final data = {
+        'paymentId': paymentId,
+        'paymentMethod': 'stripe',
+        'cardNumber': cardDetails['cardNumber'],
+        'expiryDate': cardDetails['expiryDate'],
+        'cvv': cardDetails['cvv'],
+      };
+
+      print('💳 Sending payment request to /payments/process');
+      print('   - Payment ID: $paymentId');
+
+      final response = await dio.post('/payments/process', data: data);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': response.data['message'] ?? 'Payment successful',
+          'data': response.data['data'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': response.data['error'] ?? 'Payment failed',
+        };
+      }
+    } on DioException catch (e) {
+      print('❌ Payment Error: ${e.message}');
+      if (e.response != null) {
+        print('❌ Error response: ${e.response?.data}');
+        return {
+          'success': false,
+          'message': e.response?.data['error'] ?? 'Payment service error',
+        };
+      }
+      return {
+        'success': false,
+        'message': 'Failed to connect to payment service: ${e.message}',
+      };
+    } catch (e) {
+      print('❌ General Payment Error: $e');
+      return {'success': false, 'message': 'An unexpected error occurred: $e'};
     }
   }
 }

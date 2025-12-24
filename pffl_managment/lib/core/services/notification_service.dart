@@ -240,4 +240,34 @@ class NotificationService {
       return false;
     }
   }
+
+  /// Send notification to Admin
+  /// POST /api/notification/send
+  static Future<bool> sendAdminNotification({required String message}) async {
+    try {
+      print('📡 Sending notification to Admin...');
+      final dio = await _getAuthenticatedDio();
+
+      final data = {
+        'type': 'ADMIN_NOTIFICATION',
+        'message': message,
+        'isAdmin':
+            true, // Assuming backend handles this flag to notify superadmin
+      };
+
+      final response = await dio.post('/notification/send', data: data);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Admin notification sent successfully');
+        return true;
+      }
+      return false;
+    } on DioException catch (e) {
+      print('⚠️ Failed to send admin notification: ${e.message}');
+      return false;
+    } catch (e) {
+      print('❌ Error sending admin notification: $e');
+      return false;
+    }
+  }
 }

@@ -146,7 +146,7 @@ class LoginScreen extends StatelessWidget {
                           route = AppRoutes.statKeeperDashboard;
                           break;
                         case 'freeagent':
-                          route = AppRoutes.freeAgentDashboard;
+                          route = AppRoutes.freeAgentActiveLeagues;
                           break;
                         default:
                           route = AppRoutes.playerDashboard;

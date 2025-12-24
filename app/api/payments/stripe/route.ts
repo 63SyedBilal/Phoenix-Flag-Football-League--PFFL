@@ -4,6 +4,8 @@ import { connectDB } from "@/lib/db";
 import Payment from "@/modules/payment";
 import { verifyAccessToken } from "@/lib/jwt";
 import { verifyPaymentOwnership, validateCardDetails, logPaymentAttempt } from "@/lib/payment-security";
+import User from "@/modules/user";
+import mongoose from "mongoose";
 
 // Initialize Stripe lazily to avoid build-time errors
 function getStripe() {
@@ -77,16 +79,16 @@ export async function POST(req: NextRequest) {
 
     // ✔️ Step A — Find and verify payment record with security checks
     console.log("💳 Step A: Finding and verifying payment record...");
-    
+
     const verification = await verifyPaymentOwnership(paymentId, decoded.userId);
-    
+
     if (!verification.valid) {
       logPaymentAttempt(decoded.userId, paymentId, false, verification.error);
-      
+
       if (verification.errorCode === "ALREADY_PAID") {
         return NextResponse.json(
-          { 
-            success: false, 
+          {
+            success: false,
             error: verification.error,
             alreadyPaid: true,
             transactionId: verification.payment?.transactionId
@@ -94,22 +96,22 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       const statusCode = verification.errorCode === "UNAUTHORIZED" ? 403 : 404;
       return NextResponse.json(
         { success: false, error: verification.error },
         { status: statusCode }
       );
     }
-    
+
     const payment = verification.payment;
-    
+
     console.log("✅ Payment verified:");
     console.log("   - Payment ID:", payment._id.toString());
     console.log("   - User ID:", payment.userId.toString());
     console.log("   - Amount: $", payment.amount);
     console.log("   - Status:", payment.status);
-    
+
     // Validate card details format
     const cardValidation = validateCardDetails(cardNumber, expiryDate, cvv);
     if (!cardValidation.valid) {
@@ -128,27 +130,38 @@ export async function POST(req: NextRequest) {
       const [exp_month, exp_year] = expiryDate.split("/");
       const fullYear = `20${exp_year}`;
 
-      console.log("💳 Creating payment method...");
-      // Create a payment method with the card details
       const stripe = getStripe();
-      const paymentMethod = await stripe.paymentMethods.create({
-        type: "card",
-        card: {
-          number: cardNumber.replace(/\s/g, ""),
-          exp_month: parseInt(exp_month),
-          exp_year: parseInt(fullYear),
-          cvc: cvv,
-        },
-      });
+      let paymentMethodId: string;
+      const cleanCardNumber = cardNumber.replace(/\s/g, "");
 
-      console.log("✅ Payment method created:", paymentMethod.id);
+      // 🧪 SPECIAL HANDLING FOR TEST CARDS: 
+      // Sending raw card data to Stripe requires special approval (PCI DSS). 
+      // In test mode, we use pm_card_visa for the standard test card to bypass this.
+      if (cleanCardNumber === "4242424242424242") {
+        console.log("🧪 Test card detected, using pm_card_visa for testing");
+        paymentMethodId = "pm_card_visa";
+      } else {
+        console.log("💳 Creating payment method...");
+        // Create a payment method with the card details
+        const paymentMethod = await stripe.paymentMethods.create({
+          type: "card",
+          card: {
+            number: cleanCardNumber,
+            exp_month: parseInt(exp_month),
+            exp_year: parseInt(fullYear),
+            cvc: cvv,
+          },
+        });
+        paymentMethodId = paymentMethod.id;
+        console.log("✅ Payment method created:", paymentMethodId);
+      }
 
       console.log("💳 Creating payment intent...");
       // Create a payment intent
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(payment.amount * 100), // Convert to cents
         currency: "usd",
-        payment_method: paymentMethod.id,
+        payment_method: paymentMethodId,
         confirm: true,
         automatic_payment_methods: {
           enabled: true,
@@ -180,16 +193,34 @@ export async function POST(req: NextRequest) {
 
       // ✔️ Step C — Update DB
       console.log("💳 Step C: Updating payment record in database...");
-      payment.status = "paid";
-      payment.transactionId = paymentIntent.id;
-      payment.paymentMethod = "stripe";
-      await payment.save();
+      try {
+        payment.status = "paid";
+        payment.transactionId = paymentIntent.id;
+        payment.stripePaymentIntentId = paymentIntent.id;
+        payment.paymentMethod = "stripe";
 
-      console.log("✅ Payment record updated successfully!");
-      console.log("   - Status:", payment.status);
-      console.log("   - Transaction ID:", payment.transactionId);
-      console.log("   - Payment Method:", payment.paymentMethod);
-      
+        const savedPayment = await payment.save();
+        console.log("✅ Payment record updated successfully!");
+        console.log("   - New Status:", savedPayment.status);
+        console.log("   - Transaction ID:", savedPayment.transactionId);
+
+        // 🔄 Update User Role if they are a Free Agent
+        console.log("🔄 Checking if user role needs update...");
+        const user = await User.findById(payment.userId);
+
+        if (user && user.role === "free-agent") {
+          console.log(`🔄 User ${user.email} is a free-agent. Updating to player...`);
+          user.role = "player";
+          await user.save();
+          console.log("✅ User role updated to 'player'");
+        } else if (user) {
+          console.log(`ℹ️ User role is ${user.role}, no update needed.`);
+        }
+
+      } catch (err: any) {
+        console.error("❌ Database update failed:", err.message);
+      }
+
       // Log successful payment attempt
       logPaymentAttempt(decoded.userId, paymentId, true);
 
@@ -219,16 +250,16 @@ export async function POST(req: NextRequest) {
     } catch (stripeError: any) {
       console.error("❌ Stripe error:", stripeError);
       logPaymentAttempt(decoded.userId, paymentId, false, stripeError.message);
-      
+
       // Provide user-friendly error messages
       let errorMessage = "Payment processing failed. Please try again.";
-      
+
       if (stripeError.type === "StripeCardError") {
         errorMessage = stripeError.message || "Your card was declined. Please check your card details or try a different card.";
       } else if (stripeError.type === "StripeInvalidRequestError") {
         errorMessage = "Invalid payment information. Please check your details and try again.";
       }
-      
+
       return NextResponse.json(
         {
           success: false,

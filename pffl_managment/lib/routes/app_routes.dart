@@ -47,6 +47,9 @@ class AppRoutes {
   // Free Agent Routes
   static const String freeAgentDashboard = '/free-agent/dashboard';
   static const String freeAgentActiveLeagues = '/free-agent/active-leagues';
+  static const String freeAgentPaymentOption = '/free-agent/payment-option';
+  static const String freeAgentAddPaymentDetails =
+      '/free-agent/add-payment-details';
 
   // Notification Routes
   static const String playerNotification = '/player/notifications';
