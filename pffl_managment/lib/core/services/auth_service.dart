@@ -94,7 +94,6 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
- mustafa
       // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
       urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
 
@@ -120,10 +119,13 @@ class AuthService {
       // For Android, try emulator URL first
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
       // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
+      urlsToTry.add(
+        AppConfig.iosSimulatorUrl,
+      ); // ADB port forwarding (localhost)
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
- bilalphoenix
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
       urlsToTry.add(
@@ -284,7 +286,6 @@ class AuthService {
     final urlsToTry = <String>[];
 
     if (Platform.isAndroid) {
- mustafa
       // For Android, try Localhost first (via ADB reverse tcp:3000 tcp:3000)
       urlsToTry.add(AppConfig.iosSimulatorUrl); // Localhost (via ADB reverse)
 
@@ -310,11 +311,13 @@ class AuthService {
       // For Android, try emulator URL first
       urlsToTry.add(AppConfig.androidEmulatorUrl); // Emulator IP (10.0.2.2)
       // If ADB port forwarding is set up (adb reverse tcp:3000 tcp:3000), use localhost
-      urlsToTry.add(AppConfig.iosSimulatorUrl); // ADB port forwarding (localhost)
-      urlsToTry.add('http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}'); // 127.0.0.1 (ADB port forwarding)
+      urlsToTry.add(
+        AppConfig.iosSimulatorUrl,
+      ); // ADB port forwarding (localhost)
+      urlsToTry.add(
+        'http://127.0.0.1:${AppConfig.serverPort}${AppConfig.apiPath}',
+      ); // 127.0.0.1 (ADB port forwarding)
       urlsToTry.add(AppConfig.networkBaseUrl); // Network IP (last priority)
-
- bilalphoenix
     } else if (Platform.isIOS) {
       urlsToTry.add(AppConfig.iosSimulatorUrl); // iOS Simulator
       urlsToTry.add(

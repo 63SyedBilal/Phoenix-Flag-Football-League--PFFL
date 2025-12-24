@@ -12,7 +12,6 @@ import 'package:pffl_managment/screens/settings/common/settings_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-
 import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
 
 class AdminDashboard extends StatelessWidget {

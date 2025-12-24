@@ -20,19 +20,15 @@ class LeagueCardWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFF000000).withOpacity(0.12),
-          ),
+          border: Border.all(color: const Color(0xFF000000).withOpacity(0.12)),
         ),
         child: Column(
           children: [
-            // Header (same design, just flexible)
             Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Make left side flexible so it doesn't push status chip out
                   Expanded(
                     child: Row(
                       children: [
@@ -63,16 +59,16 @@ class LeagueCardWidget extends StatelessWidget {
                                     ),
                                     errorWidget: (context, url, error) =>
                                         CustomPaint(
-                                      size: const Size(30, 30),
-                                      painter: DottedBorderPainter(),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.sports,
-                                          size: 18,
-                                          color: Colors.black,
+                                          size: const Size(30, 30),
+                                          painter: DottedBorderPainter(),
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.sports,
+                                              size: 18,
+                                              color: Colors.black,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
                                   )
                                 : CustomPaint(
                                     size: const Size(30, 30),
@@ -89,7 +85,6 @@ class LeagueCardWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
 
-                        // This is the main overflow fix
                         Expanded(
                           child: Text(
                             league.leagueName,
@@ -133,15 +128,14 @@ class LeagueCardWidget extends StatelessWidget {
               ),
             ),
 
-            // Format | League Fee (same line, same separators, responsive spacing)
+            // Format | League Fee
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  // Left group flexible
-                  Flexible(
+                  Expanded(
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         const Text(
                           'Format:',
@@ -167,43 +161,40 @@ class LeagueCardWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // Centered divider - first in the stack, positioned to align with second
-                  const SizedBox(width: 91),
                   Container(
                     width: 1,
                     height: 10,
-                    color: Color(0xFF111827),
+                    color: const Color(0xFF111827),
                   ),
-                  const SizedBox(width: 20),
-
-                  // Right group flexible
-                  Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'League Fee:',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(
-                            '\$${league.registrationFee.toStringAsFixed(0)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'League Fee:',
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF111827),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              '\$${league.registrationFee.toStringAsFixed(0)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -212,14 +203,14 @@ class LeagueCardWidget extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Start Date | End Date (same line, same separators, responsive spacing)
+            // Start Date | End Date
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  Flexible(
+                  Expanded(
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         const Text(
                           'Start Date:',
@@ -245,42 +236,40 @@ class LeagueCardWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // Centered divider - second in the stack, perfectly aligned with first
-                  const SizedBox(width: 20),
                   Container(
                     width: 1,
                     height: 10,
-                    color: Color(0xFF111827),
+                    color: const Color(0xFF111827),
                   ),
-                  const SizedBox(width: 20),
-
-                  Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'End Date:',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Flexible(
-                          child: Text(
-                            '${league.endDate.day} ${_getMonthName(league.endDate.month)} ${league.endDate.year}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'End Date:',
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF111827),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '${league.endDate.day} ${_getMonthName(league.endDate.month)} ${league.endDate.year}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -354,8 +343,9 @@ class DottedBorderPainter extends CustomPainter {
     final double radius = size.width / 2;
 
     final double circumference = 2 * 3.141592653589793 * radius;
-    final int dashCount =
-        (circumference / (dashWidth + dashSpace)).floor().clamp(1, 1000000);
+    final int dashCount = (circumference / (dashWidth + dashSpace))
+        .floor()
+        .clamp(1, 1000000);
 
     final double angleIncrement = (2 * 3.141592653589793) / dashCount;
 

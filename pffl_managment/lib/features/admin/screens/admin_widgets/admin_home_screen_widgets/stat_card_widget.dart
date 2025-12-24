@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/models/stat_card_model.dart';
 
@@ -33,15 +32,19 @@ class StatCardWidget extends StatelessWidget {
                       Flexible(
                         child: Text(
                           stat.title,
-                          style: AppTextStyles.labelLarge,
+                          style: AppTextStyles.labelLarge.copyWith(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Lato',
+                          ),
                         ),
                       ),
                       Container(
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                           color: const Color(0xFFFBFBFB),
-                         // color: AppColors.circleColor,
+                          color: const Color(0xFFFBFBFB),
+
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(stat.icon, size: 16, color: stat.iconColor),
@@ -51,13 +54,20 @@ class StatCardWidget extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     stat.value,
-                    style: AppTextStyles.headlineSmall,
+                    style: AppTextStyles.headlineSmall.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     stat.subtitle,
-                    style: AppTextStyles.labelSmall,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Lato',
+                    ),
 
                     overflow: TextOverflow.ellipsis,
                   ),

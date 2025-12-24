@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_match_card.dart';
 import 'package:pffl_managment/features/admin/providers/league_games_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
-import 'package:pffl_managment/routes/app_routes.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/admin_league_game_card.dart';
+
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_game_widgets/edit_upcomming_matches.dart';
 
 /// Games section that displays playoff games first, then regular games
 class AdminLeagueGamesSection extends StatelessWidget {
@@ -208,25 +209,18 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
     return regularGames.asMap().entries.map((entry) {
       final index = entry.key;
       final match = entry.value;
-      final roundName = match.roundName ?? 'Group Stage';
 
       // Sequential game number (1, 2, 3, ...)
       final gameSeq = index + 1;
       // Total games count for this league
       final totalCount = allGames.length;
-      final formattedGameNumber = '$roundName - Game $gameSeq of $totalCount';
 
-      // Always use CompletedMatchCard format for all group stage games
-      return CompletedMatchCard(
-        roundName: roundName,
-        gameNumber: formattedGameNumber,
-        gameDate: match.matchDateTime,
-        team1Name: match.homeTeam,
-        team1Logo: match.homeTeamLogo,
-        team2Name: match.awayTeam,
-        team2Logo: match.awayTeamLogo,
-        team1Score: match.homeScore,
-        team2Score: match.awayScore,
+      // Use AdminLeagueGameCard to enable edit functionality
+      return AdminLeagueGameCard(
+        match: match,
+        league: widget.league,
+        totalGames: totalCount,
+        sequenceNumber: gameSeq,
       );
     }).toList();
   }
@@ -280,12 +274,11 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
     final displayTeam2 = team2Name ?? 'TBD';
     final displayTeam1Logo = team1Logo ?? '';
     final displayTeam2Logo = team2Logo ?? '';
-    final isAdmin =
-        Provider.of<AuthProvider>(
-          context,
-          listen: false,
-        ).userRole.toLowerCase() ==
-        'admin';
+    final userRole = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).userRole.toLowerCase();
+    final isAdmin = userRole == 'admin' || userRole == 'superadmin';
 
     return Container(
       decoration: BoxDecoration(
@@ -345,25 +338,57 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
             ),
           ),
           if (isAdmin) ...[
-            const Divider(height: 1, color: Color(0xFFE5E7EB)),
+            const Divider(
+              height: 1,
+              indent: 12,
+              endIndent: 12,
+              color: Color(0xFFE5E7EB),
+            ),
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: match != null
-                    ? () async {
-                        await Navigator.pushNamed(
-                          context,
-                          AppRoutes.adminEditMatch,
-                          arguments: match,
-                        );
-                        if (context.mounted) {
-                          Provider.of<LeagueGamesProvider>(
-                            context,
-                            listen: false,
-                          ).refresh();
-                        }
-                      }
-                    : null,
+                onTap: () async {
+                  // Create a placeholder match for TBD playoff games
+                  final matchToEdit =
+                      match ??
+                      MatchModel(
+                        leagueName: widget.league.leagueName,
+                        homeTeam: displayTeam1,
+                        homeTeamLogo: displayTeam1Logo,
+                        awayTeam: displayTeam2,
+                        awayTeamLogo: displayTeam2Logo,
+                        date: gameDate != null
+                            ? '${gameDate.day}/${gameDate.month}/${gameDate.year}'
+                            : 'TBD',
+                        time: gameDate != null
+                            ? '${gameDate.hour}:${gameDate.minute.toString().padLeft(2, '0')}'
+                            : 'TBD',
+                        matchDateTime: gameDate,
+                        roundName: roundName,
+                        gameNumber: gameNumber,
+                        leagueId: widget.league.id,
+                      );
+
+                  final updated = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => Dialog(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: EditUpcommingMatches(
+                        match: matchToEdit,
+                        hideTeamSelection: true,
+                      ),
+                    ),
+                  );
+                  if (updated == true && context.mounted) {
+                    Provider.of<LeagueGamesProvider>(
+                      context,
+                      listen: false,
+                    ).refresh();
+                  }
+                },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -372,14 +397,18 @@ class _GamesSectionContentState extends State<_GamesSectionContent> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Edit Game',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xff0F173E),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey[400],
-                        size: 20,
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Color(0xff0F173E),
+                        size: 6,
                       ),
                     ],
                   ),

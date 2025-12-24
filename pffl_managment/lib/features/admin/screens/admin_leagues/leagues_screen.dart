@@ -15,10 +15,12 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch leagues from backend when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final provider = Provider.of<EnhancedLeaguesProvider>(context, listen: false);
+        final provider = Provider.of<EnhancedLeaguesProvider>(
+          context,
+          listen: false,
+        );
         provider.fetchAllLeagues();
       }
     });
@@ -31,14 +33,9 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
       body: SafeArea(
         child: Consumer<EnhancedLeaguesProvider>(
           builder: (context, provider, child) {
-            // Show loading state
             if (provider.isLoadingLeagues && provider.allLeagues.isEmpty) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
-
-            // Show error state
             if (provider.errorMessage != null && provider.allLeagues.isEmpty) {
               return Center(
                 child: Column(
@@ -58,8 +55,6 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                 ),
               );
             }
-
-            // Show leagues list with pull-to-refresh
             return RefreshIndicator(
               onRefresh: () => provider.refreshLeagues(),
               child: SingleChildScrollView(
@@ -75,10 +70,7 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                           padding: EdgeInsets.all(32.0),
                           child: Text(
                             'No leagues found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
                         ),
                       )
@@ -100,7 +92,6 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                           ),
                         ),
                       ),
-                    // Add bottom padding for refresh indicator
                     const SizedBox(height: 24),
                   ],
                 ),

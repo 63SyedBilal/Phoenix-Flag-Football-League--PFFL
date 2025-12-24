@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/create_games_screens/edit_upcoming_games_screen.dart';
+import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_game_widgets/edit_upcomming_matches.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/utils/date_formatter.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_details_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/core/providers/unified_games_provider.dart';
+import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
+import 'package:pffl_managment/features/admin/providers/league_games_provider.dart';
 
 class AdminLeagueGameCard extends StatelessWidget {
   final MatchModel match;
@@ -24,6 +27,12 @@ class AdminLeagueGameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userRole = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).userRole.toLowerCase();
+    final isAdmin = userRole == 'admin' || userRole == 'superadmin';
+
     final bool isCompleted =
         match.status == MatchStatus.completed &&
         match.homeScore != null &&
@@ -33,11 +42,11 @@ class AdminLeagueGameCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: isCompleted
           ? _buildCompletedCard(context)
-          : _buildUpcomingCard(context),
+          : _buildUpcomingCard(context, isAdmin),
     );
   }
 
-  Widget _buildUpcomingCard(BuildContext context) {
+  Widget _buildUpcomingCard(BuildContext context, bool isAdmin) {
     return Column(
       children: [
         Padding(
@@ -144,57 +153,73 @@ class AdminLeagueGameCard extends StatelessWidget {
             ],
           ),
         ),
-        Container(
-          height: 1,
-          color: const Color(0xFFE0E0E0),
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-        ),
-        Material(
-          color: Colors.black.withAlpha(5),
-          child: InkWell(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return Dialog(
-                    backgroundColor: Colors.transparent,
-                    insetPadding: const EdgeInsets.all(16),
-                    child: ChangeNotifierProvider(
-                      create: (_) {
-                        final provider = UpcomingGamesProvider();
-                        provider.initializeWithLeague(league);
-                        provider.loadMatch(match);
-                        return provider;
-                      },
-                      child: EditUpcomingGamesScreen(league: league),
+        if (isAdmin) ...[
+          Container(
+            height: 1,
+            color: const Color(0xFFE0E0E0),
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                final updated = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Dialog(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: EditUpcommingMatches(match: match),
+                    );
+                  },
+                );
+                if (updated == true && context.mounted) {
+                  // Refresh relevant providers
+                  try {
+                    Provider.of<UnifiedGamesProvider>(
+                      context,
+                      listen: false,
+                    ).fetchAllMatches();
+                    Provider.of<LeagueDetailProvider>(
+                      context,
+                      listen: false,
+                    ).refresh();
+                    Provider.of<LeagueGamesProvider>(
+                      context,
+                      listen: false,
+                    ).refresh();
+                  } catch (_) {}
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 13,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Edit Game',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xff0F173E),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  );
-                },
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Edit Game',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF999999),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      color: Color(0xff0F173E),
+                      size: 6,
                     ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFFCCCCCC),
-                    size: 18,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -290,9 +315,11 @@ class AdminLeagueGameCard extends StatelessWidget {
     required bool isHomeTeam,
   }) {
     // Home team has gray text, Away team has black text (matching image)
-    final textColor = isHomeTeam ? const Color(0xFF6B7280) : const Color(0xFF111827);
+    final textColor = isHomeTeam
+        ? const Color(0xFF6B7280)
+        : const Color(0xFF111827);
     final scoreColor = const Color(0xFF374151);
-    
+
     return Row(
       children: [
         // Flag icon (rectangular like in image)
@@ -301,10 +328,7 @@ class AdminLeagueGameCard extends StatelessWidget {
           height: 24,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(1.6),
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 0.5,
-            ),
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(1.6),
@@ -312,9 +336,8 @@ class AdminLeagueGameCard extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: flagUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: const Color(0xFFF3F4F6),
-                    ),
+                    placeholder: (context, url) =>
+                        Container(color: const Color(0xFFF3F4F6)),
                     errorWidget: (context, url, error) => Container(
                       color: const Color(0xFFF3F4F6),
                       child: const Icon(

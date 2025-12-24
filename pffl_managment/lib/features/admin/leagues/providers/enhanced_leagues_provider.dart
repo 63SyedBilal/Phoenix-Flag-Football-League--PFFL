@@ -7,14 +7,15 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
   List<LeagueCreationModel> _allLeagues = [];
   bool _isLoadingLeagues = false;
   String? _errorMessage;
-  
+
   // Selected league for detail view
   String _selectedLeague = 'The Rugby Championship';
   bool _hasNotifications = true;
 
   // Getters
   List<LeagueCreationModel> get allLeagues => _allLeagues;
-  List<LeagueCreationModel> get createdLeagues => _allLeagues; // For backward compatibility
+  List<LeagueCreationModel> get createdLeagues =>
+      _allLeagues; // For backward compatibility
   String get selectedLeague => _selectedLeague;
   bool get hasNotifications => _hasNotifications;
   int get leaguesCount => _allLeagues.length;
@@ -24,14 +25,20 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
   /// Fetch all leagues from backend
   Future<void> fetchAllLeagues() async {
     if (_isLoadingLeagues) return;
-    
+
     _isLoadingLeagues = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final leagues = await LeagueService.getAllLeagues();
-      _allLeagues = leagues.map((league) => _convertToLeagueCreationModel(league)).toList();
+      _allLeagues = leagues
+          .map((league) => _convertToLeagueCreationModel(league))
+          .toList();
+
+      // Sort: Newest created leagues first
+      _allLeagues.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
       _errorMessage = null;
     } catch (e) {
       debugPrint('Error fetching leagues: $e');
@@ -57,7 +64,7 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
       selectedPlayerIds: [],
       captainId: '',
       registrationFee: league.perPlayerLeagueFee,
-      createdAt: league.startDate,
+      createdAt: league.createdAt ?? league.startDate,
       status: league.status == 'active' ? 'Active' : 'Pending',
       format: league.format,
       startDate: league.startDate,
