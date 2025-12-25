@@ -1,4 +1,3 @@
-/// HomeIcons class containing all SVG icon paths from assets/icons/home_icons/
 ///
 /// This class provides centralized access to all home icon assets as static string constants.
 /// Use with flutter_svg package: SvgPicture.asset(HomeIcons.iconName)
@@ -7,8 +6,7 @@ class HomeIcons {
   HomeIcons._();
 
   // Alert and notification icons
-  static const String alertBlackIcon =
-      'assets/icons/home_icons/alertBlackIcon.svg';
+
   static const String blackAlertIcon =
       'assets/icons/home_icons/blackAlertIcon.svg';
   static const String redAlertIcon = 'assets/icons/home_icons/redAlertIcon.svg';
