@@ -182,16 +182,17 @@ class PaymentService {
 
       final data = {
         'paymentId': paymentId,
+        'payment_id': paymentId,
+        'id': paymentId,
         'paymentMethod': paymentMethod,
-        'cardNumber': cardDetails['cardNumber'],
-        'expiryDate': cardDetails['expiryDate'],
-        'cvv': cardDetails['cvv'],
-        'zipCode': cardDetails['zipCode'], // Added zipCode
+        'payment_method': paymentMethod,
+        ...cardDetails,
       };
 
+      print('🚀 Request Payload: $data');
       print('💳 Sending payment request to /payments/process');
       print('   - Payment ID: $paymentId');
-      print('   - Payment Method: $paymentMethod'); // Log payment method
+      print('   - Payment Method: $paymentMethod');
 
       final response = await dio.post('/payments/process', data: data);
 

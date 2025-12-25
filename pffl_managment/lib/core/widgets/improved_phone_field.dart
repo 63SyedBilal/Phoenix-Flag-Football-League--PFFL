@@ -218,12 +218,6 @@ class ImprovedPhoneField extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // Dropdown icon
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textSecondary,
-              size: 18,
-            ),
           ],
         ),
       ),

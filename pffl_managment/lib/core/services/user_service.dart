@@ -190,8 +190,14 @@ class UserService {
     Map<String, dynamic> profileData,
   ) async {
     try {
+      print('🔄 UserService: Updating profile for ID: $userId');
+      print('🔄 UserService: Data: $profileData');
+
       final dio = await _getAuthenticatedDio();
-      final response = await dio.put('/user/$userId', data: profileData);
+      final url = '/user/${userId.trim()}';
+      print('🔄 UserService: API URL: ${dio.options.baseUrl}$url');
+
+      final response = await dio.put(url, data: profileData);
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -200,17 +206,22 @@ class UserService {
         }
         return data as Map<String, dynamic>;
       } else {
-        print('Failed to update user profile: ${response.statusMessage}');
+        print(
+          '❌ UserService: Failed to update profile: ${response.statusCode} - ${response.statusMessage}',
+        );
         return null;
       }
     } on DioException catch (e) {
-      print('Error updating user profile: ${e.message}');
+      print('❌ UserService: DioException: ${e.message}');
       if (e.response != null) {
+        print('❌ UserService: Status Code: ${e.response?.statusCode}');
+        print('❌ UserService: Response Data: ${e.response?.data}');
         final error = e.response?.data['error'] ?? 'Failed to update profile';
         throw Exception(error);
       }
       throw Exception('Failed to update profile');
     } catch (e) {
+      print('❌ UserService: General error: $e');
       rethrow;
     }
   }

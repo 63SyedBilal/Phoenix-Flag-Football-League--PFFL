@@ -137,16 +137,12 @@ class MatchService {
   static Future<List<MatchModel>> getAllMatches() async {
     try {
       final dio = await _getAuthenticatedDio();
-      print('🌐 Calling GET /match endpoint...');
       final response = await dio.get('/match');
-      print('✅ Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data;
-        print('📦 Response data keys: ${data.keys}');
         if (data['data'] != null) {
           final matchesList = data['data'] as List;
-          print('📊 Matches count in response: ${matchesList.length}');
 
           // First parse to models
           final parsed = matchesList
@@ -154,8 +150,6 @@ class MatchService {
                 try {
                   return _parseMatchFromJson(json);
                 } catch (parseError) {
-                  print('❌ Error parsing match: $parseError');
-                  print('   JSON: $json');
                   return null;
                 }
               })
@@ -260,31 +254,16 @@ class MatchService {
             }
           }
 
-          print(
-            '✅ Successfully parsed ${fixed.length} matches (names resolved)',
-          );
           return fixed;
         }
-        print('⚠️ No data field in response');
+
         return [];
       } else {
-        print('❌ Failed to fetch all matches: ${response.statusMessage}');
-        print('   Response data: ${response.data}');
         return [];
       }
-    } on DioException catch (e) {
-      print('❌ DioException fetching all matches:');
-      print('   Type: ${e.type}');
-      print('   Message: ${e.message}');
-      print('   Status code: ${e.response?.statusCode}');
-      if (e.response != null) {
-        print('   Error response data: ${e.response?.data}');
-        print('   Error response headers: ${e.response?.headers}');
-      }
+    } on DioException {
       rethrow; // Re-throw to let provider handle it
-    } catch (e) {
-      print('❌ General error fetching all matches: $e');
-      print('   Error type: ${e.runtimeType}');
+    } catch (_) {
       rethrow; // Re-throw to let provider handle it
     }
   }
@@ -409,21 +388,16 @@ class MatchService {
   /// Helper to lookup team name from dummy teams by ID
   static String _lookupTeamName(String? teamId) {
     if (teamId == null || teamId.isEmpty) {
-      print('DEBUG: Team ID is null or empty');
       return 'Unknown Team';
     }
 
     // Normalize team ID (convert to string and trim)
     final normalizedId = teamId.toString().trim();
-    print('DEBUG: Looking up team with ID: $normalizedId');
 
     try {
       final team = _getDummyTeams().firstWhere(
         (t) => t.id.toString().trim() == normalizedId,
         orElse: () {
-          print(
-            'DEBUG: Team not found in dummy teams. Available IDs: ${_getDummyTeams().map((t) => t.id).join(", ")}',
-          );
           return TeamModel(
             id: normalizedId,
             teamName: 'Unknown Team',
@@ -433,10 +407,8 @@ class MatchService {
           );
         },
       );
-      print('DEBUG: Found team: ${team.teamName}');
       return team.teamName;
     } catch (e) {
-      print('DEBUG: Error looking up team: $e');
       return 'Unknown Team';
     }
   }
@@ -488,13 +460,6 @@ class MatchService {
   static MatchModel _parseMatchFromJson(Map<String, dynamic> json) {
     final id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
 
-    print('🔍 Parsing match: $id');
-    print(
-      '   Raw gameDate: ${json['gameDate']}, type: ${json['gameDate']?.runtimeType}',
-    );
-    print('   Raw gameTime: ${json['gameTime']}');
-    print('   Raw status: ${json['status']}');
-
     // Parse league data
     final leagueData = json['leagueId'];
     final leagueName = leagueData is Map
@@ -505,14 +470,6 @@ class MatchService {
     final leagueId = leagueData is Map
         ? (leagueData['_id']?.toString() ?? leagueData['id']?.toString())
         : (json['leagueId']?.toString());
-
-    // Debug: Print team data to understand the format
-    print(
-      'DEBUG: teamA data type: ${json['teamA'].runtimeType}, value: ${json['teamA']}',
-    );
-    print(
-      'DEBUG: teamB data type: ${json['teamB'].runtimeType}, value: ${json['teamB']}',
-    );
 
     // Parse team A data
     // First check if team name is stored directly in database
@@ -626,9 +583,6 @@ class MatchService {
           gameDate = DateTime.parse(dateValue.toString());
         }
       } catch (e) {
-        print(
-          '❌ Error parsing gameDate: $e, value: ${json['gameDate']}, type: ${json['gameDate'].runtimeType}',
-        );
         // Fallback: use current date + 1 day to ensure it's in the future
         gameDate = DateTime.now().add(const Duration(days: 1));
       }
@@ -636,10 +590,6 @@ class MatchService {
       // Fallback: use current date + 1 day to ensure it's in the future
       gameDate = DateTime.now().add(const Duration(days: 1));
     }
-
-    print(
-      '📅 Parsed gameDate: $gameDate for match ${json['_id'] ?? json['id']}',
-    );
 
     final gameTime = json['gameTime'] ?? '';
 
@@ -677,16 +627,11 @@ class MatchService {
           matchDateTime = gameDate;
         }
       } catch (e) {
-        print('Error parsing gameTime: $e, value: $gameTime');
         matchDateTime = gameDate;
       }
     } else {
       matchDateTime = gameDate;
     }
-
-    print(
-      '🕐 matchDateTime set to: $matchDateTime for match ${json['_id'] ?? json['id']}',
-    );
 
     // Format date as dd/MM
     final dateStr =
