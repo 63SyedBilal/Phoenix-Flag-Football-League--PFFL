@@ -14,33 +14,72 @@ class NotificationService {
   /// GET /api/notification/all
   static Future<List<NotificationModel>> getAllNotifications() async {
     try {
-      print('📡 [NotificationService] Fetching all notifications...');
+      print('📡 [NOTIFICATION SERVICE DEBUG] Fetching all notifications...');
       final dio = await _getAuthenticatedDio();
-      print('📡 [NotificationService] Calling endpoint: /notification/all');
+      print('📡 [NOTIFICATION SERVICE DEBUG] Base URL: ${dio.options.baseUrl}');
+      print(
+        '📡 [NOTIFICATION SERVICE DEBUG] Calling endpoint: /notification/all',
+      );
+      print(
+        '📡 [NOTIFICATION SERVICE DEBUG] Full URL: ${dio.options.baseUrl}/notification/all',
+      );
+
       final response = await dio.get('/notification/all');
 
-      print('📡 [NotificationService] Response status: ${response.statusCode}');
+      print(
+        '📡 [NOTIFICATION SERVICE DEBUG] Response status: ${response.statusCode}',
+      );
+      print(
+        '📡 [NOTIFICATION SERVICE DEBUG] Response data type: ${response.data.runtimeType}',
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
+        print('📡 [NOTIFICATION SERVICE DEBUG] Raw response data: $data');
 
         List<dynamic> rawList = [];
         if (data is Map && data.containsKey('data')) {
           rawList = data['data'] as List? ?? [];
+          print(
+            '📡 [NOTIFICATION SERVICE DEBUG] Extracted data array from response.data.data',
+          );
         } else if (data is List) {
           rawList = data;
+          print(
+            '📡 [NOTIFICATION SERVICE DEBUG] Response data is already a list',
+          );
         }
 
         print(
-          '📡 [NotificationService] Found ${rawList.length} raw notifications',
+          '📡 [NOTIFICATION SERVICE DEBUG] Found ${rawList.length} raw notifications',
         );
+
+        // Log each notification for debugging
+        for (int i = 0; i < rawList.length; i++) {
+          final notif = rawList[i];
+          print('📡 [NOTIFICATION SERVICE DEBUG] Notification $i:');
+          print('   - ID: ${notif['_id'] ?? notif['id']}');
+          print('   - Type: ${notif['type']}');
+          print('   - Message: ${notif['message']}');
+          print('   - Status: ${notif['status']}');
+          print('   - Created: ${notif['createdAt']}');
+        }
 
         final notifications = rawList
             .map((json) {
               try {
-                return NotificationModel.fromJson(json as Map<String, dynamic>);
+                final notification = NotificationModel.fromJson(
+                  json as Map<String, dynamic>,
+                );
+                print(
+                  '✅ [NOTIFICATION SERVICE DEBUG] Successfully parsed notification: ${notification.id}',
+                );
+                return notification;
               } catch (e) {
-                print('⚠️ Error parsing notification: $e');
+                print(
+                  '⚠️ [NOTIFICATION SERVICE DEBUG] Error parsing notification: $e',
+                );
+                print('⚠️ [NOTIFICATION SERVICE DEBUG] Raw data: $json');
                 return null;
               }
             })
@@ -48,28 +87,37 @@ class NotificationService {
             .toList();
 
         print(
-          '✅ [NotificationService] Returning ${notifications.length} valid notifications',
+          '✅ [NOTIFICATION SERVICE DEBUG] Returning ${notifications.length} valid notifications',
         );
+
+        // Log team invite notifications specifically
+        final teamInvites = notifications
+            .where((n) => n.type.contains('TEAM') || n.type.contains('INVITE'))
+            .toList();
+        print(
+          '🎯 [NOTIFICATION SERVICE DEBUG] Found ${teamInvites.length} team/invite notifications',
+        );
+
         return notifications;
       } else {
         print(
-          '❌ [NotificationService] Failed to fetch notifications: ${response.statusMessage}',
+          '❌ [NOTIFICATION SERVICE DEBUG] Failed to fetch notifications: ${response.statusMessage}',
         );
         return [];
       }
     } on DioException catch (e) {
-      print('❌ [NotificationService] DioException: ${e.message}');
+      print('❌ [NOTIFICATION SERVICE DEBUG] DioException: ${e.message}');
       if (e.response != null) {
         print(
-          '❌ [NotificationService] Error response status: ${e.response?.statusCode}',
+          '❌ [NOTIFICATION SERVICE DEBUG] Error response status: ${e.response?.statusCode}',
         );
         print(
-          '❌ [NotificationService] Error response data: ${e.response?.data}',
+          '❌ [NOTIFICATION SERVICE DEBUG] Error response data: ${e.response?.data}',
         );
       }
       return [];
     } catch (e) {
-      print('❌ [NotificationService] General error: $e');
+      print('❌ [NOTIFICATION SERVICE DEBUG] General error: $e');
       return [];
     }
   }
@@ -198,42 +246,62 @@ class NotificationService {
     required String leagueId,
     required String message,
   }) async {
+    return await sendNotification(
+      receiverId: playerId,
+      type: 'PAYMENT_REMINDER',
+      message: message,
+      leagueId: leagueId,
+    );
+  }
+
+  /// Send generic notification
+  /// POST /api/notification/send
+  static Future<bool> sendNotification({
+    required String receiverId,
+    required String type,
+    required String message,
+    String? leagueId,
+    String? teamId,
+  }) async {
     try {
-      print('📡 Sending payment reminder to: $playerId');
+      print('📡 Sending $type notification to: $receiverId');
       final dio = await _getAuthenticatedDio();
 
-      final data = {
-        'receiverId': playerId,
-        'leagueId': leagueId,
-        'type': 'PAYMENT_REMINDER',
+      final data = <String, dynamic>{
+        'receiverId': receiverId,
+        'type': type,
         'message': message,
       };
 
-      // Trying standard endpoint convention
-      // If "Notification collection" exists as requested by user, there should be a way to create one.
+      if (leagueId != null && leagueId.isNotEmpty) {
+        data['leagueId'] = leagueId;
+      }
+
+      if (teamId != null && teamId.isNotEmpty) {
+        data['teamId'] = teamId;
+      }
+
       final endpoint = '/notification/send';
       print('📡 Endpoint: $endpoint');
+      print('📡 Data: $data');
 
       final response = await dio.post(endpoint, data: data);
 
       print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Payment reminder sent successfully');
+        print('✅ $type notification sent successfully');
         return true;
       }
       return false;
     } on DioException catch (e) {
-      print(
-        '⚠️ Failed to send payment reminder (API might be missing): ${e.message}',
-      );
+      print('⚠️ Failed to send $type notification: ${e.message}');
       if (e.response != null) {
         print('⚠️ Response: ${e.response?.statusCode} - ${e.response?.data}');
       }
-      // We return false but don't crash app, as this might be a missing backend feature
       return false;
     } catch (e) {
-      print('❌ Error sending payment reminder: $e');
+      print('❌ Error sending $type notification: $e');
       return false;
     }
   }

@@ -3,6 +3,7 @@ import 'package:pffl_managment/screens/settings/common/settings_section_model.da
 import 'package:pffl_managment/screens/settings/roles/admin_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/captain_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/player_settings.dart';
+import 'package:pffl_managment/screens/settings/roles/free_agent_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/referee_settings.dart';
 import 'package:pffl_managment/screens/settings/roles/stat_keeper_settings.dart';
 
@@ -36,8 +37,8 @@ class RoleBasedSettingsProvider extends ChangeNotifier {
         return getCaptainSettings();
       case 'player':
         return getPlayerSettings();
-      // case 'freeagent':
-      //   return getFreeAgentSettings();
+      case 'freeagent':
+        return getFreeAgentSettings();
       case 'referee':
         return getRefereeSettings();
       case 'statkeeper':

@@ -12,7 +12,6 @@ class InviteableUserModel {
   final String? position; // Comma-separated positions
   final String? imageUrl;
   bool isInvited; // Whether user is already in team squad
-  bool isInviting; // Whether invite action is in progress
 
   InviteableUserModel({
     required this.id,
@@ -24,7 +23,6 @@ class InviteableUserModel {
     this.position,
     this.imageUrl,
     this.isInvited = false,
-    this.isInviting = false,
   });
 
   /// Create from UserModel
@@ -59,7 +57,11 @@ class InviteableUserModel {
     if (position == null || position!.isEmpty) {
       return '';
     }
-    final positions = position!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final positions = position!
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     return positions.isNotEmpty ? positions[0] : '';
   }
 
@@ -68,7 +70,11 @@ class InviteableUserModel {
     if (position == null || position!.isEmpty) {
       return 0;
     }
-    final positions = position!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final positions = position!
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     return positions.length > 1 ? positions.length - 1 : 0;
   }
 
@@ -89,7 +95,6 @@ class InviteableUserModel {
     String? position,
     String? imageUrl,
     bool? isInvited,
-    bool? isInviting,
   }) {
     return InviteableUserModel(
       id: id,
@@ -101,8 +106,6 @@ class InviteableUserModel {
       position: position ?? this.position,
       imageUrl: imageUrl ?? this.imageUrl,
       isInvited: isInvited ?? this.isInvited,
-      isInviting: isInviting ?? this.isInviting,
     );
   }
 }
-

@@ -10,9 +10,7 @@ import 'package:pffl_managment/core/services/preference_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AuthService.configureDio();
-
   final preferenceService = await PreferenceService.getInstance();
-
   runApp(MyApp(preferenceService: preferenceService));
 }
 

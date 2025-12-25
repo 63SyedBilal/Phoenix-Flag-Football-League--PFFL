@@ -51,6 +51,7 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   Future<void> loadNotifications() async {
+    print('🔄 [NOTIFICATION PROVIDER DEBUG] Starting loadNotifications...');
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -59,7 +60,13 @@ class NotificationProvider extends ChangeNotifier {
       // Get current user role to decide whether to fetch payments
       final prefs = await SharedPreferences.getInstance();
       final userRole = prefs.getString('userRole')?.toLowerCase() ?? '';
+      final userId = prefs.getString('userId') ?? '';
       final isAdmin = userRole == 'admin';
+
+      print('🔄 [NOTIFICATION PROVIDER DEBUG] User info:');
+      print('   - User ID: $userId');
+      print('   - User Role: $userRole');
+      print('   - Is Admin: $isAdmin');
 
       // Parallel fetch
       final results = await Future.wait([
@@ -70,7 +77,7 @@ class NotificationProvider extends ChangeNotifier {
           Future.value(<Map<String, dynamic>>[]),
       ]);
 
-      print('🔄 [NotificationProvider] Results received');
+      print('🔄 [NOTIFICATION PROVIDER DEBUG] Results received');
 
       // Safe type conversion
       final List<NotificationModel> regularData = (results[0] as List)
@@ -80,8 +87,20 @@ class NotificationProvider extends ChangeNotifier {
           .cast<Map<String, dynamic>>();
 
       print(
-        '🔄 [NotificationProvider] Regular: ${regularData.length}, Payment maps: ${paymentMaps.length}',
+        '🔄 [NOTIFICATION PROVIDER DEBUG] Regular: ${regularData.length}, Payment maps: ${paymentMaps.length}',
       );
+
+      // Log regular notifications for debugging
+      print('🔄 [NOTIFICATION PROVIDER DEBUG] Regular notifications:');
+      for (int i = 0; i < regularData.length; i++) {
+        final notif = regularData[i];
+        print(
+          '   [$i] ID: ${notif.id}, Type: ${notif.type}, Status: ${notif.status}',
+        );
+        print('       Message: ${notif.message}');
+        print('       Sender: ${notif.senderName}');
+        print('       Team: ${notif.teamName}');
+      }
 
       // Convert payment maps to NotificationModel objects
       final List<NotificationModel> paymentData = paymentMaps
@@ -89,7 +108,9 @@ class NotificationProvider extends ChangeNotifier {
             try {
               return NotificationModel.fromJson(map);
             } catch (e) {
-              print('⚠️ Error converting payment: $e');
+              print(
+                '⚠️ [NOTIFICATION PROVIDER DEBUG] Error converting payment: $e',
+              );
               return null;
             }
           })
@@ -98,11 +119,22 @@ class NotificationProvider extends ChangeNotifier {
 
       _notifications = [...regularData, ...paymentData];
       print(
-        '✅ [NotificationProvider] Total notifications: ${_notifications.length}',
+        '✅ [NOTIFICATION PROVIDER DEBUG] Total notifications: ${_notifications.length}',
       );
 
       // Sort by date descending
       _notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      // Log team invite notifications specifically
+      final teamInvites = _notifications
+          .where((n) => n.type.contains('TEAM') || n.type.contains('INVITE'))
+          .toList();
+      print(
+        '🎯 [NOTIFICATION PROVIDER DEBUG] Found ${teamInvites.length} team/invite notifications:',
+      );
+      for (final invite in teamInvites) {
+        print('   - ${invite.type}: ${invite.message}');
+      }
 
       _updateUnreadCount();
 
@@ -111,8 +143,8 @@ class NotificationProvider extends ChangeNotifier {
     } catch (e, stackTrace) {
       _isLoading = false;
       _errorMessage = 'Failed to load notifications: ${e.toString()}';
-      print('❌ [NotificationProvider] Error: $e');
-      print('❌ [NotificationProvider] Stack: $stackTrace');
+      print('❌ [NOTIFICATION PROVIDER DEBUG] Error: $e');
+      print('❌ [NOTIFICATION PROVIDER DEBUG] Stack: $stackTrace');
       notifyListeners();
     }
   }

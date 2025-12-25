@@ -7,6 +7,7 @@ import 'package:pffl_managment/features/admin/shared/providers/animated_fab_prov
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:pffl_managment/features/admin/provider/leagues_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/refund_reason_provider.dart';
+import 'package:pffl_managment/features/captain/providers/captain_team_provider.dart';
 import 'package:pffl_managment/features/free_agent/providers/free_agent_onboarding_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/theme_provider.dart';
@@ -76,6 +77,7 @@ class AppProviders extends StatelessWidget {
 
         // SINGLE SOURCE OF TRUTH for all games data
         ChangeNotifierProvider(create: (_) => UnifiedGamesProvider()),
+        ChangeNotifierProvider(create: (_) => CaptainTeamProvider()),
         ChangeNotifierProvider(create: (_) => BaseProvider()),
         ChangeNotifierProvider(create: (_) => FreeAgentOnboardingProvider()),
         ChangeNotifierProxyProvider<UserPreferenceProvider, AuthProvider>(

@@ -3,6 +3,7 @@ import 'package:pffl_managment/core/services/admin_service.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 /// Provider for Complete Captain Profile screen state and business logic
@@ -11,6 +12,8 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final phoneController = TextEditingController();
+  final emergencyContactNameController = TextEditingController();
+  final emergencyPhoneController = TextEditingController();
   final UserPreferenceProvider _userPrefs;
 
   CompleteCaptainProfileProvider(this._userPrefs);
@@ -19,6 +22,7 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   String? _profileImagePath;
   String? _profileImageUrl;
   bool _agreedToTerms = false;
+  String? _selectedPosition;
 
   // UI state
   bool _isLoading = false;
@@ -32,6 +36,25 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   String get firstName => firstNameController.text;
   String get lastName => lastNameController.text;
   String get phone => phoneController.text;
+  String get position => _selectedPosition ?? '';
+  String get emergencyContactName => emergencyContactNameController.text;
+  String get emergencyPhone => emergencyPhoneController.text;
+
+  // Position options
+  static const List<String> positionOptions = [
+    'Center',
+    'Blocker',
+    'Receiver',
+    'Slot',
+    'QB',
+    'Star QB',
+    'Rusher',
+    'LB',
+    'Corner',
+    'Safety',
+  ];
+
+  String? get selectedPosition => _selectedPosition;
 
   // Getters - Profile fields
   String? get profileImagePath => _profileImagePath;
@@ -47,6 +70,8 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
     firstNameController.dispose();
     lastNameController.dispose();
     phoneController.dispose();
+    emergencyContactNameController.dispose();
+    emergencyPhoneController.dispose();
     super.dispose();
   }
 
@@ -55,6 +80,9 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
     return firstName.isNotEmpty &&
         lastName.isNotEmpty &&
         phone.isNotEmpty &&
+        position.isNotEmpty &&
+        emergencyContactName.isNotEmpty &&
+        emergencyPhone.isNotEmpty &&
         _agreedToTerms &&
         _fieldErrors.isEmpty;
   }
@@ -66,6 +94,10 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
       firstNameController.text = _userPrefs.firstName ?? '';
       lastNameController.text = _userPrefs.lastName ?? '';
       phoneController.text = _userPrefs.userPhone ?? '';
+      _selectedPosition = _userPrefs.position;
+      emergencyContactNameController.text =
+          _userPrefs.emergencyContactName ?? '';
+      emergencyPhoneController.text = _userPrefs.emergencyPhone ?? '';
       _profileImagePath = _userPrefs.profileImage;
 
       // Asynchronously fetch from backend to sync
@@ -80,14 +112,19 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   Future<void> _syncWithBackend() async {
     try {
       final dio = await AuthService.getWorkingDio();
-      final response = await dio.get(AppConfig.completeProfileEndpoint);
+      final response = await dio.get(AppConfig.profileEndpoint);
       if (response.statusCode == 200) {
-        final data =
-            response.data['user']; // Adjust based on actual API response
+        final data = response
+            .data['data']; // Profile service returns data in 'data' field
         if (data != null) {
           await _userPrefs.setFirstName(data['firstName']);
           await _userPrefs.setLastName(data['lastName']);
           await _userPrefs.setUserPhone(data['phone']);
+          await _userPrefs.setPosition(data['position']);
+          await _userPrefs.setEmergencyContactName(
+            data['emergencyContactName'],
+          );
+          await _userPrefs.setEmergencyPhone(data['emergencyPhone']);
           await _userPrefs.setProfileImage(data['profileImage']);
           await _userPrefs.setCaptainProfileComplete(
             data['isCaptainProfileComplete'] ?? true,
@@ -100,6 +137,12 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
             lastNameController.text = data['lastName'] ?? '';
           if (phoneController.text.isEmpty)
             phoneController.text = data['phone'] ?? '';
+          if (_selectedPosition == null) _selectedPosition = data['position'];
+          if (emergencyContactNameController.text.isEmpty)
+            emergencyContactNameController.text =
+                data['emergencyContactName'] ?? '';
+          if (emergencyPhoneController.text.isEmpty)
+            emergencyPhoneController.text = data['emergencyPhone'] ?? '';
           _profileImagePath = data['profileImage'];
 
           notifyListeners();
@@ -107,6 +150,8 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('⚠️ Backend sync failed: $e');
+      // Don't throw error - this is just a background sync
+      // The app should work with cached data if sync fails
     }
   }
 
@@ -114,6 +159,18 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   void setPhone(String value) {
     phoneController.text = value;
     _fieldErrors.remove('phone');
+    notifyListeners();
+  }
+
+  void setEmergencyPhone(String value) {
+    emergencyPhoneController.text = value;
+    _fieldErrors.remove('emergencyPhone');
+    notifyListeners();
+  }
+
+  void setPosition(String? value) {
+    _selectedPosition = value;
+    _fieldErrors.remove('position');
     notifyListeners();
   }
 
@@ -126,6 +183,36 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
     _agreedToTerms = value;
     _fieldErrors.remove('terms');
     notifyListeners();
+  }
+
+  /// Pick image from gallery or camera
+  Future<void> pickImage() async {
+    try {
+      // TODO: Implement image picker functionality
+      // For now, we'll simulate image selection
+      // In a real implementation, you would use image_picker package
+
+      // Example implementation:
+      // final ImagePicker picker = ImagePicker();
+      // final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      // if (image != null) {
+      //   setProfileImage(image.path);
+      // }
+
+      // For demonstration, we'll just show that the method exists
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setProfileImage(result.files.single.path!);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      _errorMessage = 'Failed to pick image. Please try again.';
+      notifyListeners();
+    }
   }
 
   /// Validate form
@@ -143,6 +230,19 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
     }
     if (phone.isEmpty) {
       _fieldErrors['phone'] = 'Phone number is required';
+      isValid = false;
+    }
+    if (position.isEmpty) {
+      _fieldErrors['position'] = 'Position is required';
+      isValid = false;
+    }
+    if (emergencyContactName.isEmpty) {
+      _fieldErrors['emergencyContactName'] =
+          'Emergency contact name is required';
+      isValid = false;
+    }
+    if (emergencyPhone.isEmpty) {
+      _fieldErrors['emergencyPhone'] = 'Emergency phone number is required';
       isValid = false;
     }
     if (!_agreedToTerms) {
@@ -186,6 +286,9 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
         'firstName': firstName,
         'lastName': lastName,
         'phone': phone,
+        'position': position,
+        'emergencyContactName': emergencyContactName,
+        'emergencyPhone': emergencyPhone,
         'isCaptainProfileComplete': true,
       };
 
@@ -204,6 +307,9 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
         await _userPrefs.setFirstName(firstName);
         await _userPrefs.setLastName(lastName);
         await _userPrefs.setUserPhone(phone);
+        await _userPrefs.setPosition(position);
+        await _userPrefs.setEmergencyContactName(emergencyContactName);
+        await _userPrefs.setEmergencyPhone(emergencyPhone);
         if (imageUrl != null) await _userPrefs.setProfileImage(imageUrl);
         await _userPrefs.setCaptainProfileComplete(true);
 

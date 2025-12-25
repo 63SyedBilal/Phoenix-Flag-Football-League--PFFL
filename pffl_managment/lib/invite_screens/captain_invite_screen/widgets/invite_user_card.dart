@@ -7,11 +7,7 @@ class InviteUserCard extends StatelessWidget {
   final InviteableUserModel user;
   final CaptainInviteProvider provider;
 
-  const InviteUserCard({
-    super.key,
-    required this.user,
-    required this.provider,
-  });
+  const InviteUserCard({super.key, required this.user, required this.provider});
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +45,7 @@ class InviteUserCard extends StatelessWidget {
                       },
                     ),
                   )
-                : const Icon(
-                    Icons.person,
-                    color: Color(0xFF9CA3AF),
-                    size: 28,
-                  ),
+                : const Icon(Icons.person, color: Color(0xFF9CA3AF), size: 28),
           ),
           const SizedBox(width: 12),
           // User info
@@ -95,53 +87,29 @@ class InviteUserCard extends StatelessWidget {
           const SizedBox(width: 12),
           // Invite button
           GestureDetector(
-            onTap: user.isInviting || user.isInvited
-                ? null
-                : () => provider.inviteUser(user.id),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: user.isInvited
-                    ? Colors.white
-                    : const Color(0xFF3B82F6),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
+            onTap: user.isInvited ? null : () => provider.inviteUser(user.id),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  user.isInvited ? Icons.email_outlined : Icons.email,
+                  size: 16,
                   color: user.isInvited
-                      ? const Color(0xFFE5E7EB)
+                      ? Colors.black
                       : const Color(0xFF3B82F6),
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (user.isInviting)
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  else
-                    Icon(
-                      Icons.email_outlined,
-                      size: 16,
-                      color: user.isInvited ? Colors.grey[600] : Colors.white,
-                    ),
-                  const SizedBox(width: 6),
-                  Text(
-                    user.isInviting
-                        ? 'Inviting...'
-                        : (user.isInvited ? 'Invited' : 'Invite'),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: user.isInvited ? Colors.grey[600] : Colors.white,
-                    ),
+                const SizedBox(width: 6),
+                Text(
+                  user.isInvited ? 'Invited' : 'Invite',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: user.isInvited
+                        ? Colors.black
+                        : const Color(0xFF3B82F6),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -149,4 +117,3 @@ class InviteUserCard extends StatelessWidget {
     );
   }
 }
-
