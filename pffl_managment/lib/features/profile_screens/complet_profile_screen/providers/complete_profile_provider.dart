@@ -107,9 +107,9 @@ class CompleteProfileProvider extends ChangeNotifier {
   Future<void> _syncWithBackend() async {
     try {
       final dio = await AuthService.getWorkingDio();
-      final response = await dio.get(AppConfig.completeProfileEndpoint);
+      final response = await dio.get(AppConfig.profileEndpoint);
       if (response.statusCode == 200) {
-        final data = response.data['user'];
+        final data = response.data['data'] ?? response.data['user'];
         if (data != null) {
           await _userPrefs.setFirstName(data['firstName']);
           await _userPrefs.setLastName(data['lastName']);

@@ -7,7 +7,7 @@ import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.d
 import 'package:pffl_managment/features/player/providers/player_dashboard_provider.dart';
 
 class CaptainHomeScreen extends StatelessWidget {
-  const CaptainHomeScreen ({super.key});
+  const CaptainHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +29,7 @@ class CaptainHomeScreen extends StatelessWidget {
                 const Text(
                   'Pending Payment',
                   style: TextStyle(
+                    fontFamily: "Lato",
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: Colors.black,

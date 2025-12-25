@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'providers/captain_invite_provider.dart';
-import 'widgets/invite_header.dart';
 import 'widgets/invite_title.dart';
 import 'widgets/invite_tabs.dart';
 import 'widgets/invite_search_bar.dart';
@@ -27,15 +27,14 @@ class _CaptainInviteView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(leading: ArrowBackButton()),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Consumer<CaptainInviteProvider>(
           builder: (context, provider, _) {
-            // Show initial loading state
             if (provider.isLoading) {
               return const Column(
                 children: [
-                  InviteHeader(),
                   InviteTitle(),
                   Expanded(child: InviteLoadingState()),
                 ],
@@ -46,7 +45,6 @@ class _CaptainInviteView extends StatelessWidget {
             if (provider.errorMessage != null && provider.teamId == null) {
               return Column(
                 children: [
-                  const InviteHeader(),
                   const InviteTitle(),
                   Expanded(
                     child: Center(
@@ -87,7 +85,6 @@ class _CaptainInviteView extends StatelessWidget {
             // Show main content
             return Column(
               children: [
-                const InviteHeader(),
                 const InviteTitle(),
                 const InviteTabs(),
                 const InviteSearchBar(),

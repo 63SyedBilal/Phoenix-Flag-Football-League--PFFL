@@ -56,6 +56,8 @@ class _CompleteCaptainProfileView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Profile Picture Section
                   Center(
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -96,7 +98,9 @@ class _CompleteCaptainProfileView extends StatelessWidget {
                           bottom: -9,
                           left: 29,
                           child: GestureDetector(
-                            onTap: () async {},
+                            onTap: () async {
+                              await provider.pickImage();
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -139,88 +143,69 @@ class _CompleteCaptainProfileView extends StatelessWidget {
                   const SizedBox(height: 14),
                   Center(
                     child: Text(
-                      'Profile Pic',
+                      'Upload Profile Pic',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.labelLarge,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "First Name",
-                              style: theme.textTheme.labelLarge,
-                            ),
-                            const SizedBox(height: 4),
-                            CustomTextField(
-                              hintText: 'First Name',
-                              controller: provider.firstNameController,
-                              errorText: provider.fieldErrors['firstName'],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Last Name",
-                              style: theme.textTheme.labelLarge,
-                            ),
-                            const SizedBox(height: 4),
-                            CustomTextField(
-                              hintText: 'Last Name',
-                              controller: provider.lastNameController,
-                              errorText: provider.fieldErrors['lastName'],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+
+                  const SizedBox(height: 16),
+
+                  // Position Field
+                  Text("Position", style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  _buildPositionDropdown(context, provider),
+
+                  const SizedBox(height: 16),
+
+                  // Emergency Contact Name
                   Text(
                     "Emergency Contact Name",
                     style: theme.textTheme.labelLarge,
                   ),
                   const SizedBox(height: 8),
                   CustomTextField(
-                    hintText: 'Last Name',
-                    controller: provider.lastNameController,
-                    errorText: provider.fieldErrors['lastName'],
+                    hintText: 'e.g. Tyler',
+                    controller: provider.emergencyContactNameController,
+                    errorText: provider.fieldErrors['emergencyContactName'],
                   ),
-                  const SizedBox(height: 8),
 
-                  Text("Phone Number", style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 16),
+
+                  // Emergency Phone Number
+                  Text(
+                    "Emergency Phone Number",
+                    style: theme.textTheme.labelLarge,
+                  ),
                   const SizedBox(height: 8),
                   ImprovedPhoneField(
                     onInputChanged: (PhoneNumber number) {
-                      provider.setPhone(number.completeNumber);
+                      provider.setEmergencyPhone(number.completeNumber);
                     },
                     onInputValidated: (bool value) {},
-                    initialCountryCode: 'US',
-                    hintText: 'Enter your phone number',
-                    errorText: provider.fieldErrors['phone'],
+                    initialCountryCode: 'GB',
+                    hintText: '+44 123 456 7890',
+                    errorText: provider.fieldErrors['emergencyPhone'],
                   ),
-
                   GestureDetector(
                     onTap: () =>
                         provider.toggleTermsAgreement(!provider.agreedToTerms),
                     child: Row(
                       children: [
-                        Checkbox(
-                          value: provider.agreedToTerms,
-                          onChanged: (val) =>
-                              provider.toggleTermsAgreement(val ?? false),
-                          activeColor: Colors.black,
+                        Theme(
+                          data: Theme.of(context).copyWith(
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          child: Checkbox(
+                            value: provider.agreedToTerms,
+                            onChanged: (val) =>
+                                provider.toggleTermsAgreement(val ?? false),
+                            activeColor: Colors.black,
+                          ),
                         ),
-                        const SizedBox(width: 8),
+
                         Text(
                           'I agree to Terms & Privacy',
                           style: theme.textTheme.bodyMedium,
@@ -381,6 +366,77 @@ class _CompleteCaptainProfileView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPositionDropdown(
+    BuildContext context,
+    CompleteCaptainProfileProvider provider,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<String>(
+          initialValue: provider.selectedPosition,
+          isDense: true,
+          itemHeight: 48, // Minimum required height
+          menuMaxHeight: 160,
+          decoration: InputDecoration(
+            hintText: 'Select Position',
+            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.blue.shade500),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+          dropdownColor: Colors.white,
+          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+          items: CompleteCaptainProfileProvider.positionOptions.map((
+            String position,
+          ) {
+            final isSelected = provider.selectedPosition == position;
+            return DropdownMenuItem<String>(
+              value: position,
+              child: Text(
+                position,
+                style: TextStyle(
+                  color: isSelected ? Colors.blue.shade700 : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontSize: 14,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            provider.setPosition(newValue);
+          },
+        ),
+
+        if (provider.fieldErrors['position'] != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 8, top: 4),
+            child: Text(
+              provider.fieldErrors['position']!,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 }

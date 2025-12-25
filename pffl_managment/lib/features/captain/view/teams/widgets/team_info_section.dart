@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import '../../../model/team_model.dart';
+import '../../../model/player_model.dart';
 
-class TeamInfoSection extends StatelessWidget {
+class TeamInfoSection extends StatefulWidget {
   final TeamModel team;
   final String? selectedFormat;
   final Function(String)? onFormatChanged;
-  final GlobalKey _iconKey = GlobalKey();
 
-  TeamInfoSection({
+  const TeamInfoSection({
     super.key,
     required this.team,
     this.selectedFormat,
@@ -16,210 +17,506 @@ class TeamInfoSection extends StatelessWidget {
   });
 
   @override
+  State<TeamInfoSection> createState() => _TeamInfoSectionState();
+}
+
+class _TeamInfoSectionState extends State<TeamInfoSection> {
+  final GlobalKey _iconKey = GlobalKey();
+  String? _selectedMenuItem;
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        // Check if current user is a captain
+        final isCaptain = authProvider.userRole.toLowerCase() == 'captain';
+
+        // Debug logging to verify role-based logic
+        print('🔍 [TEAM INFO DEBUG] User role: "${authProvider.userRole}"');
+        print('🔍 [TEAM INFO DEBUG] Is captain: $isCaptain');
+        print(
+          '🔍 [TEAM INFO DEBUG] 3-dot icon will be ${isCaptain ? "visible" : "hidden"}',
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      style: BorderStyle.none,
+                Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          style: BorderStyle.none,
+                        ),
+                      ),
+                      child:
+                          widget.team.logoUrl != null &&
+                              widget.team.logoUrl!.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                widget.team.logoUrl!,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return CircleAvatar(
+                                    backgroundColor: Colors.white,
+                                    child: const Icon(
+                                      Icons.shield,
+                                      color: Colors.black,
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+                          : CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: const Icon(
+                                Icons.shield,
+                                color: Colors.black,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      widget.team.name,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      '${widget.team.players.length}/${widget.team.maxPlayers}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    // Only show 3-dot icon for captains
+                    if (isCaptain)
+                      IconButton(
+                        key: _iconKey,
+                        icon: const Icon(Icons.more_vert),
+                        onPressed: () => _showTeamActionsMenu(context),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            // Format selection (only show if format callbacks are provided)
+            if (widget.selectedFormat != null &&
+                widget.onFormatChanged != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildFormatBadge(
+                    context,
+                    label: '5v5',
+                    isSelected: widget.selectedFormat == '5v5',
+                    onTap: () => widget.onFormatChanged!('5v5'),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildFormatBadge(
+                    context,
+                    label: '7v7',
+                    isSelected: widget.selectedFormat == '7v7',
+                    onTap: () => widget.onFormatChanged!('7v7'),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  void _showTeamActionsMenu(BuildContext context) {
+    final RenderBox icon =
+        _iconKey.currentContext!.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    showMenu(
+      color: Colors.white,
+      elevation: 0, // Remove elevation
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(
+          color: Color(0xFFD2B48C), // Light brown border
+          width: 1.5,
+        ),
+      ),
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromPoints(
+          icon.localToGlobal(const Offset(0, 30), ancestor: overlay),
+          icon.localToGlobal(
+            icon.size.bottomRight(const Offset(0, 30)),
+            ancestor: overlay,
+          ),
+        ),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'transfer_leadership',
+          onTap: () => Future.delayed(
+            const Duration(milliseconds: 100),
+            () => _showTransferLeadershipDialog(context),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: _selectedMenuItem == 'transfer_leadership'
+                  ? const Color(0xFFE8F4FD) // Light blue highlight
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: const Text(
+              'Transfer Leadership',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'remove_player',
+          onTap: () => Future.delayed(
+            const Duration(milliseconds: 100),
+            () => _showRemovePlayerDialog(context),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: _selectedMenuItem == 'remove_player'
+                  ? const Color(0xFFE8F4FD) // Light blue highlight
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: const Text(
+              'Remove Player',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showTransferLeadershipDialog(BuildContext context) {
+    final nonCaptainPlayers = widget.team.players
+        .where((p) => !p.isCaptain)
+        .toList();
+
+    if (nonCaptainPlayers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No players available to transfer leadership to.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    PlayerModel? selectedPlayer;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text(
+                'Transfer Leadership',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Select a player to transfer captain role to:',
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<PlayerModel>(
+                        value: selectedPlayer,
+                        hint: const Text('Choose a player...'),
+                        isExpanded: true,
+                        items: nonCaptainPlayers.map((player) {
+                          return DropdownMenuItem<PlayerModel>(
+                            value: player,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: Colors.grey.shade200,
+                                  backgroundImage: player.imageUrl != null
+                                      ? NetworkImage(player.imageUrl!)
+                                      : null,
+                                  child: player.imageUrl == null
+                                      ? const Icon(Icons.person, size: 16)
+                                      : null,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        player.name,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      if (player.position.isNotEmpty)
+                                        Text(
+                                          player.position,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (PlayerModel? player) {
+                          setState(() {
+                            selectedPlayer = player;
+                          });
+                        },
+                      ),
                     ),
                   ),
-                  child: team.logoUrl != null && team.logoUrl!.isNotEmpty
-                      ? ClipOval(
-                          child: Image.network(
-                            team.logoUrl!,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return CircleAvatar(
-                                backgroundColor: Colors.white,
-                                child: const Icon(Icons.shield, color: Colors.black),
-                              );
-                            },
-                          ),
-                        )
-                      : CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: const Icon(Icons.shield, color: Colors.black),
-                        ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  team.name,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                ElevatedButton(
+                  onPressed: selectedPlayer == null
+                      ? null
+                      : () {
+                          Navigator.of(dialogContext).pop();
+                          _transferLeadership(context, selectedPlayer!);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    foregroundColor: Colors.white,
                   ),
+                  child: const Text('Send Invitation'),
                 ),
               ],
-            ),
-            Row(
-              children: [
-                Text(
-                  '${team.players.length}/${team.maxPlayers}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                ),
-                IconButton(
-                  key: _iconKey,
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () {
-                    // Show popup menu with options
-                    final RenderBox icon = _iconKey.currentContext!.findRenderObject() as RenderBox;
-                    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-                    
-                    showMenu(
-                    color: AppColors.lightAppBarBackground,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showRemovePlayerDialog(BuildContext context) {
+    final nonCaptainPlayers = widget.team.players
+        .where((p) => !p.isCaptain)
+        .toList();
+
+    if (nonCaptainPlayers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No players available to remove.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Remove Player',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select players to remove from the team:',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 200,
+                width: double.maxFinite,
+                child: ListView.builder(
+                  itemCount: nonCaptainPlayers.length,
+                  itemBuilder: (context, index) {
+                    final player = nonCaptainPlayers[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey.shade200,
+                        backgroundImage: player.imageUrl != null
+                            ? NetworkImage(player.imageUrl!)
+                            : null,
+                        child: player.imageUrl == null
+                            ? const Icon(Icons.person, size: 20)
+                            : null,
                       ),
-                      context: context,
-                      position: RelativeRect.fromRect(
-                        Rect.fromPoints(
-                          icon.localToGlobal(const Offset(0, 30), ancestor: overlay), // Shift down by 30 pixels
-                          icon.localToGlobal(icon.size.bottomRight(const Offset(0, 30)), ancestor: overlay), // Shift down by 30 pixels
+                      title: Text(
+                        player.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
-                        Offset.zero & overlay.size,
                       ),
-                      items: [
-                        PopupMenuItem(
-                          onTap: () {
-                            // Show dialog when Transfer Leadership is selected
-                            Future.delayed(
-                              const Duration(milliseconds: 100),
-                              () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return SimpleDialog(
-                                      title: const Text('Transfer Leadership'),
-                                      
-                                      children: <Widget>[
-                                        const Padding(
-                                          padding: EdgeInsets.all(20.0),
-                                          child: Text('Transfer leadership functionality to be implemented'),
-                                        ),
-                                        Align(
-                                          alignment: Alignment.bottomRight,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('Close'),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            child: const Text('Transfer Leadership'),
-                          ),
+                      subtitle: player.position.isNotEmpty
+                          ? Text(
+                              player.position,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            )
+                          : null,
+                      trailing: IconButton(
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                          size: 20,
                         ),
-                        PopupMenuItem(
-                          onTap: () {
-                            // Show dialog when Remove Player is selected
-                            Future.delayed(
-                              const Duration(milliseconds: 100),
-                              () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return SimpleDialog(
-                                      title: const Text('Remove Player'),
-                                      children: <Widget>[
-                                        const Padding(
-                                          padding: EdgeInsets.all(20.0),
-                                          child: Text('Remove player functionality to be implemented'),
-                                        ),
-                                        Align(
-                                          alignment: Alignment.bottomRight,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('Close'),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            child: const Text('Remove Player'),
-                          ),
-                        ),
-                      ],
-                      elevation: 8,
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          _confirmRemovePlayer(context, player);
+                        },
+                      ),
                     );
                   },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                 ),
-              ],
-            ),
-          ],
-        ),
-        // Format selection (only show if format callbacks are provided)
-        if (selectedFormat != null && onFormatChanged != null) ...[
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildFormatBadge(
-                context,
-                label: '5v5',
-                isSelected: selectedFormat == '5v5',
-                onTap: () => onFormatChanged!('5v5'),
-              ),
-              const SizedBox(width: 8),
-              _buildFormatBadge(
-                context,
-                label: '7v7',
-                isSelected: selectedFormat == '7v7',
-                onTap: () => onFormatChanged!('7v7'),
               ),
             ],
           ),
-        ],
-      ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmRemovePlayer(BuildContext context, PlayerModel player) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Removal'),
+          content: Text(
+            'Are you sure you want to remove ${player.name} from the team?\n\nThey will be notified of their removal.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _removePlayer(context, player);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _transferLeadership(BuildContext context, PlayerModel selectedPlayer) {
+    // TODO: Implement leadership transfer logic
+    // This should:
+    // 1. Send notification to selected player: "This captain has offered you the captain role."
+    // 2. Handle acceptance/rejection
+    // 3. Update roles if accepted
+
+    print(
+      '🎯 [TRANSFER DEBUG] Transferring leadership to: ${selectedPlayer.name}',
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Leadership transfer invitation sent to ${selectedPlayer.name}',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _removePlayer(BuildContext context, PlayerModel player) {
+    // TODO: Implement player removal logic
+    // This should:
+    // 1. Remove player from team
+    // 2. Send notification: "You have been removed from this team."
+    // 3. Update team state
+
+    print('🎯 [REMOVE DEBUG] Removing player: ${player.name}');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${player.name} has been removed from the team'),
+        backgroundColor: Colors.orange,
+      ),
     );
   }
 

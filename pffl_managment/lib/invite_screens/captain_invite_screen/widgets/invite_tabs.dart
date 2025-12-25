@@ -33,10 +33,10 @@ class InviteTabs extends StatelessWidget {
     return GestureDetector(
       onTap: () => provider.selectTab(title),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF3B82F6) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF3B82F6)
@@ -47,7 +47,8 @@ class InviteTabs extends StatelessWidget {
           title,
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
+            fontFamily: "Lato",
             color: isSelected ? Colors.white : const Color(0xFF000000),
           ),
         ),
@@ -55,4 +56,3 @@ class InviteTabs extends StatelessWidget {
     );
   }
 }
-

@@ -1,3 +1,4 @@
+import 'package:pffl_managment/features/profile_screens/admin_profile_screen.dart/admin_profile_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_section_model.dart';
 import 'package:pffl_managment/screens/settings/sections/player_information.dart';
 import 'package:pffl_managment/screens/settings/sections/my_performance.dart';
@@ -11,7 +12,7 @@ List<SettingsSectionModel> getPlayerSettings() {
   return [
     SettingsSectionModel(
       title: 'Player information',
-      screen: const PlayerInformationScreen(),
+      screen: const AdminProfileScreen(),
     ),
     SettingsSectionModel(
       title: 'My performance',

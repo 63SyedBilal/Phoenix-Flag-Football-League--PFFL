@@ -21,13 +21,10 @@ class LoginScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ArrowBackButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
+        leading: ArrowBackButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
         backgroundColor: theme.appBarTheme.backgroundColor,
       ),
