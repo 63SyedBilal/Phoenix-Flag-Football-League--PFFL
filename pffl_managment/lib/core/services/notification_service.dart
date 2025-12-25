@@ -262,16 +262,24 @@ class NotificationService {
     required String message,
     String? leagueId,
     String? teamId,
+    String? senderId,
   }) async {
     try {
-      print('📡 Sending $type notification to: $receiverId');
+      print(
+        '📡 [NOTIFICATION SERVICE] Sending $type notification to: $receiverId',
+      );
       final dio = await _getAuthenticatedDio();
+      print('📡 [NOTIFICATION SERVICE] Base URL: ${dio.options.baseUrl}');
 
       final data = <String, dynamic>{
         'receiverId': receiverId,
         'type': type,
         'message': message,
       };
+
+      if (senderId != null && senderId.isNotEmpty) {
+        data['senderId'] = senderId;
+      }
 
       if (leagueId != null && leagueId.isNotEmpty) {
         data['leagueId'] = leagueId;
@@ -282,26 +290,50 @@ class NotificationService {
       }
 
       final endpoint = '/notification/send';
-      print('📡 Endpoint: $endpoint');
-      print('📡 Data: $data');
+      print('📡 [NOTIFICATION SERVICE] Endpoint: $endpoint');
+      print(
+        '📡 [NOTIFICATION SERVICE] Full URL: ${dio.options.baseUrl}$endpoint',
+      );
+      print('📡 [NOTIFICATION SERVICE] Request data: $data');
 
       final response = await dio.post(endpoint, data: data);
 
-      print('📡 Response status: ${response.statusCode}');
+      print(
+        '📡 [NOTIFICATION SERVICE] Response status: ${response.statusCode}',
+      );
+      print('📡 [NOTIFICATION SERVICE] Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ $type notification sent successfully');
+        print('✅ [NOTIFICATION SERVICE] $type notification sent successfully');
+        print(
+          '📧 [NOTIFICATION SERVICE] Backend confirmed notification creation',
+        );
         return true;
+      } else {
+        print(
+          '⚠️ [NOTIFICATION SERVICE] Unexpected status code: ${response.statusCode}',
+        );
+        return false;
       }
-      return false;
     } on DioException catch (e) {
-      print('⚠️ Failed to send $type notification: ${e.message}');
+      print(
+        '❌ [NOTIFICATION SERVICE] DioException sending $type notification: ${e.message}',
+      );
+      print('❌ [NOTIFICATION SERVICE] Error type: ${e.type}');
       if (e.response != null) {
-        print('⚠️ Response: ${e.response?.statusCode} - ${e.response?.data}');
+        print(
+          '❌ [NOTIFICATION SERVICE] Response status: ${e.response?.statusCode}',
+        );
+        print('❌ [NOTIFICATION SERVICE] Response data: ${e.response?.data}');
+        print(
+          '❌ [NOTIFICATION SERVICE] Response headers: ${e.response?.headers}',
+        );
       }
       return false;
     } catch (e) {
-      print('❌ Error sending $type notification: $e');
+      print(
+        '❌ [NOTIFICATION SERVICE] General error sending $type notification: $e',
+      );
       return false;
     }
   }
