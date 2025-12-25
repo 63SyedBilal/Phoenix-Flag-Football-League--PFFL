@@ -241,6 +241,8 @@ class CaptainTeamProvider extends ChangeNotifier {
       print(
         '📧 [NOTIFICATION DEBUG] Sending leadership invitation to player: $playerId',
       );
+      print('📧 [NOTIFICATION DEBUG] Current team: ${team?.id}');
+      print('📧 [NOTIFICATION DEBUG] Current team name: ${team?.name}');
 
       // Use existing NotificationService to send notification
       final success = await NotificationService.sendNotification(
@@ -252,12 +254,19 @@ class CaptainTeamProvider extends ChangeNotifier {
 
       if (success) {
         print('✅ [NOTIFICATION DEBUG] Leadership invitation sent successfully');
+        print(
+          '📧 [NOTIFICATION DEBUG] Notification should appear for user: $playerId',
+        );
       } else {
-        print('⚠️ [NOTIFICATION DEBUG] Failed to send leadership invitation');
+        print(
+          '⚠️ [NOTIFICATION DEBUG] Failed to send leadership invitation - API returned false',
+        );
+        throw Exception('Notification API returned false - check backend logs');
       }
     } catch (e) {
       print('⚠️ [NOTIFICATION DEBUG] Failed to send leadership invitation: $e');
       // Don't throw error for notification failure - invitation should still proceed
+      rethrow; // Re-throw to show error in UI
     }
   }
 }
