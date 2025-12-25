@@ -87,10 +87,22 @@ class AdminService {
       print('Error uploading image: ${e.message}');
       if (e.response != null) {
         print('Error response: ${e.response?.data}');
+
+        // Extract specific error message from backend
+        String errorMessage = 'Failed to upload image';
+        if (e.response?.data is Map) {
+          errorMessage =
+              e.response?.data['error'] ??
+              e.response?.data['message'] ??
+              'Failed to upload image';
+        }
+
         if (e.response?.statusCode == 401) {
           throw Exception('Authentication failed. Please login again.');
         } else if (e.response?.statusCode == 400) {
-          throw Exception('Invalid file format or missing file data.');
+          throw Exception(errorMessage);
+        } else if (e.response?.statusCode == 500) {
+          throw Exception(errorMessage);
         }
       }
       throw Exception('Failed to upload image: ${e.message}');
@@ -107,32 +119,174 @@ class AdminService {
     Map<String, dynamic> profileData,
   ) async {
     try {
-      final dio = await _getAuthenticatedDio();
-      final response = await dio.put('/superadmin/$adminId', data: profileData);
+      print('🔄 AdminService: Updating profile for ID: $adminId');
+      print('🔄 AdminService: Data: $profileData');
 
-      if (response.statusCode == 200) {
+      final dio = await _getAuthenticatedDio();
+      final url = '/superadmin/${adminId.trim()}';
+      print('🔄 AdminService: API URL: ${dio.options.baseUrl}$url');
+
+      print('🔄 AdminService: PUT $url');
+      print('🔄 AdminService: Payload: $profileData');
+
+      final response = await dio.put(url, data: profileData);
+
+      print('✅ AdminService: Status ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
         final data = response.data;
-        if (data['data'] != null) {
+        if (data is Map && data['data'] != null) {
           return data['data'] as Map<String, dynamic>;
         }
-        return null;
+        if (data is Map) {
+          return data as Map<String, dynamic>;
+        }
+        return {};
       } else {
-        print('Failed to update admin profile: ${response.statusMessage}');
+        print('❌ AdminService: Failed: ${response.statusCode}');
         return null;
       }
     } on DioException catch (e) {
-      print('Error updating admin profile: ${e.message}');
+      print('❌ AdminService: DioException [${e.type}]: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
-        final errorData = e.response?.data;
-        if (errorData != null && errorData['error'] != null) {
-          throw Exception(errorData['error']);
+        print('❌ AdminService: Status: ${e.response?.statusCode}');
+        print('❌ AdminService: Response: ${e.response?.data}');
+
+        String errorMessage = 'Failed to update profile';
+        final data = e.response?.data;
+        if (data is Map) {
+          errorMessage =
+              data['error']?.toString() ??
+              data['message']?.toString() ??
+              errorMessage;
+        } else if (data is String && data.isNotEmpty) {
+          errorMessage = data;
         }
+        throw Exception(errorMessage);
       }
-      throw Exception('Failed to update profile: ${e.message}');
+      throw Exception('Network error: ${e.message}');
     } catch (e) {
-      print('General error updating admin profile: $e');
-      throw Exception('Failed to update profile: ${e.toString()}');
+      print('❌ AdminService: Unexpected error: $e');
+      rethrow;
+    }
+  }
+
+  /// Update admin profile using PATCH
+  /// PATCH /api/superadmin/:id
+  static Future<Map<String, dynamic>?> patchAdminProfile(
+    String adminId,
+    Map<String, dynamic> profileData,
+  ) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final url = '/superadmin/${adminId.trim()}';
+
+      print('🔄 AdminService (PATCH): PATCH $url');
+      print('🔄 AdminService (PATCH): Payload: $profileData');
+
+      final response = await dio.patch(url, data: profileData);
+
+      print('✅ AdminService (PATCH): Status ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        final data = response.data;
+        if (data is Map && data['data'] != null) {
+          return data['data'] as Map<String, dynamic>;
+        }
+        if (data is Map) {
+          return data as Map<String, dynamic>;
+        }
+        return {};
+      } else {
+        print('❌ AdminService (PATCH): Failed: ${response.statusCode}');
+        return null;
+      }
+    } on DioException catch (e) {
+      print('❌ AdminService (PATCH): DioException [${e.type}]: ${e.message}');
+      if (e.response != null) {
+        print('❌ AdminService (PATCH): Status: ${e.response?.statusCode}');
+        print('❌ AdminService (PATCH): Response: ${e.response?.data}');
+
+        String errorMessage = 'Failed to update profile';
+        final data = e.response?.data;
+        if (data is Map) {
+          errorMessage =
+              data['error']?.toString() ??
+              data['message']?.toString() ??
+              errorMessage;
+        } else if (data is String && data.isNotEmpty) {
+          errorMessage = data;
+        }
+        throw Exception(errorMessage);
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      print('❌ AdminService (PATCH): Unexpected error: $e');
+      rethrow;
+    }
+  }
+
+  /// Update admin profile without ID in URL (fallback)
+  /// PUT /api/superadmin
+  static Future<Map<String, dynamic>?> updateAdminProfileWithoutIdInUrl(
+    Map<String, dynamic> profileData,
+  ) async {
+    try {
+      print('🔄 AdminService (No ID in URL): Updating profile');
+      print('🔄 AdminService (No ID in URL): Data: $profileData');
+
+      final dio = await _getAuthenticatedDio();
+      const url = '/superadmin';
+      print(
+        '🔄 AdminService (No ID in URL): API URL: ${dio.options.baseUrl}$url',
+      );
+
+      print('🔄 AdminService (No ID in URL): PUT $url');
+      print('🔄 AdminService (No ID in URL): Payload: $profileData');
+
+      final response = await dio.put(url, data: profileData);
+
+      print('✅ AdminService (No ID in URL): Status ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        final data = response.data;
+        if (data is Map && data['data'] != null) {
+          return data['data'] as Map<String, dynamic>;
+        }
+        if (data is Map) {
+          return data as Map<String, dynamic>;
+        }
+        return {};
+      } else {
+        print('❌ AdminService (No ID in URL): Failed: ${response.statusCode}');
+        return null;
+      }
+    } on DioException catch (e) {
+      print(
+        '❌ AdminService (No ID in URL): DioException [${e.type}]: ${e.message}',
+      );
+      if (e.response != null) {
+        print(
+          '❌ AdminService (No ID in URL): Status: ${e.response?.statusCode}',
+        );
+        print('❌ AdminService (No ID in URL): Response: ${e.response?.data}');
+
+        String errorMessage = 'Failed to update profile';
+        final data = e.response?.data;
+        if (data is Map) {
+          errorMessage =
+              data['error']?.toString() ??
+              data['message']?.toString() ??
+              errorMessage;
+        } else if (data is String && data.isNotEmpty) {
+          errorMessage = data;
+        }
+        throw Exception(errorMessage);
+      }
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      print('❌ AdminService (No ID in URL): Unexpected error: $e');
+      rethrow;
     }
   }
 

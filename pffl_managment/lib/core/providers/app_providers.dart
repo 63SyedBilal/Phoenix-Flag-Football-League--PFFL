@@ -38,6 +38,9 @@ import 'package:pffl_managment/core/providers/back_button_provider.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/core/services/preference_service.dart';
 import 'package:pffl_managment/features/referee/providers/complete_referee_profile_provider.dart';
+import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
+import 'package:pffl_managment/features/free_agent/screens/payment_option/providers/payment_option_provider.dart';
+import 'package:pffl_managment/features/free_agent/screens/add_payment_details/providers/add_payment_details_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -127,6 +130,9 @@ class AppProviders extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => CaptainInviteProvider()),
         ChangeNotifierProvider(create: (_) => PlayerTeamProvider()),
+        ChangeNotifierProvider(create: (_) => LeagueSelectionProvider()),
+        ChangeNotifierProvider(create: (_) => PaymentOptionProvider()),
+        ChangeNotifierProvider(create: (_) => AddPaymentDetailsProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => BackButtonProvider()),
       ],

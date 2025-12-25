@@ -1,178 +1,144 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:intl_phone_field/phone_number.dart';
-import 'package:pffl_managment/core/services/auth_service.dart';
-import 'package:pffl_managment/core/utils/validators.dart';
+import 'package:pffl_managment/features/auth/models/signup_state.dart';
+import 'package:pffl_managment/features/auth/utils/signup_validators.dart';
+import 'package:pffl_managment/features/auth/repositories/signup_repository.dart';
 
-/// Password strength levels
-enum PasswordStrength { weak, medium, strong }
-
-/// Provider for managing signup form state, validation, and API calls
 class SignupProvider extends ChangeNotifier {
-  // Form field values
-  String _firstName = '';
-  String _lastName = '';
-  String _email = '';
-  PhoneNumber? _phoneNumber;
-  String _password = '';
-  String _confirmPassword = '';
-  bool _agreedToTerms = false;
+  SignupState _state = const SignupState();
 
-  // Validation errors
-  String? _firstNameError;
-  String? _lastNameError;
-  String? _emailError;
-  String? _phoneError;
-  String? _passwordError;
-  String? _confirmPasswordError;
-  String? _agreementError;
-  String? _generalError;
+  String get firstName => _state.firstName;
+  String get lastName => _state.lastName;
+  String get email => _state.email;
+  PhoneNumber? get phoneNumber => _state.phoneNumber;
+  String get password => _state.password;
+  String get confirmPassword => _state.confirmPassword;
+  bool get agreedToTerms => _state.agreedToTerms;
+  PasswordStrength get passwordStrength => _state.passwordStrength;
+  bool get isLoading => _state.isLoading;
 
-  // Password strength
-  PasswordStrength _passwordStrength = PasswordStrength.weak;
+  String? get firstNameError => _state.firstNameError;
+  String? get lastNameError => _state.lastNameError;
+  String? get emailError => _state.emailError;
+  String? get phoneError => _state.phoneError;
+  String? get passwordError => _state.passwordError;
+  String? get confirmPasswordError => _state.confirmPasswordError;
+  String? get agreementError => _state.agreementError;
+  String? get generalError => _state.generalError;
 
-  // Loading state
-  bool _isLoading = false;
+  bool get isFormValid => _state.isFormValid;
 
-  // Getters
-  String get firstName => _firstName;
-  String get lastName => _lastName;
-  String get email => _email;
-  PhoneNumber? get phoneNumber => _phoneNumber;
-  String get password => _password;
-  String get confirmPassword => _confirmPassword;
-  bool get agreedToTerms => _agreedToTerms;
-  PasswordStrength get passwordStrength => _passwordStrength;
-  bool get isLoading => _isLoading;
-
-  // Error getters
-  String? get firstNameError => _firstNameError;
-  String? get lastNameError => _lastNameError;
-  String? get emailError => _emailError;
-  String? get phoneError => _phoneError;
-  String? get passwordError => _passwordError;
-  String? get confirmPasswordError => _confirmPasswordError;
-  String? get agreementError => _agreementError;
-  String? get generalError => _generalError;
-
-  // Check if form is valid
-  bool get isFormValid {
-    return _firstNameError == null &&
-        _lastNameError == null &&
-        _emailError == null &&
-        _phoneError == null &&
-        _passwordError == null &&
-        _confirmPasswordError == null &&
-        _agreementError == null &&
-        _firstName.isNotEmpty &&
-        _lastName.isNotEmpty &&
-        _email.isNotEmpty &&
-        _phoneNumber != null &&
-        _password.isNotEmpty &&
-        _confirmPassword.isNotEmpty &&
-        _agreedToTerms;
-  }
-
-  // Update methods
   void updateFirstName(String value) {
-    _firstName = value;
-    clearFieldError('firstName');
+    _state = _state.copyWith(
+      firstName: value,
+      clearFirstNameError: true,
+      clearGeneralError: true,
+    );
     notifyListeners();
   }
 
   void updateLastName(String value) {
-    _lastName = value;
-    clearFieldError('lastName');
+    _state = _state.copyWith(
+      lastName: value,
+      clearLastNameError: true,
+      clearGeneralError: true,
+    );
     notifyListeners();
   }
 
   void updateEmail(String value) {
-    _email = value;
-    clearFieldError('email');
+    _state = _state.copyWith(
+      email: value,
+      clearEmailError: true,
+      clearGeneralError: true,
+    );
     notifyListeners();
   }
 
   void updatePhoneNumber(PhoneNumber? value) {
-    _phoneNumber = value;
-    clearFieldError('phone');
+    _state = _state.copyWith(
+      phoneNumber: value,
+      clearPhoneError: true,
+      clearGeneralError: true,
+    );
     notifyListeners();
   }
 
   void updatePassword(String value) {
-    _password = value;
-    _passwordStrength = _calculatePasswordStrength(value);
-    clearFieldError('password');
+    final strength = SignupValidators.calculatePasswordStrength(value);
+    _state = _state.copyWith(
+      password: value,
+      passwordStrength: strength,
+      clearPasswordError: true,
+      clearGeneralError: true,
+    );
+
     // Re-validate confirm password if it's already filled
-    if (_confirmPassword.isNotEmpty) {
+    if (_state.confirmPassword.isNotEmpty) {
       _validateConfirmPassword();
     }
+
     notifyListeners();
   }
 
   void updateConfirmPassword(String value) {
-    _confirmPassword = value;
+    _state = _state.copyWith(confirmPassword: value, clearGeneralError: true);
     _validateConfirmPassword();
     notifyListeners();
   }
 
   void updateAgreedToTerms(bool value) {
-    _agreedToTerms = value;
-    clearFieldError('agreement');
+    _state = _state.copyWith(
+      agreedToTerms: value,
+      clearAgreementError: true,
+      clearGeneralError: true,
+    );
     notifyListeners();
   }
 
   // Validation methods
   bool validateFirstName() {
-    _firstNameError = Validators.validateMinLength(_firstName, 2, 'First Name');
+    final error = SignupValidators.validateFirstName(_state.firstName);
+    _state = _state.copyWith(firstNameError: error);
     notifyListeners();
-    return _firstNameError == null;
+    return error == null;
   }
 
   bool validateLastName() {
-    _lastNameError = Validators.validateMinLength(_lastName, 2, 'Last Name');
+    final error = SignupValidators.validateLastName(_state.lastName);
+    _state = _state.copyWith(lastNameError: error);
     notifyListeners();
-    return _lastNameError == null;
+    return error == null;
   }
 
   bool validateEmail() {
-    _emailError = Validators.validateEmail(_email);
+    final error = SignupValidators.validateEmail(_state.email);
+    _state = _state.copyWith(emailError: error);
     notifyListeners();
-    return _emailError == null;
+    return error == null;
   }
 
   bool validatePhone() {
-    if (_phoneNumber == null || _phoneNumber!.number.isEmpty) {
-      _phoneError = 'Phone number is required';
-      notifyListeners();
-      return false;
-    }
-    if (!_phoneNumber!.isValidNumber()) {
-      _phoneError = 'Please enter a valid phone number';
-      notifyListeners();
-      return false;
-    }
-    _phoneError = null;
+    final error = SignupValidators.validatePhone(_state.phoneNumber);
+    _state = _state.copyWith(phoneError: error);
     notifyListeners();
-    return true;
+    return error == null;
   }
 
   bool validatePassword() {
-    _passwordError = Validators.validatePassword(_password);
+    final error = SignupValidators.validatePassword(_state.password);
+    _state = _state.copyWith(passwordError: error);
     notifyListeners();
-    return _passwordError == null;
+    return error == null;
   }
 
   bool _validateConfirmPassword() {
-    if (_confirmPassword.isEmpty) {
-      _confirmPasswordError = 'Please confirm your password';
-      return false;
-    }
-    if (_confirmPassword != _password) {
-      _confirmPasswordError = 'Passwords do not match';
-      return false;
-    }
-    _confirmPasswordError = null;
-    return true;
+    final error = SignupValidators.validateConfirmPassword(
+      _state.password,
+      _state.confirmPassword,
+    );
+    _state = _state.copyWith(confirmPasswordError: error);
+    return error == null;
   }
 
   bool validateConfirmPassword() {
@@ -182,100 +148,71 @@ class SignupProvider extends ChangeNotifier {
   }
 
   bool validateAgreement() {
-    if (!_agreedToTerms) {
-      _agreementError = 'You must agree to Terms & Privacy';
-      notifyListeners();
-      return false;
-    }
-    _agreementError = null;
+    final error = SignupValidators.validateAgreement(_state.agreedToTerms);
+    _state = _state.copyWith(agreementError: error);
     notifyListeners();
-    return true;
+    return error == null;
   }
 
   // Validate all fields
   bool validateAllFields() {
-    final isValid =
-        validateFirstName() &&
-        validateLastName() &&
-        validateEmail() &&
-        validatePhone() &&
-        validatePassword() &&
-        validateConfirmPassword() &&
-        validateAgreement();
-    return isValid;
-  }
+    final validationResults = SignupValidators.validateAllFields(_state);
 
-  // Calculate password strength
-  PasswordStrength _calculatePasswordStrength(String password) {
-    if (password.isEmpty) {
-      return PasswordStrength.weak;
-    }
+    _state = _state.copyWith(
+      firstNameError: validationResults['firstName'],
+      lastNameError: validationResults['lastName'],
+      emailError: validationResults['email'],
+      phoneError: validationResults['phone'],
+      passwordError: validationResults['password'],
+      confirmPasswordError: validationResults['confirmPassword'],
+      agreementError: validationResults['agreement'],
+    );
 
-    if (password.length < 8) {
-      return PasswordStrength.weak;
-    }
-
-    final hasUppercase = RegExp(r'[A-Z]').hasMatch(password);
-    final hasLowercase = RegExp(r'[a-z]').hasMatch(password);
-    final hasNumber = RegExp(r'[0-9]').hasMatch(password);
-    final hasSpecialChar = RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
-
-    // Check if basic requirements are met
-    if (!hasUppercase || !hasLowercase || !hasNumber) {
-      return PasswordStrength.weak;
-    }
-
-    // Medium: basic requirements met
-    if (password.length >= 8 && hasUppercase && hasLowercase && hasNumber) {
-      // Strong: has special char OR length >= 12
-      if (hasSpecialChar || password.length >= 12) {
-        return PasswordStrength.strong;
-      }
-      return PasswordStrength.medium;
-    }
-
-    return PasswordStrength.weak;
+    notifyListeners();
+    return SignupValidators.isAllValid(validationResults);
   }
 
   // Clear field error
   void clearFieldError(String fieldName) {
     switch (fieldName) {
       case 'firstName':
-        _firstNameError = null;
+        _state = _state.copyWith(clearFirstNameError: true);
         break;
       case 'lastName':
-        _lastNameError = null;
+        _state = _state.copyWith(clearLastNameError: true);
         break;
       case 'email':
-        _emailError = null;
+        _state = _state.copyWith(clearEmailError: true);
         break;
       case 'phone':
-        _phoneError = null;
+        _state = _state.copyWith(clearPhoneError: true);
         break;
       case 'password':
-        _passwordError = null;
+        _state = _state.copyWith(clearPasswordError: true);
         break;
       case 'confirmPassword':
-        _confirmPasswordError = null;
+        _state = _state.copyWith(clearConfirmPasswordError: true);
         break;
       case 'agreement':
-        _agreementError = null;
+        _state = _state.copyWith(clearAgreementError: true);
         break;
     }
-    _generalError = null;
+    _state = _state.copyWith(clearGeneralError: true);
     notifyListeners();
   }
 
   // Clear all errors
   void clearAllErrors() {
-    _firstNameError = null;
-    _lastNameError = null;
-    _emailError = null;
-    _phoneError = null;
-    _passwordError = null;
-    _confirmPasswordError = null;
-    _agreementError = null;
-    _generalError = null;
+    _state = _state.copyWith(
+      clearFirstNameError: true,
+      clearLastNameError: true,
+      clearEmailError: true,
+      clearPhoneError: true,
+      clearPasswordError: true,
+      clearConfirmPasswordError: true,
+      clearAgreementError: true,
+      clearGeneralError: true,
+    );
     notifyListeners();
   }
 
@@ -290,96 +227,44 @@ class SignupProvider extends ChangeNotifier {
     }
 
     // Set loading state
-    _isLoading = true;
+    _state = _state.copyWith(isLoading: true);
     notifyListeners();
 
     try {
       // Prepare user data for API
       final userData = {
-        'firstName': _firstName.trim(),
-        'lastName': _lastName.trim(),
-        'email': _email.trim().toLowerCase(),
-        'phone': _phoneNumber!.completeNumber,
-        'password': _password,
+        'firstName': _state.firstName.trim(),
+        'lastName': _state.lastName.trim(),
+        'email': _state.email.trim().toLowerCase(),
+        'phone': _state.phoneNumber!.completeNumber,
+        'password': _state.password,
         'role': 'free-agent', // HARDCODED - never user-selectable
       };
 
-      print('📝 Attempting signup with data: ${userData['email']}');
-      print('📝 Role: ${userData['role']} (hardcoded)');
+      // Call repository signup method
+      final result = await SignupRepository.signup(userData);
 
-      // Call AuthService register method
-      final authResponse = await AuthService.register(userData);
-
-      if (authResponse != null) {
-        print('✅ Signup successful');
-        _isLoading = false;
+      if (result.success) {
+        _state = _state.copyWith(isLoading: false);
         notifyListeners();
         return true;
       } else {
-        // This should not happen as exceptions are re-thrown, but handle it anyway
-        _generalError = 'Registration failed. Please try again.';
-        _isLoading = false;
+        // Handle errors from repository
+        _state = _state.copyWith(
+          isLoading: false,
+          generalError: result.generalError,
+          emailError: result.fieldErrors?['email'],
+          phoneError: result.fieldErrors?['phone'],
+        );
         notifyListeners();
         return false;
       }
-    } on DioException catch (e) {
-      print('❌ Signup Dio error: ${e.message}');
-      print('❌ Error type: ${e.type}');
-      print('❌ Response status: ${e.response?.statusCode}');
-      print('❌ Response data: ${e.response?.data}');
-
-      _isLoading = false;
-
-      // Handle specific error cases
-      if (e.response != null) {
-        final statusCode = e.response!.statusCode;
-        final errorData = e.response!.data;
-
-        if (statusCode == 409) {
-          // Conflict - email or phone already exists
-          final errorMessage =
-              errorData['error'] ?? 'Email or phone already exists';
-          if (errorMessage.toLowerCase().contains('email')) {
-            _emailError = 'This email is already registered';
-          } else if (errorMessage.toLowerCase().contains('phone')) {
-            _phoneError = 'This phone number is already registered';
-          } else {
-            _generalError = errorMessage;
-          }
-        } else if (statusCode == 400) {
-          // Bad request - validation error
-          final errorMessage =
-              errorData['error'] ?? 'Invalid data. Please check your input.';
-          _generalError = errorMessage;
-        } else if (statusCode == 500) {
-          // Server error
-          _generalError = 'Server error. Please try again later.';
-        } else {
-          _generalError =
-              errorData['error'] ?? 'Registration failed. Please try again.';
-        }
-      } else {
-        // Network or connection error
-        if (e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.sendTimeout ||
-            e.type == DioExceptionType.receiveTimeout) {
-          _generalError =
-              'Connection timeout. Please check:\n1. Backend server is running\n2. Both devices are on same WiFi\n3. Firewall allows port 3000';
-        } else if (e.type == DioExceptionType.connectionError) {
-          _generalError =
-              'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
-        } else {
-          _generalError =
-              'Network error. Please check your connection and try again.';
-        }
-      }
-
-      notifyListeners();
-      return false;
     } catch (e) {
-      print('❌ Signup general error: $e');
-      _isLoading = false;
-      _generalError = 'An unexpected error occurred. Please try again.';
+      print('❌ Signup unexpected error: $e');
+      _state = _state.copyWith(
+        isLoading: false,
+        generalError: 'An unexpected error occurred. Please try again.',
+      );
       notifyListeners();
       return false;
     }
@@ -387,16 +272,7 @@ class SignupProvider extends ChangeNotifier {
 
   // Reset form
   void reset() {
-    _firstName = '';
-    _lastName = '';
-    _email = '';
-    _phoneNumber = null;
-    _password = '';
-    _confirmPassword = '';
-    _agreedToTerms = false;
-    clearAllErrors();
-    _passwordStrength = PasswordStrength.weak;
-    _isLoading = false;
+    _state = _state.reset();
     notifyListeners();
   }
 }

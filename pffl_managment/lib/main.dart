@@ -28,7 +28,6 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Phoenix Flag Football League',
         theme: app_theme.AppTheme.lightTheme,
-        darkTheme: app_theme.AppTheme.darkTheme,
         themeMode: ThemeMode.system,
         initialRoute: AppRoutes.getStarted,
         onGenerateRoute: RouteGenerator.generateRoute,

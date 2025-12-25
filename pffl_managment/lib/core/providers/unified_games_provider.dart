@@ -22,24 +22,17 @@ class UnifiedGamesProvider extends ChangeNotifier {
   List<MatchModel> get upcomingGames {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    debugPrint(
-      '🔍 upcomingGames getter: Total games: ${_allGames.length}, Current time: $now, Today: $today',
-    );
 
     // Filter for upcoming matches (not completed or cancelled)
     final futureMatches = _allGames.where((game) {
       // Skip if match is completed or cancelled
       if (game.status == MatchStatus.completed ||
           game.status == MatchStatus.cancelled) {
-        debugPrint('⚠️ Game ${game.id} skipped: status is ${game.status}');
         return false;
       }
 
       // If matchDateTime is null, still include if status is upcoming
       if (game.matchDateTime == null) {
-        debugPrint(
-          '⚠️ Game ${game.id} has null matchDateTime, but status is ${game.status} - including it',
-        );
         return game.status == MatchStatus.upcoming;
       }
 
@@ -52,17 +45,6 @@ class UnifiedGamesProvider extends ChangeNotifier {
 
       // Include if match is today or in the future, OR if status is upcoming (to catch games with date issues)
       final isTodayOrFuture = !matchDate.isBefore(today);
-      final isFuture = game.matchDateTime!.isAfter(now);
-
-      debugPrint(
-        '${isTodayOrFuture ? "✅" : "❌"} Game ${game.id}: ${game.homeTeam} vs ${game.awayTeam}',
-      );
-      debugPrint(
-        '   Date: ${game.matchDateTime}, matchDate: $matchDate, today: $today',
-      );
-      debugPrint(
-        '   isTodayOrFuture: $isTodayOrFuture, isFuture: $isFuture, status: ${game.status}',
-      );
 
       // Include if status is upcoming (regardless of date for now, to debug)
       if (game.status == MatchStatus.upcoming) {
@@ -79,9 +61,6 @@ class UnifiedGamesProvider extends ChangeNotifier {
       return dateA.compareTo(dateB);
     });
 
-    debugPrint(
-      '✅ upcomingGames: Returning ${futureMatches.length} future matches',
-    );
     return futureMatches;
   }
 
@@ -163,7 +142,6 @@ class UnifiedGamesProvider extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Failed to load games: ${e.toString()}';
-      debugPrint('Error fetching games: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -201,7 +179,7 @@ class UnifiedGamesProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to update game: ${e.toString()}';
-      debugPrint('Error updating game: $e');
+
       return false;
     } finally {
       _isLoading = false;
@@ -239,42 +217,16 @@ class UnifiedGamesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('🎮 Fetching all matches from backend...');
-
       // Fetch all matches from backend
       final allMatches = await MatchService.getAllMatches();
-      debugPrint('📊 Total matches fetched: ${allMatches.length}');
-
-      // Debug: Print first few matches to verify data
-      if (allMatches.isNotEmpty) {
-        debugPrint('📋 First match details:');
-        final firstMatch = allMatches.first;
-        debugPrint('  - ID: ${firstMatch.id}');
-        debugPrint('  - League: ${firstMatch.leagueName}');
-        debugPrint(
-          '  - Teams: ${firstMatch.homeTeam} vs ${firstMatch.awayTeam}',
-        );
-        debugPrint('  - Date: ${firstMatch.date}');
-        debugPrint('  - Time: ${firstMatch.time}');
-        debugPrint('  - matchDateTime: ${firstMatch.matchDateTime}');
-        debugPrint('  - Status: ${firstMatch.status}');
-        debugPrint(
-          '  - Is future: ${firstMatch.matchDateTime?.isAfter(DateTime.now())}',
-        );
-      }
 
       _allGames = allMatches;
       _sortGames();
       _errorMessage = null;
 
-      debugPrint('✅ All matches loaded: ${_allGames.length}');
+      // Log error (consider using a logger or crash analytics in production)
     } catch (e) {
-      debugPrint('❌ Error fetching matches: $e');
-      debugPrint('   Error type: ${e.runtimeType}');
       if (e is DioException) {
-        debugPrint('   DioException type: ${e.type}');
-        debugPrint('   Status code: ${e.response?.statusCode}');
-        debugPrint('   Error data: ${e.response?.data}');
         _errorMessage =
             'Failed to load matches: ${e.response?.data?['error'] ?? e.message ?? 'Unknown error'}';
       } else {

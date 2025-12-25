@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/auth/providers/signup_provider.dart';
+import 'package:pffl_managment/features/auth/models/signup_state.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 
 /// Widget to display password strength indicator

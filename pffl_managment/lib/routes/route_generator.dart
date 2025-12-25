@@ -5,12 +5,12 @@ import 'package:pffl_managment/features/admin/screens/admin_dashboard.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_detail_view.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/create_league/league_creation_screen.dart';
 import 'package:pffl_managment/features/auth/screens/login_screen.dart';
-import 'package:pffl_managment/features/auth/screens/create_account_screen.dart';
+import 'package:pffl_managment/features/auth/screens/create_profile/create_account_screen.dart';
 import 'package:pffl_managment/features/auth/screens/get_started_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
-import 'package:pffl_managment/features/free_agent/screens/league_selection_screen.dart';
-import 'package:pffl_managment/features/free_agent/screens/payment_option_screen.dart';
-import 'package:pffl_managment/features/free_agent/screens/add_payment_details_screen.dart';
+import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/league_selection_screen.dart';
+import 'package:pffl_managment/features/free_agent/screens/payment_option/payment_option_screen.dart';
+import 'package:pffl_managment/features/free_agent/screens/add_payment_details/add_payment_details_screen.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_profile_screen.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_captain_profile_screen.dart';
 import 'package:pffl_managment/features/admin/users/views/my_team.dart';
@@ -161,9 +161,7 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const PaymentOptionScreen());
 
       case AppRoutes.freeAgentAddPaymentDetails:
-        return MaterialPageRoute(
-          builder: (_) => const AddPaymentDetailsScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => AddPaymentDetailsScreen());
 
       // Notification Routes
       case AppRoutes.playerNotification:

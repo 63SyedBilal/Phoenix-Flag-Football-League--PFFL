@@ -223,25 +223,9 @@ class UpcommingGames extends StatelessWidget {
           if (leagueId == null &&
               gamesProvider.allGames.isEmpty &&
               !gamesProvider.isLoading) {
-            debugPrint(
-              '🔄 UpcommingGames: Triggering data fetch via UnifiedGamesProvider...',
-            );
             gamesProvider.fetchAllMatches();
           }
         });
-
-        debugPrint('🔍 UpcommingGames Widget Build:');
-        debugPrint(
-          '   - Total games in provider: ${gamesProvider.allGames.length}',
-        );
-        debugPrint('   - Upcoming games per league: ${matches.length}');
-        debugPrint('   - Is loading: ${gamesProvider.isLoading}');
-
-        if (matches.isNotEmpty) {
-          debugPrint(
-            '   - First entry: ${matches.first.leagueName} - ${matches.first.homeTeam} vs ${matches.first.awayTeam}',
-          );
-        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

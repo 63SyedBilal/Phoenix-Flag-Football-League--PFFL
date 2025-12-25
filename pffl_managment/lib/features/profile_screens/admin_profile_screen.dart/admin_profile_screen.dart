@@ -82,7 +82,7 @@ class _AdminProfileScreenContentState
           appBar: AppBar(leading: ArrowBackButton()),
           body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -90,7 +90,7 @@ class _AdminProfileScreenContentState
                     'My Profile',
                     style: widget.theme.textTheme.headlineLarge,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Manage your personal details & update\nyour player information.',
                     style: widget.theme.textTheme.titleSmall!.copyWith(
@@ -99,7 +99,7 @@ class _AdminProfileScreenContentState
                           : const Color.fromRGBO(0, 0, 0, 0.4),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 16),
                   Center(
                     child: Stack(
                       clipBehavior: Clip.none,

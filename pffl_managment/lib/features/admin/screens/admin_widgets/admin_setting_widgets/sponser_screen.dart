@@ -20,21 +20,21 @@ class SponserScreen extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 8),
                       const Text(
                         'Sponsors',
                         style: TextStyle(
                           fontSize: 32,
+
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Serotiva',
                           color: Colors.black,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Text(
                         'Manage ads that appear across the mobile app.',
                         style: TextStyle(
@@ -43,13 +43,13 @@ class SponserScreen extends StatelessWidget {
                           color: const Color(0xFF2E2E2E),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       AdSlotSection(slotNumber: 1),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 8),
                       AdSlotSection(slotNumber: 2),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 8),
                       AdSlotSection(slotNumber: 3),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 8),
                       Consumer<SponsorScreenProvider>(
                         builder: (context, provider, child) {
                           return SizedBox(
@@ -169,7 +169,7 @@ class AdSlotSection extends StatelessWidget {
                 color: Color(0xFF101828),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 4),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -181,7 +181,7 @@ class AdSlotSection extends StatelessWidget {
                     color: Color(0xFF111827),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 ThumbnailUploadWidget(
                   slotNumber: slotNumber,
                   previewImage: previewImage,
@@ -199,7 +199,7 @@ class AdSlotSection extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 6),
 
             // Redirect URL
             Column(
