@@ -279,14 +279,19 @@ class NotificationService {
 
       if (senderId != null && senderId.isNotEmpty) {
         data['senderId'] = senderId;
+        print('📡 [NOTIFICATION SERVICE] Including senderId: $senderId');
+      } else {
+        print('⚠️ [NOTIFICATION SERVICE] No senderId provided');
       }
 
       if (leagueId != null && leagueId.isNotEmpty) {
         data['leagueId'] = leagueId;
+        print('📡 [NOTIFICATION SERVICE] Including leagueId: $leagueId');
       }
 
       if (teamId != null && teamId.isNotEmpty) {
         data['teamId'] = teamId;
+        print('📡 [NOTIFICATION SERVICE] Including teamId: $teamId');
       }
 
       final endpoint = '/notification/send';
@@ -295,6 +300,9 @@ class NotificationService {
         '📡 [NOTIFICATION SERVICE] Full URL: ${dio.options.baseUrl}$endpoint',
       );
       print('📡 [NOTIFICATION SERVICE] Request data: $data');
+      print(
+        '📡 [NOTIFICATION SERVICE] Request headers: ${dio.options.headers}',
+      );
 
       final response = await dio.post(endpoint, data: data);
 
@@ -302,16 +310,27 @@ class NotificationService {
         '📡 [NOTIFICATION SERVICE] Response status: ${response.statusCode}',
       );
       print('📡 [NOTIFICATION SERVICE] Response data: ${response.data}');
+      print('📡 [NOTIFICATION SERVICE] Response headers: ${response.headers}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('✅ [NOTIFICATION SERVICE] $type notification sent successfully');
         print(
           '📧 [NOTIFICATION SERVICE] Backend confirmed notification creation',
         );
+        print(
+          '📧 [NOTIFICATION SERVICE] Notification should be visible to user: $receiverId',
+        );
+        print(
+          '📧 [NOTIFICATION SERVICE] Notification details stored: type=$type, message=$message, senderId=$senderId, teamId=$teamId',
+        );
         return true;
       } else {
         print(
           '⚠️ [NOTIFICATION SERVICE] Unexpected status code: ${response.statusCode}',
+        );
+        print('⚠️ [NOTIFICATION SERVICE] Response body: ${response.data}');
+        print(
+          '⚠️ [NOTIFICATION SERVICE] This indicates the backend /notification/send endpoint did not return 200/201',
         );
         return false;
       }
@@ -319,21 +338,20 @@ class NotificationService {
       print(
         '❌ [NOTIFICATION SERVICE] DioException sending $type notification: ${e.message}',
       );
-      print('❌ [NOTIFICATION SERVICE] Error type: ${e.type}');
+      print('❌ [NOTIFICATION SERVICE] DioException type: ${e.type}');
       if (e.response != null) {
         print(
-          '❌ [NOTIFICATION SERVICE] Response status: ${e.response?.statusCode}',
+          '❌ [NOTIFICATION SERVICE] Error status: ${e.response?.statusCode}',
         );
-        print('❌ [NOTIFICATION SERVICE] Response data: ${e.response?.data}');
-        print(
-          '❌ [NOTIFICATION SERVICE] Response headers: ${e.response?.headers}',
-        );
+        print('❌ [NOTIFICATION SERVICE] Error data: ${e.response?.data}');
+        print('❌ [NOTIFICATION SERVICE] Error headers: ${e.response?.headers}');
+      } else {
+        print('❌ [NOTIFICATION SERVICE] No response received - network issue');
       }
       return false;
     } catch (e) {
-      print(
-        '❌ [NOTIFICATION SERVICE] General error sending $type notification: $e',
-      );
+      print('❌ [NOTIFICATION SERVICE] General error sending $type: $e');
+      print('❌ [NOTIFICATION SERVICE] Error type: ${e.runtimeType}');
       return false;
     }
   }

@@ -149,8 +149,7 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
       final dio = await AuthService.getWorkingDio();
       // Assuming a generic endpoint for profile updates or a dedicated one for referees
       final response = await dio.put(
-        AppConfig
-            .completeProfileEndpoint, // Reusing existing endpoint if applicable
+        AppConfig.profileEndpoint,
         data: profileData,
       );
 

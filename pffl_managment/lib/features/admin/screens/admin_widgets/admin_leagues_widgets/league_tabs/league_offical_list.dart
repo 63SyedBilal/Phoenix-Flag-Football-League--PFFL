@@ -158,10 +158,10 @@ class _RefereeList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (referees.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0),
+      return Center(
         child: Text(
           'No referees found',
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: Color.fromRGBO(107, 114, 128, 1),
             fontFamily: 'Lato',
@@ -284,8 +284,7 @@ class _StatKeeperList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (statKeepers.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0),
+      return Center(
         child: Text(
           'No stat keepers found',
           style: TextStyle(
