@@ -42,6 +42,7 @@ import 'package:pffl_managment/features/referee/providers/complete_referee_profi
 import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/payment_option/providers/payment_option_provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/providers/add_payment_details_provider.dart';
+import 'package:pffl_managment/core/providers/calendar_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -137,6 +138,7 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AddPaymentDetailsProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => BackButtonProvider()),
+        ChangeNotifierProvider(create: (_) => CalendarProvider()),
       ],
       child: child,
     );

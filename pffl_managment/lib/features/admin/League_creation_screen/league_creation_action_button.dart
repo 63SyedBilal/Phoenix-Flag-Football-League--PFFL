@@ -11,30 +11,26 @@ class LeagueCreationActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
-    return Material(
-      color: const Color(0xFFF9FAFB), // Match scaffold background
-      elevation: 8, // Elevation to keep button above content when keyboard opens
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Color(0xFFF9FAFB),
-          border: Border(top: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: CustomButton(
-                text: _getButtonText(viewModel.currentStep),
-                onPressed: _getButtonAction(context, viewModel) ?? () {},
-                backgroundColor: const Color(0xFF0F173E),
-                textColor: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                isLoading: viewModel.isLoading,
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF9FAFB),
+        border: Border(top: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: CustomButton(
+              text: _getButtonText(viewModel.currentStep),
+              onPressed: _getButtonAction(context, viewModel) ?? () {},
+              backgroundColor: const Color(0xFF0F173E),
+              textColor: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              isLoading: viewModel.isLoading,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -79,10 +75,11 @@ class LeagueCreationActionButton extends StatelessWidget {
             showCustomBottomSheet(
               context: context,
               title: 'League created\nsuccessfully!',
-              subtitle: 'Invites have been sent to team captains and officials. You can now manage scheduling, rosters, and games for this league.',
+              subtitle:
+                  'Invites have been sent to team captains and officials. You can now manage scheduling, rosters, and games for this league.',
               buttonText: 'Continue',
               onButtonPressed: () {
-                Navigator.of(context).pop();// Close bottom sheet
+                Navigator.of(context).pop(); // Close bottom sheet
                 Navigator.of(context).pop(); // Close dialog
                 Navigator.pushNamedAndRemoveUntil(
                   context,
@@ -90,8 +87,10 @@ class LeagueCreationActionButton extends StatelessWidget {
                   (route) => false,
                 );
               },
-              content: const SizedBox(), // Empty content since we're using the optional icon
-            );          }
+              content:
+                  const SizedBox(), // Empty content since we're using the optional icon
+            );
+          }
         };
       default:
         return null;

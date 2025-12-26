@@ -13,58 +13,54 @@ class LeagueHeaderWidget extends StatelessWidget {
 
     String title = _getTitleForStep(viewModel.currentStep);
     String subtitle = _getSubtitleForStep(viewModel.currentStep);
-    
-    // Show Skip button from Step 2 onwards (not on Step 1)
-    // Step 0 = Step 1 (no skip), Step 1 = Step 2 (show skip), Step 2 = Step 3 (show skip), Step 3 = Step 4 (no skip - last step)
-    final bool showSkipButton = viewModel.currentStep > 0 && viewModel.currentStep < 3;
+    final bool showSkipButton =
+        viewModel.currentStep > 0 && viewModel.currentStep < 3;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // LEFT SIDE (Title + Subtitle)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: AppTextStyles.headlineLarge),
                 const SizedBox(height: 4),
-                Text(subtitle, style: AppTextStyles.titleSmall),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.titleSmall.copyWith(color: Colors.grey),
+                ),
               ],
             ),
           ),
-
-          // RIGHT SIDE (Skip Button)
-         if (showSkipButton)
-  GestureDetector(
-    onTap: () {
-      // Navigate to next step
-      viewModel.nextStep();
-    },
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6), // ✅ correct
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Skip',
-            style: AppTextStyles.titleSmall.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
+          if (showSkipButton)
+            GestureDetector(
+              onTap: () {
+                viewModel.nextStep();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Skip',
+                      style: AppTextStyles.titleSmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12,
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.arrow_forward_ios,
-            size: 12,
-            color: AppColors.primary,
-          ),
-        ],
-      ),
-    ),
-  ),
-
         ],
       ),
     );
