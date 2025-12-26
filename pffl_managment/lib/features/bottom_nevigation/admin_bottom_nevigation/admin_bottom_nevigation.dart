@@ -60,7 +60,9 @@ class AdminBottomNevigation extends StatelessWidget {
                     svgIcon: SvgIcons.setting(size: 24),
                     svgIconSelected: SvgIcons.settingFilled(size: 24),
                     label: 'Settings',
-                    isActive: viewModel.selectedIndex == 4,
+                    isActive:
+                        viewModel.selectedIndex == 4 ||
+                        viewModel.selectedIndex == 5,
                     onTap: () => viewModel.setIndex(4),
                   ),
                 ],

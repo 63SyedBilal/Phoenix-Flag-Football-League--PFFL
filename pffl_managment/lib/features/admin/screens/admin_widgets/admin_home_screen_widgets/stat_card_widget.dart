@@ -14,67 +14,76 @@ class StatCardWidget extends StatelessWidget {
 
     return Card(
       shadowColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          stat.title,
-                          style: AppTextStyles.labelLarge.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Lato',
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: stat.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colorScheme.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            stat.title,
+                            style: AppTextStyles.labelLarge.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Lato',
+                            ),
                           ),
                         ),
-                      ),
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFBFBFB),
-
-                          borderRadius: BorderRadius.circular(16),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFBFBFB),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            stat.icon,
+                            size: 16,
+                            color: stat.iconColor,
+                          ),
                         ),
-                        child: Icon(stat.icon, size: 16, color: stat.iconColor),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      stat.value,
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    stat.value,
-                    style: AppTextStyles.headlineSmall.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    stat.subtitle,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Lato',
-                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      stat.subtitle,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Lato',
+                      ),
 
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
