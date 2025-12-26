@@ -64,13 +64,18 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('My Profile', style: theme.textTheme.headlineLarge),
+              Text('My Profile', style: theme.textTheme.headlineLarge!.copyWith(
+                fontSize: 32,
+                fontFamily: 'Serotiva',
+                fontWeight: FontWeight.w700,
+              )),
 
               Text(
                 'Manage your personal details & update\nyour player information.',
                 style: theme.textTheme.titleSmall!.copyWith(
                   fontFamily: "Lato",
                   fontSize: 16,
+                  fontWeight: FontWeight.w500,
                   color: Colors.grey,
                 ),
               ),
@@ -125,7 +130,7 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                               'Upload',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 8,
+                                fontSize: 7.93,
                                 fontFamily: 'Satoshi Variable',
                                 fontWeight: FontWeight.w700,
                                 height: 1.37,
@@ -144,7 +149,11 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 child: Text(
                   'Profile Pic',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.labelLarge,
+                  style: theme.textTheme.labelLarge!.copyWith(
+                    fontSize: 14,
+                    fontFamily: "Lato",
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -157,9 +166,10 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                         Text(
                           "First Name",
                           style: theme.textTheme.labelLarge!.copyWith(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
+                           fontWeight: FontWeight.w500,
+                            fontSize : 14,
                             fontFamily: "Lato",
+                            color: Color(0xFF111827),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -175,7 +185,12 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Last Name", style: theme.textTheme.labelLarge),
+                        Text("Last Name", style: theme.textTheme.labelLarge!.copyWith(
+                          fontSize: 14,
+                          fontFamily: "Lato",
+                          fontWeight: FontWeight.w500,
+                           color: Color(0xFF111827),
+                        )),
                         const SizedBox(height: 4),
                         CustomTextField(
                           hintText: 'Last Name',
@@ -187,7 +202,12 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              Text("Email Address", style: theme.textTheme.labelLarge),
+              Text("Email Address", style: theme.textTheme.labelLarge!.copyWith(
+                fontSize: 14,
+                fontFamily: "Lato",
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF111827),
+              )),
               const SizedBox(height: 4),
               CustomTextField(
                 hintText: 'Email Address',
@@ -197,7 +217,12 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Phone Number", style: theme.textTheme.labelLarge),
+                  Text("Phone Number", style: theme.textTheme.labelLarge!.copyWith(
+                    fontSize: 14,
+                    fontFamily: "Lato",
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF111827),
+                  )),
                   const SizedBox(height: 4),
                   ImprovedPhoneField(
                     onInputChanged: (PhoneNumber number) {
@@ -212,7 +237,12 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              Text("Jersey Number", style: theme.textTheme.labelLarge),
+              Text("Jersey Number", style: theme.textTheme.labelLarge!.copyWith(
+                fontSize: 14,
+                fontFamily: "Lato",
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF111827),
+              )),
               const SizedBox(height: 4),
               CustomTextField(
                 hintText: 'Jersey Number',
@@ -220,7 +250,12 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 keyboardType: TextInputType.number,
               ),
 
-              Text("Position", style: theme.textTheme.labelLarge),
+              Text("Position", style: theme.textTheme.labelLarge!.copyWith(
+                fontSize: 14,
+                fontFamily: "Lato",
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF111827),
+              )),
               const SizedBox(height: 4),
               SimpleDropdownList(
                 selectedValue: _selectedPosition,
@@ -233,7 +268,12 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              Text("Emergency Contact Name", style: theme.textTheme.labelLarge),
+              Text("Emergency Contact Name", style: theme.textTheme.labelLarge!.copyWith(
+                fontSize: 14,
+                fontFamily: "Lato",
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF111827),
+              )),
               const SizedBox(height: 4),
               CustomTextField(
                 hintText: 'Emergency Contact Name',
@@ -245,7 +285,12 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 children: [
                   Text(
                     "Emergency Phone Number",
-                    style: theme.textTheme.labelLarge,
+                    style: theme.textTheme.labelLarge!.copyWith(
+                      fontSize: 14,
+                      fontFamily: "Lato",
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF111827),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   ImprovedPhoneField(
@@ -266,6 +311,7 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 width: double.infinity,
                 textColor: AppColors.lightAppBarBackground,
                 text: 'Save',
+                
                 onPressed: () {
                   Navigator.pushNamed(context, AppRoutes.adminDashboard);
                 },
