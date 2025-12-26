@@ -4,6 +4,8 @@ import 'package:pffl_managment/features/admin/provider/dashboard_provider.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_home_screen_widgets/stat_card_widget.dart';
 import 'package:provider/provider.dart';
 
+import 'package:pffl_managment/features/admin/utils/admin_navigation_helper.dart';
+
 /// Admin Overview Section displaying real-time statistics
 /// Fetches data from API and handles loading/error states
 class AdminOverViewSection extends StatelessWidget {
@@ -81,15 +83,43 @@ class AdminOverViewSection extends StatelessWidget {
               ),
             Row(
               children: [
-                Expanded(child: StatCardWidget(stat: stats[0])),
-                Expanded(child: StatCardWidget(stat: stats[1])),
+                Expanded(
+                  child: StatCardWidget(
+                    stat: stats[0].copyWith(
+                      onTap: () =>
+                          AdminNavigationHelper.navigateToLeagues(context),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: StatCardWidget(
+                    stat: stats[1].copyWith(
+                      onTap: () =>
+                          AdminNavigationHelper.navigateToGames(context),
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                Expanded(child: StatCardWidget(stat: stats[2])),
-                Expanded(child: StatCardWidget(stat: stats[3])),
+                Expanded(
+                  child: StatCardWidget(
+                    stat: stats[2].copyWith(
+                      onTap: () =>
+                          AdminNavigationHelper.navigateToUsers(context),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: StatCardWidget(
+                    stat: stats[3].copyWith(
+                      onTap: () =>
+                          AdminNavigationHelper.navigateToPayments(context),
+                    ),
+                  ),
+                ),
               ],
             ),
           ],

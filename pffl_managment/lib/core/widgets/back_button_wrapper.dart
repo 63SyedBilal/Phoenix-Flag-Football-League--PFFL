@@ -3,18 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/back_button_provider.dart';
 
-/// A wrapper widget that handles Android back button behavior.
-///
-/// It intercepts the back button press and requires a second press
-/// within 2 seconds to actually exit or pop the screen.
 class BackButtonWrapper extends StatelessWidget {
-  /// The widget tree that this wrapper should protect.
   final Widget child;
-
-  /// Whether this is the root screen (if true, it handles app exit).
-  /// If false, it just handles popping the current route.
   final bool isRoot;
-
   const BackButtonWrapper({
     super.key,
     required this.child,
@@ -46,10 +37,13 @@ class BackButtonWrapper extends StatelessWidget {
           // First press - show message
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Press back again to exit'),
-                duration: Duration(seconds: 2),
+              SnackBar(
+                content: const Text('Press back again to exit'),
+                duration: const Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
+
+                // 👇 Ye line main fix hai
+                margin: const EdgeInsets.only(top: 20, left: 16, right: 16),
               ),
             );
           }

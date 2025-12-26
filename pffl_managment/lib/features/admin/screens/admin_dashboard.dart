@@ -14,6 +14,10 @@ import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
 
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_history.dart';
+
+import 'package:pffl_managment/features/admin/screens/calendar_screen.dart';
+
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
@@ -25,13 +29,17 @@ class AdminDashboard extends StatelessWidget {
       ],
       child: Consumer<AdminNavigationProvider>(
         builder: (context, navigationProvider, _) {
+          final showHeader =
+              navigationProvider.selectedIndex != 5 &&
+              navigationProvider.selectedIndex != 6;
+
           return BackButtonWrapper(
             isRoot: true,
             child: Scaffold(
               body: SafeArea(
                 child: Column(
                   children: [
-                    const AdminHeaderWidget(),
+                    if (showHeader) const AdminHeaderWidget(),
                     Expanded(
                       child: IndexedStack(
                         index: navigationProvider.selectedIndex,
@@ -60,6 +68,8 @@ class AdminDashboard extends StatelessWidget {
                                 RoleBasedSettingsProvider(userRole: 'admin'),
                             child: const SettingsScreen(),
                           ),
+                          const PaymentHistory(),
+                          const CalendarScreen(),
                         ],
                       ),
                     ),

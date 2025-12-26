@@ -22,6 +22,10 @@ class AdminNavigationProvider extends ChangeNotifier {
         return 'Users';
       case 4:
         return 'Settings';
+      case 5:
+        return 'Payment History';
+      case 6:
+        return 'Calendar';
       default:
         return 'Home';
     }

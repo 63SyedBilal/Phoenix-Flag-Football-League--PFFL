@@ -11,6 +11,8 @@ import 'package:pffl_managment/core/widgets/dotted_border_widget.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/calendar_provider.dart';
+import 'package:pffl_managment/features/admin/screens/calendar_screen.dart';
 
 class Step1TeamInfoWidget extends StatelessWidget {
   const Step1TeamInfoWidget({super.key});
@@ -18,6 +20,10 @@ class Step1TeamInfoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
+    final calendarProvider = Provider.of<CalendarProvider>(
+      context,
+      listen: false,
+    );
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -113,7 +119,9 @@ class Step1TeamInfoWidget extends StatelessWidget {
             strokeWidth: 1.5,
             dashWidth: 5.0,
             dashSpace: 3.0,
-            color: viewModel.logoError != null ? Colors.red : AppColors.borderDefault,
+            color: viewModel.logoError != null
+                ? Colors.red
+                : AppColors.borderDefault,
             borderRadius: BorderRadius.circular(6),
             child: Container(
               width: double.infinity,
@@ -133,7 +141,8 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         if (result != null && result.files.isNotEmpty) {
                           final file = result.files.first;
                           final path =
-                              file.path ?? 'assets/images/logos/default_logo.png';
+                              file.path ??
+                              'assets/images/logos/default_logo.png';
                           viewModel.setUploadedLogo(path);
                         }
                       },
@@ -188,7 +197,8 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         if (result != null && result.files.isNotEmpty) {
                           final file = result.files.first;
                           final path =
-                              file.path ?? 'assets/images/logos/default_logo.png';
+                              file.path ??
+                              'assets/images/logos/default_logo.png';
                           viewModel.setUploadedLogo(path);
                         }
                       },
@@ -199,7 +209,8 @@ class Step1TeamInfoWidget extends StatelessWidget {
                           children: [
                             Image.file(
                               File(viewModel.uploadedLogoPath),
-                              fit: BoxFit.cover, // Changed back to cover to fill entire container
+                              fit: BoxFit
+                                  .cover, // Changed back to cover to fill entire container
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: AppColors.backgroundWhite,
@@ -268,36 +279,36 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         color: AppColors.backgroundWhite,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: viewModel.startDateError != null 
-                              ? Colors.red 
+                          color: viewModel.startDateError != null
+                              ? Colors.red
                               : AppColors.borderDefault,
                         ),
                       ),
                       child: GestureDetector(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: viewModel.startDate ?? DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(2100),
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: ColorScheme.light(
-                                    primary: AppColors.primary,
-                                    onPrimary: Colors.white,
-                                    onSurface: AppColors.textPrimary,
-                                  ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
-                                ),
-                                child: child!,
-                              );
-                            },
+                        onTap: () {
+                          calendarProvider.setSelectionType(
+                            DateSelectionType.startDate,
+                            viewModel.startDate,
                           );
-                          if (picked != null) viewModel.setStartDate(picked);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChangeNotifierProvider.value(
+                                value: viewModel,
+                                child: const CalendarScreen(),
+                              ),
+                            ),
+                          );
                         },
                         child: AbsorbPointer(
                           child: CustomTextField(
-                            hintText: DateFormatter.format(viewModel.startDate),
+                            controller: TextEditingController(
+                              text: viewModel.startDate != null
+                                  ? DateFormatter.format(viewModel.startDate)
+                                  : '',
+                            ),
+                            hintText: 'Select Date',
+                            readOnly: true,
                             suffixIcon: const Icon(
                               AppIcons.calendar,
                               size: 20,
@@ -343,8 +354,8 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         color: AppColors.backgroundWhite,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: viewModel.endDateError != null 
-                              ? Colors.red 
+                          color: viewModel.endDateError != null
+                              ? Colors.red
                               : AppColors.borderDefault,
                         ),
                         boxShadow: [
@@ -358,34 +369,32 @@ class Step1TeamInfoWidget extends StatelessWidget {
                         ],
                       ),
                       child: GestureDetector(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate:
-                                viewModel.endDate ??
-                                DateTime.now().add(const Duration(days: 7)),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(2100),
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: ColorScheme.light(
-                                    primary: AppColors.primary,
-                                    onPrimary: Colors.white,
-                                    onSurface: AppColors.textPrimary,
-                                  ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
-                                ),
-                                child: child!,
-                              );
-                            },
+                        onTap: () {
+                          calendarProvider.setSelectionType(
+                            DateSelectionType.endDate,
+                            viewModel.endDate,
+                            minDate: viewModel
+                                .startDate, // Enforce End Date > Start Date
                           );
-                          if (picked != null) viewModel.setEndDate(picked);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChangeNotifierProvider.value(
+                                value: viewModel,
+                                child: const CalendarScreen(),
+                              ),
+                            ),
+                          );
                         },
                         child: AbsorbPointer(
                           child: CustomTextField(
-                            hintText: viewModel.endDate != null
-                                ? DateFormatter.formatDate(viewModel.endDate!)
-                                : '',
+                            controller: TextEditingController(
+                              text: viewModel.endDate != null
+                                  ? DateFormatter.format(viewModel.endDate)
+                                  : '',
+                            ),
+                            hintText: 'Select Date',
+                            readOnly: true,
                             suffixIcon: const Icon(
                               AppIcons.calendar,
                               size: 20,
@@ -421,12 +430,34 @@ class Step1TeamInfoWidget extends StatelessWidget {
               ),
             ],
           ),
+
           const SizedBox(height: 18),
-          const Text('Minimum Players Required', style: AppTextStyles.labelLarge),
+          const Text(
+            'Minimum Players Required',
+            style: AppTextStyles.labelLarge,
+          ),
           const SizedBox(height: 4),
           SimpleDropdownList(
-            selectedValue: viewModel.minPlayers > 0 ? viewModel.minPlayers.toString() : null,
-            items: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'],
+            selectedValue: viewModel.minPlayers > 0
+                ? viewModel.minPlayers.toString()
+                : null,
+            items: [
+              '1',
+              '2',
+              '3',
+              '4',
+              '5',
+              '6',
+              '7',
+              '8',
+              '9',
+              '10',
+              '11',
+              '12',
+              '13',
+              '14',
+              '15',
+            ],
             onSelected: (value) {
               final intValue = int.tryParse(value);
               if (intValue != null) viewModel.setMinPlayers(intValue);
@@ -456,11 +487,8 @@ class Step1TeamInfoWidget extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 18),
-         
-          const Text(
-            'Per Player League Fee',
-            style: AppTextStyles.labelLarge,
-          ),
+
+          const Text('Per Player League Fee', style: AppTextStyles.labelLarge),
           const SizedBox(height: 4),
           CustomTextField(
             controller: viewModel.perPlayerFeeController,
@@ -474,6 +502,31 @@ class Step1TeamInfoWidget extends StatelessWidget {
           const SizedBox(height: 20),
         ],
       ),
+    );
+  }
+
+  Widget _buildPreviewRow(
+    String label,
+    String value, {
+    bool isHighlighted = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: const Color(0xFF64748B),
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: isHighlighted ? AppColors.primary : const Color(0xFF1E293B),
+            fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
