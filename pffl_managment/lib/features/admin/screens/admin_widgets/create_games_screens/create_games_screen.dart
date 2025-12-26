@@ -8,26 +8,104 @@ import 'package:pffl_managment/core/services/league_service.dart'
     show TeamModel;
 import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
 
-class CreateUpcomingGamesScreen extends StatelessWidget {
+class CreateUpcomingGamesScreen extends StatefulWidget {
   final LeagueCreationModel league;
 
   const CreateUpcomingGamesScreen({super.key, required this.league});
 
   @override
+  State<CreateUpcomingGamesScreen> createState() =>
+      _CreateUpcomingGamesScreenState();
+}
+
+class _CreateUpcomingGamesScreenState extends State<CreateUpcomingGamesScreen>
+    with WidgetsBindingObserver {
+  UpcomingGamesProvider? _provider;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh data when app comes back to foreground
+    if (state == AppLifecycleState.resumed && _provider != null) {
+      _provider!.refreshData();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(leading: ArrowBackButton()),
+      appBar: AppBar(
+        leading: ArrowBackButton(),
+        actions: [
+          Consumer<UpcomingGamesProvider>(
+            builder: (context, provider, _) {
+              return IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed:
+                    provider.isLoadingTeams ||
+                        provider.isLoadingReferees ||
+                        provider.isLoadingStatKeepers
+                    ? null
+                    : () async {
+                        try {
+                          await provider.refreshData();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Data refreshed successfully'),
+                                backgroundColor: Colors.green,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Failed to refresh: ${e.toString()}',
+                                ),
+                                backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                tooltip: 'Refresh data',
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ChangeNotifierProvider(
-          create: (_) {
-            final provider = UpcomingGamesProvider();
-            // Initialize with league data
-            provider.initializeWithLeague(league);
-            return provider;
-          },
+          create: (_) => UpcomingGamesProvider(),
           child: Consumer<UpcomingGamesProvider>(
             builder: (context, provider, child) {
+              // Store provider reference for lifecycle callbacks
+              _provider = provider;
+
+              // Initialize with league data when provider is first created
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (provider.leagueId != widget.league.id) {
+                  provider.initializeWithLeague(widget.league);
+                }
+              });
+
               // Show loading state
               if (provider.isLoadingTeams ||
                   provider.isLoadingReferees ||
@@ -51,7 +129,7 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () =>
-                              provider.initializeWithLeague(league),
+                              provider.initializeWithLeague(widget.league),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -436,13 +514,28 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Assign Referee (optional)',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
-          ),
+        Row(
+          children: [
+            const Text(
+              'Assign Referee (optional)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (provider.availableReferees.isEmpty)
+              Tooltip(
+                message:
+                    'No referees available. Referees will appear here after they accept league invitations.',
+                child: Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         Container(
@@ -457,8 +550,15 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
             child: DropdownButton<String>(
               value: provider.selectedRefereeId,
               hint: Text(
-                'Select Referee',
-                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                provider.availableReferees.isEmpty
+                    ? 'No referees available'
+                    : 'Select Referee',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: provider.availableReferees.isEmpty
+                      ? Colors.grey[600]
+                      : Colors.grey[400],
+                ),
               ),
               icon: Icon(
                 Icons.keyboard_arrow_down,
@@ -484,10 +584,23 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                   );
                 }),
               ],
-              onChanged: (val) => provider.updateReferee(val),
+              onChanged: provider.availableReferees.isEmpty
+                  ? null
+                  : (val) => provider.updateReferee(val),
             ),
           ),
         ),
+        if (provider.availableReferees.isEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Referees will appear here after they accept league invitations.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -496,13 +609,28 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Assign Stat Keeper (optional)',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
-          ),
+        Row(
+          children: [
+            const Text(
+              'Assign Stat Keeper (optional)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (provider.availableStatKeepers.isEmpty)
+              Tooltip(
+                message:
+                    'No stat keepers available. Stat keepers will appear here after they accept league invitations.',
+                child: Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         Container(
@@ -517,8 +645,15 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
             child: DropdownButton<String>(
               value: provider.selectedStatKeeperId,
               hint: Text(
-                'Select Stat Keeper',
-                style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                provider.availableStatKeepers.isEmpty
+                    ? 'No stat keepers available'
+                    : 'Select Stat Keeper',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: provider.availableStatKeepers.isEmpty
+                      ? Colors.grey[600]
+                      : Colors.grey[400],
+                ),
               ),
               icon: Icon(
                 Icons.keyboard_arrow_down,
@@ -544,10 +679,23 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                   );
                 }),
               ],
-              onChanged: (val) => provider.updateStatKeeper(val),
+              onChanged: provider.availableStatKeepers.isEmpty
+                  ? null
+                  : (val) => provider.updateStatKeeper(val),
             ),
           ),
         ),
+        if (provider.availableStatKeepers.isEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Stat keepers will appear here after they accept league invitations.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
       ],
     );
   }

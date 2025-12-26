@@ -24,8 +24,9 @@ class Step2SelectRefereesWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<CreateLeagueViewModel>(
       builder: (context, viewModel, child) {
-        // Fetch referees on first build if not already loading
-        if (viewModel.referees.isEmpty && !viewModel.isLoadingReferees) {
+        // Fetch referees on first build if not already attempted
+        if (!viewModel.hasAttemptedRefereesFetch &&
+            !viewModel.isLoadingReferees) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             viewModel.fetchReferees();
           });
@@ -53,7 +54,7 @@ class Step2SelectRefereesWidget extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Loading state
+              // Loading state - only show if currently loading
               if (viewModel.isLoadingReferees)
                 const Center(
                   child: Padding(
@@ -61,8 +62,9 @@ class Step2SelectRefereesWidget extends StatelessWidget {
                     child: CircularProgressIndicator(),
                   ),
                 )
-              // Empty state
-              else if (filteredReferees.isEmpty)
+              // Empty state - show if fetch attempted but no results
+              else if (viewModel.hasAttemptedRefereesFetch &&
+                  filteredReferees.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Center(
@@ -84,12 +86,26 @@ class Step2SelectRefereesWidget extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () {
+                            // Allow retry by resetting the fetch attempt flag
+                            viewModel.retryFetchReferees();
+                          },
+                          child: Text(
+                            'Retry',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 )
-              // Referee list
-              else
+              // Referee list - show if we have data
+              else if (filteredReferees.isNotEmpty)
                 ...filteredReferees.map((referee) {
                   return _buildRefereeItem(context, referee, viewModel);
                 }),

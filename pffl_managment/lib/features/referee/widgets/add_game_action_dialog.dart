@@ -464,7 +464,8 @@ class _AddGameActionDialogState extends State<AddGameActionDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        Expanded(
+        Container(
+          height: 200, // Fixed height instead of Expanded
           child: _isLoadingPlayers
               ? const Center(
                   child: Padding(
@@ -522,118 +523,109 @@ class _AddGameActionDialogState extends State<AddGameActionDialog> {
                           _selectedPlayerId = player['id'];
                         });
                       },
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedPlayerId = player['id'];
-                          });
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF1E3A5F).withValues(alpha: 0.05)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
                             color: isSelected
-                                ? const Color(
-                                    0xFF1E3A5F,
-                                  ).withValues(alpha: 0.05)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF1E3A5F)
-                                  : const Color(0xFFE5E7EB),
-                              width: isSelected ? 1.5 : 1,
-                            ),
+                                ? const Color(0xFF1E3A5F)
+                                : const Color(0xFFE5E7EB),
+                            width: isSelected ? 1.5 : 1,
                           ),
-                          child: Row(
-                            children: [
-                              // Player avatar - smaller
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  shape: BoxShape.circle,
-                                ),
-                                child: player['image'] != null
-                                    ? ClipOval(
-                                        child: Image.network(
-                                          player['image'],
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.person,
-                                        color: Colors.grey,
-                                        size: 18,
-                                      ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Player avatar - smaller
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
+                              child: player['image'] != null
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        player['image'],
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      color: Colors.grey,
+                                      size: 18,
+                                    ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    player['jerseyNumber'] != null &&
+                                            player['jerseyNumber']
+                                                .toString()
+                                                .isNotEmpty
+                                        ? '#${player['jerseyNumber']} ${player['name'] ?? 'Unknown Player'}'
+                                        : player['name'] ?? 'Unknown Player',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? const Color(0xFF1E3A5F)
+                                          : Colors.black,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (player['position'] != null)
                                     Text(
-                                      player['jerseyNumber'] != null &&
-                                              player['jerseyNumber']
-                                                  .toString()
-                                                  .isNotEmpty
-                                          ? '#${player['jerseyNumber']} ${player['name'] ?? 'Unknown Player'}'
-                                          : player['name'] ?? 'Unknown Player',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: isSelected
-                                            ? const Color(0xFF1E3A5F)
-                                            : Colors.black,
+                                      player['position'],
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    if (player['position'] != null)
-                                      Text(
-                                        player['position'],
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                  ],
-                                ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              // Radio button - smaller
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF1E3A5F)
-                                        : const Color(0xFFE5E7EB),
-                                    width: 2,
-                                  ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Radio button - smaller
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
                                   color: isSelected
                                       ? const Color(0xFF1E3A5F)
-                                      : Colors.transparent,
+                                      : const Color(0xFFE5E7EB),
+                                  width: 2,
                                 ),
-                                child: isSelected
-                                    ? const Icon(
-                                        Icons.check,
-                                        size: 12,
-                                        color: Colors.white,
-                                      )
-                                    : null,
+                                color: isSelected
+                                    ? const Color(0xFF1E3A5F)
+                                    : Colors.transparent,
                               ),
-                            ],
-                          ),
+                              child: isSelected
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 12,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                          ],
                         ),
                       ),
                     );

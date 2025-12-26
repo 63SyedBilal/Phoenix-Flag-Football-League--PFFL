@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/admin/matches/models/match_model.dart';
-import 'package:pffl_managment/features/admin/matches/widgets/game_detail_view.dart';
+import 'package:pffl_managment/features/admin/Games/models/match_model.dart';
+import 'package:pffl_managment/features/admin/Games/widgets/game_detail_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class GameCardWidget extends StatelessWidget {
@@ -14,9 +14,7 @@ class GameCardWidget extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => GameDetailView(match: match),
-          ),
+          MaterialPageRoute(builder: (context) => GameDetailView(match: match)),
         );
       },
       child: Container(
@@ -59,7 +57,10 @@ class GameCardWidget extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3B82F6),
                     borderRadius: BorderRadius.circular(110),
@@ -230,11 +231,7 @@ class GameCardWidget extends StatelessWidget {
                 const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.edit,
-                      size: 12,
-                      color: Colors.white,
-                    ),
+                    Icon(Icons.edit, size: 12, color: Colors.white),
                     SizedBox(width: 4),
                     Text(
                       'Edit Game',

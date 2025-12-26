@@ -1,0 +1,23 @@
+{
+  "name": "pffl-backend-seeder",
+  "version": "1.0.0",
+  "description": "Backend seeding script for PFFL Management System testing",
+  "main": "backend_seed_script.js",
+  "scripts": {
+    "seed": "node backend_seed_script.js",
+    "cleanup": "node backend_seed_script.js --cleanup",
+    "help": "node backend_seed_script.js --help"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "keywords": [
+    "pffl",
+    "seeding",
+    "testing",
+    "backend",
+    "dummy-data"
+  ],
+  "author": "PFFL Development Team",
+  "license": "MIT"
+}

@@ -22,10 +22,7 @@ class AppConfig {
   // NOTE: Android Emulator sometimes can't reach 10.0.2.2
   // If 10.0.2.2 doesn't work, try using the network IP instead
   static String get baseUrl {
-    // Use local development server for testing
-    return 'http://localhost:3000/api';
-    // For production/staging, use:
-    // return 'https://api-staging.phoenixflagfootballleague.com/api';
+    return 'https://api-staging.phoenixflagfootballleague.com/api';
   }
 
   // Alternative: Use network IP for physical devices

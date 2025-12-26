@@ -3,8 +3,8 @@ import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart'
     show TeamModel, LeagueService;
-import 'package:pffl_managment/core/services/user_service.dart'
-    show UserModel;
+import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
+import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 
 class UpcomingGamesProvider extends ChangeNotifier {
@@ -32,7 +32,6 @@ class UpcomingGamesProvider extends ChangeNotifier {
   bool _isLoadingReferees = false;
   bool _isLoadingStatKeepers = false;
   String? _errorMessage;
-
 
   // Game stages
   static const List<String> _availableStages = [
@@ -82,7 +81,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
     _leagueFormat = league.format;
     _leagueStartDate = league.startDate;
     _leagueEndDate = league.endDate;
-    
+
     // Fetch teams, referees, and stat keepers
     await Future.wait([
       fetchTeamsForLeague(league.id),
@@ -91,12 +90,36 @@ class UpcomingGamesProvider extends ChangeNotifier {
     ]);
   }
 
+  /// Refresh all data (teams, referees, stat keepers) for the current league
+  /// This ensures that recently accepted invitations are reflected in the UI
+  Future<void> refreshData() async {
+    if (_leagueId == null || _leagueId!.isEmpty) {
+      debugPrint('⚠️ Cannot refresh data: No league ID set');
+      return;
+    }
+
+    debugPrint('🔄 Refreshing all data for league: $_leagueId');
+
+    // Clear error message
+    _errorMessage = null;
+    notifyListeners();
+
+    // Fetch fresh data from backend
+    await Future.wait([
+      fetchTeamsForLeague(_leagueId!),
+      fetchReferees(),
+      fetchStatKeepers(),
+    ]);
+
+    debugPrint('✅ Data refresh completed');
+  }
+
   /// Initialize provider without league (for editing matches outside league context)
   Future<void> initializeWithoutLeague() async {
     _leagueId = null;
     _leagueStartDate = null;
     _leagueEndDate = null;
-    
+
     // Fetch teams, referees, and stat keepers without league filter
     await Future.wait([
       fetchTeamsForLeague(''),
@@ -123,10 +146,10 @@ class UpcomingGamesProvider extends ChangeNotifier {
       }
 
       debugPrint('📡 Fetching teams for league ID: $leagueId');
-      
+
       // Fetch league details which includes populated teams
       final league = await LeagueService.getLeagueById(leagueId);
-      
+
       if (league == null) {
         debugPrint('❌ League not found for ID: $leagueId');
         _teams = [];
@@ -135,14 +158,16 @@ class UpcomingGamesProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      
+
       debugPrint('✅ League fetched: ${league.leagueName}');
       debugPrint('📊 Teams count in league: ${league.teams.length}');
-      
+
       if (league.teams.isNotEmpty) {
         // Use teams from the league (only teams invited/added during league creation)
         _teams = league.teams;
-        debugPrint('✅ Loaded ${_teams.length} teams from league: ${league.leagueName}');
+        debugPrint(
+          '✅ Loaded ${_teams.length} teams from league: ${league.leagueName}',
+        );
         for (var team in _teams) {
           debugPrint('   - Team: ${team.teamName} (ID: ${team.id})');
         }
@@ -150,7 +175,9 @@ class UpcomingGamesProvider extends ChangeNotifier {
         // League has no teams yet - this is not an error, just empty state
         _teams = [];
         debugPrint('ℹ️ League has no teams assigned yet');
-        debugPrint('   - Teams will appear when invited in Step 4 of league creation');
+        debugPrint(
+          '   - Teams will appear when invited in Step 4 of league creation',
+        );
         // Don't show error - just let the dropdown be empty
         // User can still create the league and add teams later
       }
@@ -174,7 +201,9 @@ class UpcomingGamesProvider extends ChangeNotifier {
     try {
       if (_leagueId == null || _leagueId!.isEmpty) {
         // No league ID, use empty list
-        debugPrint('⚠️ Empty league ID provided, returning empty referees list');
+        debugPrint(
+          '⚠️ Empty league ID provided, returning empty referees list',
+        );
         _referees = [];
         _isLoadingReferees = false;
         notifyListeners();
@@ -182,10 +211,10 @@ class UpcomingGamesProvider extends ChangeNotifier {
       }
 
       debugPrint('📡 Fetching referees for league ID: $_leagueId');
-      
+
       // Fetch league details which includes populated referees (only those assigned to league)
       final league = await LeagueService.getLeagueById(_leagueId!);
-      
+
       if (league == null) {
         debugPrint('❌ League not found for ID: $_leagueId');
         _referees = [];
@@ -194,28 +223,35 @@ class UpcomingGamesProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      
+
       debugPrint('✅ League fetched: ${league.leagueName}');
       debugPrint('📊 Referees count in league: ${league.referees.length}');
-      
+
       if (league.referees.isNotEmpty) {
         // Use referees from the league (only referees invited and assigned during league creation)
         _referees = league.referees;
-        debugPrint('✅ Loaded ${_referees.length} referees from league: ${league.leagueName}');
+        debugPrint(
+          '✅ Loaded ${_referees.length} referees from league: ${league.leagueName}',
+        );
         for (var referee in _referees) {
-          debugPrint('   - Referee: ${referee.displayName} (ID: ${referee.id})');
+          debugPrint(
+            '   - Referee: ${referee.displayName} (ID: ${referee.id})',
+          );
         }
       } else {
         // League has no referees yet - this is not an error, just empty state
         _referees = [];
         debugPrint('ℹ️ League has no referees assigned yet');
-        debugPrint('   - Referees will appear when they accept invitation in Step 2 of league creation');
+        debugPrint(
+          '   - Referees will appear when they accept invitation in Step 2 of league creation',
+        );
       }
     } catch (e, stackTrace) {
       debugPrint('❌ Error fetching referees for league: $e');
       debugPrint('❌ Stack trace: $stackTrace');
       _referees = [];
-      _errorMessage = 'Failed to load referees for this league: ${e.toString()}';
+      _errorMessage =
+          'Failed to load referees for this league: ${e.toString()}';
     } finally {
       _isLoadingReferees = false;
       notifyListeners();
@@ -231,7 +267,9 @@ class UpcomingGamesProvider extends ChangeNotifier {
     try {
       if (_leagueId == null || _leagueId!.isEmpty) {
         // No league ID, use empty list
-        debugPrint('⚠️ Empty league ID provided, returning empty stat keepers list');
+        debugPrint(
+          '⚠️ Empty league ID provided, returning empty stat keepers list',
+        );
         _statKeepers = [];
         _isLoadingStatKeepers = false;
         notifyListeners();
@@ -239,10 +277,10 @@ class UpcomingGamesProvider extends ChangeNotifier {
       }
 
       debugPrint('📡 Fetching stat keepers for league ID: $_leagueId');
-      
+
       // Fetch league details which includes populated stat keepers (only those assigned to league)
       final league = await LeagueService.getLeagueById(_leagueId!);
-      
+
       if (league == null) {
         debugPrint('❌ League not found for ID: $_leagueId');
         _statKeepers = [];
@@ -251,28 +289,37 @@ class UpcomingGamesProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      
+
       debugPrint('✅ League fetched: ${league.leagueName}');
-      debugPrint('📊 Stat keepers count in league: ${league.statKeepers.length}');
-      
+      debugPrint(
+        '📊 Stat keepers count in league: ${league.statKeepers.length}',
+      );
+
       if (league.statKeepers.isNotEmpty) {
         // Use stat keepers from the league (only stat keepers invited and assigned during league creation)
         _statKeepers = league.statKeepers;
-        debugPrint('✅ Loaded ${_statKeepers.length} stat keepers from league: ${league.leagueName}');
+        debugPrint(
+          '✅ Loaded ${_statKeepers.length} stat keepers from league: ${league.leagueName}',
+        );
         for (var statKeeper in _statKeepers) {
-          debugPrint('   - Stat Keeper: ${statKeeper.displayName} (ID: ${statKeeper.id})');
+          debugPrint(
+            '   - Stat Keeper: ${statKeeper.displayName} (ID: ${statKeeper.id})',
+          );
         }
       } else {
         // League has no stat keepers yet - this is not an error, just empty state
         _statKeepers = [];
         debugPrint('ℹ️ League has no stat keepers assigned yet');
-        debugPrint('   - Stat keepers will appear when they accept invitation in Step 3 of league creation');
+        debugPrint(
+          '   - Stat keepers will appear when they accept invitation in Step 3 of league creation',
+        );
       }
     } catch (e, stackTrace) {
       debugPrint('❌ Error fetching stat keepers for league: $e');
       debugPrint('❌ Stack trace: $stackTrace');
       _statKeepers = [];
-      _errorMessage = 'Failed to load stat keepers for this league: ${e.toString()}';
+      _errorMessage =
+          'Failed to load stat keepers for this league: ${e.toString()}';
     } finally {
       _isLoadingStatKeepers = false;
       notifyListeners();
@@ -284,7 +331,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
     _editingMatch = match;
     _selectedTeamA = match.homeTeam;
     _selectedTeamB = match.awayTeam;
-    
+
     // Find team IDs from available teams (only if teams are loaded)
     if (_teams.isNotEmpty) {
       final teamA = _teams.firstWhere(
@@ -365,12 +412,12 @@ class UpcomingGamesProvider extends ChangeNotifier {
         );
       }
     }
-    
+
     // Validate time if both date and time are set
     if (_selectedTime != null && _leagueId != null) {
       await _validateGameTime(date, _selectedTime!, _editingMatch?.id);
     }
-    
+
     _selectedDate = date;
     notifyListeners();
   }
@@ -380,7 +427,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
     if (_selectedDate != null && _leagueId != null) {
       await _validateGameTime(_selectedDate!, time, _editingMatch?.id);
     }
-    
+
     _selectedTime = time;
     notifyListeners();
   }
@@ -418,12 +465,12 @@ class UpcomingGamesProvider extends ChangeNotifier {
     try {
       // Fetch all games for the league
       final allGames = await MatchService.getMatchesByLeague(_leagueId!);
-      
+
       // Filter games on the same date (excluding the current match if editing)
       final gamesOnSameDate = allGames.where((game) {
         if (game.id == excludeMatchId) return false;
         if (game.matchDateTime == null) return false;
-        
+
         return game.matchDateTime!.year == date.year &&
             game.matchDateTime!.month == date.month &&
             game.matchDateTime!.day == date.day;
@@ -440,11 +487,13 @@ class UpcomingGamesProvider extends ChangeNotifier {
         if (game.matchDateTime != null) {
           final gameTimeMinutes =
               game.matchDateTime!.hour * 60 + game.matchDateTime!.minute;
-          
+
           // Consider games at the same time or within 30 minutes as conflicting
           final timeDifference = (selectedTimeMinutes - gameTimeMinutes).abs();
           if (timeDifference < 30) {
-            throw Exception('Game time conflicts with existing game on this date');
+            throw Exception(
+              'Game time conflicts with existing game on this date',
+            );
           }
         }
       }
@@ -459,7 +508,6 @@ class UpcomingGamesProvider extends ChangeNotifier {
     }
   }
 
-
   /// Validate all required fields are filled
   Future<bool> validateFields() async {
     if (_leagueId == null) {
@@ -467,14 +515,15 @@ class UpcomingGamesProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    
+
     // Check if teams are available before validating selection
     if (_teams.isEmpty) {
-      _errorMessage = 'No teams in this league yet. Please invite teams first from the League settings.';
+      _errorMessage =
+          'No teams in this league yet. Please invite teams first from the League settings.';
       notifyListeners();
       return false;
     }
-    
+
     if (_selectedTeamAId == null || _selectedTeamBId == null) {
       _errorMessage = 'Both teams must be selected';
       notifyListeners();
@@ -505,16 +554,20 @@ class UpcomingGamesProvider extends ChangeNotifier {
         return false;
       }
     }
-    
+
     // Validate time constraints
     try {
-      await _validateGameTime(_selectedDate!, _selectedTime!, _editingMatch?.id);
+      await _validateGameTime(
+        _selectedDate!,
+        _selectedTime!,
+        _editingMatch?.id,
+      );
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       notifyListeners();
       return false;
     }
-    
+
     _errorMessage = null;
     notifyListeners();
     return true;
@@ -528,7 +581,8 @@ class UpcomingGamesProvider extends ChangeNotifier {
 
     try {
       // Format time as HH:mm
-      final timeStr = '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
 
       // Combine date and time for gameDate
       final gameDateTime = DateTime(
@@ -555,10 +609,15 @@ class UpcomingGamesProvider extends ChangeNotifier {
         'teamAInitialSide': 'offense',
         'teamBInitialSide': 'defense',
         if (_selectedRefereeId != null) 'refereeId': _selectedRefereeId,
-        if (_selectedStatKeeperId != null) 'statKeeperId': _selectedStatKeeperId,
+        if (_selectedStatKeeperId != null)
+          'statKeeperId': _selectedStatKeeperId,
       };
 
       final createdMatch = await MatchService.createMatch(matchData);
+
+      // Send notifications to assigned referee and StatKeeper
+      await _sendAssignmentNotifications(createdMatch);
+
       _errorMessage = null;
       notifyListeners();
       return createdMatch;
@@ -581,7 +640,8 @@ class UpcomingGamesProvider extends ChangeNotifier {
 
     try {
       // Format time as HH:mm
-      final timeStr = '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
 
       // Combine date and time for gameDate
       final gameDateTime = DateTime(
@@ -603,11 +663,18 @@ class UpcomingGamesProvider extends ChangeNotifier {
         'roundName': _selectedRoundName ?? 'Group Stage',
         'gameNumber': _editingMatch!.gameNumber ?? '',
         if (_selectedRefereeId != null) 'refereeId': _selectedRefereeId,
-        if (_selectedStatKeeperId != null) 'statKeeperId': _selectedStatKeeperId,
+        if (_selectedStatKeeperId != null)
+          'statKeeperId': _selectedStatKeeperId,
       };
 
-      final updatedMatch =
-          await MatchService.updateMatch(_editingMatch!.id!, matchData);
+      final updatedMatch = await MatchService.updateMatch(
+        _editingMatch!.id!,
+        matchData,
+      );
+
+      // Send notifications for new assignments (only if assignments changed)
+      await _sendAssignmentNotifications(updatedMatch, isUpdate: true);
+
       _errorMessage = null;
       notifyListeners();
       return updatedMatch;
@@ -646,5 +713,84 @@ class UpcomingGamesProvider extends ChangeNotifier {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  /// Send assignment notifications to referee and StatKeeper
+  Future<void> _sendAssignmentNotifications(
+    MatchModel match, {
+    bool isUpdate = false,
+  }) async {
+    try {
+      final gameInfo = '${match.homeTeam} vs ${match.awayTeam}';
+      final dateStr = _formatDate(match.matchDateTime ?? DateTime.now());
+      final timeStr = match.time.isNotEmpty ? ' at ${match.time}' : '';
+      final venueStr = (match.venue?.isNotEmpty ?? false)
+          ? ' at ${match.venue}'
+          : '';
+
+      // Send notification to referee if assigned
+      if (match.refereeId != null && match.refereeId!.isNotEmpty) {
+        // Check if this is a new assignment (for updates)
+        bool shouldNotifyReferee = true;
+        if (isUpdate && _editingMatch != null) {
+          shouldNotifyReferee = _editingMatch!.refereeId != match.refereeId;
+        }
+
+        if (shouldNotifyReferee) {
+          final refereeMessage = isUpdate
+              ? 'You have been assigned as referee for updated game: $gameInfo on $dateStr$timeStr$venueStr'
+              : 'You have been assigned as referee for game: $gameInfo on $dateStr$timeStr$venueStr';
+
+          final refereeNotificationSent =
+              await NotificationService.sendNotification(
+                receiverId: match.refereeId!,
+                type: 'GAME_ASSIGNMENT_REFEREE',
+                message: refereeMessage,
+                leagueId: match.leagueId,
+              );
+
+          if (refereeNotificationSent) {
+            debugPrint('✅ Referee assignment notification sent successfully');
+          } else {
+            debugPrint('⚠️ Failed to send referee assignment notification');
+          }
+        }
+      }
+
+      // Send notification to StatKeeper if assigned
+      if (match.statKeeperId != null && match.statKeeperId!.isNotEmpty) {
+        // Check if this is a new assignment (for updates)
+        bool shouldNotifyStatKeeper = true;
+        if (isUpdate && _editingMatch != null) {
+          shouldNotifyStatKeeper =
+              _editingMatch!.statKeeperId != match.statKeeperId;
+        }
+
+        if (shouldNotifyStatKeeper) {
+          final statKeeperMessage = isUpdate
+              ? 'You have been assigned as stat keeper for updated game: $gameInfo on $dateStr$timeStr$venueStr'
+              : 'You have been assigned as stat keeper for game: $gameInfo on $dateStr$timeStr$venueStr';
+
+          final statKeeperNotificationSent =
+              await NotificationService.sendNotification(
+                receiverId: match.statKeeperId!,
+                type: 'GAME_ASSIGNMENT_STATKEEPER',
+                message: statKeeperMessage,
+                leagueId: match.leagueId,
+              );
+
+          if (statKeeperNotificationSent) {
+            debugPrint(
+              '✅ StatKeeper assignment notification sent successfully',
+            );
+          } else {
+            debugPrint('⚠️ Failed to send StatKeeper assignment notification');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error sending assignment notifications: $e');
+      // Don't throw error - assignment notifications are not critical for match creation
+    }
   }
 }

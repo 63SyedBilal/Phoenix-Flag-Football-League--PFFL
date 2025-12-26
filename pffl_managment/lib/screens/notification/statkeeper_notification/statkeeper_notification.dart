@@ -78,12 +78,14 @@ class StatKeeperNotification extends StatelessWidget {
                     notification: notification,
                     onAccept:
                         notification.isPending &&
-                            notification.type == 'LEAGUE_STATKEEPER_INVITE'
+                            (notification.type == 'LEAGUE_STATKEEPER_INVITE' ||
+                                notification.type == 'TEAM_INVITE')
                         ? () => _handleAccept(context, notification.id)
                         : null,
                     onReject:
                         notification.isPending &&
-                            notification.type == 'LEAGUE_STATKEEPER_INVITE'
+                            (notification.type == 'LEAGUE_STATKEEPER_INVITE' ||
+                                notification.type == 'TEAM_INVITE')
                         ? () => _handleReject(context, notification.id)
                         : null,
                   );
