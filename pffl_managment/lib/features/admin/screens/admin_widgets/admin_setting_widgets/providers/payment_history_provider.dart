@@ -43,6 +43,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
   String _searchQuery = '';
   bool _isLoading = false;
   String? _errorMessage;
+  bool _disposed = false;
 
   // Getters
   List<PaymentModel> get payments => _filteredPayments;
@@ -62,23 +63,37 @@ class PaymentHistoryProvider extends ChangeNotifier {
     return team['teamName'] as String?;
   }
 
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  void _safeNotifyListeners() {
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
+
   /// Initialize and fetch data
   Future<void> initialize() async {
-    if (_isLoading) return;
-    await Future.wait([
-      fetchTeams(),
-      fetchPayments(),
-    ]);
+    if (_isLoading || _disposed) return;
+    await Future.wait([fetchTeams(), fetchPayments()]);
   }
 
   /// Fetch all teams
   Future<void> fetchTeams() async {
+    if (_disposed) return;
+
     try {
       debugPrint('🔄 Fetching teams...');
       final teamsList = await PaymentService.getAllTeams();
+
+      if (_disposed) return; // Check again after async operation
+
       _teams = teamsList;
       debugPrint('✅ Fetched ${_teams.length} teams');
-      notifyListeners();
+      _safeNotifyListeners();
     } catch (e) {
       debugPrint('❌ Error fetching teams: $e');
     }
@@ -86,15 +101,19 @@ class PaymentHistoryProvider extends ChangeNotifier {
 
   /// Fetch payments from backend
   Future<void> fetchPayments() async {
+    if (_disposed) return;
+
     try {
       _isLoading = true;
       _errorMessage = null;
-      notifyListeners();
+      _safeNotifyListeners();
 
       debugPrint('🔄 Fetching payments...');
 
       // Fetch all payments (we'll filter by status on the client side)
       final paymentsList = await PaymentService.getAllPayments('all');
+
+      if (_disposed) return; // Check again after async operation
 
       debugPrint('✅ Fetched ${paymentsList.length} payments');
 
@@ -109,24 +128,32 @@ class PaymentHistoryProvider extends ChangeNotifier {
       _applyFilters();
 
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     } catch (e) {
+      if (_disposed) return; // Don't update state if disposed
+
       debugPrint('❌ Error fetching payments: $e');
       _errorMessage = 'Failed to load payment history';
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
   /// Convert backend payment to PaymentModel
-  PaymentModel _convertPaymentToModel(Map<String, dynamic> payment, int recordNumber) {
+  PaymentModel _convertPaymentToModel(
+    Map<String, dynamic> payment,
+    int recordNumber,
+  ) {
     final status = payment['status'] as String? ?? 'unpaid';
-    final createdAt = payment['createdAt'] as String? ?? payment['updatedAt'] as String? ?? DateTime.now().toIso8601String();
+    final createdAt =
+        payment['createdAt'] as String? ??
+        payment['updatedAt'] as String? ??
+        DateTime.now().toIso8601String();
     final amount = payment['amount'] as num? ?? 0;
     final userId = payment['userId'];
     final leagueId = payment['leagueId'];
     final teamId = payment['teamId'];
-    
+
     String playerName = 'Unknown Player';
     if (userId != null && userId is Map) {
       final firstName = userId['firstName'] as String? ?? '';
@@ -146,7 +173,8 @@ class PaymentHistoryProvider extends ChangeNotifier {
       teamName = payment['teamName'] as String;
     } else if (_teams.isNotEmpty && teamId != null) {
       final team = _teams.firstWhere(
-        (t) => (t['_id']?.toString() ?? t['id']?.toString()) == teamId.toString(),
+        (t) =>
+            (t['_id']?.toString() ?? t['id']?.toString()) == teamId.toString(),
         orElse: () => {},
       );
       teamName = team['teamName'] as String? ?? 'Unknown Team';
@@ -175,14 +203,18 @@ class PaymentHistoryProvider extends ChangeNotifier {
     String displayStatus = 'pending';
     if (status.toLowerCase() == 'paid') {
       displayStatus = 'completed';
-    } else if (status.toLowerCase() == 'unpaid' || status.toLowerCase() == 'pending') {
+    } else if (status.toLowerCase() == 'unpaid' ||
+        status.toLowerCase() == 'pending') {
       displayStatus = 'pending';
     } else if (status.toLowerCase() == 'refunded') {
       displayStatus = 'refunded';
     }
 
     return PaymentModel(
-      id: payment['_id']?.toString() ?? payment['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          payment['_id']?.toString() ??
+          payment['id']?.toString() ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       recordNumber: recordNumber.toString().padLeft(2, '0'),
       date: _formatDate(createdAt),
       player: playerName,
@@ -191,7 +223,9 @@ class PaymentHistoryProvider extends ChangeNotifier {
       amount: '\$${amount.toStringAsFixed(2)}',
       method: paymentMethod,
       status: displayStatus,
-      transactionId: payment['transactionId'] as String? ?? payment['stripePaymentIntentId'] as String?,
+      transactionId:
+          payment['transactionId'] as String? ??
+          payment['stripePaymentIntentId'] as String?,
       refundDate: displayStatus == 'refunded' ? _formatDate(createdAt) : null,
       refundReason: displayStatus == 'refunded' ? 'Others' : null,
     );
@@ -201,7 +235,20 @@ class PaymentHistoryProvider extends ChangeNotifier {
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${date.day} ${months[date.month - 1]} ${date.year}';
     } catch (e) {
       return DateTime.now().toString().substring(0, 10);
@@ -212,21 +259,21 @@ class PaymentHistoryProvider extends ChangeNotifier {
   void setSelectedTab(int index) {
     _selectedTabIndex = index;
     _applyFilters();
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   /// Set selected team
   void setSelectedTeam(String? teamId) {
     _selectedTeamId = teamId;
     _applyFilters();
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   /// Update search query
   void updateSearchQuery(String query) {
     _searchQuery = query;
     _applyFilters();
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   /// Apply all filters (status, team, search)
@@ -251,7 +298,8 @@ class PaymentHistoryProvider extends ChangeNotifier {
       filtered = filtered.where((p) {
         // Match by team name or team ID
         final team = _teams.firstWhere(
-          (t) => (t['_id']?.toString() ?? t['id']?.toString()) == _selectedTeamId,
+          (t) =>
+              (t['_id']?.toString() ?? t['id']?.toString()) == _selectedTeamId,
           orElse: () => {},
         );
         final teamName = team['teamName'] as String? ?? '';

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_fixed.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/player_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_model.dart';
-import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_working.dart';
+import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_fixed.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/stat_stats_provider.dart';
 
-class StatAddProvider extends ChangeNotifier {
+/// Fixed StatAddProvider with proper error handling and API endpoint fixes
+class StatAddProviderFixed extends ChangeNotifier {
   // Match context
   String? _matchId;
 
@@ -45,6 +45,10 @@ class StatAddProvider extends ChangeNotifier {
   // Read-only state
   bool _isReadOnly = false;
 
+  // Error handling
+  String? _errorMessage;
+  bool _hasError = false;
+
   // Getters
   String? get selectedMatchId => _matchId;
   String? get selectedTeam => _selectedTeamId;
@@ -54,6 +58,8 @@ class StatAddProvider extends ChangeNotifier {
   bool get isLoadingTeams => _isLoadingTeams;
   bool get isLoadingPlayers => _isLoadingPlayers;
   bool get isReadOnly => _isReadOnly;
+  String? get errorMessage => _errorMessage;
+  bool get hasError => _hasError;
 
   // Computed getters for dropdown data
   List<MatchModel> get assignedMatches => _assignedMatches;
@@ -65,6 +71,7 @@ class StatAddProvider extends ChangeNotifier {
   List<String> get players => _players.map((player) => player.name).toList();
 
   void initialize(String? matchId) {
+    _clearError();
     if (matchId != null) {
       _matchId = matchId;
       _loadSpecificMatch(matchId);
@@ -73,9 +80,23 @@ class StatAddProvider extends ChangeNotifier {
     }
   }
 
+  void _clearError() {
+    _errorMessage = null;
+    _hasError = false;
+    notifyListeners();
+  }
+
+  void _setError(String message) {
+    _errorMessage = message;
+    _hasError = true;
+    notifyListeners();
+  }
+
   Future<void> _loadSpecificMatch(String matchId) async {
     _isLoadingMatches = true;
+    _clearError();
     notifyListeners();
+
     try {
       final matches = await StatKeeperRepositoryFixed.getAssignedMatches();
       _assignedMatches = matches;
@@ -84,6 +105,7 @@ class StatAddProvider extends ChangeNotifier {
       loadTeams();
     } catch (e) {
       debugPrint('Error loading specific match: $e');
+      _setError('Failed to load match details: ${e.toString()}');
     } finally {
       _isLoadingMatches = false;
       notifyListeners();
@@ -92,12 +114,15 @@ class StatAddProvider extends ChangeNotifier {
 
   Future<void> loadAssignedMatches() async {
     _isLoadingMatches = true;
+    _clearError();
     notifyListeners();
+
     try {
       _assignedMatches = await StatKeeperRepositoryFixed.getAssignedMatches();
     } catch (e) {
       debugPrint('Error loading assigned matches: $e');
       _assignedMatches = [];
+      _setError('Failed to load assigned matches: ${e.toString()}');
     } finally {
       _isLoadingMatches = false;
       notifyListeners();
@@ -106,6 +131,7 @@ class StatAddProvider extends ChangeNotifier {
 
   void setSelectedMatch(String matchOption) {
     try {
+      _clearError();
       final match = _assignedMatches.firstWhere(
         (m) => '${m.homeTeam} vs ${m.awayTeam} (${m.date})' == matchOption,
       );
@@ -119,18 +145,23 @@ class StatAddProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error selecting match: $e');
+      _setError('Failed to select match: ${e.toString()}');
     }
   }
 
   Future<void> loadTeams() async {
     if (_matchId == null) return;
+
     _isLoadingTeams = true;
+    _clearError();
     notifyListeners();
+
     try {
       _teams = await StatKeeperRepositoryFixed.getMatchTeams(_matchId!);
     } catch (e) {
       debugPrint('Error loading teams: $e');
       _teams = [];
+      _setError('Failed to load teams: ${e.toString()}');
     } finally {
       _isLoadingTeams = false;
       notifyListeners();
@@ -143,8 +174,11 @@ class StatAddProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
+
     _isLoadingPlayers = true;
+    _clearError();
     notifyListeners();
+
     try {
       final teamPlayers = await StatKeeperRepositoryFixed.getMatchTeamPlayers(
         _matchId!,
@@ -153,6 +187,7 @@ class StatAddProvider extends ChangeNotifier {
       _players = teamPlayers;
     } catch (e) {
       _players = [];
+      _setError('Failed to load players: ${e.toString()}');
     } finally {
       _isLoadingPlayers = false;
       notifyListeners();
@@ -161,89 +196,107 @@ class StatAddProvider extends ChangeNotifier {
 
   void setSelectedTeam(String teamName) {
     if (_isReadOnly) return;
-    final team = _teams.firstWhere((t) => t.name == teamName);
-    _selectedTeamId = team.id;
-    _selectedPlayerId = null;
-    loadPlayers();
-    notifyListeners();
+
+    try {
+      _clearError();
+      final team = _teams.firstWhere((t) => t.name == teamName);
+      _selectedTeamId = team.id;
+      _selectedPlayerId = null;
+      loadPlayers();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error selecting team: $e');
+      _setError('Failed to select team: ${e.toString()}');
+    }
   }
 
   void setSelectedPlayer(String playerName) {
     if (_isReadOnly) return;
-    final player = _players.firstWhere((p) => p.name == playerName);
-    _selectedPlayerId = player.id;
-    notifyListeners();
+
+    try {
+      _clearError();
+      final player = _players.firstWhere((p) => p.name == playerName);
+      _selectedPlayerId = player.id;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error selecting player: $e');
+      _setError('Failed to select player: ${e.toString()}');
+    }
   }
 
-  Future<void> updateNow(BuildContext context) async {
+  /// FIXED: Enhanced updateNow with comprehensive error handling
+  Future<void> updateNowFixed(BuildContext context) async {
     if (_isReadOnly) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot edit stats for an approved/completed match'),
-        ),
+      _showErrorSnackBar(
+        context,
+        'Cannot edit stats for an approved/completed match',
       );
       return;
     }
 
-    if (_matchId == null || _selectedTeamId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a game and a team')),
-      );
+    // Validate inputs
+    final validationError = _validateInputs();
+    if (validationError != null) {
+      _showErrorSnackBar(context, validationError);
       return;
     }
 
     _isLoading = true;
+    _clearError();
     notifyListeners();
+
     try {
-      final catches = int.tryParse(catchesController.text) ?? 0;
-      final catchesYards = int.tryParse(catchesYardsController.text) ?? 0;
-      final rushes = int.tryParse(rushesController.text) ?? 0;
-      final rushesYards = int.tryParse(rushesYardsController.text) ?? 0;
-      final passAttempts = int.tryParse(passAttemptsController.text) ?? 0;
-      final passYards = int.tryParse(passYardsController.text) ?? 0;
-      final completions = int.tryParse(completionsController.text) ?? 0;
-      final tds = int.tryParse(tdsController.text) ?? 0;
-      final flagPull = int.tryParse(flagPullController.text) ?? 0;
-      final sack = int.tryParse(sackController.text) ?? 0;
-      final interceptions = int.tryParse(intController.text) ?? 0;
-      final safety = int.tryParse(safetyController.text) ?? 0;
-      final conversionPoints =
-          int.tryParse(conversionPointsController.text) ?? 0;
+      // Parse input values with validation
+      final statsData = _parseStatsFromInputs();
+
+      print('📊 [UPDATE STATS DEBUG] Starting stats update...');
+      print('📊 [UPDATE STATS DEBUG] Match ID: $_matchId');
+      print('📊 [UPDATE STATS DEBUG] Team ID: $_selectedTeamId');
+      print('📊 [UPDATE STATS DEBUG] Player ID: $_selectedPlayerId');
+      print('📊 [UPDATE STATS DEBUG] Stats: $statsData');
 
       await StatKeeperRepositoryFixed.addMatchStatsFixed(
         matchId: _matchId!,
         teamId: _selectedTeamId!,
         playerId: _selectedPlayerId,
-        catches: catches,
-        catchesYards: catchesYards,
-        rushes: rushes,
-        rushesYards: rushesYards,
-        passAttempts: passAttempts,
-        passYards: passYards,
-        completions: completions,
-        tds: tds,
-        flagPull: flagPull,
-        sack: sack,
-        interceptions: interceptions,
-        safety: safety,
-        conversionPoints: conversionPoints,
+        catches: statsData['catches']!,
+        catchesYards: statsData['catchesYards']!,
+        rushes: statsData['rushes']!,
+        rushesYards: statsData['rushesYards']!,
+        passAttempts: statsData['passAttempts']!,
+        passYards: statsData['passYards']!,
+        completions: statsData['completions']!,
+        tds: statsData['tds']!,
+        flagPull: statsData['flagPull']!,
+        sack: statsData['sack']!,
+        interceptions: statsData['interceptions']!,
+        safety: statsData['safety']!,
+        conversionPoints: statsData['conversionPoints']!,
       );
 
-      // FIX 1: Refresh stats in other providers after successful update
+      // Refresh other providers after successful update
       await _refreshStatsProviders(context);
 
       clearForm();
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Stats updated successfully')),
+          const SnackBar(
+            content: Text('✅ Stats updated successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
+
+      print('✅ [UPDATE STATS DEBUG] Stats update completed successfully');
     } catch (e) {
-      debugPrint('Error updating stats: $e');
+      final errorMessage = 'Failed to update stats: ${e.toString()}';
+      debugPrint('❌ [UPDATE STATS DEBUG] Error: $errorMessage');
+
+      _setError(errorMessage);
+
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating stats: ${e.toString()}')),
-        );
+        _showErrorSnackBar(context, errorMessage);
       }
     } finally {
       _isLoading = false;
@@ -251,27 +304,72 @@ class StatAddProvider extends ChangeNotifier {
     }
   }
 
+  String? _validateInputs() {
+    if (_matchId == null || _matchId!.isEmpty) {
+      return 'Please select a game';
+    }
+
+    if (_selectedTeamId == null || _selectedTeamId!.isEmpty) {
+      return 'Please select a team';
+    }
+
+    if (_selectedPlayerId == null || _selectedPlayerId!.isEmpty) {
+      return 'Please select a player';
+    }
+
+    if (_isReadOnly) {
+      return 'Cannot edit stats for completed matches';
+    }
+
+    return null; // No validation errors
+  }
+
+  Map<String, int> _parseStatsFromInputs() {
+    return {
+      'catches': int.tryParse(catchesController.text) ?? 0,
+      'catchesYards': int.tryParse(catchesYardsController.text) ?? 0,
+      'rushes': int.tryParse(rushesController.text) ?? 0,
+      'rushesYards': int.tryParse(rushesYardsController.text) ?? 0,
+      'passAttempts': int.tryParse(passAttemptsController.text) ?? 0,
+      'passYards': int.tryParse(passYardsController.text) ?? 0,
+      'completions': int.tryParse(completionsController.text) ?? 0,
+      'tds': int.tryParse(tdsController.text) ?? 0,
+      'flagPull': int.tryParse(flagPullController.text) ?? 0,
+      'sack': int.tryParse(sackController.text) ?? 0,
+      'interceptions': int.tryParse(intController.text) ?? 0,
+      'safety': int.tryParse(safetyController.text) ?? 0,
+      'conversionPoints': int.tryParse(conversionPointsController.text) ?? 0,
+    };
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('❌ $message'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   /// Refresh stats providers after adding new stats
   Future<void> _refreshStatsProviders(BuildContext context) async {
     try {
-      // Find and refresh StatStatsProvider if it exists in the widget tree
       final statStatsProvider = Provider.of<StatStatsProvider>(
         context,
         listen: false,
       );
 
-      // Force refresh the stats for the current match
       if (_matchId != null) {
         await statStatsProvider.forceRefreshForMatch(_matchId!);
       }
     } catch (e) {
-      // StatStatsProvider might not be available in current context
       debugPrint('StatStatsProvider not available for refresh: $e');
     }
   }
 
   void clearForm() {
-    // Retain selectedTeamId to allow sequential entry for multiple players (Req #1)
+    // Retain selectedTeamId to allow sequential entry for multiple players
     _selectedPlayerId = null;
     _players = [];
     catchesController.text = '0';
@@ -287,14 +385,12 @@ class StatAddProvider extends ChangeNotifier {
     intController.text = '0';
     safetyController.text = '0';
     conversionPointsController.text = '0';
+    _clearError();
     notifyListeners();
   }
 
   bool validateInputs() {
-    if (_selectedTeamId == null || _isReadOnly) {
-      return false;
-    }
-    return true; // Simplified for now
+    return _validateInputs() == null;
   }
 
   @override

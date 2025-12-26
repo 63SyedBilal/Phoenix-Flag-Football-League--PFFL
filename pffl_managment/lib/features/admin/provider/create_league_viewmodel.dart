@@ -44,6 +44,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Referees list from API
   List<UserModel> _referees = [];
   bool _isLoadingReferees = false;
+  bool _hasAttemptedRefereesFetch =
+      false; // Track if we've attempted to fetch referees
   // Map to store profile image URLs for referees (userId -> imageUrl)
   final Map<String, String?> _refereeProfileImages = {};
 
@@ -54,8 +56,14 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Stat keepers list from API
   List<UserModel> _statKeepers = [];
   bool _isLoadingStatKeepers = false;
+  bool _hasAttemptedStatKeepersFetch =
+      false; // Track if we've attempted to fetch stat keepers
   // Map to store profile image URLs for stat keepers (userId -> imageUrl)
   final Map<String, String?> _statKeeperProfileImages = {};
+
+  // Player profile data cache (playerId -> profile data)
+  final Map<String, Map<String, dynamic>?> _playerProfilesCache = {};
+  bool _isLoadingPlayerProfile = false;
 
   // Referee invitation tracking (sent invites, not selection)
   final Map<String, bool> _refereeInviteSending = {}; // Currently sending
@@ -101,6 +109,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
   List<String> get selectedFreeAgentIds => _selectedFreeAgentIds; // New getter
   List<UserModel> get referees => _referees;
   bool get isLoadingReferees => _isLoadingReferees;
+  bool get hasAttemptedRefereesFetch => _hasAttemptedRefereesFetch;
   List<UserModel> get freeAgents => _freeAgents;
   bool get isLoadingFreeAgents => _isLoadingFreeAgents;
   String get captainId =>
@@ -152,6 +161,8 @@ class CreateLeagueViewModel extends ChangeNotifier {
   String get freeAgentSearchQuery => _freeAgentSearchQuery;
   List<UserModel> get statKeepers => _statKeepers;
   bool get isLoadingStatKeepers => _isLoadingStatKeepers;
+  bool get hasAttemptedStatKeepersFetch => _hasAttemptedStatKeepersFetch;
+  bool get isLoadingPlayerProfile => _isLoadingPlayerProfile;
   List<TeamModel> get teams => _teams;
   bool get isLoadingTeams => _isLoadingTeams;
   List<String> get selectedTeamIds => _selectedTeamIds;
@@ -204,8 +215,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _perPlayerFeeText.isNotEmpty &&
       _perPlayerFee > 0 &&
       _perPlayerFeeError == null &&
-      _uploadedLogoPath.isNotEmpty &&
-      _logoError == null &&
+      // Logo is optional - no validation required
       _startDate != null &&
       _startDateError == null &&
       _endDate != null &&
@@ -213,6 +223,49 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _minPlayers > 0 &&
       _minPlayers <= 15 &&
       _minPlayersError == null;
+
+  // Enhanced validation methods for form validation
+  String? validateLeagueName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'League name is required';
+    }
+    if (value.trim().length < 3) {
+      return 'League name must be at least 3 characters';
+    }
+    if (value.trim().length > 50) {
+      return 'League name must be less than 50 characters';
+    }
+    return null;
+  }
+
+  String? validatePerPlayerFee(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Per player fee is required';
+    }
+    final fee = double.tryParse(value.trim());
+    if (fee == null) {
+      return 'Please enter a valid number';
+    }
+    if (fee <= 0) {
+      return 'Fee must be greater than 0';
+    }
+    if (fee > 10000) {
+      return 'Fee must be less than \$10,000';
+    }
+    return null;
+  }
+
+  // Clear validation errors
+  void clearValidationErrors() {
+    _leagueNameError = null;
+    _perPlayerFeeError = null;
+    _logoError = null;
+    _startDateError = null;
+    _endDateError = null;
+    _minPlayersError = null;
+    notifyListeners();
+  }
+
   bool get isStep2Valid =>
       true; // No selection required - invitations sent via icon only
   bool get isStep3Valid =>
@@ -538,12 +591,16 @@ class CreateLeagueViewModel extends ChangeNotifier {
     }
 
     // Validate Logo
-    if (_uploadedLogoPath.isEmpty) {
-      _logoError = 'Please upload a league logo';
-      isValid = false;
-    } else {
-      _logoError = null;
-    }
+    // TODO: Uncomment this validation in the future when logo upload is required
+    // if (_uploadedLogoPath.isEmpty) {
+    //   _logoError = 'Please upload a league logo';
+    //   isValid = false;
+    // } else {
+    //   _logoError = null;
+    // }
+
+    // For now, clear any existing logo error
+    _logoError = null;
 
     // Validate Start Date
     if (_startDate == null) {
@@ -661,9 +718,10 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   // Fetch referees from API
   Future<void> fetchReferees() async {
-    if (_isLoadingReferees) return;
+    if (_isLoadingReferees || _hasAttemptedRefereesFetch) return;
 
     _isLoadingReferees = true;
+    _hasAttemptedRefereesFetch = true; // Mark that we've attempted to fetch
     notifyListeners();
 
     try {
@@ -680,6 +738,12 @@ class CreateLeagueViewModel extends ChangeNotifier {
       _isLoadingReferees = false;
       notifyListeners();
     }
+  }
+
+  // Retry fetching referees (resets the attempt flag)
+  void retryFetchReferees() {
+    _hasAttemptedRefereesFetch = false;
+    fetchReferees();
   }
 
   // Fetch profile images for referees
@@ -813,23 +877,32 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
   // Fetch stat keepers from API
   Future<void> fetchStatKeepers() async {
-    if (_isLoadingStatKeepers) return;
+    if (_isLoadingStatKeepers || _hasAttemptedStatKeepersFetch) return;
 
     _isLoadingStatKeepers = true;
+    _hasAttemptedStatKeepersFetch = true; // Mark that we've attempted to fetch
     notifyListeners();
 
     try {
+      debugPrint('🔄 Fetching stat keepers...');
       _statKeepers = await UserService.getStatKeepers();
+      debugPrint('✅ Fetched ${_statKeepers.length} stat keepers');
 
       // Fetch profile images for stat keepers
       await _fetchStatKeeperProfileImages();
     } catch (e) {
-      debugPrint('Error fetching stat keepers: $e');
+      debugPrint('❌ Error fetching stat keepers: $e');
       _statKeepers = [];
     } finally {
       _isLoadingStatKeepers = false;
       notifyListeners();
     }
+  }
+
+  // Retry fetching stat keepers (resets the attempt flag)
+  void retryFetchStatKeepers() {
+    _hasAttemptedStatKeepersFetch = false;
+    fetchStatKeepers();
   }
 
   // Fetch profile images for stat keepers
@@ -1288,22 +1361,19 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Returns leagueId if successful, empty string if failed
   Future<String> _createLeagueSilently() async {
     try {
-      // Upload logo if provided
+      // Upload logo if provided (OPTIONAL)
       String? logoUrl;
       if (_uploadedLogoPath.isNotEmpty) {
         try {
           final logoFile = File(_uploadedLogoPath);
           if (await logoFile.exists()) {
             logoUrl = await LeagueService.uploadLogo(logoFile);
+            debugPrint('✅ Logo uploaded successfully: $logoUrl');
           }
         } catch (e) {
           debugPrint('⚠️ Logo upload failed during silent league creation: $e');
-          // Use default logo if upload fails
-          final selectedLogo = teamLogos.firstWhere(
-            (logo) => logo.id == _selectedLogoId,
-            orElse: () => teamLogos.first,
-          );
-          logoUrl = selectedLogo.url;
+          // Continue without logo - it's optional
+          logoUrl = null;
         }
       } else if (_selectedLogoId.isNotEmpty) {
         final selectedLogo = teamLogos.firstWhere(
@@ -1311,14 +1381,11 @@ class CreateLeagueViewModel extends ChangeNotifier {
           orElse: () => teamLogos.first,
         );
         logoUrl = selectedLogo.url;
+        debugPrint('✅ Using selected logo: $logoUrl');
       }
 
-      if (logoUrl == null || logoUrl.isEmpty) {
-        debugPrint('⚠️ No logo available for silent league creation');
-        return '';
-      }
-
-      final leagueData = {
+      // Create league data - logo is optional
+      final leagueData = <String, dynamic>{
         'leagueName': _leagueName,
         'format': formatString,
         'startDate': _startDate!.toIso8601String(),
@@ -1326,13 +1393,21 @@ class CreateLeagueViewModel extends ChangeNotifier {
         'minimumPlayers': _minPlayers,
         'entryFeeType': 'stripe',
         'perPlayerLeagueFee': _perPlayerFee,
-        'logo': logoUrl,
         'status': 'pending',
       };
+
+      // Only include logo if we have one
+      if (logoUrl != null && logoUrl.isNotEmpty) {
+        leagueData['logo'] = logoUrl;
+        debugPrint('✅ Including logo in league data: $logoUrl');
+      } else {
+        debugPrint('ℹ️ Creating league without logo (optional)');
+      }
 
       final leagueResponse = await LeagueService.createLeague(leagueData);
 
       if (leagueResponse != null && leagueResponse.data.id.isNotEmpty) {
+        debugPrint('✅ League created successfully: ${leagueResponse.data.id}');
         return leagueResponse.data.id;
       } else {
         debugPrint('❌ Failed to create league silently: empty response');
@@ -1584,11 +1659,14 @@ class CreateLeagueViewModel extends ChangeNotifier {
     _perPlayerFeeText = '';
     _referees = [];
     _refereeSearchQuery = '';
+    _hasAttemptedRefereesFetch = false; // Reset referee fetch attempt flag
     _refereeProfileImages.clear(); // Clear referee profile images
     _freeAgents = [];
     _freeAgentSearchQuery = '';
     _statKeepers = [];
     _statKeeperSearchQuery = '';
+    _hasAttemptedStatKeepersFetch =
+        false; // Reset stat keeper fetch attempt flag
     _statKeeperProfileImages.clear(); // Clear stat keeper profile images
     _teams = [];
     _selectedTeamIds = [];

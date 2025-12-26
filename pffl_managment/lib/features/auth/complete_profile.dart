@@ -7,11 +7,11 @@ import 'package:pffl_managment/core/utils/helpers.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
-import 'package:pffl_managment/core/widgets/simple_dropdown_list.dart';
+import 'package:pffl_managment/core/widgets/multiple_position_selector.dart';
 import 'package:pffl_managment/core/widgets/text_with_text_field.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
-import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
+import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/enhanced_complete_profile_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 
@@ -23,14 +23,14 @@ class CompleteProfile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ChangeNotifierProvider(
-      create: (context) => CompleteProfileProvider(
+      create: (context) => EnhancedCompleteProfileProvider(
         Provider.of<UserPreferenceProvider>(context, listen: false),
       )..initialize(),
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(leading: ArrowBackButton()),
         body: SafeArea(
-          child: Consumer<CompleteProfileProvider>(
+          child: Consumer<EnhancedCompleteProfileProvider>(
             builder: (context, provider, child) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
@@ -51,86 +51,94 @@ class CompleteProfile extends StatelessWidget {
                     ),
                     const SizedBox(height: 30),
                     Center(
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          DottedBorder(
-                            options: CircularDottedBorderOptions(
-                              dashPattern: const <double>[5, 5],
-                              strokeWidth: 1,
-                              color: theme.brightness == Brightness.dark
-                                  ? Colors.white70
-                                  : const Color.fromRGBO(0, 0, 0, 0.4),
-                            ),
-                            child: Container(
-                              width: 120,
-                              height: 120,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
+                      child: GestureDetector(
+                        onTap: provider.pickImage,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            DottedBorder(
+                              options: CircularDottedBorderOptions(
+                                dashPattern: const <double>[5, 5],
+                                strokeWidth: 1,
+                                color:
+                                    provider.fieldErrors['profileImage'] != null
+                                    ? Colors.red
+                                    : theme.brightness == Brightness.dark
+                                    ? Colors.white70
+                                    : const Color.fromRGBO(0, 0, 0, 0.4),
                               ),
-                              child: ClipOval(
-                                child: Center(
-                                  child: provider.profileImagePath != null
-                                      ? Image.file(
-                                          File(provider.profileImagePath!),
-                                          fit: BoxFit.cover,
-                                          width: 120,
-                                          height: 120,
-                                        )
-                                      : Icon(
-                                          Icons.person_outline,
-                                          size: 60,
-                                          color: Colors.grey[300],
-                                        ),
+                              child: Container(
+                                width: 120,
+                                height: 120,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
                                 ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: -9,
-                            left: 30,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: ShapeDecoration(
-                                color: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14.88),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(
-                                    Icons.upload,
-                                    size: 12,
-                                    color: Colors.white,
+                                child: ClipOval(
+                                  child: Center(
+                                    child: provider.isUploadingImage
+                                        ? const CircularProgressIndicator()
+                                        : provider.profileImagePath != null
+                                        ? Image.file(
+                                            File(provider.profileImagePath!),
+                                            fit: BoxFit.cover,
+                                            width: 120,
+                                            height: 120,
+                                          )
+                                        : Icon(
+                                            Icons.person_outline,
+                                            size: 60,
+                                            color: Colors.grey[300],
+                                          ),
                                   ),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Upload',
-                                    style: TextStyle(
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: -9,
+                              left: 30,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: ShapeDecoration(
+                                  color: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14.88),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(
+                                      Icons.upload,
+                                      size: 12,
                                       color: Colors.white,
-                                      fontSize: 8,
-                                      fontFamily: 'Satoshi Variable',
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.37,
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Upload',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8,
+                                        fontFamily: 'Satoshi Variable',
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.37,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 20),
                     Center(
                       child: Text(
-                        'Profile Pic',
+                        'Profile Pic *',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.labelLarge,
                       ),
@@ -139,39 +147,51 @@ class CompleteProfile extends StatelessWidget {
                     Opacity(
                       opacity: 0.70,
                       child: Text(
-                        'Submit this image if you think it\'s readable or tap on re-upload button to upload another one',
+                        'Tap the image above to upload your profile picture (required)',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall,
                       ),
                     ),
-
-                    const SizedBox(height: 30),
-
-                    // Input Fields
-                    Text('Position', style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 4),
-                    SimpleDropdownList(
-                      items: const [
-                        'Quarterback',
-                        'Receiver',
-                        'Running Back',
-                        'Linebacker',
-                        'Cornerback',
-                        'Safety',
-                      ],
-                      onSelected: (val) => provider.togglePosition(val),
-                    ),
-                    if (provider.fieldErrors['position'] != null)
+                    if (provider.fieldErrors['profileImage'] != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          provider.fieldErrors['position']!,
+                          provider.fieldErrors['profileImage']!,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.red,
                             fontSize: 12,
                           ),
                         ),
                       ),
+
+                    const SizedBox(height: 30),
+
+                    // Phone Number Field
+                    Text('Phone Number *', style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 4),
+                    ImprovedPhoneField(
+                      onInputChanged: (PhoneNumber number) {
+                        provider.setPhone(number.completeNumber);
+                      },
+                      onInputValidated: (bool value) {
+                        // Validation handled in provider
+                      },
+                      initialCountryCode: 'US',
+                      hintText: 'e.g +1 123 456 7890',
+                      errorText: provider.fieldErrors['phone'],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Input Fields
+                    Text('Position *', style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 4),
+                    MultiplePositionSelector(
+                      availablePositions: provider.availablePositions,
+                      selectedPositions: provider.selectedPositions,
+                      onPositionToggle: provider.togglePosition,
+                      errorText: provider.fieldErrors['position'],
+                    ),
                     const SizedBox(height: 18),
 
                     Text('Jersey Number', style: theme.textTheme.bodyMedium),
@@ -194,7 +214,7 @@ class CompleteProfile extends StatelessWidget {
                     const SizedBox(height: 18),
 
                     Text(
-                      'Emergency Contact Name',
+                      'Emergency Contact Name *',
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 4),
@@ -216,7 +236,7 @@ class CompleteProfile extends StatelessWidget {
                     const SizedBox(height: 18),
 
                     Text(
-                      'Emergency Phone Number',
+                      'Emergency Phone Number *',
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 4),
@@ -229,7 +249,7 @@ class CompleteProfile extends StatelessWidget {
                       },
                       initialCountryCode: 'US',
                       hintText: 'e.g +1 123 456 7890',
-                      errorText: provider.phoneError,
+                      errorText: provider.fieldErrors['emergencyPhone'],
                     ),
                     const SizedBox(height: 20),
 
@@ -248,7 +268,7 @@ class CompleteProfile extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'I agree to Terms & Privacy',
+                            'I agree to Terms & Privacy *',
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],

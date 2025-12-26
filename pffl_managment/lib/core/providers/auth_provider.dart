@@ -27,6 +27,9 @@ class AuthProvider extends ChangeNotifier {
   // Loading state
   bool _isLoggingIn = false;
 
+  // Disposal flag to prevent notifications after disposal
+  bool _disposed = false;
+
   bool get isLoggedIn => _isLoggedIn;
   bool get isLoggingIn => _isLoggingIn;
   String get userToken => _userToken;
@@ -48,6 +51,19 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider(this._userPreferenceProvider) {
     _syncWithPreferences();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
   }
 
   void _syncWithPreferences() {

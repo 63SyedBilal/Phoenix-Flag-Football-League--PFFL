@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/game_widgets/upcomming_matches_screens/upcomming_matches.dart';
-import 'package:pffl_managment/features/admin/matches/models/match_model.dart';
+import 'package:pffl_managment/features/admin/Games/models/match_model.dart';
 import 'package:pffl_managment/features/key_players/league_key_players_section.dart';
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 
@@ -287,8 +287,6 @@ class GameDetailView extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     // Actions section with circles and lines
-               
-                    
                     const SizedBox(height: 24),
 
                     // Actions section
@@ -316,7 +314,7 @@ class GameDetailView extends StatelessWidget {
                               color: const Color(0xFFDBDCDC),
                             ),
                           ),
-                                            
+
                           // Timeline items
                           Positioned(
                             top: 300,
@@ -328,114 +326,116 @@ class GameDetailView extends StatelessWidget {
                               'Half Time',
                               true,
                             ),
-                          ),     Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.black,
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Vertical line connecting circles
-                          Positioned(
-                            left: 33,
-                            top: 24,
-                            bottom: 24,
-                            child: Container(
-                              width: 2,
-                              color: const Color(0xFFDBDCDC),
-                            ),
                           ),
-                          
-                          // 5 Circles in column
-                          Positioned(
-                            top: 24,
-                            left: 24,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF3B82F6),
-                                shape: BoxShape.circle,
-                              ),
+                          Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.black),
                             ),
-                          ),
-                          Positioned(
-                            top: 64,
-                            left: 24,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF10B981),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 104,
-                            left: 24,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFF59E0B),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 144,
-                            left: 24,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF8B5CF6),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 184,
-                            left: 24,
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEF4444),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                          
-                          // Button at the end
-                          Positioned(
-                            top: 24,
-                            right: 24,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F173E),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Action',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
+                            child: Stack(
+                              children: [
+                                // Vertical line connecting circles
+                                Positioned(
+                                  left: 33,
+                                  top: 24,
+                                  bottom: 24,
+                                  child: Container(
+                                    width: 2,
+                                    color: const Color(0xFFDBDCDC),
+                                  ),
                                 ),
-                              ),
+
+                                // 5 Circles in column
+                                Positioned(
+                                  top: 24,
+                                  left: 24,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF3B82F6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 64,
+                                  left: 24,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF10B981),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 104,
+                                  left: 24,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFF59E0B),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 144,
+                                  left: 24,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF8B5CF6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 184,
+                                  left: 24,
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFEF4444),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+
+                                // Button at the end
+                                Positioned(
+                                  top: 24,
+                                  right: 24,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0F173E),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Text(
+                                      'Action',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                                            ),
-                                            //yaha per center ma krna ha 
+                          //yaha per center ma krna ha
                           Positioned(
                             top: 80,
                             left: 0,
@@ -447,7 +447,7 @@ class GameDetailView extends StatelessWidget {
                               false,
                             ),
                           ),
-                                            
+
                           Positioned(
                             top: 136,
                             left: 0,
@@ -459,7 +459,7 @@ class GameDetailView extends StatelessWidget {
                               true,
                             ),
                           ),
-                                            
+
                           Positioned(
                             top: 192,
                             left: 0,
@@ -471,7 +471,7 @@ class GameDetailView extends StatelessWidget {
                               false,
                             ),
                           ),
-                                            
+
                           Positioned(
                             top: 248,
                             left: 0,
@@ -507,9 +507,7 @@ class GameDetailView extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.black,
-                        ),
+                        border: Border.all(color: Colors.black),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,10 +556,7 @@ class GameDetailView extends StatelessWidget {
                     // Upcoming Games section
                     Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                      
-                        UpcommingMatches(),
-                      ],
+                      children: [UpcommingMatches()],
                     ),
                     // Leaderboard section
                     Row(
@@ -586,7 +581,11 @@ class GameDetailView extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 4),
-                          Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFF0F173E))
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 12,
+                              color: Color(0xFF0F173E),
+                            ),
                           ],
                         ),
                       ],
@@ -755,7 +754,9 @@ class GameDetailView extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   border: Border(
                                     bottom: BorderSide(
-                                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.5),
+                                      color: const Color(
+                                        0xFFE5E7EB,
+                                      ).withValues(alpha: 0.5),
                                       width: 1,
                                     ),
                                   ),
@@ -778,22 +779,32 @@ class GameDetailView extends StatelessWidget {
                                       child: Row(
                                         children: [
                                           ClipRRect(
-                                            borderRadius: BorderRadius.all(Radius.circular(4)),
+                                            borderRadius: BorderRadius.all(
+                                              Radius.circular(4),
+                                            ),
                                             child: Image.asset(
                                               'assets/images/rc_logo.png',
                                               width: 24,
                                               height: 24,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Container(
-                                                  width: 24,
-                                                  height: 24,
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(0xFFF59E0B),
-                                                    borderRadius: BorderRadius.all(Radius.circular(4)),
-                                                  ),
-                                                );
-                                              },
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return Container(
+                                                      width: 24,
+                                                      height: 24,
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                          0xFFF59E0B,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                              Radius.circular(
+                                                                4,
+                                                              ),
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
                                             ),
                                           ),
                                           const SizedBox(width: 8),
@@ -920,7 +931,9 @@ class GameDetailView extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   border: Border(
                                     bottom: BorderSide(
-                                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.5),
+                                      color: const Color(
+                                        0xFFE5E7EB,
+                                      ).withValues(alpha: 0.5),
                                       width: 1,
                                     ),
                                   ),
@@ -943,22 +956,32 @@ class GameDetailView extends StatelessWidget {
                                       child: Row(
                                         children: [
                                           ClipRRect(
-                                            borderRadius: BorderRadius.all(Radius.circular(4)),
+                                            borderRadius: BorderRadius.all(
+                                              Radius.circular(4),
+                                            ),
                                             child: Image.asset(
                                               'assets/images/sta_logo.png',
                                               width: 24,
                                               height: 24,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Container(
-                                                  width: 24,
-                                                  height: 24,
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(0xFFDB1F35),
-                                                    borderRadius: BorderRadius.all(Radius.circular(4)),
-                                                  ),
-                                                );
-                                              },
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                    return Container(
+                                                      width: 24,
+                                                      height: 24,
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                          0xFFDB1F35,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                              Radius.circular(
+                                                                4,
+                                                              ),
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
                                             ),
                                           ),
                                           const SizedBox(width: 8),
@@ -1082,11 +1105,9 @@ class GameDetailView extends StatelessWidget {
                       ),
                     ),
 
-
                     LeagueKeyPlayersSection(),
-                    SizedBox(height: 10,),
+                    SizedBox(height: 10),
                     SponsorBannerScreen(),
-                        
                   ],
                 ),
               ),
@@ -1146,7 +1167,7 @@ class GameDetailView extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-        
+
             Text(
               awayValue,
               style: const TextStyle(
@@ -1304,5 +1325,4 @@ class GameDetailView extends StatelessWidget {
       ),
     );
   }
-
 }

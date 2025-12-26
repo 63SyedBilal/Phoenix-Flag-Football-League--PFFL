@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/config/app_config.dart';
 
 /// Provider for Admin Profile Screen
@@ -284,13 +285,10 @@ class AdminProfileProvider extends ChangeNotifier {
       // Try multiple endpoint strategies until one works
       final dio = await AuthService.getWorkingDio();
 
-      // Strategy 1: PATCH /profile
+      // Strategy 1: PUT /user/:id (most likely to work based on UserService)
       try {
-        print('🔄 Strategy 1: PATCH /profile');
-        final response = await dio.patch(
-          AppConfig.profileEndpoint,
-          data: profileData,
-        );
+        print('🔄 Strategy 1: PUT /user/$_userId');
+        final response = await dio.put('/user/$_userId', data: profileData);
         print('📡 Strategy 1 Response: ${response.statusCode}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
@@ -300,13 +298,10 @@ class AdminProfileProvider extends ChangeNotifier {
         print('❌ Strategy 1 failed: $e');
       }
 
-      // Strategy 2: PUT /profile
+      // Strategy 2: PATCH /user/:id
       try {
-        print('🔄 Strategy 2: PUT /profile');
-        final response = await dio.put(
-          AppConfig.profileEndpoint,
-          data: profileData,
-        );
+        print('🔄 Strategy 2: PATCH /user/$_userId');
+        final response = await dio.patch('/user/$_userId', data: profileData);
         print('📡 Strategy 2 Response: ${response.statusCode}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
@@ -316,11 +311,11 @@ class AdminProfileProvider extends ChangeNotifier {
         print('❌ Strategy 2 failed: $e');
       }
 
-      // Strategy 3: POST /complete-profile
+      // Strategy 3: PATCH /profile
       try {
-        print('🔄 Strategy 3: POST /complete-profile');
-        final response = await dio.post(
-          AppConfig.completeProfileEndpoint,
+        print('🔄 Strategy 3: PATCH /profile');
+        final response = await dio.patch(
+          AppConfig.profileEndpoint,
           data: profileData,
         );
         print('📡 Strategy 3 Response: ${response.statusCode}');
@@ -332,11 +327,11 @@ class AdminProfileProvider extends ChangeNotifier {
         print('❌ Strategy 3 failed: $e');
       }
 
-      // Strategy 4: PUT /user (generic user update)
+      // Strategy 4: PUT /profile
       try {
-        print('🔄 Strategy 4: PUT /user');
+        print('🔄 Strategy 4: PUT /profile');
         final response = await dio.put(
-          AppConfig.userEndpoint,
+          AppConfig.profileEndpoint,
           data: profileData,
         );
         print('📡 Strategy 4 Response: ${response.statusCode}');
@@ -348,11 +343,11 @@ class AdminProfileProvider extends ChangeNotifier {
         print('❌ Strategy 4 failed: $e');
       }
 
-      // Strategy 5: PATCH /user
+      // Strategy 5: POST /complete-profile
       try {
-        print('🔄 Strategy 5: PATCH /user');
-        final response = await dio.patch(
-          AppConfig.userEndpoint,
+        print('🔄 Strategy 5: POST /complete-profile');
+        final response = await dio.post(
+          AppConfig.completeProfileEndpoint,
           data: profileData,
         );
         print('📡 Strategy 5 Response: ${response.statusCode}');
@@ -362,6 +357,44 @@ class AdminProfileProvider extends ChangeNotifier {
         }
       } catch (e) {
         print('❌ Strategy 5 failed: $e');
+      }
+
+      // Strategy 6: Use UserService.updateProfile (fallback)
+      try {
+        print('🔄 Strategy 6: UserService.updateProfile');
+        final result = await UserService.updateProfile(_userId!, profileData);
+
+        if (result != null) {
+          print('✅ UserService update successful');
+
+          // Update local state with response data
+          if (result['firstName'] != null)
+            _firstName = result['firstName'] ?? '';
+          if (result['lastName'] != null) _lastName = result['lastName'] ?? '';
+          if (result['email'] != null) _email = result['email'] ?? '';
+          if (result['phone'] != null) _phone = result['phone'] ?? '';
+          if (result['profileImage'] != null)
+            _imageUrl = result['profileImage'];
+
+          // Save to SharedPreferences for persistence
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('admin_firstName', _firstName);
+          await prefs.setString('admin_lastName', _lastName);
+          await prefs.setString('userEmail', _email);
+          if (_phone.isNotEmpty) {
+            await prefs.setString('admin_phone', _phone);
+          }
+          if (_imageUrl != null) {
+            await prefs.setString('admin_image', _imageUrl!);
+          }
+
+          print('✅ Profile updated successfully via UserService');
+          _isLoading = false;
+          notifyListeners();
+          return true;
+        }
+      } catch (e) {
+        print('❌ Strategy 6 failed: $e');
       }
 
       // If all strategies failed

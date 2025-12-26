@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
-import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository.dart';
+import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_fixed.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StatStatsProvider extends ChangeNotifier {
@@ -118,7 +119,7 @@ class StatStatsProvider extends ChangeNotifier {
   Future<void> fetchAssignedMatches() async {
     _setLoading(true);
     try {
-      final matches = await StatKeeperRepository.getAssignedMatches();
+      final matches = await StatKeeperRepositoryFixed.getAssignedMatches();
       _assignedMatches = matches;
       if (_selectedMatchId == null && matches.isNotEmpty) {
         _selectedMatchId = matches.first.id;
@@ -139,10 +140,10 @@ class StatStatsProvider extends ChangeNotifier {
       final currentUserId = prefs.getString('userId');
 
       // 1. Fetch consolidated match stats (from Match doc)
-      final matchStat = await StatKeeperRepository.getMatchStats(matchId);
+      final matchStat = await StatKeeperRepositoryFixed.getMatchStats(matchId);
 
       // 2. Fetch individual draft records for current user (from Stat records)
-      final draftStatsList = await StatKeeperRepository.getMatchStatsList(
+      final draftStatsList = await StatKeeperRepositoryFixed.getMatchStatsList(
         matchId: matchId,
         status: 'DRAFT',
         createdBy: currentUserId,
@@ -160,9 +161,14 @@ class StatStatsProvider extends ChangeNotifier {
         _allStats.add(_parseStatItem(item));
       }
 
+      // FIX 2: Always notify listeners after loading stats
       notifyListeners();
+
+      debugPrint('✅ Loaded ${_allStats.length} stats for match $matchId');
+      debugPrint('   - Draft stats: ${draftStats.length}');
+      debugPrint('   - Approved stats: ${approvedStats.length}');
     } catch (e) {
-      debugPrint('Error loading stats: $e');
+      debugPrint('❌ Error loading stats: $e');
     } finally {
       _setLoading(false);
     }
@@ -236,18 +242,64 @@ class StatStatsProvider extends ChangeNotifier {
 
     _setSubmitting(true);
     try {
-      await StatKeeperRepository.submitStatsForApproval(_selectedMatchId!);
+      // Submit stats for approval
+      await StatKeeperRepositoryFixed.submitStatsForApproval(_selectedMatchId!);
+
+      // FIX 3: Send admin notification after successful submission
+      await _sendAdminNotification();
+
+      // Reload stats to reflect new status
       await loadStats(_selectedMatchId!);
+
+      debugPrint('✅ Stats submitted for approval and admin notified');
     } catch (e) {
-      print('Error submitting stats: $e');
+      debugPrint('❌ Error submitting stats: $e');
     } finally {
       _setSubmitting(false);
+    }
+  }
+
+  /// Send notification to admin when stats are submitted for approval
+  Future<void> _sendAdminNotification() async {
+    try {
+      // Get match details for notification message
+      final match = _assignedMatches.firstWhere(
+        (m) => m.id == _selectedMatchId,
+        orElse: () => MatchModel(
+          id: _selectedMatchId ?? '',
+          leagueName: 'Unknown League',
+          homeTeam: 'Team A',
+          homeTeamLogo: '',
+          awayTeam: 'Team B',
+          awayTeamLogo: '',
+          date: '',
+          time: '',
+          status: MatchStatus.upcoming,
+        ),
+      );
+
+      final message =
+          'Stats submitted for approval: ${match.homeTeam} vs ${match.awayTeam} in ${match.leagueName}';
+
+      await NotificationService.sendAdminNotification(message: message);
+
+      debugPrint('✅ Admin notification sent for stats approval');
+    } catch (e) {
+      debugPrint('❌ Error sending admin notification: $e');
+      // Don't throw error - notification failure shouldn't block stats submission
     }
   }
 
   Future<void> refreshStats() async {
     if (_selectedMatchId != null) {
       await loadStats(_selectedMatchId!);
+    }
+  }
+
+  /// Force refresh stats for a specific match (called from other providers)
+  Future<void> forceRefreshForMatch(String matchId) async {
+    if (_selectedMatchId == matchId) {
+      await loadStats(matchId);
     }
   }
 

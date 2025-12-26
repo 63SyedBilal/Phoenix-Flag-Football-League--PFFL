@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/features/admin/matches/widgets/game_card_widget.dart';
-import 'package:pffl_managment/features/admin/matches/providers/matches_provider.dart';
+import 'package:pffl_managment/features/admin/Games/widgets/game_card_widget.dart';
+import 'package:pffl_managment/features/admin/Games/providers/matches_provider.dart';
 import 'package:provider/provider.dart';
 
 class GamesView extends StatelessWidget {
