@@ -499,20 +499,28 @@ class _PlayerListItemState extends State<PlayerListItem> {
     PlayerModel newCaptain,
   ) {
     print('🎯 [TRANSFER DEBUG] Transferring leadership to: ${newCaptain.name}');
+    print('🎯 [TRANSFER DEBUG] Player ID: ${newCaptain.id}');
+
     teamProvider
         .transferLeadership(newCaptain.id)
         .then((_) {
+          print('✅ [TRANSFER DEBUG] Transfer completed successfully');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 'Leadership transfer invitation sent to ${newCaptain.name}',
               ),
+              backgroundColor: Colors.green,
             ),
           );
         })
         .catchError((error) {
+          print('❌ [TRANSFER DEBUG] Transfer failed: $error');
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to transfer leadership: $error')),
+            SnackBar(
+              content: Text('Failed to transfer leadership: $error'),
+              backgroundColor: Colors.red,
+            ),
           );
         });
   }

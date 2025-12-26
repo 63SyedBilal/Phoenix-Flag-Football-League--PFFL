@@ -379,7 +379,6 @@ class _CompleteCaptainProfileView extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: provider.selectedPosition,
           isDense: true,
-          itemHeight: 48, // Minimum required height
           menuMaxHeight: 160,
           decoration: InputDecoration(
             hintText: 'Select Position',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/core/services/profile_service.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
@@ -216,12 +217,26 @@ class CaptainTeamProvider extends ChangeNotifier {
         '📧 [NOTIFICATION DEBUG] Sending removal notification to player: $playerId',
       );
 
+      // Get current user ID (captain) from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserId = prefs.getString('userId');
+
+      if (currentUserId == null || currentUserId.isEmpty) {
+        print(
+          '⚠️ [NOTIFICATION DEBUG] Current user ID not found in SharedPreferences',
+        );
+        throw Exception('Current user ID not available');
+      }
+
+      print('📧 [NOTIFICATION DEBUG] Sender ID (Captain): $currentUserId');
+
       // Use existing NotificationService to send notification
       final success = await NotificationService.sendNotification(
         receiverId: playerId,
         type: 'TEAM_REMOVAL',
         message: 'You have been removed from this team',
         teamId: team?.id, // Include team ID if available
+        senderId: currentUserId, // Include sender ID (captain)
       );
 
       if (success) {
@@ -244,12 +259,32 @@ class CaptainTeamProvider extends ChangeNotifier {
       print('📧 [NOTIFICATION DEBUG] Current team: ${team?.id}');
       print('📧 [NOTIFICATION DEBUG] Current team name: ${team?.name}');
 
+      // Get current user ID (captain) from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final currentUserId = prefs.getString('userId');
+
+      if (currentUserId == null || currentUserId.isEmpty) {
+        print(
+          '⚠️ [NOTIFICATION DEBUG] Current user ID not found in SharedPreferences',
+        );
+        throw Exception('Current user ID not available');
+      }
+
+      print('📧 [NOTIFICATION DEBUG] Sender ID (Captain): $currentUserId');
+      print('📧 [NOTIFICATION DEBUG] Receiver ID (Player): $playerId');
+      print('📧 [NOTIFICATION DEBUG] Team ID: ${team?.id}');
+      print('📧 [NOTIFICATION DEBUG] Notification Type: LEADERSHIP_INVITATION');
+      print(
+        '📧 [NOTIFICATION DEBUG] Message: This captain has offered you the captain role',
+      );
+
       // Use existing NotificationService to send notification
       final success = await NotificationService.sendNotification(
         receiverId: playerId,
         type: 'LEADERSHIP_INVITATION',
         message: 'This captain has offered you the captain role',
         teamId: team?.id, // Include team ID if available
+        senderId: currentUserId, // Include sender ID (captain)
       );
 
       if (success) {
@@ -257,16 +292,28 @@ class CaptainTeamProvider extends ChangeNotifier {
         print(
           '📧 [NOTIFICATION DEBUG] Notification should appear for user: $playerId',
         );
+        print(
+          '📧 [NOTIFICATION DEBUG] Backend confirmed notification creation with sender: $currentUserId',
+        );
+        print(
+          '📧 [NOTIFICATION DEBUG] Next step: Check if user $playerId receives notification in their notification list',
+        );
       } else {
         print(
           '⚠️ [NOTIFICATION DEBUG] Failed to send leadership invitation - API returned false',
         );
-        throw Exception('Notification API returned false - check backend logs');
+        print(
+          '📧 [NOTIFICATION DEBUG] This means the backend /notification/send endpoint returned non-200 status',
+        );
+        throw Exception(
+          'Notification API returned false - check backend logs for /notification/send endpoint',
+        );
       }
     } catch (e) {
       print('⚠️ [NOTIFICATION DEBUG] Failed to send leadership invitation: $e');
-      // Don't throw error for notification failure - invitation should still proceed
-      rethrow; // Re-throw to show error in UI
+      print('📧 [NOTIFICATION DEBUG] Full error details: ${e.toString()}');
+      // Re-throw to show error in UI so captain knows there was an issue
+      rethrow;
     }
   }
 }

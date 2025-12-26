@@ -372,7 +372,7 @@ class CompleteProfileProvider extends ChangeNotifier {
       // Submit to complete-profile endpoint (updates User model directly)
       final dio = await AuthService.getWorkingDio();
       final response = await dio.put(
-        AppConfig.completeProfileEndpoint,
+        AppConfig.profileEndpoint,
         data: profileData,
       );
 

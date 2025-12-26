@@ -114,8 +114,20 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
       final dio = await AuthService.getWorkingDio();
       final response = await dio.get(AppConfig.profileEndpoint);
       if (response.statusCode == 200) {
-        final data = response
-            .data['data']; // Profile service returns data in 'data' field
+        final responseData = response.data;
+        Map<String, dynamic>? data;
+
+        // Handle different response formats
+        if (responseData is Map) {
+          if (responseData.containsKey('data')) {
+            data = responseData['data'] as Map<String, dynamic>?;
+          } else if (responseData.containsKey('user')) {
+            data = responseData['user'] as Map<String, dynamic>?;
+          } else {
+            data = responseData as Map<String, dynamic>?;
+          }
+        }
+
         if (data != null) {
           await _userPrefs.setFirstName(data['firstName']);
           await _userPrefs.setLastName(data['lastName']);
@@ -298,7 +310,7 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
 
       final dio = await AuthService.getWorkingDio();
       final response = await dio.put(
-        AppConfig.completeProfileEndpoint,
+        AppConfig.profileEndpoint,
         data: profileData,
       );
 

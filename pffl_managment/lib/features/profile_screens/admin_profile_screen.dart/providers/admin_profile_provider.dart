@@ -69,6 +69,9 @@ class AdminProfileProvider extends ChangeNotifier {
       if (storedPhone != null) _phone = storedPhone;
       if (storedImage != null) _imageUrl = storedImage;
 
+      // Try to sync with backend
+      await _syncWithBackend();
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -76,6 +79,57 @@ class AdminProfileProvider extends ChangeNotifier {
       _errorMessage = 'Failed to load profile';
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Sync profile data with backend
+  Future<void> _syncWithBackend() async {
+    try {
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.get(AppConfig.profileEndpoint);
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        Map<String, dynamic>? data;
+
+        // Handle different response formats
+        if (responseData is Map) {
+          if (responseData.containsKey('data')) {
+            data = responseData['data'] as Map<String, dynamic>?;
+          } else if (responseData.containsKey('user')) {
+            data = responseData['user'] as Map<String, dynamic>?;
+          } else {
+            data = responseData as Map<String, dynamic>?;
+          }
+        }
+
+        if (data != null) {
+          // Update local state with backend data
+          if (data['firstName'] != null) _firstName = data['firstName'] ?? '';
+          if (data['lastName'] != null) _lastName = data['lastName'] ?? '';
+          if (data['email'] != null) _email = data['email'] ?? '';
+          if (data['phone'] != null) _phone = data['phone'] ?? '';
+          if (data['profileImage'] != null) _imageUrl = data['profileImage'];
+
+          // Update SharedPreferences cache
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('admin_firstName', _firstName);
+          await prefs.setString('admin_lastName', _lastName);
+          await prefs.setString('userEmail', _email);
+          if (_phone.isNotEmpty) {
+            await prefs.setString('admin_phone', _phone);
+          }
+          if (_imageUrl != null) {
+            await prefs.setString('admin_image', _imageUrl!);
+          }
+
+          debugPrint('✅ Profile synced with backend');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Backend sync failed: $e');
+      // Don't throw error - this is just a background sync
+      // The app should work with cached data if sync fails
     }
   }
 
@@ -140,7 +194,7 @@ class AdminProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Upload image to server
+  /// Upload image to server (completely optional - don't fail profile update if this fails)
   Future<String?> uploadImage() async {
     if (_selectedImageFile == null) {
       return _imageUrl; // Return existing URL if no new image
@@ -160,12 +214,23 @@ class AdminProfileProvider extends ChangeNotifier {
       return null;
     } catch (e) {
       debugPrint('⚠️ Error uploading image: $e');
+
+      // Check for specific Cloudinary configuration errors
+      if (e.toString().contains('Cloudinary') ||
+          e.toString().contains('CLOUDINARY') ||
+          e.toString().contains('500')) {
+        debugPrint(
+          '⚠️ Cloudinary configuration issue detected - image upload is optional',
+        );
+      }
+
       // We don't set _errorMessage here to allow saveProfile to handle it or continue
+      // Image upload failure should not prevent profile updates
       return null;
     }
   }
 
-  /// Save profile to backend
+  /// Save profile to backend using multiple endpoint strategies
   Future<bool> saveProfile() async {
     print('💾 saveProfile called. userId: $_userId, userRole: $_userRole');
 
@@ -181,7 +246,7 @@ class AdminProfileProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      // Upload image first if a new image was selected
+      // Upload image first if a new image was selected (OPTIONAL - don't fail if it doesn't work)
       String? finalImageUrl = _imageUrl;
       if (_selectedImageFile != null) {
         try {
@@ -190,198 +255,194 @@ class AdminProfileProvider extends ChangeNotifier {
             finalImageUrl = uploadedUrl;
             print('✅ Profile image uploaded: $finalImageUrl');
           } else {
-            print(
-              '⚠️ Image upload returned null, continuing with existing image',
-            );
+            print('⚠️ Image upload returned null, continuing without image');
           }
         } catch (e) {
           print('⚠️ Profile image upload failed: $e');
-        }
-      }
-
-      // Prepare profile data WITHOUT ID (some backends don't like it in body if in URL)
-      final cleanProfileData = <String, dynamic>{
-        'email': _email,
-        if (_firstName.isNotEmpty) 'firstName': _firstName,
-        if (_lastName.isNotEmpty) 'lastName': _lastName,
-        if (_phone.isNotEmpty) 'phone': _phone,
-        if (finalImageUrl != null && finalImageUrl.startsWith('http'))
-          'image': finalImageUrl,
-      };
-
-      // --- NUCLEAR STRATEGY PLAN ---
-      // 1. PATCH /superadmin/:id (Standard partial update)
-      // 2. PUT /superadmin/:id with EVERYTHING (Max ID keys)
-      // 3. PATCH /profile (Role-neutral JWT update)
-      // 4. PUT /superadmin/:id with wrapped 'admin' object (re-verified)
-      // 5. PUT /superadmin/:id with ID in QUERY params
-
-      Map<String, dynamic>? updatedData;
-      final dio = await AuthService.getWorkingDio();
-
-      // Variations of ID keys
-      final allIdKeys = {
-        'id': _userId,
-        '_id': _userId,
-        'userId': _userId,
-        'adminId': _userId,
-        'admin_id': _userId,
-        'superadminId': _userId,
-        'superadmin_id': _userId,
-        'ID': _userId,
-        'UID': _userId,
-        'uId': _userId,
-      };
-
-      final profileWithAllIds = Map<String, dynamic>.from(cleanProfileData)
-        ..addAll(allIdKeys);
-
-      // --- STRATEGY 1: PATCH /superadmin/:id (Partial update convention) ---
-      try {
-        print(
-          '🔄 Strategy 1: Attempting PATCH /superadmin/$_userId (Clean Body)...',
-        );
-        updatedData = await AdminService.patchAdminProfile(
-          _userId!,
-          cleanProfileData,
-        );
-      } catch (e1) {
-        print('⚠️ Strategy 1 (PATCH) Failed: $e1');
-
-        // --- STRATEGY 2: PUT /superadmin/:id (All IDs in body) ---
-        try {
-          print(
-            '🔄 Strategy 2: Attempting PUT /superadmin/$_userId (All Possible ID Keys)...',
-          );
-          updatedData = await AdminService.updateAdminProfile(
-            _userId!,
-            profileWithAllIds,
-          );
-        } catch (e2) {
-          print('⚠️ Strategy 2 (Max IDs) Failed: $e2');
-
-          // --- STRATEGY 3: PATCH /profile (JWT-based role-neutral) ---
-          try {
-            print('🔄 Strategy 3: Attempting PATCH /profile (JWT-based)...');
-            final patchResponse = await dio.patch(
-              AppConfig.profileEndpoint,
-              data: cleanProfileData,
+          // Continue without image - it's completely optional
+          // Don't include image in profile data if upload failed
+          if (e.toString().contains('Cloudinary')) {
+            print(
+              '⚠️ Cloudinary configuration issue detected, skipping image upload',
             );
-            if (patchResponse.statusCode == 200 ||
-                patchResponse.statusCode == 204) {
-              print('✅ Strategy 3 Succeeded!');
-              final rData = patchResponse.data;
-              updatedData = rData is Map ? (rData['data'] ?? rData) : {};
-            } else {
-              throw Exception('Status: ${patchResponse.statusCode}');
-            }
-          } catch (e3) {
-            print('⚠️ Strategy 3 (PATCH /profile) Failed: $e3');
-
-            // --- STRATEGY 4: Wrapped Object Strategy (PUT) ---
-            try {
-              print(
-                '🔄 Strategy 4: Attempting Wrapped Admin Strategy (id + admin object)...',
-              );
-              final wrappedData = {
-                ...allIdKeys,
-                'admin': cleanProfileData,
-                'data': cleanProfileData,
-                'profile': cleanProfileData,
-              };
-              updatedData = await AdminService.updateAdminProfile(
-                _userId!,
-                wrappedData,
-              );
-            } catch (e4) {
-              print('⚠️ Strategy 4 (Wrapped) Failed: $e4');
-
-              // --- STRATEGY 5: ID in Query Params ---
-              try {
-                print(
-                  '🔄 Strategy 5: Attempting PUT with ID in query params...',
-                );
-                final queryUrl =
-                    '/superadmin/$_userId?id=$_userId&adminId=$_userId';
-                print('🔄 PUT $queryUrl');
-                final response = await dio.put(
-                  queryUrl,
-                  data: cleanProfileData,
-                );
-                if (response.statusCode == 200 || response.statusCode == 204) {
-                  print('✅ Strategy 5 Succeeded!');
-                  final rData = response.data;
-                  updatedData = rData is Map ? (rData['data'] ?? rData) : {};
-                } else {
-                  throw Exception('Status: ${response.statusCode}');
-                }
-              } catch (e5) {
-                print('⚠️ Strategy 5 (Query Params) Failed: $e5');
-
-                // --- STRATEGY 6: Final Fallback (/complete-profile as POST) ---
-                try {
-                  print('🔄 Strategy 6: Attempting POST /complete-profile...');
-                  final response = await dio.post(
-                    AppConfig.completeProfileEndpoint,
-                    data: profileWithAllIds,
-                  );
-                  if (response.statusCode == 200 ||
-                      response.statusCode == 201) {
-                    print('✅ Strategy 6 Succeeded!');
-                    final rData = response.data;
-                    updatedData = rData is Map
-                        ? (rData['data'] ?? rData['user'] ?? rData)
-                        : {};
-                  } else {
-                    throw Exception('Status: ${response.statusCode}');
-                  }
-                } catch (e6) {
-                  print('❌ All strategies failed.');
-                  throw Exception(
-                    'All 6 update strategies failed. Latest Error (S6): $e6',
-                  );
-                }
-              }
-            }
           }
         }
       }
 
-      if (updatedData == null) {
-        throw Exception('No data returned from any update strategy');
+      // Prepare profile data
+      final profileData = <String, dynamic>{
+        if (_firstName.isNotEmpty) 'firstName': _firstName.trim(),
+        if (_lastName.isNotEmpty) 'lastName': _lastName.trim(),
+        if (_email.isNotEmpty) 'email': _email.trim(),
+        if (_phone.isNotEmpty) 'phone': _phone.trim(),
+        if (finalImageUrl != null && finalImageUrl.startsWith('http'))
+          'profileImage': finalImageUrl,
+      };
+
+      print('🔄 Profile data prepared: $profileData');
+
+      // Try multiple endpoint strategies until one works
+      final dio = await AuthService.getWorkingDio();
+
+      // Strategy 1: PATCH /profile
+      try {
+        print('🔄 Strategy 1: PATCH /profile');
+        final response = await dio.patch(
+          AppConfig.profileEndpoint,
+          data: profileData,
+        );
+        print('📡 Strategy 1 Response: ${response.statusCode}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return await _handleSuccessResponse(response);
+        }
+      } catch (e) {
+        print('❌ Strategy 1 failed: $e');
       }
 
-      // Update local state with response
-      if (updatedData['firstName'] != null)
-        _firstName = updatedData['firstName'] ?? '';
-      if (updatedData['lastName'] != null)
-        _lastName = updatedData['lastName'] ?? '';
-      if (updatedData['email'] != null) _email = updatedData['email'] ?? '';
-      if (updatedData['phone'] != null) _phone = updatedData['phone'] ?? '';
-      if (updatedData['image'] != null) _imageUrl = updatedData['image'];
+      // Strategy 2: PUT /profile
+      try {
+        print('🔄 Strategy 2: PUT /profile');
+        final response = await dio.put(
+          AppConfig.profileEndpoint,
+          data: profileData,
+        );
+        print('📡 Strategy 2 Response: ${response.statusCode}');
 
-      // Save to SharedPreferences for persistence
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('admin_firstName', _firstName);
-      await prefs.setString('admin_lastName', _lastName);
-      await prefs.setString('userEmail', _email);
-      if (_phone.isNotEmpty) {
-        await prefs.setString('admin_phone', _phone);
-      }
-      if (_imageUrl != null) {
-        await prefs.setString('admin_image', _imageUrl!);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return await _handleSuccessResponse(response);
+        }
+      } catch (e) {
+        print('❌ Strategy 2 failed: $e');
       }
 
-      _isLoading = false;
-      notifyListeners();
-      return true;
+      // Strategy 3: POST /complete-profile
+      try {
+        print('🔄 Strategy 3: POST /complete-profile');
+        final response = await dio.post(
+          AppConfig.completeProfileEndpoint,
+          data: profileData,
+        );
+        print('📡 Strategy 3 Response: ${response.statusCode}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return await _handleSuccessResponse(response);
+        }
+      } catch (e) {
+        print('❌ Strategy 3 failed: $e');
+      }
+
+      // Strategy 4: PUT /user (generic user update)
+      try {
+        print('🔄 Strategy 4: PUT /user');
+        final response = await dio.put(
+          AppConfig.userEndpoint,
+          data: profileData,
+        );
+        print('📡 Strategy 4 Response: ${response.statusCode}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return await _handleSuccessResponse(response);
+        }
+      } catch (e) {
+        print('❌ Strategy 4 failed: $e');
+      }
+
+      // Strategy 5: PATCH /user
+      try {
+        print('🔄 Strategy 5: PATCH /user');
+        final response = await dio.patch(
+          AppConfig.userEndpoint,
+          data: profileData,
+        );
+        print('📡 Strategy 5 Response: ${response.statusCode}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return await _handleSuccessResponse(response);
+        }
+      } catch (e) {
+        print('❌ Strategy 5 failed: $e');
+      }
+
+      // If all strategies failed
+      throw Exception(
+        'All profile update strategies failed. Please contact support.',
+      );
     } catch (e) {
-      debugPrint('Error saving profile: $e');
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('❌ Error saving profile: $e');
+
+      // Handle specific error types
+      if (e.toString().contains('401')) {
+        _errorMessage = 'Authentication failed. Please login again.';
+      } else if (e.toString().contains('409')) {
+        _errorMessage =
+            'Phone number already exists. Please use a different number.';
+      } else if (e.toString().contains('404')) {
+        _errorMessage = 'User not found. Please login again.';
+      } else if (e.toString().contains('500')) {
+        _errorMessage = 'Server error. Please try again later.';
+      } else if (e.toString().contains(
+        'All profile update strategies failed',
+      )) {
+        _errorMessage =
+            'Unable to update profile. Please check your connection and try again.';
+      } else {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
+
       _isLoading = false;
       notifyListeners();
       return false;
     }
+  }
+
+  /// Handle successful response from any strategy
+  Future<bool> _handleSuccessResponse(dynamic response) async {
+    print('✅ Profile update successful with status: ${response.statusCode}');
+    print('📡 Response data: ${response.data}');
+
+    // Handle response data
+    final responseData = response.data;
+    Map<String, dynamic>? userData;
+
+    // Handle different response formats
+    if (responseData is Map) {
+      if (responseData.containsKey('data')) {
+        userData = responseData['data'] as Map<String, dynamic>?;
+      } else if (responseData.containsKey('user')) {
+        userData = responseData['user'] as Map<String, dynamic>?;
+      } else {
+        userData = responseData as Map<String, dynamic>?;
+      }
+    }
+
+    // Update local state with response data
+    if (userData != null) {
+      if (userData['firstName'] != null)
+        _firstName = userData['firstName'] ?? '';
+      if (userData['lastName'] != null) _lastName = userData['lastName'] ?? '';
+      if (userData['email'] != null) _email = userData['email'] ?? '';
+      if (userData['phone'] != null) _phone = userData['phone'] ?? '';
+      if (userData['profileImage'] != null)
+        _imageUrl = userData['profileImage'];
+    }
+
+    // Save to SharedPreferences for persistence
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('admin_firstName', _firstName);
+    await prefs.setString('admin_lastName', _lastName);
+    await prefs.setString('userEmail', _email);
+    if (_phone.isNotEmpty) {
+      await prefs.setString('admin_phone', _phone);
+    }
+    if (_imageUrl != null) {
+      await prefs.setString('admin_image', _imageUrl!);
+    }
+
+    print('✅ Profile updated successfully');
+    _isLoading = false;
+    notifyListeners();
+    return true;
   }
 
   /// Set user ID (should be called after login)
