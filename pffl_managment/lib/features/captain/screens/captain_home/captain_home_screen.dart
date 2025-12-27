@@ -48,14 +48,28 @@ class CaptainHomeScreen extends StatelessWidget {
               );
 
           if (leagueDetail != null) {
+            final effectiveLeagueModel = leagueModel ??
+                LeagueModel(
+                  id: leagueId,
+                  leagueName: leagueDetail.leagueName,
+                  format: leagueDetail.format,
+                  startDate: leagueDetail.startDate,
+                  endDate: leagueDetail.endDate,
+                  minimumPlayers: 0,
+                  perPlayerLeagueFee: amountFromPayment ?? 0,
+                  logo: null,
+                  status: 'pending',
+                  createdAt: null,
+                );
+
             return _PendingLeaguePaymentInfo(
               leagueId: leagueId,
               leagueName: leagueDetail.leagueName,
               format: leagueDetail.format,
               startDate: leagueDetail.startDate,
               endDate: leagueDetail.endDate,
-              perPlayerFee: leagueModel?.perPlayerLeagueFee ?? amountFromPayment,
-              leagueModel: leagueModel,
+              perPlayerFee: effectiveLeagueModel.perPlayerLeagueFee,
+              leagueModel: effectiveLeagueModel,
             );
           }
         }
@@ -72,14 +86,27 @@ class CaptainHomeScreen extends StatelessWidget {
               orElse: () => null,
             );
         if (leagueDetail != null) {
+          final effectiveLeagueModel = leagueModel ??
+              LeagueModel(
+                id: savedLeagueId,
+                leagueName: leagueDetail.leagueName,
+                format: leagueDetail.format,
+                startDate: leagueDetail.startDate,
+                endDate: leagueDetail.endDate,
+                minimumPlayers: 0,
+                perPlayerLeagueFee: 0,
+                logo: null,
+                status: 'pending',
+                createdAt: null,
+              );
           return _PendingLeaguePaymentInfo(
             leagueId: savedLeagueId,
             leagueName: leagueDetail.leagueName,
             format: leagueDetail.format,
             startDate: leagueDetail.startDate,
             endDate: leagueDetail.endDate,
-            perPlayerFee: leagueModel?.perPlayerLeagueFee,
-            leagueModel: leagueModel,
+            perPlayerFee: effectiveLeagueModel.perPlayerLeagueFee,
+            leagueModel: effectiveLeagueModel,
           );
         }
       }
@@ -115,14 +142,27 @@ class CaptainHomeScreen extends StatelessWidget {
                   orElse: () => null,
                 );
             if (leagueDetail != null) {
+              final effectiveLeagueModel = leagueModel ??
+                  LeagueModel(
+                    id: inferredLeagueId,
+                    leagueName: leagueDetail.leagueName,
+                    format: leagueDetail.format,
+                    startDate: leagueDetail.startDate,
+                    endDate: leagueDetail.endDate,
+                    minimumPlayers: 0,
+                    perPlayerLeagueFee: 0,
+                    logo: null,
+                    status: 'pending',
+                    createdAt: null,
+                  );
               return _PendingLeaguePaymentInfo(
                 leagueId: inferredLeagueId,
                 leagueName: leagueDetail.leagueName,
                 format: leagueDetail.format,
                 startDate: leagueDetail.startDate,
                 endDate: leagueDetail.endDate,
-                perPlayerFee: leagueModel?.perPlayerLeagueFee,
-                leagueModel: leagueModel,
+                perPlayerFee: effectiveLeagueModel.perPlayerLeagueFee,
+                leagueModel: effectiveLeagueModel,
               );
             }
           }
@@ -185,18 +225,33 @@ class CaptainHomeScreen extends StatelessWidget {
                       leagueFee: feeText,
                       startDate: startDateText,
                       endDate: endDateText,
-                      onPayNow: () {
+                      onPayNow: () async {
+                        var resolvedInfo = info;
+                        resolvedInfo ??= await _loadPendingPaymentInfo();
+
+                        if (resolvedInfo != null) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString(
+                            'pendingLeagueId',
+                            resolvedInfo.leagueId,
+                          );
+                        }
+
                         final leagueProvider =
                             Provider.of<LeagueSelectionProvider>(context, listen: false);
                         leagueProvider.clearAllSelections();
-                        if (info?.leagueModel != null) {
-                          leagueProvider.toggleLeagueSelection(info!.leagueModel!);
+                        if (resolvedInfo?.leagueModel != null) {
+                          leagueProvider.toggleLeagueSelection(
+                            resolvedInfo!.leagueModel!,
+                          );
                         }
 
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.freeAgentPaymentOption,
-                        );
+                        if (context.mounted) {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.freeAgentPaymentOption,
+                          );
+                        }
                       },
                     );
                   },

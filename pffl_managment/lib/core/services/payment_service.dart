@@ -180,12 +180,39 @@ class PaymentService {
     try {
       final dio = await _getAuthenticatedDio();
 
+      final cardNumber =
+          (cardDetails['cardNumber'] ?? cardDetails['number'] ?? cardDetails['card_number'])
+              ?.toString()
+              .replaceAll(' ', '');
+      final expMonth = cardDetails['expMonth'] ?? cardDetails['exp_month'];
+      final expYear = cardDetails['expYear'] ?? cardDetails['exp_year'];
+      final cvc = cardDetails['cvv'] ?? cardDetails['cvc'];
+      final name = (cardDetails['cardholderName'] ?? cardDetails['name'])?.toString();
+      final zip = (cardDetails['zipCode'] ?? cardDetails['zip_code'] ?? cardDetails['address_zip'])
+          ?.toString();
+
       final data = {
         'paymentId': paymentId,
         'payment_id': paymentId,
         'id': paymentId,
         'paymentMethod': paymentMethod,
         'payment_method': paymentMethod,
+        'method': paymentMethod,
+
+        // Nested payload variants (some backends expect nested objects)
+        'cardDetails': cardDetails,
+        'card_details': cardDetails,
+        'card': {
+          if (cardNumber != null) 'number': cardNumber,
+          if (expMonth != null) 'exp_month': expMonth,
+          if (expYear != null) 'exp_year': expYear,
+          if (cvc != null) 'cvc': cvc,
+        },
+        'billing_details': {
+          if (name != null) 'name': name,
+          if (zip != null) 'address': {'postal_code': zip},
+        },
+
         ...cardDetails,
       };
 
@@ -194,27 +221,40 @@ class PaymentService {
       print('   - Payment ID: $paymentId');
       print('   - Payment Method: $paymentMethod');
 
-      final response = await dio.post('/payments/process', data: data);
+      final response = await dio.post(
+        '/payments/process',
+        data: data,
+        options: Options(validateStatus: (_) => true),
+      );
 
-      if (response.statusCode == 200) {
+      final body = response.data;
+      final status = response.statusCode ?? 0;
+
+      if (status == 200 || status == 201) {
         return {
           'success': true,
-          'message': response.data['message'] ?? 'Payment successful',
-          'data': response.data['data'],
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['error'] ?? 'Payment failed',
+          'message': body is Map ? (body['message'] ?? 'Payment successful') : 'Payment successful',
+          'data': body is Map ? body['data'] : body,
         };
       }
+
+      return {
+        'success': false,
+        'statusCode': status,
+        'errorType': body is Map ? body['errorType'] : null,
+        'message': body is Map ? (body['error'] ?? body['message'] ?? 'Payment failed') : (body?.toString() ?? 'Payment failed'),
+      };
     } on DioException catch (e) {
       print('❌ Payment Error: ${e.message}');
       if (e.response != null) {
         print('❌ Error response: ${e.response?.data}');
         return {
           'success': false,
-          'message': e.response?.data['error'] ?? 'Payment service error',
+          'statusCode': e.response?.statusCode,
+          'errorType': e.response?.data is Map ? e.response?.data['errorType'] : null,
+          'message': e.response?.data is Map
+              ? (e.response?.data['error'] ?? e.response?.data['message'] ?? 'Payment service error')
+              : (e.response?.data?.toString() ?? 'Payment service error'),
         };
       }
       return {

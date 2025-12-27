@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
+import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/models/payment_state.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/utils/payment_validators.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddPaymentDetailsProvider extends ChangeNotifier {
   PaymentState _state = const PaymentState();
@@ -75,6 +77,50 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
 
     _state = _state.copyWith(isLoading: true, clearGeneralError: true);
     notifyListeners();
+
+    if (leagueProvider.selectedLeagues.isEmpty) {
+      // Fallback for Pending Payment card flow: persist a leagueId and recover it here.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final pendingLeagueId = prefs.getString('pendingLeagueId');
+
+        if (pendingLeagueId != null && pendingLeagueId.trim().isNotEmpty) {
+          final leagueDetail = await LeagueService.getLeagueById(
+            pendingLeagueId.trim(),
+          );
+
+          if (leagueDetail != null) {
+            final allLeagues = await LeagueService.getAllLeagues();
+            final leagueModel = allLeagues
+                .where((l) => l.id == pendingLeagueId.trim())
+                .cast<LeagueModel?>()
+                .firstWhere(
+                  (l) => l != null,
+                  orElse: () => null,
+                );
+
+            final effectiveLeague = leagueModel ??
+                LeagueModel(
+                  id: pendingLeagueId.trim(),
+                  leagueName: leagueDetail.leagueName,
+                  format: leagueDetail.format,
+                  startDate: leagueDetail.startDate,
+                  endDate: leagueDetail.endDate,
+                  minimumPlayers: 0,
+                  perPlayerLeagueFee: 0,
+                  logo: null,
+                  status: 'pending',
+                  createdAt: null,
+                );
+
+            leagueProvider.clearAllSelections();
+            leagueProvider.toggleLeagueSelection(effectiveLeague);
+          }
+        }
+      } catch (_) {
+        // Ignore and fall through to error state.
+      }
+    }
 
     if (leagueProvider.selectedLeagues.isEmpty) {
       _state = _state.copyWith(
