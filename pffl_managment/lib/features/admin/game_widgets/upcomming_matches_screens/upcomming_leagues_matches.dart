@@ -41,14 +41,15 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: Colors.grey[600],
+                    color: Color(0xFF111827),
+                    fontFamily: 'Lato',
                     letterSpacing: 0.3,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 8,
+                  size: 10,
                   color: Colors.grey[400],
                 ),
               ],
@@ -68,12 +69,12 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                     children: [
                       Text(
                         match.date,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: Color(0xFF111827), fontFamily: 'Lato',fontWeight: FontWeight.w700,),
                       ),
                       const SizedBox(height: 1),
                       Text(
                         match.time,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: Color(0xFF111827), fontFamily: 'Lato',fontWeight: FontWeight.w400,),
                       ),
                     ],
                   ),
@@ -135,12 +136,13 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                           fontSize: 12,
                           color: Color(0xff0F173E),
                           fontWeight: FontWeight.w500,
+                          fontFamily: 'Lato',
                         ),
                       ),
                       const Icon(
                         Icons.arrow_forward_ios,
                         color: Color(0xff0F173E),
-                        size: 6,
+                        size: 8,
                       ),
                     ],
                   ),
@@ -162,22 +164,28 @@ class UpcommingGamesCardWidget extends StatelessWidget {
           Text(
             name,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF000000),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF111827),
+              fontFamily: 'Lato',
             ),
           ),
         ] else ...[
+
+           
+          _buildTeamLogo(logo),
+          const SizedBox(width: 8),
           Text(
             name,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF000000),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF111827),
+              fontFamily: 'Lato',
             ),
           ),
-          const SizedBox(width: 8),
-          _buildTeamLogo(logo),
+          // const SizedBox(width: 8),
+          // _buildTeamLogo(logo),
         ],
       ],
     );

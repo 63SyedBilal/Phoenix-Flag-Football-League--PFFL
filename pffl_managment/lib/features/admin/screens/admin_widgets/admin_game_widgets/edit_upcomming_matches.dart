@@ -174,6 +174,7 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
+                fontFamily: 'Serotiva',
                 color: Colors.black,
               ),
             ),
@@ -186,7 +187,8 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: Colors.black54,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
             ),
           ),
@@ -208,7 +210,8 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          fontFamily: 'Lato',
+                          color: Color(0xFF111827),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -235,7 +238,8 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          fontFamily: 'Lato',
+                          color: Color(0xFF111827),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -262,8 +266,9 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             "Game Date",
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
+           fontWeight: FontWeight.w500,
+          fontFamily: 'Lato',
+         color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 4),
@@ -296,8 +301,9 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             "Game Time",
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
+               fontWeight: FontWeight.w500,
+                fontFamily: 'Lato',
+                   color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 4),
@@ -326,7 +332,8 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.black,
+              fontFamily: 'Lato',
+                   color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 8),
@@ -349,6 +356,7 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
               Expanded(
                 child: CustomButton.secondary(
                   text: "Cancel",
+                  
                   onPressed: () => Navigator.pop(context),
                 ),
               ),

@@ -93,6 +93,7 @@ class LeagueCardWidget extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
+                              fontFamily: 'Lato',
                               color: Color(0xFF111827),
                             ),
                           ),
@@ -119,6 +120,7 @@ class LeagueCardWidget extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w400,
+                        fontFamily: 'Lato',
                         color: Colors.white,
                         letterSpacing: 0.2,
                       ),
@@ -142,6 +144,7 @@ class LeagueCardWidget extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
+                            fontFamily: 'Lato',
                             color: Color(0xFF111827),
                           ),
                         ),
@@ -154,6 +157,7 @@ class LeagueCardWidget extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
+                              fontFamily: 'Lato',
                               color: Color(0xFF111827),
                             ),
                           ),
@@ -177,6 +181,7 @@ class LeagueCardWidget extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
+                              fontFamily: 'Lato',
                               color: Color(0xFF111827),
                             ),
                           ),
@@ -188,6 +193,7 @@ class LeagueCardWidget extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 10,
+                                fontFamily: 'Lato',
                                 fontWeight: FontWeight.w500,
                                 color: Color(0xFF111827),
                               ),
@@ -217,6 +223,7 @@ class LeagueCardWidget extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
+                            fontFamily: 'Lato',
                             color: Color(0xFF111827),
                           ),
                         ),
@@ -229,6 +236,7 @@ class LeagueCardWidget extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
+                              fontFamily: 'Lato',
                               color: Color(0xFF111827),
                             ),
                           ),
@@ -251,6 +259,7 @@ class LeagueCardWidget extends StatelessWidget {
                             'End Date:',
                             style: TextStyle(
                               fontSize: 10,
+                              fontFamily: 'Lato',
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF111827),
                             ),
@@ -263,6 +272,7 @@ class LeagueCardWidget extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 10,
+                                fontFamily: 'Lato',
                                 fontWeight: FontWeight.w500,
                                 color: Color(0xFF111827),
                               ),
@@ -298,10 +308,11 @@ class LeagueCardWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
+                      fontFamily: 'Lato',
                       color: Color(0xFF000000),
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 12, color: Colors.brown),
+                  Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF111827),),
                 ],
               ),
             ),

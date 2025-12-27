@@ -32,7 +32,11 @@ class AdminOverViewSection extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Overview', style: AppTextStyles.headlineSmall),
+                  Text('Overview', style: AppTextStyles.headlineSmall!.copyWith(
+                    fontFamily: 'Lato',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                  )),
                 ],
               ),
             ),
