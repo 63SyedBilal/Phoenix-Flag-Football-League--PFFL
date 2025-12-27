@@ -18,7 +18,11 @@ class AdminQuickActionSection extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
-              child: Text('Quick Actions', style: AppTextStyles.headlineSmall),
+              child: Text('Quick Actions', style: AppTextStyles.headlineSmall!.copyWith(
+                fontFamily: 'Lato',
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+              )),
             ),
             const SizedBox(height: 8),
             Row(
@@ -30,7 +34,11 @@ class AdminQuickActionSection extends StatelessWidget {
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
-              child: Text('Comming Soon', style: AppTextStyles.headlineSmall),
+              child: Text('Comming Soon', style: AppTextStyles.headlineSmall!.copyWith(
+                fontFamily: 'Lato',
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+              )),
             ),
             const SizedBox(height: 8),
             Row(

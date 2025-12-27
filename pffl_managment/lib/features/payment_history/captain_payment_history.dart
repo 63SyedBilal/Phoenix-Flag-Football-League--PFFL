@@ -135,7 +135,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     ],
                   ),
                 ),
-                _buildBottomNav(),
+               
               ],
             );
           },
