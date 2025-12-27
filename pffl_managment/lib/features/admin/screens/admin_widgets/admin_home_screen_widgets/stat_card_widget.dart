@@ -65,6 +65,7 @@ class StatCardWidget extends StatelessWidget {
                       style: AppTextStyles.headlineSmall.copyWith(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
+                        fontFamily: 'Lato',
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

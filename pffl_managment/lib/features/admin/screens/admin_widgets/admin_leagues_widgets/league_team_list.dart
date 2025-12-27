@@ -22,8 +22,10 @@ class LeagueTeamList extends StatelessWidget {
               const Text(
                 'Teams',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Lato',
+                  color: Color(0xFF111827),
                 ),
               ),
               IconButton(
