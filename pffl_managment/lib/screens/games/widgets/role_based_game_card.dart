@@ -112,7 +112,7 @@ class RoleBasedGameCard extends StatelessWidget {
                       match.date,
                       style: const TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Lato',
                         color: Color(0xFF111827),
                       ),
@@ -121,7 +121,7 @@ class RoleBasedGameCard extends StatelessWidget {
                       match.time,
                       style: const TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Lato',
                         color: Color(0xFF111827),
                       ),
@@ -258,12 +258,12 @@ class RoleBasedGameCard extends StatelessWidget {
         children: [
           const Expanded(
             child: Text(
-              'Your league payment still unpaid',
+              'Your league payment still unpaid.',
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
                 fontFamily: 'Lato',
-                color: Color(0xFFDC2626), // Red color for warning
+                color: Color(0xFF111827), // Red color for warning
               ),
             ),
           ),
@@ -271,19 +271,19 @@ class RoleBasedGameCard extends StatelessWidget {
           ElevatedButton(
             onPressed: onPayLeagueFee,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
+              backgroundColor: const Color(0xFF0F173E),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(12),
               ),
-              elevation: 0,
+             // elevation: 0,
             ),
             child: const Text(
               'Pay League Fee',
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 fontFamily: 'Lato',
               ),
             ),
