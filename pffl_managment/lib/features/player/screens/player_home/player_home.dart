@@ -5,7 +5,6 @@ import 'package:pffl_managment/features/captain/widgets/league_payment_card.dart
 import 'package:pffl_managment/core/widgets/upcomingmatches/shared_upcoming_matches.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.dart';
 import 'package:pffl_managment/features/player/providers/player_dashboard_provider.dart';
-
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
 
@@ -150,6 +149,7 @@ class _PlayerHomeState extends State<PlayerHome> {
                       );
                     },
                   ),
+                const SizedBox(height: 12),
                 SponsorBannerScreen(),
 
                 const SizedBox(height: 8),

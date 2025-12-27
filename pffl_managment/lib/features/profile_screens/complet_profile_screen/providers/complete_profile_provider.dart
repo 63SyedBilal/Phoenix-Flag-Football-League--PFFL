@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
@@ -107,7 +108,10 @@ class CompleteProfileProvider extends ChangeNotifier {
   Future<void> _syncWithBackend() async {
     try {
       final dio = await AuthService.getWorkingDio();
-      final response = await dio.get(AppConfig.profileEndpoint);
+      final response = await dio.get(
+        AppConfig.profileEndpoint,
+        options: Options(validateStatus: (_) => true),
+      );
       if (response.statusCode == 200) {
         final data = response.data['data'] ?? response.data['user'];
         if (data != null) {
@@ -147,6 +151,79 @@ class CompleteProfileProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('⚠️ Profile backend sync failed: $e');
     }
+  }
+
+  String? _extractMessage(dynamic body) {
+    if (body is Map) {
+      return body['message']?.toString() ?? body['error']?.toString();
+    }
+    if (body is String) return body;
+    return null;
+  }
+
+  void _applyBackendErrorToFields(String message) {
+    final lower = message.toLowerCase();
+    if (lower.contains('phone') && !lower.contains('emergency')) {
+      _setFieldError('phone', message);
+      return;
+    }
+    if (lower.contains('emergency') && lower.contains('phone')) {
+      _setFieldError('emergencyPhone', message);
+      return;
+    }
+    if (lower.contains('position')) {
+      _setFieldError('position', message);
+      return;
+    }
+    if (lower.contains('jersey')) {
+      _setFieldError('jerseyNumber', message);
+      return;
+    }
+    if (lower.contains('terms')) {
+      _setFieldError('terms', message);
+      return;
+    }
+  }
+
+  Future<Response<dynamic>> _submitProfileWithFallback(
+    Dio dio,
+    Map<String, dynamic> profileData,
+  ) async {
+    final methods = <String>['PUT', 'POST', 'PATCH'];
+    final paths = <String>[
+      AppConfig.profileEndpoint,
+      AppConfig.completeProfileEndpoint,
+    ];
+
+    Response<dynamic>? lastResponse;
+    for (final path in paths) {
+      for (final method in methods) {
+        lastResponse = await dio.request(
+          path,
+          data: profileData,
+          options: Options(method: method, validateStatus: (_) => true),
+        );
+
+        final status = lastResponse.statusCode ?? 0;
+
+        if (status == 200 || status == 201) {
+          return lastResponse;
+        }
+
+        // If method is not allowed, try next method.
+        if (status == 405) {
+          continue;
+        }
+
+        // For 400s, still allow trying next endpoint because some envs validate differently.
+        if (status == 400) {
+          continue;
+        }
+      }
+    }
+
+    // If everything failed, return the last attempt.
+    return lastResponse!;
   }
 
   // Setters for basic info
@@ -352,6 +429,8 @@ class CompleteProfileProvider extends ChangeNotifier {
       // Prepare profile data - all stored in User model
       final positionString = _selectedPositions.join(', ');
       final profileData = <String, dynamic>{
+        if (_phone != null && _phone!.trim().isNotEmpty)
+          'phone': _phone!.trim(),
         'position': positionString,
         'emergencyContactName': _emergencyContactName!,
         'emergencyPhone': _emergencyPhone!,
@@ -369,16 +448,35 @@ class CompleteProfileProvider extends ChangeNotifier {
         profileData['profileImage'] = imageUrl;
       }
 
-      // Backend doesn't support profile updates, save locally only
-      debugPrint('💾 [PROFILE UPDATE] Backend profile update not supported - saving locally only');
-      debugPrint('📄 [PROFILE UPDATE] Profile data: $profileData');
-      debugPrint('🎯 [PROFILE UPDATE] Using LOCAL STORAGE ONLY approach');
+      try {
+        // Submit with method/endpoint fallback. We also don't want Dio to throw for 405/400.
+        final dio = await AuthService.getWorkingDio();
+        final response = await _submitProfileWithFallback(dio, profileData);
 
-      // Simulate successful profile completion (local only)
-      await Future.delayed(const Duration(milliseconds: 500));
-      debugPrint('✅ [PROFILE UPDATE] Local save completed successfully');
-
-      return await _handleProfileSuccess(null, positionString, imageUrl);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Update local cache and return success
+          return await _handleProfileSuccess(
+            response,
+            positionString,
+            imageUrl,
+          );
+        } else {
+          final msg =
+              _extractMessage(response.data) ??
+              'Failed to complete profile (status: ${response.statusCode})';
+          debugPrint(
+            '⚠️ Backend submission failed: $msg. Falling back to local save.',
+          );
+          _applyBackendErrorToFields(msg);
+          // Don't throw - fall back to local save if possible
+          return await _handleProfileSuccess(null, positionString, imageUrl);
+        }
+      } catch (e) {
+        debugPrint(
+          '⚠️ Backend submission crashed: $e. Falling back to local save.',
+        );
+        return await _handleProfileSuccess(null, positionString, imageUrl);
+      }
     } catch (e) {
       _isLoading = false;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -388,7 +486,11 @@ class CompleteProfileProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> _handleProfileSuccess(dynamic response, String positionString, String? imageUrl) async {
+  Future<bool> _handleProfileSuccess(
+    dynamic response,
+    String positionString,
+    String? imageUrl,
+  ) async {
     // Update local cache
     await _userPrefs.setPosition(positionString);
     await _userPrefs.setEmergencyContactName(_emergencyContactName);

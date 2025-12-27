@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_fixed.dart';
+import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/player_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_model.dart';
-import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository.dart';
+import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_working.dart';
+import 'package:pffl_managment/features/stat_keeper/providers/stat_stats_provider.dart';
 
 class StatAddProvider extends ChangeNotifier {
   // Match context
@@ -74,7 +77,7 @@ class StatAddProvider extends ChangeNotifier {
     _isLoadingMatches = true;
     notifyListeners();
     try {
-      final matches = await StatKeeperRepository.getAssignedMatches();
+      final matches = await StatKeeperRepositoryFixed.getAssignedMatches();
       _assignedMatches = matches;
       final match = matches.firstWhere((m) => m.id == matchId);
       _isReadOnly = match.status == 'completed';
@@ -91,7 +94,7 @@ class StatAddProvider extends ChangeNotifier {
     _isLoadingMatches = true;
     notifyListeners();
     try {
-      _assignedMatches = await StatKeeperRepository.getAssignedMatches();
+      _assignedMatches = await StatKeeperRepositoryFixed.getAssignedMatches();
     } catch (e) {
       debugPrint('Error loading assigned matches: $e');
       _assignedMatches = [];
@@ -124,7 +127,7 @@ class StatAddProvider extends ChangeNotifier {
     _isLoadingTeams = true;
     notifyListeners();
     try {
-      _teams = await StatKeeperRepository.getMatchTeams(_matchId!);
+      _teams = await StatKeeperRepositoryFixed.getMatchTeams(_matchId!);
     } catch (e) {
       debugPrint('Error loading teams: $e');
       _teams = [];
@@ -143,7 +146,7 @@ class StatAddProvider extends ChangeNotifier {
     _isLoadingPlayers = true;
     notifyListeners();
     try {
-      final teamPlayers = await StatKeeperRepository.getMatchTeamPlayers(
+      final teamPlayers = await StatKeeperRepositoryFixed.getMatchTeamPlayers(
         _matchId!,
         _selectedTeamId!,
       );
@@ -207,7 +210,7 @@ class StatAddProvider extends ChangeNotifier {
       final conversionPoints =
           int.tryParse(conversionPointsController.text) ?? 0;
 
-      await StatKeeperRepository.addMatchStats(
+      await StatKeeperRepositoryFixed.addMatchStatsFixed(
         matchId: _matchId!,
         teamId: _selectedTeamId!,
         playerId: _selectedPlayerId,
@@ -226,6 +229,9 @@ class StatAddProvider extends ChangeNotifier {
         conversionPoints: conversionPoints,
       );
 
+      // FIX 1: Refresh stats in other providers after successful update
+      await _refreshStatsProviders(context);
+
       clearForm();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -242,6 +248,25 @@ class StatAddProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Refresh stats providers after adding new stats
+  Future<void> _refreshStatsProviders(BuildContext context) async {
+    try {
+      // Find and refresh StatStatsProvider if it exists in the widget tree
+      final statStatsProvider = Provider.of<StatStatsProvider>(
+        context,
+        listen: false,
+      );
+
+      // Force refresh the stats for the current match
+      if (_matchId != null) {
+        await statStatsProvider.forceRefreshForMatch(_matchId!);
+      }
+    } catch (e) {
+      // StatStatsProvider might not be available in current context
+      debugPrint('StatStatsProvider not available for refresh: $e');
     }
   }
 

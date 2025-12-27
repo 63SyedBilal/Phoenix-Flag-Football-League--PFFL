@@ -52,51 +52,54 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
 
       debugPrint('🔄 Fetching matches assigned to stat keeper: $currentUserId');
 
-      // Use Repository to get assigned matches (it handles filtering securely)
-      // This includes all assigned matches regardless of status (Upcoming, Live, Completed)
-      // We want to show them all in the "Assigned Games" section usually,
-      // or at least Upcoming + Live.
-
-      // We'll fetch ALL matches to populate both lists if needed,
-      // but Repository is best for "Assigned" specifically.
-      // However, the UI expects a single list `_upcomingGames` and filters `isMyGame`.
-      // So fetch all from MatchService to get the big list, but ensure parsing is robust.
-
+      // Fetch ALL matches from backend
       final allMatches = await MatchService.getAllMatches();
+      debugPrint('📊 Total matches fetched: ${allMatches.length}');
 
-      // Filter for display
+      // Log all matches with statKeeperId for debugging
+      for (final match in allMatches) {
+        if (match.statKeeperId != null && match.statKeeperId!.isNotEmpty) {
+          debugPrint(
+            '🎯 Match ${match.id} has statKeeperId: ${match.statKeeperId}',
+          );
+          debugPrint('   - Current user: $currentUserId');
+          debugPrint('   - Match: ${match.homeTeam} vs ${match.awayTeam}');
+          debugPrint('   - Status: ${match.status}');
+          debugPrint('   - Date: ${match.date}');
+        }
+      }
+
+      // Filter matches for StatKeeper dashboard
       final relevantMatches = allMatches.where((match) {
-        // Show if assigned to me AND status is COMPLETED (as per requirement)
         final isAssigned = match.statKeeperId == currentUserId;
-        final isCompleted = match.status == MatchStatus.completed;
-
-        // Also show upcoming/live games generally if they aren't assigned,
-        // BUT the requirement says: "Statkeeper sees ONLY completed games assigned to them".
-        // It also says "Do NOT show Upcoming games".
-        // HOWEVER, the dashboard usually has two sections: "Assigned" and "Upcoming".
-        // If "Assigned Messages" means the "Assigned Games For You" section, we should filter that list.
-        // But here `_upcomingGames` feeds the entire screen.
-        // The HomeScreen filters `isMyGame` for the top section.
-
-        // Let's adhere strictly to the "Statkeeper assigned games" requirement for the assigned list.
-        // If the user wants to see *General* upcoming games (unassigned), the requirement says:
-        // "Do NOT show: Upcoming games" (under Statkeeper assigned games section).
-
-        // Interpretation:
-        // 1. Assigned list must contain ONLY (Assigned + Completed).
-        // 2. The variable `_upcomingGames` currently holds everything.
-        // 3. I will make `_upcomingGames` hold robust data, but ensure `isMyGame` is only true if Completed.
 
         if (isAssigned) {
-          return isCompleted;
+          debugPrint(
+            '✅ Found assigned match: ${match.homeTeam} vs ${match.awayTeam} (Status: ${match.status})',
+          );
         }
 
-        // For general list (bottom section), usually we show upcoming matches.
-        // The requirement "Do NOT show: Upcoming games" is under the "STATKEEPER ASSIGNED GAMES" header.
-        // So unassigned upcoming games are likely still fine for the general list.
+        // For StatKeeper assigned games: Show ALL assigned games regardless of status
+        // This includes upcoming, live, and completed games assigned to this StatKeeper
+        if (isAssigned) {
+          return true; // Show all assigned games
+        }
+
+        // For general upcoming games list: Show upcoming/live games (not assigned to anyone or assigned to others)
+        // This provides a general view of what's happening in the league
         return match.status == MatchStatus.upcoming ||
             match.status == MatchStatus.live;
       }).toList();
+
+      debugPrint('📋 Filtered matches count: ${relevantMatches.length}');
+
+      // Count assigned vs general matches
+      final assignedCount = relevantMatches
+          .where((m) => m.statKeeperId == currentUserId)
+          .length;
+      final generalCount = relevantMatches.length - assignedCount;
+      debugPrint('   - Assigned to me: $assignedCount');
+      debugPrint('   - General upcoming: $generalCount');
 
       // Sort by date (earliest first)
       relevantMatches.sort((a, b) {
@@ -110,6 +113,15 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
           .toList();
 
       debugPrint('✅ Dashboard loaded with ${_upcomingGames.length} games');
+
+      // Log assigned games specifically
+      final assignedGames = _upcomingGames.where((g) => g.isMyGame).toList();
+      debugPrint('🎯 Assigned games for StatKeeper:');
+      for (final game in assignedGames) {
+        debugPrint(
+          '   - ${game.team1Name} vs ${game.team2Name} on ${game.date}',
+        );
+      }
 
       _errorMessage = null;
     } catch (e) {

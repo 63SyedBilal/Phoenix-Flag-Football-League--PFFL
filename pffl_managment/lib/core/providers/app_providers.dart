@@ -3,6 +3,7 @@ import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/core/providers/unified_games_provider.dart';
 import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:pffl_managment/features/admin/provider/dashboard_provider.dart';
+import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.dart';
 import 'package:pffl_managment/features/admin/shared/providers/animated_fab_provider.dart';
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:pffl_managment/features/admin/provider/leagues_provider.dart';
@@ -83,6 +84,7 @@ class AppProviders extends StatelessWidget {
 
         // SINGLE SOURCE OF TRUTH for all games data
         ChangeNotifierProvider(create: (_) => UnifiedGamesProvider()),
+        ChangeNotifierProvider(create: (_) => UpcomingGamesProvider()),
         ChangeNotifierProvider(create: (_) => CaptainTeamProvider()),
         ChangeNotifierProvider(create: (_) => BaseProvider()),
         ChangeNotifierProvider(create: (_) => FreeAgentOnboardingProvider()),

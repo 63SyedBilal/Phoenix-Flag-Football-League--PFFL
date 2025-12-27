@@ -32,9 +32,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
         child: Consumer<CaptainPaymentHistoryProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (provider.errorMessage != null) {
@@ -55,9 +53,9 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     const SizedBox(height: 8),
                     Text(
                       provider.errorMessage!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -75,11 +73,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.payment,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
+                    const Icon(Icons.payment, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
                     Text(
                       'No Team Payments',
@@ -88,9 +82,9 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     const SizedBox(height: 8),
                     Text(
                       'No team members have made league payments yet.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -168,21 +162,13 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                 '\$${provider.totalTeamRevenue.toStringAsFixed(0)}',
                 Colors.green,
               ),
-              Container(
-                width: 1,
-                height: 40,
-                color: const Color(0xFFE5E7EB),
-              ),
+              Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
               _buildSummaryItem(
                 'Paid',
                 '${provider.paidPaymentsCount}',
                 Colors.green,
               ),
-              Container(
-                width: 1,
-                height: 40,
-                color: const Color(0xFFE5E7EB),
-              ),
+              Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
               _buildSummaryItem(
                 'Pending',
                 '${provider.pendingPaymentsCount}',
@@ -207,13 +193,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
   }
@@ -298,8 +278,9 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                   'Payment #${payment.id.substring(payment.id.length - 6)}',
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF000000),
+                    fontWeight: FontWeight.w700,
+                    fontFamily: "Lato",
+                    color: Color(0xFF101828),
                   ),
                 ),
                 Container(
@@ -314,8 +295,9 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                   child: Text(
                     payment.formattedDate,
                     style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: "Lato",
                       color: Colors.white,
                     ),
                   ),
@@ -341,9 +323,9 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                   Text(
                     'View League Details',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF6A7282),
                     ),
                   ),
                   Icon(
@@ -351,7 +333,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
                     color: Colors.grey[400],
-                    size: 20,
+                    size: 24,
                   ),
                 ],
               ),
@@ -369,25 +351,25 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
-                        child: payment.leagueLogo != null
-                            ? Image.network(
-                                payment.leagueLogo!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.shield,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.shield,
-                                size: 16,
-                                color: Colors.grey,
-                              ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        payment.leagueName,
+                    child: payment.leagueLogo != null
+                        ? Image.network(
+                            payment.leagueLogo!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.shield,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.shield,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    payment.leagueName,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -403,22 +385,22 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                              Text(
-                                'Format:',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                payment.leagueFormat,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
+                        Text(
+                          'Format:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          payment.leagueFormat,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -433,20 +415,21 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                                Text(
-                                  'League Fee:',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '\$${payment.amount}',
+                          Text(
+                            'League Fee:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '\$${payment.amount}',
                             style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF000000),
+                              fontSize: 10,
+                              fontFamily: "Lato",
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF111827),
                             ),
                           ),
                         ],
@@ -462,22 +445,22 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                              Text(
-                                'Start Date:',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                payment.leagueStartDate,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
+                        Text(
+                          'Start Date:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          payment.leagueStartDate,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -492,20 +475,21 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                                Text(
-                                  'End Date:',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  payment.leagueEndDate,
+                          Text(
+                            'End Date:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            payment.leagueEndDate,
                             style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF000000),
+                              fontSize: 10,
+                              fontFamily: "Lato",
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF111827),
                             ),
                           ),
                         ],
@@ -529,18 +513,20 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w400,
-            color: Colors.grey[600],
+            fontFamily: 'Lato',
+            color: Color(0xFF6A7282),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF000000),
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'Lato',
+            color: Color(0xFF6A7282),
           ),
         ),
       ],
@@ -550,7 +536,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
   Widget _buildViewReceiptButton() {
     return Container(
       width: double.infinity,
-      height: 48,
+      height: 40,
       decoration: BoxDecoration(
         color: const Color(0xFF000000),
         borderRadius: BorderRadius.circular(24),
@@ -564,33 +550,14 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
             child: Text(
               'View Receipt',
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
                 color: Colors.white,
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Home', false),
-          _buildNavItem(Icons.emoji_events_outlined, 'Leagues', false),
-          _buildNavItem(Icons.calendar_today_outlined, 'Games', false),
-          _buildNavItem(Icons.people_outline, 'My Team', false),
-          _buildNavItem(Icons.settings, 'Settings', true),
-        ],
       ),
     );
   }
@@ -628,10 +595,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
 class PaymentReceiptScreen extends StatefulWidget {
   final PaymentHistoryItem payment;
 
-  const PaymentReceiptScreen({
-    super.key,
-    required this.payment,
-  });
+  const PaymentReceiptScreen({super.key, required this.payment});
 
   @override
   State<PaymentReceiptScreen> createState() => _PaymentReceiptScreenState();
@@ -655,8 +619,9 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   const Text(
                     'Payment Receipt',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 32,
                       fontWeight: FontWeight.w700,
+                      fontFamily: 'Serotiva',
                       color: Color(0xFF000000),
                     ),
                   ),
@@ -664,8 +629,8 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   Text(
                     'Transaction details for your league payment.',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                       color: Colors.grey[600],
                     ),
                   ),
@@ -673,19 +638,26 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   Text(
                     'Record #${widget.payment.id.substring(widget.payment.id.length - 6)}',
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: FontWeight.w700,
+                      fontFamily: 'Lato',
                       color: Color(0xFF000000),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildDetailRow('Transaction ID:', widget.payment.transactionId ?? 'N/A'),
+                  _buildDetailRow(
+                    'Transaction ID:',
+                    widget.payment.transactionId ?? 'N/A',
+                  ),
                   const SizedBox(height: 12),
                   _buildDetailRow('Date:', widget.payment.formattedDate),
                   const SizedBox(height: 12),
                   _buildDetailRow('League:', widget.payment.leagueName),
                   const SizedBox(height: 12),
-                  _buildDetailRow('Total Amount:', '\$${widget.payment.amount}'),
+                  _buildDetailRow(
+                    'Total Amount:',
+                    '\$${widget.payment.amount}',
+                  ),
                   const SizedBox(height: 12),
                   _buildDetailRow('Method:', widget.payment.paymentMethod),
                   const SizedBox(height: 12),
@@ -708,8 +680,9 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                           'View League Details',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF000000),
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Lato',
+                            color: Color(0xFF6A7282),
                           ),
                         ),
                         Icon(
@@ -754,9 +727,10 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                         Text(
                           widget.payment.leagueName,
                           style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF000000),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Lato',
+                            color: Color(0xFF111827),
                           ),
                         ),
                       ],
@@ -771,17 +745,20 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                               Text(
                                 'Format:',
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
+                                  fontSize: 10,
+                                  fontFamily: 'Lato',
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFF111827),
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 widget.payment.leagueFormat,
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF000000),
+                                  fontSize: 10,
+                                  fontFamily: 'Lato',
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFF111827),
                                 ),
                               ),
                             ],
@@ -801,17 +778,20 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                 Text(
                                   'League Fee:',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
+                                    fontSize: 10,
+                                    fontFamily: 'Lato',
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF111827),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '\$${widget.payment.amount}',
                                   style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF000000),
+                                    fontSize: 10,
+                                    fontFamily: 'Lato',
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF111827),
                                   ),
                                 ),
                               ],
@@ -830,17 +810,20 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                               Text(
                                 'Start Date:',
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
+                                  fontSize: 10,
+                                  fontFamily: 'Lato',
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFF111827),
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 widget.payment.leagueStartDate,
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF000000),
+                                  fontSize: 10,
+                                  fontFamily: 'Lato',
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFF111827),
                                 ),
                               ),
                             ],
@@ -860,17 +843,20 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                 Text(
                                   'End Date:',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
+                                    fontSize: 10,
+                                    fontFamily: 'Lato',
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF111827),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   widget.payment.leagueEndDate,
                                   style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF000000),
+                                    fontSize: 10,
+                                    fontFamily: 'Lato',
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF111827),
                                   ),
                                 ),
                               ],
@@ -885,7 +871,6 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                 ],
               ),
             ),
-            _buildBottomNav(),
           ],
         ),
       ),
@@ -915,9 +900,10 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
-              color: Colors.grey[600],
+              fontFamily: 'Lato',
+              color: statusColor ?? const Color(0xFF6A7282),
             ),
           ),
         ),
@@ -925,9 +911,10 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: statusColor ?? const Color(0xFF000000),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              fontFamily: 'Lato',
+              color: statusColor ?? const Color(0xFF6A7282),
             ),
           ),
         ),
@@ -938,7 +925,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
   Widget _buildDownloadButton() {
     return Container(
       width: double.infinity,
-      height: 48,
+      height: 40,
       decoration: BoxDecoration(
         color: const Color(0xFF000000),
         borderRadius: BorderRadius.circular(24),
@@ -952,58 +939,14 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
             child: Text(
               'Download Receipt',
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
                 color: Colors.white,
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Home', false),
-          _buildNavItem(Icons.emoji_events_outlined, 'Leagues', false),
-          _buildNavItem(Icons.calendar_today_outlined, 'Games', false),
-          _buildNavItem(Icons.people_outline, 'My Team', false),
-          _buildNavItem(Icons.settings, 'Settings', true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 24,
-            color: isActive ? const Color(0xFF3B82F6) : Colors.grey[400],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isActive ? const Color(0xFF3B82F6) : Colors.grey[400],
-              fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }

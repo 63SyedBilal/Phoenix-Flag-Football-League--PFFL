@@ -158,7 +158,7 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: const BorderSide(
-          color: Color(0xFFD2B48C), // Light brown border
+          color: Color(0xFFD1D5DB), // Light brown border
           width: 1.5,
         ),
       ),
@@ -189,10 +189,11 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: const Text(
-              'Transfer Leadership',
+              'Transfer Captainship',
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
                 color: Colors.black87,
               ),
             ),
@@ -216,7 +217,8 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
               'Remove Player',
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
                 color: Colors.black87,
               ),
             ),

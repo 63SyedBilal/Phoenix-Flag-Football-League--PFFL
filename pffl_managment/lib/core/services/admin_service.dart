@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:pffl_managment/core/services/upload_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 
@@ -18,98 +19,10 @@ class AdminService {
   /// POST /api/upload
   /// Returns the uploaded image URL
   static Future<String?> uploadImage(File imageFile) async {
-    try {
-      final token = await AuthService.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      // Validate file exists
-      if (!await imageFile.exists()) {
-        throw Exception('Image file does not exist: ${imageFile.path}');
-      }
-
-      // Validate file size (max 10MB)
-      final fileSize = await imageFile.length();
-      if (fileSize > 10 * 1024 * 1024) {
-        throw Exception('Image file is too large. Maximum size is 10MB');
-      }
-
-      // Get file extension for validation
-      final fileName = imageFile.path.split('/').last;
-      final fileExtension = fileName.split('.').last.toLowerCase();
-      final allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-      if (!allowedExtensions.contains(fileExtension)) {
-        throw Exception(
-          'Invalid file format. Allowed formats: ${allowedExtensions.join(", ")}',
-        );
-      }
-
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          imageFile.path,
-          filename: fileName,
-        ),
-        'folder': 'pffl/profiles',
-      });
-
-      // Use working Dio instance with proper URL and increased timeout for file uploads
-      final dio = await AuthService.getWorkingDio();
-      // Increase timeouts for file uploads
-      dio.options.connectTimeout = const Duration(
-        seconds: 120,
-      ); // 2 minutes for connection
-      dio.options.receiveTimeout = const Duration(
-        seconds: 120,
-      ); // 2 minutes for upload
-      dio.options.sendTimeout = const Duration(
-        seconds: 120,
-      ); // 2 minutes for sending
-
-      // Ensure token is set
-      dio.options.headers['Authorization'] = 'Bearer $token';
-
-      print('📤 Uploading image: ${imageFile.path}');
-      print('📤 File size: ${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
-      print('📤 API URL: ${dio.options.baseUrl}/upload');
-
-      final response = await dio.post('/upload', data: formData);
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['data'] != null && data['data']['url'] != null) {
-          return data['data']['url'] as String;
-        }
-        throw Exception('Invalid response format from server');
-      }
-      throw Exception('Upload failed with status: ${response.statusCode}');
-    } on DioException catch (e) {
-      print('Error uploading image: ${e.message}');
-      if (e.response != null) {
-        print('Error response: ${e.response?.data}');
-
-        // Extract specific error message from backend
-        String errorMessage = 'Failed to upload image';
-        if (e.response?.data is Map) {
-          errorMessage =
-              e.response?.data['error'] ??
-              e.response?.data['message'] ??
-              'Failed to upload image';
-        }
-
-        if (e.response?.statusCode == 401) {
-          throw Exception('Authentication failed. Please login again.');
-        } else if (e.response?.statusCode == 400) {
-          throw Exception(errorMessage);
-        } else if (e.response?.statusCode == 500) {
-          throw Exception(errorMessage);
-        }
-      }
-      throw Exception('Failed to upload image: ${e.message}');
-    } catch (e) {
-      print('General error uploading image: $e');
-      throw Exception('Failed to upload image: ${e.toString()}');
-    }
+    return UploadService.uploadImage(
+      imageFile,
+      folder: 'pffl/profiles',
+    );
   }
 
   /// Update admin profile

@@ -30,6 +30,9 @@ class AuthProvider extends ChangeNotifier {
   // User data object
   UserData? _userData;
 
+  // Disposal flag to prevent notifications after disposal
+  bool _disposed = false;
+
   bool get isLoggedIn => _isLoggedIn;
   bool get isLoggingIn => _isLoggingIn;
   String get userToken => _userToken;
@@ -52,6 +55,19 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider(this._userPreferenceProvider) {
     _syncWithPreferences();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
   }
 
   void _syncWithPreferences() {
@@ -328,22 +344,33 @@ class AuthProvider extends ChangeNotifier {
         if (userDataResponse != null) {
           // Update user data while preserving token
           final updatedUserData = UserData(
-            id: userDataResponse['_id'] ?? userDataResponse['id'] ?? _userData!.id,
+            id:
+                userDataResponse['_id'] ??
+                userDataResponse['id'] ??
+                _userData!.id,
             firstName: userDataResponse['firstName'] ?? _userData!.firstName,
             lastName: userDataResponse['lastName'] ?? _userData!.lastName,
             email: userDataResponse['email'] ?? _userData!.email,
             phone: userDataResponse['phone'] ?? _userData!.phone,
             role: _userData!.role, // Keep existing role
-            needsProfileCompletion: userDataResponse['needsProfileCompletion'] ?? _userData!.needsProfileCompletion,
-            needsProfileForm: userDataResponse['needsProfileForm'] ?? _userData!.needsProfileForm,
-            needsTeamForm: userDataResponse['needsTeamForm'] ?? _userData!.needsTeamForm,
+            needsProfileCompletion:
+                userDataResponse['needsProfileCompletion'] ??
+                _userData!.needsProfileCompletion,
+            needsProfileForm:
+                userDataResponse['needsProfileForm'] ??
+                _userData!.needsProfileForm,
+            needsTeamForm:
+                userDataResponse['needsTeamForm'] ?? _userData!.needsTeamForm,
           );
 
           _userData = updatedUserData;
 
           // Also update individual fields for consistency
-          _userName = updatedUserData.firstName != null && updatedUserData.lastName != null
-              ? '${updatedUserData.firstName} ${updatedUserData.lastName}'.trim()
+          _userName =
+              updatedUserData.firstName != null &&
+                  updatedUserData.lastName != null
+              ? '${updatedUserData.firstName} ${updatedUserData.lastName}'
+                    .trim()
               : updatedUserData.email;
           _needsProfileForm = updatedUserData.needsProfileForm;
           _needsTeamForm = updatedUserData.needsTeamForm;

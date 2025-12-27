@@ -23,24 +23,14 @@ class AppConfig {
   // Get base URL based on platform
   // NOTE: Android Emulator sometimes can't reach 10.0.2.2
   // If 10.0.2.2 doesn't work, try using the network IP instead
-
-  // OLD IP CONFIGURATION - Commented out on 2025-12-27
   // Previous staging URL for production environment
-  // static String get baseUrl => 'https://api-staging.phoenixflagfootballleague.com/api';
+  static String get baseUrl =>
+      'https://api-staging.phoenixflagfootballleague.com/api';
 
   // NEW IP CONFIGURATION - Set using ipconfig on 2025-12-27
   // Current system IP: 192.168.1.3 (obtained via ipconfig command)
-  // For local development and testing on physical devices
-  static String get baseUrl => 'http://192.168.1.3:3000/api';
-
-  // INSTRUCTIONS FOR CHANGING IP CONFIGURATION:
-  // 1. Run 'ipconfig' command in terminal to get current IP address
-  // 2. Update the IP address in the baseUrl getter above
-  // 3. For different environments:
-  //    - Development: Use local IP (e.g., 'http://192.168.1.3:3000/api')
-  //    - Staging: Use staging URL (e.g., 'https://api-staging.phoenixflagfootballleague.com/api')
-  //    - Production: Use production URL (e.g., 'https://api.phoenixflagfootballleague.com/api')
-  // 4. Restart the app after changing IP configuration
+  // For local development and testing on physical devices, uncomment:
+  // static String get baseUrl => 'http://192.168.1.3:3000/api';
 
   // Alternative: Use network IP for physical devices
   static String get networkBaseUrl => 'http://$networkIp:$serverPort$apiPath';

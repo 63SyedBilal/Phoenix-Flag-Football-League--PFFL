@@ -4,7 +4,6 @@ import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/core/utils/app_icons.dart';
 import 'package:pffl_managment/core/utils/svg_icons.dart';
-import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
 import 'package:provider/provider.dart';
@@ -15,17 +14,17 @@ class Step4InvuteTeamWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
-    
+
     // Fetch teams if empty and not loading when widget builds
     // Note: Step 4 widget is shown when currentStep == 3 (0-indexed)
-    if (viewModel.currentStep == 3 && 
-        viewModel.teams.isEmpty && 
+    if (viewModel.currentStep == 3 &&
+        viewModel.teams.isEmpty &&
         !viewModel.isLoadingTeams) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         viewModel.fetchTeams();
       });
     }
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -64,37 +63,37 @@ class _TeamList extends StatelessWidget {
     // Determine which squad to use (prefer 5v5, fallback to 7v7)
     final squad5v5 = team.squad5v5;
     final squad7v7 = team.squad7v7;
-    
+
     final players = (squad5v5 != null && squad5v5.isNotEmpty)
         ? squad5v5
         : (squad7v7 ?? []);
-    
+
     final playerCount = players.length;
     final maxPlayers = (squad5v5 != null && squad5v5.isNotEmpty) ? 5 : 7;
-    
+
     // Map players to playersList format
     final playersList = players.asMap().entries.map((entry) {
       final index = entry.key;
       final player = entry.value;
-      
+
       // Handle player data - could be Map or already parsed
       String firstName = '';
       String lastName = '';
-      
+
       if (player is Map) {
         firstName = player['firstName']?.toString() ?? '';
         lastName = player['lastName']?.toString() ?? '';
       }
-      
+
       final name = '$firstName $lastName'.trim();
-      
+
       return {
         'number': '${(index + 1).toString().padLeft(2, '0')}',
         'name': name.isEmpty ? 'Player ${index + 1}' : name,
         'position': 'N/A', // Position not available in team response
       };
     }).toList();
-    
+
     return {
       'id': team.id,
       'name': team.teamName,
@@ -109,7 +108,7 @@ class _TeamList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
-    
+
     // Show loading indicator
     if (viewModel.isLoadingTeams) {
       return const Center(
@@ -119,7 +118,7 @@ class _TeamList extends StatelessWidget {
         ),
       );
     }
-    
+
     // Show empty state
     final filteredTeams = viewModel.filteredTeams;
     if (filteredTeams.isEmpty) {
@@ -130,15 +129,12 @@ class _TeamList extends StatelessWidget {
             viewModel.teamSearchQuery.isNotEmpty
                 ? 'No teams found matching your search'
                 : 'No teams found',
-            style: const TextStyle(
-              color: AppColors.textDisabled,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: AppColors.textDisabled, fontSize: 14),
           ),
         ),
       );
     }
-    
+
     return Column(
       children: filteredTeams.map((team) {
         // Map team to UI format
@@ -185,7 +181,9 @@ class _TeamList extends StatelessWidget {
                         ),
                       ),
                       child: ClipOval(
-                        child: (team['image'] != null && team['image'].toString().isNotEmpty)
+                        child:
+                            (team['image'] != null &&
+                                team['image'].toString().isNotEmpty)
                             ? CachedNetworkImage(
                                 imageUrl: team['image'].toString(),
                                 width: 40,
@@ -243,10 +241,12 @@ class _TeamList extends StatelessWidget {
                       builder: (context, vm, child) {
                         final teamId = team['id'] as String;
                         final bool isEmailSent = vm.isTeamEmailSent(teamId);
-                        
+
                         // Icon color: Red when sent, Grey when not sent
-                        final iconColor = isEmailSent ? AppColors.buttonBackground : AppColors.borderDefault;
-                        
+                        final iconColor = isEmailSent
+                            ? AppColors.buttonBackground
+                            : AppColors.borderDefault;
+
                         return GestureDetector(
                           onTap: isEmailSent
                               ? null
@@ -257,7 +257,10 @@ class _TeamList extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             child: isEmailSent
-                                ? SvgIcons.emailAfterInvitation(size: 22, color: iconColor)
+                                ? SvgIcons.emailAfterInvitation(
+                                    size: 22,
+                                    color: iconColor,
+                                  )
                                 : Icon(
                                     AppIcons.emailOutlined,
                                     color: iconColor,
@@ -322,48 +325,60 @@ class _TeamList extends StatelessWidget {
                                         content: Wrap(
                                           spacing: 8,
                                           runSpacing: 8,
-                                          children: const [
+                                          children: [
                                             Chip(
                                               label: Text('Rusher'),
+                                              labelStyle: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: "Lato",
+                                              ),
                                               backgroundColor:
-                                                  AppColors.chipBackground,
+                                                  AppColors.primary,
                                             ),
                                             Chip(
                                               label: Text('Blocker'),
+                                              labelStyle: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: "Lato",
+                                              ),
                                               backgroundColor:
-                                                  AppColors.chipBackground,
+                                                  AppColors.primary,
                                             ),
                                             Chip(
                                               label: Text('Slot'),
+                                              labelStyle: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: "Lato",
+                                              ),
                                               backgroundColor:
-                                                  AppColors.chipBackground,
+                                                  AppColors.primary,
                                             ),
                                             Chip(
                                               label: Text('Center'),
+                                              labelStyle: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: "Lato",
+                                              ),
                                               backgroundColor:
-                                                  AppColors.chipBackground,
+                                                  AppColors.primary,
                                             ),
                                           ],
                                         ),
-                                        actions: [
-                                          CustomButton(
-                                            text: 'Close',
-                                            onPressed: () {
-                                              Navigator.of(ctx).pop();
-                                            },
-                                            backgroundColor: Colors.transparent,
-                                            textColor: AppColors.textBlack,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ],
                                       );
                                     },
                                   );
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
+                                    horizontal: 20,
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(

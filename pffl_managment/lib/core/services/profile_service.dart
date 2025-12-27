@@ -65,38 +65,54 @@ class ProfileService {
     try {
       print('📡 Fetching profile for user: $userId');
       final dio = await _getAuthenticatedDio();
-      print('📡 API URL: ${dio.options.baseUrl}${AppConfig.profileEndpoint}/$userId');
 
-      final response = await dio.get('${AppConfig.profileEndpoint}/$userId');
-
-      print('📡 Response status: ${response.statusCode}');
+      // Some backends do not support /profile/:id. We try path-style first,
+      // then fall back to query-param style.
+      final response = await dio.get(
+        '${AppConfig.profileEndpoint}/$userId',
+        options: Options(validateStatus: (_) => true),
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
-        if (data['data'] != null) {
-          print('✅ Profile found');
-          return data['data'] as Map<String, dynamic>;
+        if (data is Map && data['data'] is Map) {
+          return (data['data'] as Map).cast<String, dynamic>();
         }
-        print('⚠️ Profile data not found in response');
-        return null;
-      } else if (response.statusCode == 404) {
-        print('ℹ️ Profile not found for user: $userId');
-        return null;
-      } else {
-        print('❌ Failed to fetch profile: ${response.statusMessage}');
-        return null;
-      }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        print('ℹ️ Profile not found (404)');
+        if (data is Map && data['user'] is Map) {
+          return (data['user'] as Map).cast<String, dynamic>();
+        }
+        if (data is Map) {
+          return data.cast<String, dynamic>();
+        }
         return null;
       }
-      print('❌ Error fetching profile: ${e.message}');
-      print('❌ Error type: ${e.type}');
-      if (e.response != null) {
-        print('❌ Error status: ${e.response?.statusCode}');
-        print('❌ Error response: ${e.response?.data}');
+
+      if (response.statusCode == 404 || response.statusCode == 405) {
+        final fallback = await dio.get(
+          AppConfig.profileEndpoint,
+          queryParameters: {'userId': userId},
+          options: Options(validateStatus: (_) => true),
+        );
+
+        if (fallback.statusCode == 200) {
+          final body = fallback.data;
+          if (body is Map) {
+            final d = body['data'] ?? body['user'] ?? body;
+            if (d is Map) return d.cast<String, dynamic>();
+            if (d is List && d.isNotEmpty) {
+              final first = d.first;
+              if (first is Map) return first.cast<String, dynamic>();
+            }
+          }
+        }
+
+        // Profile not available for this user.
+        return null;
       }
+
+      print('❌ Failed to fetch profile: ${response.statusCode}');
+      return null;
+    } on DioException {
       // Return null instead of throwing to allow graceful handling
       return null;
     } catch (e) {

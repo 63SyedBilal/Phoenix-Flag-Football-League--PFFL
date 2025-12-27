@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/models/filter_model.dart';
-import 'package:pffl_managment/features/admin/matches/models/match_model.dart';
+import 'package:pffl_managment/features/admin/Games/models/match_model.dart';
 
 class MatchesProvider extends ChangeNotifier {
   String _selectedFilter = 'all';

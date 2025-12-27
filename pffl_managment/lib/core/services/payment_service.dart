@@ -162,7 +162,8 @@ class PaymentService {
         return {
           'success': false,
           'data': [],
-          'message': e.response?.data?['error'] ?? 'Failed to fetch user payments',
+          'message':
+              e.response?.data?['error'] ?? 'Failed to fetch user payments',
         };
       }
       return {
@@ -193,7 +194,8 @@ class PaymentService {
           return {
             'success': true,
             'data': data['data'] ?? [],
-            'message': data['message'] ?? 'Team payments retrieved successfully',
+            'message':
+                data['message'] ?? 'Team payments retrieved successfully',
           };
         }
         return {
@@ -215,7 +217,8 @@ class PaymentService {
         return {
           'success': false,
           'data': [],
-          'message': e.response?.data?['error'] ?? 'Failed to fetch team payments',
+          'message':
+              e.response?.data?['error'] ?? 'Failed to fetch team payments',
         };
       }
       return {
@@ -287,39 +290,102 @@ class PaymentService {
       final dio = await _getAuthenticatedDio();
 
       // Format data according to backend expectations
-      // Backend expects: cardNumber, expiryDate (MM/YY), cvv
+      final cardNumber =
+          (cardDetails['cardNumber'] ??
+                  cardDetails['number'] ??
+                  cardDetails['card_number'])
+              ?.toString()
+              .replaceAll(' ', '');
+      final expMonth = cardDetails['expMonth'] ?? cardDetails['exp_month'];
+      final expYear = cardDetails['expYear'] ?? cardDetails['exp_year'];
+      final cvc = cardDetails['cvv'] ?? cardDetails['cvc'];
+      final name = (cardDetails['cardholderName'] ?? cardDetails['name'])
+          ?.toString();
+      final zip =
+          (cardDetails['zipCode'] ??
+                  cardDetails['zip_code'] ??
+                  cardDetails['address_zip'])
+              ?.toString();
+
       final data = {
         'paymentId': paymentId,
         'paymentMethod': paymentMethod,
-        'cardNumber': cardDetails['number'] ?? cardDetails['cardNumber'],
-        'expiryDate': cardDetails['exp_date'] ?? cardDetails['expiryDate'] ?? cardDetails['expiry'],
-        'cvv': cardDetails['cvc'] ?? cardDetails['cvv'],
+        'payment_method': paymentMethod,
+        'method': paymentMethod,
+        'cardNumber': cardNumber,
+        'expiryDate':
+            cardDetails['exp_date'] ??
+            cardDetails['expiryDate'] ??
+            cardDetails['expiry'],
+        'cvv': cvc,
+
+        // Nested payload variants (some backends expect nested objects)
+        'cardDetails': cardDetails,
+        'card_details': cardDetails,
+        'card': {
+          if (cardNumber != null) 'number': cardNumber,
+          if (expMonth != null) 'exp_month': expMonth,
+          if (expYear != null) 'exp_year': expYear,
+          if (cvc != null) 'cvc': cvc,
+        },
+        'billing_details': {
+          if (name != null) 'name': name,
+          if (zip != null) 'address': {'postal_code': zip},
+        },
+
+        ...cardDetails,
       };
 
       print('🚀 Request Payload: $data');
       print('💳 Sending payment request to /payments/process');
       print('   - Payment ID: $paymentId');
       print('   - Payment Method: $paymentMethod');
-      print('   - Card Number: **** **** **** ${data['cardNumber']?.toString().substring(data['cardNumber'].toString().length - 4)}');
+      print(
+        '   - Card Number: **** **** **** ${data['cardNumber']?.toString().substring(data['cardNumber'].toString().length - 4)}',
+      );
 
       // Send as JSON data with detailed error logging
-      print('📡 Making authenticated request to: ${dio.options.baseUrl}/payments/process');
+      print(
+        '📡 Making authenticated request to: ${dio.options.baseUrl}/payments/process',
+      );
       print('🔐 Auth headers: ${dio.options.headers}');
 
-      final response = await dio.post('/payments/process', data: data);
+      final response = await dio.post(
+        '/payments/process',
+        data: data,
+        options: Options(validateStatus: (_) => true),
+      );
 
-      if (response.statusCode == 200) {
+      final body = response.data;
+      final status = response.statusCode ?? 0;
+
+      if (status == 200 || status == 201) {
         return {
           'success': true,
-          'message': response.data?['message'] ?? 'Payment successful',
-          'data': response.data?['data'],
+          'message': body is Map
+              ? (body['message'] ?? 'Payment successful')
+              : 'Payment successful',
+          'data': body is Map ? body['data'] : body,
         };
       } else {
         return {
           'success': false,
-          'message': response.data?['error'] ?? 'Payment failed',
+          'message': body is Map
+              ? (body['error'] ?? body['message'] ?? 'Payment failed')
+              : (body?.toString() ?? 'Payment failed'),
+          'errorType': body is Map ? body['errorType'] : null,
+          'statusCode': status,
         };
       }
+
+      return {
+        'success': false,
+        'statusCode': status,
+        'errorType': body is Map ? body['errorType'] : null,
+        'message': body is Map
+            ? (body['error'] ?? body['message'] ?? 'Payment failed')
+            : (body?.toString() ?? 'Payment failed'),
+      };
     } on DioException catch (e) {
       print('❌ Payment Error: ${e.message}');
       print('❌ Error type: ${e.type}');
@@ -332,7 +398,9 @@ class PaymentService {
         // Check if it's a server error (5xx)
         if (e.response!.statusCode! >= 500) {
           print('🚨 SERVER ERROR: Backend threw an exception!');
-          print('💡 This means the backend received the request but failed to process it with Stripe');
+          print(
+            '💡 This means the backend received the request but failed to process it with Stripe',
+          );
           print('🔧 Backend developer needs to check:');
           print('   - Stripe API keys');
           print('   - Stripe SDK version');
@@ -342,8 +410,15 @@ class PaymentService {
 
         return {
           'success': false,
-          'message': e.response?.data['error'] ?? 'Payment service error',
           'statusCode': e.response?.statusCode,
+          'errorType': e.response?.data is Map
+              ? e.response?.data['errorType']
+              : null,
+          'message': e.response?.data is Map
+              ? (e.response?.data['error'] ??
+                    e.response?.data['message'] ??
+                    'Payment service error')
+              : (e.response?.data?.toString() ?? 'Payment service error'),
         };
       }
       return {
