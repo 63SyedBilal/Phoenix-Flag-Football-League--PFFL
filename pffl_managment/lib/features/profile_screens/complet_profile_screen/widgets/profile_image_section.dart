@@ -32,12 +32,27 @@ class ProfileImageSection extends StatelessWidget {
                   ),
                   child: provider.profileImagePath != null
                       ? ClipOval(
-                          child: Image.file(
-                            File(provider.profileImagePath!),
-                            fit: BoxFit.cover,
-                            width: 100,
-                            height: 100,
-                          ),
+                          child:
+                              provider.profileImagePath!.toLowerCase().startsWith('http')
+                                  ? Image.network(
+                                      provider.profileImagePath!,
+                                      fit: BoxFit.cover,
+                                      width: 100,
+                                      height: 100,
+                                      errorBuilder: (context, error, stack) {
+                                        return const Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: Color(0xFFD1D5DB),
+                                        );
+                                      },
+                                    )
+                                  : Image.file(
+                                      File(provider.profileImagePath!),
+                                      fit: BoxFit.cover,
+                                      width: 100,
+                                      height: 100,
+                                    ),
                         )
                       : const Icon(
                           Icons.person,

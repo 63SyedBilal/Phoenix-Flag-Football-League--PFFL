@@ -57,6 +57,15 @@ dependencies:
   # File picker for image upload
   file_picker: ^8.0.3
   
+  # Camera/gallery picker for team logo
+  image_picker: ^1.1.2
+
+  # Image compression for uploads
+  flutter_image_compress: ^2.3.0
+
+  # Temp directory for compressed images
+  path_provider: ^2.1.4
+  
   # Color picker
   flutter_colorpicker: ^1.0.3
   

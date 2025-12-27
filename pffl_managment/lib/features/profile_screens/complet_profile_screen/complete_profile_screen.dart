@@ -4,6 +4,7 @@ import 'package:pffl_managment/features/profile_screens/complet_profile_screen/p
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/profile_image_section.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/position_dropdown.dart';
+import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/jersey_number_field.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/emergency_contact_fields.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/success_bottom_sheet.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/terms_checkbox.dart';
@@ -51,7 +52,7 @@ class _CompleteProfileView extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         children: [
                           const Text(
-                            'Complete Your Profile',
+                            'Complete Your s',
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w700,
@@ -72,6 +73,8 @@ class _CompleteProfileView extends StatelessWidget {
                           const SizedBox(height: 32),
                           const PositionDropdown(),
 
+                          const SizedBox(height: 20),
+                          const JerseyNumberField(),
                           const SizedBox(height: 20),
                           const EmergencyContactFields(),
                           const SizedBox(height: 24),

@@ -720,6 +720,23 @@ class LeagueModel {
       }
     }
 
+    double parseFee(dynamic v) {
+      if (v == null) return 0;
+      if (v is num) return v.toDouble();
+      if (v is String) {
+        final cleaned = v.replaceAll(RegExp(r'[^0-9\.]'), '');
+        return double.tryParse(cleaned) ?? 0;
+      }
+      return 0;
+    }
+
+    final feeValue =
+        json['perPlayerLeagueFee'] ??
+        json['perPlayerFee'] ??
+        json['leagueFee'] ??
+        json['fee'] ??
+        json['amount'];
+
     return LeagueModel(
       id: id,
       leagueName: json['leagueName'] ?? '',
@@ -727,7 +744,7 @@ class LeagueModel {
       startDate: parseDate(json['startDate']),
       endDate: parseDate(json['endDate']),
       minimumPlayers: json['minimumPlayers'] ?? 0,
-      perPlayerLeagueFee: (json['perPlayerLeagueFee'] ?? 0).toDouble(),
+      perPlayerLeagueFee: parseFee(feeValue),
       logo: json['logo'],
       status: json['status'] ?? 'pending',
       createdAt: json['createdAt'] != null
