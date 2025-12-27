@@ -113,9 +113,9 @@ export async function createTeam(req: NextRequest) {
 
     // Populate captain and squads
     const populatedTeam = await Team.findById((team as any)._id)
-      .populate("captain", "firstName lastName email role")
-      .populate("squad5v5", "firstName lastName email role")
-      .populate("squad7v7", "firstName lastName email role");
+      .populate("captain", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad5v5", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad7v7", "firstName lastName email role profileImage jerseyNumber position");
 
     return NextResponse.json(
       {
@@ -152,9 +152,9 @@ export async function getTeam(req: NextRequest, { params }: { params: { id: stri
     const { id } = params;
 
     const team = await Team.findById(id)
-      .populate("captain", "firstName lastName email role")
-      .populate("squad5v5", "firstName lastName email role")
-      .populate("squad7v7", "firstName lastName email role");
+      .populate("captain", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad5v5", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad7v7", "firstName lastName email role profileImage jerseyNumber position");
 
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
@@ -187,9 +187,9 @@ export async function getTeamByCode(req: NextRequest, { params }: { params: { co
     const { code } = params;
 
     const team = await Team.findOne({ enterCode: code })
-      .populate("captain", "firstName lastName email role")
-      .populate("squad5v5", "firstName lastName email role")
-      .populate("squad7v7", "firstName lastName email role");
+      .populate("captain", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad5v5", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad7v7", "firstName lastName email role profileImage jerseyNumber position");
 
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
@@ -259,9 +259,9 @@ export async function getAllTeams(req: NextRequest) {
     console.log("🔍 Fetching teams from database...");
 
     const teams = await Team.find(query)
-      .populate("captain", "firstName lastName email role")
-      .populate("squad5v5", "firstName lastName email role")
-      .populate("squad7v7", "firstName lastName email role")
+      .populate("captain", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad5v5", "firstName lastName email role profileImage jerseyNumber position")
+      .populate("squad7v7", "firstName lastName email role profileImage jerseyNumber position")
       .sort({ createdAt: -1 })
       .exec();
 
@@ -387,9 +387,9 @@ export async function updateTeam(req: NextRequest, { params }: { params: { id: s
     await team.save();
 
     // Populate before returning
-    await team.populate("captain", "firstName lastName email role");
-    await team.populate("squad5v5", "firstName lastName email role");
-    await team.populate("squad7v7", "firstName lastName email role");
+    await team.populate("captain", "firstName lastName email role profileImage jerseyNumber position");
+    await team.populate("squad5v5", "firstName lastName email role profileImage jerseyNumber position");
+    await team.populate("squad7v7", "firstName lastName email role profileImage jerseyNumber position");
 
     return NextResponse.json(
       {
@@ -495,9 +495,9 @@ export async function addPlayer(req: NextRequest, { params }: { params: { id: st
     squad.push(playerId);
     await team.save();
 
-    await team.populate("captain", "firstName lastName email role");
-    await team.populate("squad5v5", "firstName lastName email role");
-    await team.populate("squad7v7", "firstName lastName email role");
+    await team.populate("captain", "firstName lastName email role profileImage jerseyNumber position");
+    await team.populate("squad5v5", "firstName lastName email role profileImage jerseyNumber position");
+    await team.populate("squad7v7", "firstName lastName email role profileImage jerseyNumber position");
 
     return NextResponse.json(
       {
@@ -557,9 +557,9 @@ export async function removePlayer(req: NextRequest, { params }: { params: { id:
     
     await team.save();
 
-    await team.populate("captain", "firstName lastName email role");
-    await team.populate("squad5v5", "firstName lastName email role");
-    await team.populate("squad7v7", "firstName lastName email role");
+    await team.populate("captain", "firstName lastName email role profileImage jerseyNumber position");
+    await team.populate("squad5v5", "firstName lastName email role profileImage jerseyNumber position");
+    await team.populate("squad7v7", "firstName lastName email role profileImage jerseyNumber position");
 
     return NextResponse.json(
       {

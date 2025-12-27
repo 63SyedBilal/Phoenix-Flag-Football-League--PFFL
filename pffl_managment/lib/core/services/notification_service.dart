@@ -262,6 +262,7 @@ class NotificationService {
     required String message,
     String? leagueId,
     String? teamId,
+    String? matchId,
     String? senderId,
   }) async {
     try {
@@ -292,6 +293,11 @@ class NotificationService {
       if (teamId != null && teamId.isNotEmpty) {
         data['teamId'] = teamId;
         print('📡 [NOTIFICATION SERVICE] Including teamId: $teamId');
+      }
+
+      if (matchId != null && matchId.isNotEmpty) {
+        data['matchId'] = matchId;
+        print('📡 [NOTIFICATION SERVICE] Including matchId: $matchId');
       }
 
       final endpoint = '/notification/send';
@@ -392,87 +398,146 @@ class NotificationService {
     List<NotificationModel> allNotifications,
     String userRole,
   ) {
-    print('🎯 Filtering ${allNotifications.length} notifications for role: $userRole');
-    print('📋 All notification types: ${allNotifications.map((n) => n.type).toSet()}');
+    print(
+      '🎯 Filtering ${allNotifications.length} notifications for role: $userRole',
+    );
+    print(
+      '📋 All notification types: ${allNotifications.map((n) => n.type).toSet()}',
+    );
+
+    // Log GAME_ASSIGNED notifications specifically
+    final gameAssignedNotifications = allNotifications
+        .where((n) => n.type == 'GAME_ASSIGNED')
+        .toList();
+    print(
+      '🎮 Found ${gameAssignedNotifications.length} GAME_ASSIGNED notifications:',
+    );
+    for (final notif in gameAssignedNotifications) {
+      print('   - ID: ${notif.id}, Message: ${notif.message}');
+      print('   - Receiver: ${notif.receiver?.id ?? "null"}');
+      print('   - Status: ${notif.status}');
+    }
 
     // Convert role to lowercase for consistent comparison
     final normalizedRole = userRole.toLowerCase();
+    print('🎯 Normalized user role: "$normalizedRole"');
 
     final filteredNotifications = allNotifications.where((notification) {
       final type = notification.type.toLowerCase();
       final message = notification.displayMessage.toLowerCase();
 
+      bool shouldInclude = false;
       switch (normalizedRole) {
         case 'player':
           // Players see: team invites, payment reminders, league updates, general notifications
-          return type.contains('team_invite') ||
-                 type.contains('payment') ||
-                 type.contains('league') ||
-                 type.contains('general') ||
-                 message.contains('payment') ||
-                 message.contains('league') ||
-                 message.contains('team');
+          shouldInclude =
+              type.contains('team_invite') ||
+              type.contains('payment') ||
+              type.contains('league') ||
+              type.contains('general') ||
+              message.contains('payment') ||
+              message.contains('league') ||
+              message.contains('team');
+          break;
 
         case 'captain':
           // Captains see: team management, league updates, payment confirmations, admin messages
-          return type.contains('team') ||
-                 type.contains('league') ||
-                 type.contains('payment') ||
-                 type.contains('admin') ||
-                 type.contains('captain') ||
-                 message.contains('team') ||
-                 message.contains('captain');
+          shouldInclude =
+              type.contains('team') ||
+              type.contains('league') ||
+              type.contains('payment') ||
+              type.contains('admin') ||
+              type.contains('captain') ||
+              message.contains('team') ||
+              message.contains('captain');
+          break;
 
         case 'admin':
         case 'superadmin':
           // Admins see: all notifications, system alerts, user registrations, payment issues
-          return type.contains('admin') ||
-                 type.contains('system') ||
-                 type.contains('payment') ||
-                 type.contains('user') ||
-                 type.contains('registration') ||
-                 message.contains('admin') ||
-                 message.contains('system');
+          shouldInclude =
+              type.contains('admin') ||
+              type.contains('system') ||
+              type.contains('payment') ||
+              type.contains('user') ||
+              type.contains('registration') ||
+              message.contains('admin') ||
+              message.contains('system');
+          break;
 
         case 'referee':
-          // Referees see: match assignments, league updates, admin messages
-          return type.contains('match') ||
-                 type.contains('referee') ||
-                 type.contains('league') ||
-                 type.contains('admin') ||
-                 message.contains('match') ||
-                 message.contains('referee');
+          // Referees see: match assignments, league updates, admin messages, game assignments
+          shouldInclude =
+              type.contains('match') ||
+              type.contains('referee') ||
+              type.contains('league') ||
+              type.contains('admin') ||
+              type.contains('game_assigned') ||
+              type == 'GAME_ASSIGNED' ||
+              message.contains('match') ||
+              message.contains('referee') ||
+              message.contains('assigned');
+          break;
 
         case 'statkeeper':
         case 'stat-keeper':
-          // Stat keepers see: match stats, league updates, admin messages
-          return type.contains('stats') ||
-                 type.contains('match') ||
-                 type.contains('league') ||
-                 type.contains('admin') ||
-                 message.contains('stats') ||
-                 message.contains('match');
+          // Stat keepers see: match stats, league updates, admin messages, game assignments
+          shouldInclude =
+              type.contains('stats') ||
+              type.contains('match') ||
+              type.contains('league') ||
+              type.contains('admin') ||
+              type.contains('game_assigned') ||
+              type == 'GAME_ASSIGNED' ||
+              message.contains('stats') ||
+              message.contains('match') ||
+              message.contains('assigned');
+          break;
 
         case 'freeagent':
         case 'free-agent':
           // Free agents see: league invitations, payment reminders, team invites
-          return type.contains('league_invite') ||
-                 type.contains('team_invite') ||
-                 type.contains('payment') ||
-                 type.contains('free_agent') ||
-                 message.contains('league') ||
-                 message.contains('payment');
+          shouldInclude =
+              type.contains('league_invite') ||
+              type.contains('team_invite') ||
+              type.contains('payment') ||
+              type.contains('free_agent') ||
+              message.contains('league') ||
+              message.contains('payment');
+          break;
 
         default:
           // Unknown role - show general notifications only
-          return type.contains('general') ||
-                 type.contains('system') ||
-                 message.contains('general');
+          shouldInclude =
+              type.contains('general') ||
+              type.contains('system') ||
+              message.contains('general');
+          break;
       }
+
+      // Debug logging for GAME_ASSIGNED notifications
+      if (notification.type == 'GAME_ASSIGNED') {
+        print('🎮 GAME_ASSIGNED notification filtering:');
+        print('   - Notification ID: ${notification.id}');
+        print('   - User role: $normalizedRole');
+        print('   - Should include: $shouldInclude');
+        print('   - Type matches: ${type == 'game_assigned'}');
+        print(
+          '   - Message contains assigned: ${message.contains('assigned')}',
+        );
+        print('   - Receiver ID: ${notification.receiver?.id ?? "null"}');
+        print('   - Message: ${notification.message ?? "null"}');
+      }
+
+      return shouldInclude;
     }).toList();
 
-    print('✅ Filtered to ${filteredNotifications.length} notifications for role: $userRole');
-    print('📋 Filtered notification types: ${filteredNotifications.map((n) => n.type).toSet()}');
+    print(
+      '✅ Filtered to ${filteredNotifications.length} notifications for role: $userRole',
+    );
+    print(
+      '📋 Filtered notification types: ${filteredNotifications.map((n) => n.type).toSet()}',
+    );
 
     return filteredNotifications;
   }

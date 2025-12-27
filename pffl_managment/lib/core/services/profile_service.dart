@@ -36,7 +36,8 @@ class ProfileService {
         }
         throw Exception('Invalid response format: missing data field');
       } else {
-        final errorMessage = response.data['error'] ?? 'Failed to create profile';
+        final errorMessage =
+            response.data['error'] ?? 'Failed to create profile';
         print('❌ Failed to create profile: $errorMessage');
         throw Exception(errorMessage);
       }
@@ -59,15 +60,56 @@ class ProfileService {
   }
 
   /// Get profile by user ID
-  /// GET /api/profile/:userId
-  /// Returns profile data or null if not found
+  /// First tries to get user data (which has profileImage, jerseyNumber, position)
+  /// Falls back to profile collection if user data not available
+  /// Returns combined profile data or null if not found
   static Future<Map<String, dynamic>?> getProfile(String userId) async {
     try {
       print('📡 Fetching profile for user: $userId');
       final dio = await _getAuthenticatedDio();
 
-      // Some backends do not support /profile/:id. We try path-style first,
-      // then fall back to query-param style.
+      // First try to get user data which contains profileImage, jerseyNumber, position
+      try {
+        final userResponse = await dio.get(
+          '/api/user/$userId',
+          options: Options(validateStatus: (_) => true),
+        );
+
+        print('📡 User API response status: ${userResponse.statusCode}');
+
+        if (userResponse.statusCode == 200) {
+          final userData = userResponse.data;
+          print('📡 User API response data: $userData');
+
+          if (userData is Map && userData['data'] is Map) {
+            final user = (userData['data'] as Map).cast<String, dynamic>();
+            print(
+              '📡 ✅ Got user data with profileImage: ${user['profileImage']}',
+            );
+            print('📡 ✅ User jerseyNumber: ${user['jerseyNumber']}');
+            print('📡 ✅ User position: ${user['position']}');
+
+            // Return user data which includes profileImage, jerseyNumber, position
+            return {
+              'profileImage': user['profileImage'] ?? '',
+              'image':
+                  user['profileImage'] ??
+                  '', // Also set as 'image' for compatibility
+              'jerseyNumber': user['jerseyNumber'] ?? '',
+              'position': user['position'] ?? '',
+              'firstName': user['firstName'] ?? '',
+              'lastName': user['lastName'] ?? '',
+              'email': user['email'] ?? '',
+              'phone': user['phone'] ?? '',
+              'role': user['role'] ?? '',
+            };
+          }
+        }
+      } catch (e) {
+        print('⚠️ User API failed, trying profile API: $e');
+      }
+
+      // Fallback to profile collection
       final response = await dio.get(
         '${AppConfig.profileEndpoint}/$userId',
         options: Options(validateStatus: (_) => true),
@@ -76,7 +118,9 @@ class ProfileService {
       if (response.statusCode == 200) {
         final data = response.data;
         if (data is Map && data['data'] is Map) {
-          return (data['data'] as Map).cast<String, dynamic>();
+          final profileData = (data['data'] as Map).cast<String, dynamic>();
+          print('📡 ✅ Got profile data with image: ${profileData['image']}');
+          return profileData;
         }
         if (data is Map && data['user'] is Map) {
           return (data['user'] as Map).cast<String, dynamic>();
@@ -112,8 +156,8 @@ class ProfileService {
 
       print('❌ Failed to fetch profile: ${response.statusCode}');
       return null;
-    } on DioException {
-      // Return null instead of throwing to allow graceful handling
+    } on DioException catch (e) {
+      print('❌ DioException fetching profile: ${e.message}');
       return null;
     } catch (e) {
       print('❌ General error fetching profile: $e');
@@ -121,4 +165,3 @@ class ProfileService {
     }
   }
 }
-

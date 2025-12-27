@@ -225,6 +225,55 @@ class UserService {
       rethrow;
     }
   }
+
+  /// Check if jersey number is available
+  /// GET /api/user/check-jersey?number=10&excludeUserId=123
+  static Future<Map<String, dynamic>> checkJerseyNumber(
+    int jerseyNumber, {
+    String? excludeUserId,
+  }) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final queryParams = <String, dynamic>{'number': jerseyNumber.toString()};
+
+      if (excludeUserId != null && excludeUserId.isNotEmpty) {
+        queryParams['excludeUserId'] = excludeUserId;
+      }
+
+      final response = await dio.get(
+        '/user/check-jersey',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        return {
+          'available': false,
+          'message': 'Failed to check jersey number availability',
+        };
+      }
+    } on DioException catch (e) {
+      print('❌ Error checking jersey number: ${e.message}');
+      if (e.response != null) {
+        print('❌ Error response: ${e.response?.data}');
+        final errorData = e.response?.data;
+        if (errorData is Map && errorData['message'] != null) {
+          return {'available': false, 'message': errorData['message']};
+        }
+      }
+      return {
+        'available': false,
+        'message': 'Failed to check jersey number availability',
+      };
+    } catch (e) {
+      print('❌ General error checking jersey number: $e');
+      return {
+        'available': false,
+        'message': 'Failed to check jersey number availability',
+      };
+    }
+  }
 }
 
 /// User model for API responses
@@ -235,6 +284,9 @@ class UserModel {
   final String email;
   final String? phone;
   final String role;
+  final String? profileImage; // Add profile image field
+  final int? jerseyNumber; // Add jersey number field
+  final String? position; // Add position field
 
   UserModel({
     required this.id,
@@ -243,6 +295,9 @@ class UserModel {
     required this.email,
     this.phone,
     required this.role,
+    this.profileImage, // Add profile image parameter
+    this.jerseyNumber, // Add jersey number parameter
+    this.position, // Add position parameter
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -256,6 +311,9 @@ class UserModel {
       email: json['email'] ?? '',
       phone: json['phone'],
       role: json['role'] ?? '',
+      profileImage: json['profileImage'], // Parse profile image from JSON
+      jerseyNumber: json['jerseyNumber'], // Parse jersey number from JSON
+      position: json['position'], // Parse position from JSON
     );
   }
 

@@ -53,6 +53,11 @@ class UsersProvider extends ChangeNotifier {
   // All users data - fetched from backend
   List<UserModel> get allUsers => List.unmodifiable(_allUsers);
 
+  // Backend users data - direct access to user_service.UserModel
+  List<user_service.UserModel> _backendUsers = [];
+  List<user_service.UserModel> get backendUsers =>
+      List.unmodifiable(_backendUsers);
+
   // Filtered and searched users with enhanced search capabilities
   List<UserModel> get filteredUsers {
     var users = allUsers;
@@ -178,14 +183,54 @@ class UsersProvider extends ChangeNotifier {
 
     // Get profile image URL (null if not available)
     String? imageUrl;
-    if (profile != null &&
-        profile['image'] != null &&
-        profile['image'].toString().isNotEmpty) {
-      final img = profile['image'].toString();
+
+    // First, try to get image from the user data directly (profileImage field)
+    if (backendUser.profileImage != null &&
+        backendUser.profileImage!.isNotEmpty) {
+      final img = backendUser.profileImage!;
       // Only use valid http URLs
       if (img.startsWith('http')) {
         imageUrl = img;
+        debugPrint(
+          '✅ Found profile image for ${backendUser.email}: $img (from user data)',
+        );
       }
+    }
+
+    // If not found in user data, try profile data as fallback
+    if (imageUrl == null && profile != null) {
+      // Try different possible field names for profile image
+      final possibleImageFields = [
+        'profileImage',
+        'image',
+        'imageUrl',
+        'profile_image',
+      ];
+
+      for (final fieldName in possibleImageFields) {
+        if (profile[fieldName] != null &&
+            profile[fieldName].toString().isNotEmpty) {
+          final img = profile[fieldName].toString();
+          // Only use valid http URLs
+          if (img.startsWith('http')) {
+            imageUrl = img;
+            debugPrint(
+              '✅ Found profile image for ${backendUser.email}: $img (field: $fieldName from profile data)',
+            );
+            break;
+          }
+        }
+      }
+
+      if (imageUrl == null) {
+        debugPrint(
+          '⚠️ No valid profile image found for ${backendUser.email}. Profile data keys: ${profile.keys.toList()}',
+        );
+      }
+    } else if (imageUrl == null) {
+      debugPrint(
+        '⚠️ No profile image found for ${backendUser.email} (no user profileImage and no profile data)',
+      );
     }
 
     // Determine team name
@@ -256,6 +301,8 @@ class UsersProvider extends ChangeNotifier {
       team: teamName,
       status: status,
       imageUrl: imageUrl,
+      jerseyNumber: backendUser.jerseyNumber?.toString(), // Add jersey number
+      position: backendUser.position, // Add position
     );
   }
 
@@ -276,6 +323,9 @@ class UsersProvider extends ChangeNotifier {
       _profiles = results[1] as List<Map<String, dynamic>>;
       _teams = results[2] as List<TeamModel>;
       _leagues = results[3] as List<LeagueModel>;
+
+      // Store backend users for direct access
+      _backendUsers = backendUsers;
 
       debugPrint(
         '✅ Fetched ${backendUsers.length} users, ${_profiles.length} profiles, ${_teams.length} teams, ${_leagues.length} leagues',

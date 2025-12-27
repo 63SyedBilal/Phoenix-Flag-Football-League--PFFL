@@ -453,26 +453,56 @@ class AuthService {
     String newPassword,
   ) async {
     try {
+      print('🔐 [AUTH SERVICE] Starting password change...');
+      print(
+        '🔐 [AUTH SERVICE] Current password length: ${currentPassword.length}',
+      );
+      print('🔐 [AUTH SERVICE] New password length: ${newPassword.length}');
+
+      // Check if token exists
+      final token = await getToken();
+      print('🔐 [AUTH SERVICE] Token exists: ${token != null}');
+      if (token != null) {
+        print('🔐 [AUTH SERVICE] Token preview: ${token.substring(0, 20)}...');
+      }
+
       final dio = await getWorkingDio();
+      print('🔐 [AUTH SERVICE] Dio base URL: ${dio.options.baseUrl}');
+      print(
+        '🔐 [AUTH SERVICE] Making request to: ${dio.options.baseUrl}/user/change-password',
+      );
+
       final response = await dio.put(
         '/user/change-password',
         data: {'currentPassword': currentPassword, 'newPassword': newPassword},
       );
 
+      print('🔐 [AUTH SERVICE] Response status: ${response.statusCode}');
+      print('🔐 [AUTH SERVICE] Response data: ${response.data}');
+
       if (response.statusCode == 200) {
+        print('✅ [AUTH SERVICE] Password changed successfully');
         return true;
       } else {
         final error = response.data['error'] ?? 'Failed to change password';
+        print('❌ [AUTH SERVICE] Password change failed: $error');
         throw Exception(error);
       }
     } on DioException catch (e) {
-      print('Error changing password: ${e.message}');
+      print('❌ [AUTH SERVICE] DioException: ${e.message}');
+      print('❌ [AUTH SERVICE] Response status: ${e.response?.statusCode}');
+      print('❌ [AUTH SERVICE] Response data: ${e.response?.data}');
+
       if (e.response != null) {
-        final error = e.response?.data['error'] ?? 'Failed to change password';
+        final errorData = e.response?.data;
+        final error = errorData is Map
+            ? (errorData['error'] ?? 'Failed to change password').toString()
+            : 'Failed to change password';
         throw Exception(error);
       }
       throw Exception('Failed to connect to server');
     } catch (e) {
+      print('❌ [AUTH SERVICE] General error: $e');
       rethrow;
     }
   }

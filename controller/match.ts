@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import Match from "@/modules/match";
 import League from "@/modules/league";
 import Team from "@/modules/team";
+import User from "@/modules/user";
 import Notification from "@/modules/notification";
 import { verifyAccessToken } from "@/lib/jwt";
 
@@ -266,13 +267,77 @@ export async function createMatch(req: NextRequest) {
     const senderId = toObjectId(userId);
     const matchObjectId = (match as any)._id;
 
+    // 🎮 LOG GAME CREATION INFORMATION
+    console.log("🎮 [GAME CREATED] ================================");
+    console.log("🎮 [GAME CREATED] Game successfully created!");
+    console.log("🎮 [GAME CREATED] Match ID:", matchObjectId.toString());
+    console.log("🎮 [GAME CREATED] League ID:", leagueObjectId.toString());
+    console.log("🎮 [GAME CREATED] League Name:", league.leagueName);
+    console.log("🎮 [GAME CREATED] Team A ID:", teamAObjectId.toString());
+    console.log("🎮 [GAME CREATED] Team B ID:", teamBObjectId.toString());
+    console.log("🎮 [GAME CREATED] Format:", format);
+    console.log("🎮 [GAME CREATED] Game Date:", gameDateObj.toISOString());
+    console.log("🎮 [GAME CREATED] Game Time:", gameTime);
+    console.log("🎮 [GAME CREATED] Venue:", venue || "No venue specified");
+    console.log("🎮 [GAME CREATED] Round Name:", roundName || "Group Stage");
+    console.log("🎮 [GAME CREATED] Status:", status || "upcoming");
+    console.log("🎮 [GAME CREATED] Team A Initial Side:", teamASide);
+    console.log("🎮 [GAME CREATED] Team B Initial Side:", teamBSide);
+    console.log("🎮 [GAME CREATED] Created By (Admin ID):", createdByObjectId.toString());
+    
+    if (refereeId) {
+      console.log("🎮 [GAME CREATED] Referee Assigned:", refereeId);
+    } else {
+      console.log("🎮 [GAME CREATED] No referee assigned");
+    }
+    
+    if (statKeeperId) {
+      console.log("🎮 [GAME CREATED] Stat Keeper Assigned:", statKeeperId);
+    } else {
+      console.log("🎮 [GAME CREATED] No stat keeper assigned");
+    }
+    
+    console.log("🎮 [GAME CREATED] ================================");
+
     // Create notifications for assigned referee and stat keeper
     const notifications = [];
+    console.log("🔔 [MATCH CREATION] Starting notification creation process...");
+    console.log("🔔 [MATCH CREATION] RefereeId:", refereeId);
+    console.log("🔔 [MATCH CREATION] StatKeeperId:", statKeeperId);
+    console.log("🔔 [MATCH CREATION] MatchId:", matchObjectId.toString());
+    console.log("🔔 [MATCH CREATION] LeagueId:", leagueObjectId.toString());
+    console.log("🔔 [MATCH CREATION] SenderId:", senderId.toString());
 
     // Create notification for referee if assigned
     if (refereeId) {
       try {
         const refereeObjectId = toObjectId(refereeId);
+        console.log("🔔 [REFEREE NOTIFICATION] Creating notification for referee:", refereeObjectId.toString());
+        
+        // Verify the referee user exists
+        const refereeUser = await User.findById(refereeObjectId);
+        if (!refereeUser) {
+          console.error("❌ [REFEREE NOTIFICATION] Referee user not found in database:", refereeObjectId.toString());
+          console.error("❌ [REFEREE NOTIFICATION] This means the admin panel passed an invalid user ID");
+        } else {
+          console.log("✅ [REFEREE NOTIFICATION] Referee user verified:", {
+            id: refereeUser._id.toString(),
+            email: refereeUser.email,
+            role: refereeUser.role,
+            firstName: refereeUser.firstName,
+            lastName: refereeUser.lastName
+          });
+        }
+        
+        console.log("🔔 [REFEREE NOTIFICATION] Notification data:", {
+          sender: senderId.toString(),
+          receiver: refereeObjectId.toString(),
+          league: leagueObjectId.toString(),
+          match: matchObjectId.toString(),
+          type: "GAME_ASSIGNED",
+          status: "pending"
+        });
+        
         const refereeNotification = await Notification.create({
           sender: senderId,
           receiver: refereeObjectId,
@@ -281,22 +346,92 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
+        
         notifications.push(refereeNotification);
-        console.log("✅ Notification created for referee:", {
+        console.log("✅ [REFEREE NOTIFICATION] Notification created successfully:", {
           notificationId: refereeNotification._id.toString(),
           refereeId: refereeId,
-          matchId: matchObjectId.toString()
+          matchId: matchObjectId.toString(),
+          leagueId: leagueObjectId.toString(),
+          senderId: senderId.toString(),
+          type: "GAME_ASSIGNED",
+          status: "pending"
         });
+        
+        // Verify the notification was saved correctly
+        const savedNotification = await Notification.findById(refereeNotification._id);
+        if (savedNotification) {
+          console.log("✅ [REFEREE NOTIFICATION] Verification - notification exists in database:", {
+            id: savedNotification._id.toString(),
+            receiver: savedNotification.receiver.toString(),
+            match: savedNotification.match?.toString() || "null",
+            league: savedNotification.league?.toString() || "null",
+            type: savedNotification.type,
+            status: savedNotification.status
+          });
+        } else {
+          console.error("❌ [REFEREE NOTIFICATION] Verification failed - notification not found in database");
+        }
       } catch (error: any) {
-        console.error("❌ Error creating notification for referee:", error);
+        console.error("❌ [REFEREE NOTIFICATION] Error creating notification for referee:", error);
+        console.error("❌ [REFEREE NOTIFICATION] Error details:", {
+          refereeId,
+          matchId: matchObjectId.toString(),
+          leagueId: leagueObjectId.toString(),
+          senderId: senderId.toString(),
+          errorMessage: error.message,
+          errorStack: error.stack
+        });
         // Don't fail match creation if notification fails
       }
+    } else {
+      console.log("⏭️ [REFEREE NOTIFICATION] No referee assigned, skipping notification");
     }
 
     // Create notification for stat keeper if assigned
     if (statKeeperId) {
       try {
         const statKeeperObjectId = toObjectId(statKeeperId);
+        console.log("🔔 [STATKEEPER NOTIFICATION] Creating notification for stat keeper:", statKeeperObjectId.toString());
+        
+        // Verify the stat keeper user exists
+        const statKeeperUser = await User.findById(statKeeperObjectId);
+        if (!statKeeperUser) {
+          console.error("❌ [STATKEEPER NOTIFICATION] Stat keeper user not found in database:", statKeeperObjectId.toString());
+          console.error("❌ [STATKEEPER NOTIFICATION] This means the admin panel passed an invalid user ID");
+          
+          // Try to find the user by email to help debug
+          const statKeeperByEmail = await User.findOne({ email: "statkeeper1@gmail.com" });
+          if (statKeeperByEmail) {
+            console.log("🔍 [STATKEEPER NOTIFICATION] Found statkeeper1@gmail.com in database:", {
+              correctId: statKeeperByEmail._id.toString(),
+              passedId: statKeeperObjectId.toString(),
+              email: statKeeperByEmail.email,
+              role: statKeeperByEmail.role
+            });
+            console.error("❌ [STATKEEPER NOTIFICATION] ID MISMATCH! Admin panel passed wrong ID");
+          } else {
+            console.error("❌ [STATKEEPER NOTIFICATION] statkeeper1@gmail.com not found in database at all");
+          }
+        } else {
+          console.log("✅ [STATKEEPER NOTIFICATION] Stat keeper user verified:", {
+            id: statKeeperUser._id.toString(),
+            email: statKeeperUser.email,
+            role: statKeeperUser.role,
+            firstName: statKeeperUser.firstName,
+            lastName: statKeeperUser.lastName
+          });
+        }
+        
+        console.log("🔔 [STATKEEPER NOTIFICATION] Notification data:", {
+          sender: senderId.toString(),
+          receiver: statKeeperObjectId.toString(),
+          league: leagueObjectId.toString(),
+          match: matchObjectId.toString(),
+          type: "GAME_ASSIGNED",
+          status: "pending"
+        });
+        
         const statKeeperNotification = await Notification.create({
           sender: senderId,
           receiver: statKeeperObjectId,
@@ -305,17 +440,49 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
+        
         notifications.push(statKeeperNotification);
-        console.log("✅ Notification created for stat keeper:", {
+        console.log("✅ [STATKEEPER NOTIFICATION] Notification created successfully:", {
           notificationId: statKeeperNotification._id.toString(),
           statKeeperId: statKeeperId,
-          matchId: matchObjectId.toString()
+          matchId: matchObjectId.toString(),
+          leagueId: leagueObjectId.toString(),
+          senderId: senderId.toString(),
+          type: "GAME_ASSIGNED",
+          status: "pending"
         });
+        
+        // Verify the notification was saved correctly
+        const savedNotification = await Notification.findById(statKeeperNotification._id);
+        if (savedNotification) {
+          console.log("✅ [STATKEEPER NOTIFICATION] Verification - notification exists in database:", {
+            id: savedNotification._id.toString(),
+            receiver: savedNotification.receiver.toString(),
+            match: savedNotification.match?.toString() || "null",
+            league: savedNotification.league?.toString() || "null",
+            type: savedNotification.type,
+            status: savedNotification.status
+          });
+        } else {
+          console.error("❌ [STATKEEPER NOTIFICATION] Verification failed - notification not found in database");
+        }
       } catch (error: any) {
-        console.error("❌ Error creating notification for stat keeper:", error);
+        console.error("❌ [STATKEEPER NOTIFICATION] Error creating notification for stat keeper:", error);
+        console.error("❌ [STATKEEPER NOTIFICATION] Error details:", {
+          statKeeperId,
+          matchId: matchObjectId.toString(),
+          leagueId: leagueObjectId.toString(),
+          senderId: senderId.toString(),
+          errorMessage: error.message,
+          errorStack: error.stack
+        });
         // Don't fail match creation if notification fails
       }
+    } else {
+      console.log("⏭️ [STATKEEPER NOTIFICATION] No stat keeper assigned, skipping notification");
     }
+
+    console.log("🔔 [MATCH CREATION] Notification creation process completed. Created:", notifications.length, "notifications");
 
     // Populate references
     await match.populate("leagueId", "leagueName format startDate endDate");

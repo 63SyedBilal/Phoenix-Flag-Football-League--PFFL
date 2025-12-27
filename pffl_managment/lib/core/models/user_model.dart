@@ -8,6 +8,8 @@ class UserModel {
   final String team;
   final UserStatus status;
   final String? imageUrl;
+  final String? jerseyNumber;
+  final String? position;
 
   UserModel({
     required this.id,
@@ -17,11 +19,23 @@ class UserModel {
     required this.team,
     required this.status,
     this.imageUrl,
+    this.jerseyNumber,
+    this.position,
   });
 
   /// Check if user has a valid profile image URL
   bool get hasProfileImage =>
       imageUrl != null && imageUrl!.isNotEmpty && imageUrl!.startsWith('http');
+
+  /// Get list of positions (split by comma if multiple)
+  List<String> get positions {
+    if (position == null || position!.isEmpty) return [];
+    return position!
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+  }
 }
 
 enum UserRole { player, captain, referee, statKeeper }

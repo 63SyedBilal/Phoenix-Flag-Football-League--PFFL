@@ -145,17 +145,43 @@ class PlayerPaymentHistoryProvider extends ChangeNotifier {
       if (paymentsResponse['success'] == true) {
         final paymentsData = paymentsResponse['data'] as List<dynamic>? ?? [];
 
-        _payments = paymentsData
-            .map((payment) => PaymentHistoryItem.fromJson(payment as Map<String, dynamic>))
+        // Parse all payments first
+        final allPayments = paymentsData
+            .map(
+              (payment) =>
+                  PaymentHistoryItem.fromJson(payment as Map<String, dynamic>),
+            )
+            .toList();
+
+        // Filter to show only PAID payments (jo player ne actually pay ki hain)
+        _payments = allPayments
+            .where((payment) => payment.status.toLowerCase() == 'paid')
             .toList();
 
         // Sort by creation date (newest first)
         _payments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-        debugPrint('✅ [PAYMENT HISTORY] Loaded ${_payments.length} payments');
+        debugPrint(
+          '✅ [PAYMENT HISTORY] Total payments found: ${allPayments.length}',
+        );
+        debugPrint(
+          '✅ [PAYMENT HISTORY] Paid payments loaded: ${_payments.length}',
+        );
+
+        // Log payment statuses for debugging
+        for (var payment in allPayments) {
+          debugPrint(
+            '   - Payment ${payment.id.substring(payment.id.length - 6)}: ${payment.status} - ${payment.leagueName}',
+          );
+        }
       } else {
-        _errorMessage = paymentsResponse['message'] ?? paymentsResponse['error'] ?? 'Failed to load payment history';
-        debugPrint('❌ [PAYMENT HISTORY] Failed to load payments: $_errorMessage');
+        _errorMessage =
+            paymentsResponse['message'] ??
+            paymentsResponse['error'] ??
+            'Failed to load payment history';
+        debugPrint(
+          '❌ [PAYMENT HISTORY] Failed to load payments: $_errorMessage',
+        );
       }
     } catch (e) {
       _errorMessage = 'Failed to load payment history: ${e.toString()}';
@@ -179,14 +205,19 @@ class PlayerPaymentHistoryProvider extends ChangeNotifier {
 
   /// Get payments by status
   List<PaymentHistoryItem> getPaymentsByStatus(String status) {
-    return _payments.where((payment) => payment.status.toLowerCase() == status.toLowerCase()).toList();
+    return _payments
+        .where(
+          (payment) => payment.status.toLowerCase() == status.toLowerCase(),
+        )
+        .toList();
   }
 
   /// Get paid payments
   List<PaymentHistoryItem> get paidPayments => getPaymentsByStatus('paid');
 
   /// Get pending payments
-  List<PaymentHistoryItem> get pendingPayments => getPaymentsByStatus('pending');
+  List<PaymentHistoryItem> get pendingPayments =>
+      getPaymentsByStatus('pending');
 
   /// Get failed payments
   List<PaymentHistoryItem> get failedPayments => getPaymentsByStatus('failed');
@@ -198,7 +229,11 @@ class PlayerPaymentHistoryProvider extends ChangeNotifier {
 
   /// Get payment count by status
   int getPaymentCount(String status) {
-    return _payments.where((payment) => payment.status.toLowerCase() == status.toLowerCase()).length;
+    return _payments
+        .where(
+          (payment) => payment.status.toLowerCase() == status.toLowerCase(),
+        )
+        .length;
   }
 
   /// Check if user has any paid leagues

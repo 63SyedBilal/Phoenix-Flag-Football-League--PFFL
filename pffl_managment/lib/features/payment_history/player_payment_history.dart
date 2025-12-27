@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 class PlayerPaymentHistory extends StatefulWidget {
@@ -18,7 +19,10 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
     super.initState();
     // Load payment history when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PlayerPaymentHistoryProvider>().loadPaymentHistory();
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.userId.isNotEmpty) {
+        context.read<PlayerPaymentHistoryProvider>().loadPaymentHistory();
+      }
     });
   }
 
@@ -31,9 +35,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
         child: Consumer<PlayerPaymentHistoryProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (provider.errorMessage != null) {
@@ -54,9 +56,9 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                     const SizedBox(height: 8),
                     Text(
                       provider.errorMessage!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -74,22 +76,18 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.payment,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
+                    const Icon(Icons.payment, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
                     Text(
-                      'No Payment History',
+                      'No Paid Leagues',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'You haven\'t made any league payments yet.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      'You haven\'t paid for any leagues yet.\nComplete your league payments to see them here.',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -104,7 +102,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       const Text(
-                        'Payment History',
+                        'Paid Leagues History',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
@@ -114,7 +112,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Track all your league payments and receipts.',
+                        'View receipts and details for leagues you\'ve paid for.',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -190,16 +188,28 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F173E),
+                    color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green.withOpacity(0.3)),
                   ),
-                  child: Text(
-                    payment.formattedDate,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 14,
+                        color: Colors.green[700],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'PAID',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -400,7 +410,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
               ),
             ],
             const SizedBox(height: 16),
-            _buildViewReceiptButton(),
+            _buildViewReceiptButton(payment),
           ],
         ),
       ),
@@ -477,7 +487,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
     );
   }
 
-  Widget _buildViewReceiptButton() {
+  Widget _buildViewReceiptButton(PaymentHistoryItem payment) {
     return Container(
       width: double.infinity,
       height: 48,
@@ -489,7 +499,15 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {},
+          onTap: () {
+            // Navigate to receipt detail screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaymentReceiptScreen(payment: payment),
+              ),
+            );
+          },
           child: const Center(
             child: Text(
               'View Receipt',
@@ -558,10 +576,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
 class PaymentReceiptScreen extends StatefulWidget {
   final PaymentHistoryItem payment;
 
-  const PaymentReceiptScreen({
-    super.key,
-    required this.payment,
-  });
+  const PaymentReceiptScreen({super.key, required this.payment});
 
   @override
   State<PaymentReceiptScreen> createState() => _PaymentReceiptScreenState();
@@ -583,7 +598,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   const Text(
-                    'Payment Receipt',
+                    'League Payment Receipt',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
@@ -592,7 +607,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Transaction details for your league payment.',
+                    'Receipt for your paid league registration.',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -609,13 +624,19 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildDetailRow('Transaction ID:', widget.payment.transactionId ?? 'N/A'),
+                  _buildDetailRow(
+                    'Transaction ID:',
+                    widget.payment.transactionId ?? 'N/A',
+                  ),
                   const SizedBox(height: 12),
                   _buildDetailRow('Date:', widget.payment.formattedDate),
                   const SizedBox(height: 12),
                   _buildDetailRow('League:', widget.payment.leagueName),
                   const SizedBox(height: 12),
-                  _buildDetailRow('Total Amount:', '\$${widget.payment.amount}'),
+                  _buildDetailRow(
+                    'Total Amount:',
+                    '\$${widget.payment.amount}',
+                  ),
                   const SizedBox(height: 12),
                   _buildDetailRow('Method:', widget.payment.paymentMethod),
                   const SizedBox(height: 12),
@@ -892,7 +913,43 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {},
+          onTap: () async {
+            // Show loading indicator
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            );
+
+            try {
+              // Generate and download receipt
+              await _downloadReceipt();
+
+              // Close loading dialog
+              if (mounted) Navigator.pop(context);
+
+              // Show success message
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Receipt downloaded successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } catch (e) {
+              // Close loading dialog
+              if (mounted) Navigator.pop(context);
+
+              // Show error message
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to download receipt: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
           child: const Center(
             child: Text(
               'Download Receipt',
@@ -906,6 +963,20 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _downloadReceipt() async {
+    // For now, just simulate download
+    // In a real implementation, you would:
+    // 1. Generate PDF using pdf package
+    // 2. Save to device storage
+    // 3. Open with system PDF viewer
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    // TODO: Implement actual PDF generation and download
+    // This would require adding pdf and path_provider packages
+    print('📄 Receipt download simulated for payment: ${widget.payment.id}');
   }
 
   Widget _buildBottomNav() {

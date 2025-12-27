@@ -70,7 +70,10 @@ export async function getAllNotifications(req: NextRequest) {
         type: n.type,
         status: n.status,
         receiver: n.receiver?.toString(),
-        receiverType: typeof n.receiver
+        receiverType: typeof n.receiver,
+        match: n.match?.toString() || "null",
+        league: n.league?.toString() || "null",
+        createdAt: n.createdAt
       })));
     } else {
       // Try a different query to see if notifications exist with string ID
@@ -78,14 +81,30 @@ export async function getAllNotifications(req: NextRequest) {
         receiver: decoded.userId.toString()
       }).lean();
       console.log(`📊 Notifications with receiver as string ID: ${receiverStringQuery.length}`);
+      
+      // Also check for GAME_ASSIGNED notifications specifically
+      const gameAssignedNotifications = await Notification.find({
+        type: "GAME_ASSIGNED"
+      }).lean();
+      console.log(`📊 Total GAME_ASSIGNED notifications in system: ${gameAssignedNotifications.length}`);
+      if (gameAssignedNotifications.length > 0) {
+        console.log("📊 GAME_ASSIGNED notifications details:", gameAssignedNotifications.map((n: any) => ({
+          id: n._id.toString(),
+          receiver: n.receiver?.toString(),
+          match: n.match?.toString() || "null",
+          league: n.league?.toString() || "null",
+          status: n.status,
+          createdAt: n.createdAt
+        })));
+      }
     }
 
     const notifications = await Notification.find({
       $or: [
         { receiver: receiverObjectId },
         { receiver: receiverString }
-      ],
-      status: "pending"
+      ]
+      // Remove status filter to show ALL notifications (pending, accepted, rejected)
     })
       .populate({
         path: "team",
@@ -99,7 +118,21 @@ export async function getAllNotifications(req: NextRequest) {
       })
       .populate({
         path: "match",
-        select: "teamAName teamBName gameDate gameTime venue status",
+        select: "teamAName teamBName gameDate gameTime venue status format leagueId teamA teamB",
+        populate: [
+          {
+            path: "leagueId",
+            select: "leagueName"
+          },
+          {
+            path: "teamA.teamId",
+            select: "teamName enterCode"
+          },
+          {
+            path: "teamB.teamId", 
+            select: "teamName enterCode"
+          }
+        ],
         model: "Match"
       })
       .populate({
@@ -248,7 +281,6 @@ export async function getAllNotifications(req: NextRequest) {
         return false;
       }
 
-      // For league invites, league must exist
       // For league invites, league must exist (except GAME_ASSIGNED which needs match)
       if (n.type.includes("LEAGUE") && n.type !== "GAME_ASSIGNED" && !n.league) {
         console.warn("Filtering out league notification with null league:", {
@@ -258,12 +290,34 @@ export async function getAllNotifications(req: NextRequest) {
         return false;
       }
       // For GAME_ASSIGNED, match should exist (league is optional but recommended)
-      if (n.type === "GAME_ASSIGNED" && !n.match) {
-        console.warn("Filtering out GAME_ASSIGNED notification with null match:", {
-          id: n._id,
-          type: n.type
-        });
-        return false;
+      if (n.type === "GAME_ASSIGNED") {
+        if (!n.match) {
+          console.warn("Filtering out GAME_ASSIGNED notification with null match:", {
+            id: n._id,
+            type: n.type,
+            matchId: n.match?.toString() || "null",
+            leagueId: n.league?.toString() || "null"
+          });
+          return false;
+        }
+        
+        // Check if match is populated or just an ObjectId
+        const isMatchPopulated = n.match && typeof n.match === 'object' && 
+          (n.match.teamAName || n.match.teamBName || n.match.gameDate);
+        
+        if (!isMatchPopulated) {
+          console.warn("GAME_ASSIGNED notification has unpopulated match reference:", {
+            id: n._id,
+            matchId: n.match?.toString() || "null",
+            matchType: typeof n.match,
+            hasTeamAName: !!(n.match && n.match.teamAName),
+            hasTeamBName: !!(n.match && n.match.teamBName)
+          });
+          // Don't filter out - the match exists but just isn't populated
+          // This is acceptable for GAME_ASSIGNED notifications
+        }
+        
+        console.log(`✅ Notification ${n._id} (GAME_ASSIGNED) passed match validation`);
       }
       // For team invites, team must exist
       if (n.type.includes("LEAGUE")) {

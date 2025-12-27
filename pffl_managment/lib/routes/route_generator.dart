@@ -56,14 +56,10 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const CompleteProfileScreen());
 
       case AppRoutes.completeCaptainProfile:
-        return MaterialPageRoute(
-          builder: (_) => const CompleteProfileScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const CompleteProfileScreen());
 
       case AppRoutes.changePassword:
-        return MaterialPageRoute(
-          builder: (_) => const ChangePasswordScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const ChangePasswordScreen());
 
       case AppRoutes.playerDashboard:
         return MaterialPageRoute(builder: (_) => const PlayerDashboard());
