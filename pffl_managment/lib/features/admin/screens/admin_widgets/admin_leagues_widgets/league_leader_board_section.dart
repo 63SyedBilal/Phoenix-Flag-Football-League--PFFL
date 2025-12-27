@@ -17,7 +17,12 @@ class LeagueLeaderboardSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('Leaderboard', style: Theme.of(context).textTheme.bodyLarge),
+              Text('Leaderboard', style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Lato',
+                fontSize: 20,
+                color: Color(0xFF111827),
+              )),
               const Spacer(),
               Text(
                 'View Leaderboard',
@@ -66,9 +71,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'Rank',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                             ),
                           ),
@@ -77,9 +83,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'Team',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                             ),
                           ),
@@ -89,9 +96,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'W',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -102,9 +110,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'D',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -115,9 +124,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'L',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -128,9 +138,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'PD',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                               fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -141,9 +152,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'PS',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -154,9 +166,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'PA',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -167,9 +180,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                             child: Text(
                               'PTA',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6B7280),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -222,9 +236,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                                     child: Text(
                                       standing.teamName,
                                       style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF111827),
+                                        fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -238,9 +253,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               child: Text(
                                 standing.wins.toString(),
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
+                                 fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -251,9 +267,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               child: Text(
                                 standing.draws.toString(),
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
+                                  fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -264,9 +281,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               child: Text(
                                 standing.losses.toString(),
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
+                                  fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -277,9 +295,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               child: Text(
                                 '0',
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
+                                  fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -290,9 +309,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               child: Text(
                                 '0',
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
+                                  fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -303,9 +323,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               child: Text(
                                 '0',
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
+                                  fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -316,9 +337,10 @@ class LeagueLeaderboardSection extends StatelessWidget {
                               child: Text(
                                 '0',
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
+                                  fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF000000),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
