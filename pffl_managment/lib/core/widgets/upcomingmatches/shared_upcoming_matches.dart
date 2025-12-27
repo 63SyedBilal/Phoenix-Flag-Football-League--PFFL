@@ -33,31 +33,12 @@ class SharedUpcomingMatches extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
+                fontFamily: 'Lato',
                 color: Colors.black,
               ),
             ),
-            if (onViewMore != null)
-              TextButton(
-                onPressed: onViewMore,
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 0),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      'View more',
-                      style: TextStyle(
-                        color: Color(0xFF0F173E),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF0F173E),),
-                  ],
-                ),
-              ),
+
+
           ],
         ),
         const SizedBox(height: 16),
