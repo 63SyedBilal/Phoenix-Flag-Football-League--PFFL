@@ -377,15 +377,6 @@ class PaymentService {
           'statusCode': status,
         };
       }
-
-      return {
-        'success': false,
-        'statusCode': status,
-        'errorType': body is Map ? body['errorType'] : null,
-        'message': body is Map
-            ? (body['error'] ?? body['message'] ?? 'Payment failed')
-            : (body?.toString() ?? 'Payment failed'),
-      };
     } on DioException catch (e) {
       print('❌ Payment Error: ${e.message}');
       print('❌ Error type: ${e.type}');

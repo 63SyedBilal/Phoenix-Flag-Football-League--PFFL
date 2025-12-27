@@ -1,11 +1,13 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
+import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/config/app_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
 
 /// Provider for Complete Profile screen state and business logic
 /// Profile data is stored directly in the User model (no separate Profile collection)
@@ -280,10 +282,40 @@ class CompleteProfileProvider extends ChangeNotifier {
           'jerseyNumber',
           'Jersey number must be between 1 and 99',
         );
+      } else {
+        // Check if jersey number is unique (debounced)
+        _checkJerseyNumberUniqueness(jerseyNum);
       }
     }
 
     notifyListeners();
+  }
+
+  Timer? _jerseyCheckTimer;
+
+  /// Check jersey number uniqueness with debouncing
+  void _checkJerseyNumberUniqueness(int jerseyNumber) {
+    // Cancel previous timer
+    _jerseyCheckTimer?.cancel();
+
+    // Set new timer to debounce the API call
+    _jerseyCheckTimer = Timer(const Duration(milliseconds: 800), () async {
+      try {
+        final userId = _userPrefs.userId;
+        final result = await UserService.checkJerseyNumber(
+          jerseyNumber,
+          excludeUserId: userId,
+        );
+
+        if (!result['available']) {
+          _setFieldError('jerseyNumber', result['message']);
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('Error checking jersey number uniqueness: $e');
+        // Don't show error to user for API failures
+      }
+    });
   }
 
   /// Set emergency contact name and validate
@@ -491,6 +523,13 @@ class CompleteProfileProvider extends ChangeNotifier {
     String positionString,
     String? imageUrl,
   ) async {
+    // Get SharedPreferences instance
+    final prefs = await SharedPreferences.getInstance();
+
+    // CRITICAL: Get and preserve current role and user ID BEFORE any updates
+    final currentRole = prefs.getString('userRole');
+    final currentUserId = prefs.getString('userId');
+
     // Update local cache
     await _userPrefs.setPosition(positionString);
     await _userPrefs.setEmergencyContactName(_emergencyContactName);
@@ -498,6 +537,17 @@ class CompleteProfileProvider extends ChangeNotifier {
     if (_jerseyNumber != null) await _userPrefs.setJerseyNumber(_jerseyNumber);
     if (imageUrl != null) await _userPrefs.setProfileImage(imageUrl);
     await _userPrefs.setProfileComplete(true);
+
+    // CRITICAL: Restore user role and ID after profile updates
+    // This prevents unwanted navigation to different dashboards after profile updates
+    if (currentRole != null) {
+      await prefs.setString('userRole', currentRole);
+      print('✅ [COMPLETE PROFILE] User role preserved: $currentRole');
+    }
+    if (currentUserId != null) {
+      await prefs.setString('userId', currentUserId);
+      print('✅ [COMPLETE PROFILE] User ID preserved: $currentUserId');
+    }
 
     // Show success sheet
     _showSuccessSheet = true;
@@ -549,6 +599,7 @@ class CompleteProfileProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _jerseyCheckTimer?.cancel();
     super.dispose();
   }
 }

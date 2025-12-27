@@ -43,15 +43,15 @@ class UserAvatarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('🖼️ [AVATAR DEBUG] Building avatar with imageUrl: "$imageUrl"');
+    print('🖼️ [AVATAR DEBUG] _hasValidImage: $_hasValidImage');
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(
-          color: borderColor,
-          width: borderWidth,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
         color: backgroundColor,
       ),
       child: ClipOval(
@@ -61,8 +61,16 @@ class UserAvatarWidget extends StatelessWidget {
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => _buildLoadingIndicator(),
-                errorWidget: (context, url, error) => _buildPlaceholderIcon(),
+                placeholder: (context, url) {
+                  print('🖼️ [AVATAR DEBUG] Loading image: $url');
+                  return _buildLoadingIndicator();
+                },
+                errorWidget: (context, url, error) {
+                  print(
+                    '🖼️ [AVATAR DEBUG] ❌ Error loading image: $url, error: $error',
+                  );
+                  return _buildPlaceholderIcon();
+                },
               )
             : _buildPlaceholderIcon(),
       ),
@@ -155,10 +163,7 @@ class UserAvatarWithInitials extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(
-          color: borderColor,
-          width: borderWidth,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
         color: backgroundColor,
       ),
       child: ClipOval(
@@ -194,4 +199,3 @@ class UserAvatarWithInitials extends StatelessWidget {
     );
   }
 }
-

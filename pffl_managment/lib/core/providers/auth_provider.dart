@@ -247,11 +247,11 @@ class AuthProvider extends ChangeNotifier {
           e.type == DioExceptionType.receiveTimeout) {
         // Timeout - show error message
         _loginPasswordError =
-            'Connection timeout. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
+            'Connection timeout. Please check:\n1. Backend server is running at http://192.168.18.32:3000\n2. Both devices are on same WiFi network\n3. Try restarting the backend server';
       } else if (e.type == DioExceptionType.connectionError) {
         // Connection error - show error message
         _loginPasswordError =
-            'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.1.13:3000\n2. Both devices are on same WiFi network\n3. Firewall allows port 3000';
+            'Cannot connect to server. Please check:\n1. Backend server is running at http://192.168.18.32:3000\n2. Both devices are on same WiFi network\n3. Firewall allows port 3000';
       } else {
         // Other network errors - show generic error
         _loginPasswordError =
@@ -330,11 +330,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Refresh user data from backend after payment or other updates
+  /// IMPORTANT: This method preserves the user's original role to prevent unwanted navigation
   Future<void> refreshUserData() async {
     if (_userData == null) return;
 
     try {
       debugPrint('🔄 [AUTH PROVIDER] Refreshing user data...');
+      debugPrint('🔄 [AUTH PROVIDER] Current role: ${_userData!.role}');
 
       final dio = await AuthService.getWorkingDio();
       final response = await dio.get('/user/${_userData!.id}');
@@ -342,7 +344,10 @@ class AuthProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final userDataResponse = response.data['data'] ?? response.data;
         if (userDataResponse != null) {
-          // Update user data while preserving token
+          // CRITICAL: Always preserve the original role to prevent unwanted navigation
+          final originalRole = _userData!.role;
+
+          // Update user data while preserving token and role
           final updatedUserData = UserData(
             id:
                 userDataResponse['_id'] ??
@@ -352,7 +357,7 @@ class AuthProvider extends ChangeNotifier {
             lastName: userDataResponse['lastName'] ?? _userData!.lastName,
             email: userDataResponse['email'] ?? _userData!.email,
             phone: userDataResponse['phone'] ?? _userData!.phone,
-            role: _userData!.role, // Keep existing role
+            role: originalRole, // ALWAYS keep the original role
             needsProfileCompletion:
                 userDataResponse['needsProfileCompletion'] ??
                 _userData!.needsProfileCompletion,
@@ -365,7 +370,7 @@ class AuthProvider extends ChangeNotifier {
 
           _userData = updatedUserData;
 
-          // Also update individual fields for consistency
+          // Also update individual fields for consistency but preserve role
           _userName =
               updatedUserData.firstName != null &&
                   updatedUserData.lastName != null
@@ -375,13 +380,77 @@ class AuthProvider extends ChangeNotifier {
           _needsProfileForm = updatedUserData.needsProfileForm;
           _needsTeamForm = updatedUserData.needsTeamForm;
 
+          // Ensure role is not changed in preferences
+          await _userPreferenceProvider.setUserRole(originalRole);
+
           debugPrint('✅ [AUTH PROVIDER] User data refreshed successfully');
+          debugPrint('✅ [AUTH PROVIDER] Role preserved: $originalRole');
           notifyListeners();
         }
       }
     } catch (e) {
       debugPrint('⚠️ [AUTH PROVIDER] Failed to refresh user data: $e');
       // Don't throw error, just log it
+    }
+  }
+
+  /// Update user profile data without changing role
+  /// This method is specifically for profile updates that should not affect user role
+  Future<void> updateProfileData({
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
+    String? imageUrl,
+  }) async {
+    if (_userData == null) return;
+
+    try {
+      debugPrint('🔄 [AUTH PROVIDER] Updating profile data...');
+      debugPrint('🔄 [AUTH PROVIDER] Preserving role: ${_userData!.role}');
+
+      // Update user data while preserving role and other critical fields
+      final updatedUserData = UserData(
+        id: _userData!.id,
+        firstName: firstName ?? _userData!.firstName,
+        lastName: lastName ?? _userData!.lastName,
+        email: email ?? _userData!.email,
+        phone: phone ?? _userData!.phone,
+        role: _userData!.role, // NEVER change role during profile updates
+        needsProfileCompletion: _userData!.needsProfileCompletion,
+        needsProfileForm: _userData!.needsProfileForm,
+        needsTeamForm: _userData!.needsTeamForm,
+      );
+
+      _userData = updatedUserData;
+
+      // Update individual fields for consistency
+      _userName =
+          updatedUserData.firstName != null && updatedUserData.lastName != null
+          ? '${updatedUserData.firstName} ${updatedUserData.lastName}'.trim()
+          : updatedUserData.email;
+
+      if (email != null) {
+        _userEmail = email;
+        await _userPreferenceProvider.setUserEmail(email);
+      }
+
+      // Update preferences but preserve role
+      await _userPreferenceProvider.setUserName(_userName);
+      await _userPreferenceProvider.setFirstName(updatedUserData.firstName);
+      await _userPreferenceProvider.setLastName(updatedUserData.lastName);
+      if (phone != null) {
+        await _userPreferenceProvider.setUserPhone(phone);
+      }
+      if (imageUrl != null) {
+        await _userPreferenceProvider.setProfileImage(imageUrl);
+      }
+
+      debugPrint('✅ [AUTH PROVIDER] Profile data updated successfully');
+      debugPrint('✅ [AUTH PROVIDER] Role preserved: ${_userData!.role}');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('⚠️ [AUTH PROVIDER] Failed to update profile data: $e');
     }
   }
 }

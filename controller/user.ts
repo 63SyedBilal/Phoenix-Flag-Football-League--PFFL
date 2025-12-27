@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { User } from "@/modules";
+import { User, SuperAdmin } from "@/modules";
 import { generateAccessToken, verifyAccessToken } from "@/lib/jwt";
+import { verifyPassword } from "@/lib/auth";
 
 // Helper to get token from request
 function getToken(req: NextRequest): string | null {
@@ -14,7 +15,13 @@ async function verifyUser(req: NextRequest) {
   const token = getToken(req);
   if (!token) throw new Error("No token provided");
   
+  console.log("🔐 Verifying token:", token.substring(0, 20) + "...");
+  
   const decoded = verifyAccessToken(token);
+  console.log("🔐 Decoded token payload:", decoded);
+  console.log("🔐 User ID from token:", decoded.userId);
+  console.log("🔐 User ID type:", typeof decoded.userId);
+  
   return decoded;
 }
 
@@ -127,6 +134,9 @@ export async function getAllUsers(req: NextRequest) {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          profileImage: user.profileImage, // Include profile image
+          jerseyNumber: user.jerseyNumber, // Include jersey number
+          position: user.position, // Include position
         })),
       },
       { status: 200 }
@@ -169,6 +179,9 @@ export async function getUser(req: NextRequest, { params }: { params: { id: stri
           email: user.email,
           phone: user.phone,
           role: user.role,
+          profileImage: user.profileImage, // Include profile image
+          jerseyNumber: user.jerseyNumber, // Include jersey number
+          position: user.position, // Include position
         },
       },
       { status: 200 }
@@ -191,7 +204,7 @@ export async function updateUser(req: NextRequest, { params }: { params: { id: s
     await verifyUser(req);
 
     const { id } = params;
-    const { firstName, lastName, email, phone, password, role } = await req.json();
+    const { firstName, lastName, email, phone, password, role, jerseyNumber, position, profileImage } = await req.json();
 
     const user = await User.findById(id);
     if (!user) {
@@ -229,6 +242,42 @@ export async function updateUser(req: NextRequest, { params }: { params: { id: s
       }
     }
 
+    // Validate and set jersey number
+    if (jerseyNumber !== undefined) {
+      if (jerseyNumber !== null && jerseyNumber !== "") {
+        const jerseyNum = parseInt(jerseyNumber);
+        if (isNaN(jerseyNum) || jerseyNum < 1 || jerseyNum > 99) {
+          return NextResponse.json({ error: "Jersey number must be between 1 and 99" }, { status: 400 });
+        }
+        
+        // Check if jersey number is already taken by another user
+        const existing = await User.findOne({ 
+          jerseyNumber: jerseyNum, 
+          _id: { $ne: id } 
+        });
+        if (existing) {
+          const existingUserName = existing.firstName && existing.lastName 
+            ? `${existing.firstName} ${existing.lastName}`.trim()
+            : existing.email;
+          return NextResponse.json({ 
+            error: `Jersey number ${jerseyNum} is already assigned to ${existingUserName}` 
+          }, { status: 409 });
+        }
+        
+        user.jerseyNumber = jerseyNum;
+      } else {
+        (user as any).jerseyNumber = undefined;
+      }
+    }
+
+    if (position !== undefined) {
+      user.position = position || "";
+    }
+
+    if (profileImage !== undefined) {
+      user.profileImage = profileImage || "";
+    }
+
     if (password) {
       user.password = password; // Will be hashed by pre-save hook
     }
@@ -246,7 +295,10 @@ export async function updateUser(req: NextRequest, { params }: { params: { id: s
           lastName: user.lastName,
           email: user.email,
           phone: user.phone,
-          role: user.role 
+          role: user.role,
+          profileImage: user.profileImage,
+          jerseyNumber: user.jerseyNumber,
+          position: user.position,
         },
       },
       { status: 200 }
@@ -281,6 +333,92 @@ export async function deleteUser(req: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
     return NextResponse.json({ error: error.message || "Failed to delete" }, { status: 500 });
+  }
+}
+
+/**
+ * Change password
+ * PUT /api/user/change-password
+ */
+export async function changePassword(req: NextRequest) {
+  try {
+    await connectDB();
+    const decoded = await verifyUser(req);
+    
+    console.log("🔐 Change password - decoded token:", decoded);
+    console.log("🔐 Change password - userId:", decoded.userId);
+    console.log("🔐 Change password - role:", decoded.role);
+    
+    const { currentPassword, newPassword } = await req.json();
+
+    if (!currentPassword || !newPassword) {
+      return NextResponse.json(
+        { error: "Current password and new password are required" },
+        { status: 400 }
+      );
+    }
+
+    if (newPassword.length < 6) {
+      return NextResponse.json(
+        { error: "New password must be at least 6 characters long" },
+        { status: 400 }
+      );
+    }
+
+    let user;
+    
+    // Check if user is superadmin or regular user
+    if (decoded.role === 'superadmin') {
+      console.log("🔍 Looking for SuperAdmin with ID:", decoded.userId);
+      user = await SuperAdmin.findById(decoded.userId).select("+password");
+      console.log("👤 SuperAdmin found:", !!user);
+    } else {
+      console.log("🔍 Looking for User with ID:", decoded.userId);
+      user = await User.findById(decoded.userId).select("+password");
+      console.log("👤 User found:", !!user);
+    }
+    
+    if (!user) {
+      console.log("❌ User/SuperAdmin not found for ID:", decoded.userId);
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    console.log("✅ User/SuperAdmin found:", user.email);
+
+    // Verify current password
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "No password set. Please contact admin." },
+        { status: 400 }
+      );
+    }
+
+    const isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return NextResponse.json(
+        { error: "Current password is incorrect" },
+        { status: 400 }
+      );
+    }
+
+    // Update password (will be hashed by pre-save hook)
+    user.password = newPassword;
+    await user.save();
+
+    console.log("✅ Password changed successfully for user:", user.email);
+    return NextResponse.json(
+      { message: "Password changed successfully" },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("❌ Change password error:", error);
+    if (error.message === "No token provided" || error.message === "Invalid token") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    return NextResponse.json(
+      { error: error.message || "Failed to change password" },
+      { status: 500 }
+    );
   }
 }
 

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../model/player_model.dart';
 import '../../../providers/captain_team_provider.dart';
 import '../../../../../core/providers/auth_provider.dart';
+import '../../../../../core/widgets/user_avatar_widget.dart';
 
 class PlayerListItem extends StatefulWidget {
   final PlayerModel player;
@@ -14,7 +15,6 @@ class PlayerListItem extends StatefulWidget {
 }
 
 class _PlayerListItemState extends State<PlayerListItem> {
-
   @override
   Widget build(BuildContext context) {
     return Consumer2<CaptainTeamProvider, AuthProvider>(
@@ -37,19 +37,42 @@ class _PlayerListItemState extends State<PlayerListItem> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundImage: widget.player.imageUrl != null
-                    ? (widget.player.imageUrl!.startsWith('http') ||
-                              widget.player.imageUrl!.startsWith('https')
-                          ? NetworkImage(widget.player.imageUrl!)
-                          : AssetImage(widget.player.imageUrl!)
-                                as ImageProvider)
-                    : null,
-                backgroundColor: Colors.grey.shade200,
-                child: widget.player.imageUrl == null
-                    ? const Icon(Icons.person, color: Colors.grey)
-                    : null,
+              // Debug logging for image URL
+              Builder(
+                builder: (context) {
+                  print('🖼️ [PLAYER IMAGE DEBUG] ==================');
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Player: ${widget.player.name}',
+                  );
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Player ID: ${widget.player.id}',
+                  );
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Image URL: "${widget.player.imageUrl}"',
+                  );
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Has image: ${widget.player.imageUrl != null}',
+                  );
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Image not empty: ${widget.player.imageUrl?.isNotEmpty ?? false}',
+                  );
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Image starts with http: ${widget.player.imageUrl?.startsWith('http') ?? false}',
+                  );
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Jersey number: "${widget.player.number}"',
+                  );
+                  print(
+                    '🖼️ [PLAYER IMAGE DEBUG] Position: "${widget.player.position}"',
+                  );
+                  print('🖼️ [PLAYER IMAGE DEBUG] ==================');
+                  return UserAvatarWidget(
+                    imageUrl: widget.player.imageUrl,
+                    size: 48,
+                    borderWidth: 2,
+                    borderColor: const Color(0xFFF3F4F6),
+                  );
+                },
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -64,7 +87,9 @@ class _PlayerListItemState extends State<PlayerListItem> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  '#${widget.player.number} ${widget.player.name}',
+                                  widget.player.number.isNotEmpty
+                                      ? '#${widget.player.number} ${widget.player.name}'
+                                      : widget.player.name,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -118,8 +143,6 @@ class _PlayerListItemState extends State<PlayerListItem> {
                                 ),
                               ),
                             ),
-                            // Show 3-dot menu only for captains and only for non-captain players
-
                           ],
                         ),
                       ],
@@ -128,51 +151,56 @@ class _PlayerListItemState extends State<PlayerListItem> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.player.email,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'Lato',
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            RichText(
-                              text: TextSpan(
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.player.email,
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade400,
-
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Colors.grey.shade600,
                                 ),
-                                children: [
-                                  const TextSpan(text: 'Position: '),
-                                  TextSpan(
-                                    text: widget.player.position,
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade400,
                                   ),
-                                  if (widget.player.additionalPositionsCount >
-                                      0)
+                                  children: [
+                                    const TextSpan(text: 'Position: '),
                                     TextSpan(
-                                      text:
-                                          ' +${widget.player.additionalPositionsCount} more',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF0F173E
-                                        ),
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Lato',
+                                      text: widget.player.position.isNotEmpty
+                                          ? widget.player.position
+                                          : 'Not set',
+                                      style: TextStyle(
+                                        color: widget.player.position.isNotEmpty
+                                            ? Colors.grey.shade600
+                                            : Colors.grey.shade400,
                                       ),
                                     ),
-                                ],
+                                    if (widget.player.additionalPositionsCount >
+                                        0)
+                                      TextSpan(
+                                        text:
+                                            ' +${widget.player.additionalPositionsCount} more',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF0F173E),
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Lato',
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -206,8 +234,4 @@ class _PlayerListItemState extends State<PlayerListItem> {
       },
     );
   }
-
-
-
-
 }

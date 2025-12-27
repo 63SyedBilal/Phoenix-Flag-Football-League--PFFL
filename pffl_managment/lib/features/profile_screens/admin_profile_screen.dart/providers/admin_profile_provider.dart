@@ -472,6 +472,11 @@ class AdminProfileProvider extends ChangeNotifier {
 
     // Save to SharedPreferences for persistence
     final prefs = await SharedPreferences.getInstance();
+
+    // CRITICAL: Get and preserve current role BEFORE any updates
+    final currentRole = prefs.getString('userRole');
+    final currentUserId = prefs.getString('userId');
+
     await prefs.setString('admin_firstName', _firstName);
     await prefs.setString('admin_lastName', _lastName);
     await prefs.setString('userEmail', _email);
@@ -480,6 +485,17 @@ class AdminProfileProvider extends ChangeNotifier {
     }
     if (_imageUrl != null) {
       await prefs.setString('admin_image', _imageUrl!);
+    }
+
+    // CRITICAL: Restore user role and ID after profile updates
+    // This prevents unwanted navigation to different dashboards after profile updates
+    if (currentRole != null) {
+      await prefs.setString('userRole', currentRole);
+      print('✅ User role preserved: $currentRole');
+    }
+    if (currentUserId != null) {
+      await prefs.setString('userId', currentUserId);
+      print('✅ User ID preserved: $currentUserId');
     }
 
     print('✅ Profile updated successfully');
@@ -527,6 +543,22 @@ class AdminProfileProvider extends ChangeNotifier {
   /// Handle local success (no API call needed)
   Future<bool> _handleLocalSuccess() async {
     print('✅ [ADMIN PROFILE] Profile update completed locally');
+
+    // CRITICAL: Get and preserve current role and user ID BEFORE any updates
+    final prefs = await SharedPreferences.getInstance();
+    final currentRole = prefs.getString('userRole');
+    final currentUserId = prefs.getString('userId');
+
+    // CRITICAL: Restore user role and ID after profile updates
+    // This prevents unwanted navigation to different dashboards after profile updates
+    if (currentRole != null) {
+      await prefs.setString('userRole', currentRole);
+      print('✅ [ADMIN PROFILE] User role preserved: $currentRole');
+    }
+    if (currentUserId != null) {
+      await prefs.setString('userId', currentUserId);
+      print('✅ [ADMIN PROFILE] User ID preserved: $currentUserId');
+    }
 
     _isLoading = false;
     notifyListeners();
