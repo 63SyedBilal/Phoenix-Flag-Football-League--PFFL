@@ -77,7 +77,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                 ],
               ),
             ),
-            _buildBottomNav(),
+
           ],
         ),
       ),
@@ -432,25 +432,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Home', false),
-          _buildNavItem(Icons.emoji_events_outlined, 'Leagues', false),
-          _buildNavItem(Icons.calendar_today_outlined, 'Games', false),
-          _buildNavItem(Icons.people_outline, 'My Team', false),
-          _buildNavItem(Icons.settings, 'Settings', true),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildNavItem(IconData icon, String label, bool isActive) {
     return InkWell(
@@ -776,7 +758,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                 ],
               ),
             ),
-            _buildBottomNav(),
+
           ],
         ),
       ),
@@ -859,48 +841,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_outlined, 'Home', false),
-          _buildNavItem(Icons.emoji_events_outlined, 'Leagues', false),
-          _buildNavItem(Icons.calendar_today_outlined, 'Games', false),
-          _buildNavItem(Icons.people_outline, 'My Team', false),
-          _buildNavItem(Icons.settings, 'Settings', true),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 24,
-            color: isActive ? const Color(0xFF3B82F6) : Colors.grey[400],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isActive ? const Color(0xFF3B82F6) : Colors.grey[400],
-              fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
+
 }
