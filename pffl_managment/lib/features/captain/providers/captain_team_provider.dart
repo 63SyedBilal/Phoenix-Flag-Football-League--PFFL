@@ -34,6 +34,16 @@ class CaptainTeamProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final role = prefs.getString('userRole')?.toLowerCase() ?? '';
+      if (role != 'captain') {
+        _isLoading = false;
+        _teams = {};
+        _errorMessage = null;
+        notifyListeners();
+        return;
+      }
+
       print('🔄 Loading team data for captain...');
       // Fetch team data from API
       final teamData = await TeamService.getTeamByCaptain();
