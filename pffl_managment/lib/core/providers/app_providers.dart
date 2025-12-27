@@ -43,6 +43,11 @@ import 'package:pffl_managment/features/free_agent/screens/free_agent_league_sel
 import 'package:pffl_managment/features/free_agent/screens/payment_option/providers/payment_option_provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/providers/add_payment_details_provider.dart';
 import 'package:pffl_managment/core/providers/calendar_provider.dart';
+import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
+import 'package:pffl_managment/core/providers/change_password_provider.dart';
+import 'package:pffl_managment/core/providers/performance_provider.dart';
+import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
+import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -139,6 +144,11 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => BackButtonProvider()),
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
+        ChangeNotifierProvider(create: (_) => PendingPaymentProvider()),
+        ChangeNotifierProvider(create: (_) => ChangePasswordProvider()),
+        ChangeNotifierProvider(create: (_) => PerformanceProvider()),
+        ChangeNotifierProvider(create: (_) => PlayerPaymentHistoryProvider()),
+        ChangeNotifierProvider(create: (_) => CaptainPaymentHistoryProvider()),
       ],
       child: child,
     );

@@ -127,6 +127,112 @@ class PaymentService {
   }
 
   /// Search users
+  /// Get all payments for the current user
+  /// GET /api/payments/my
+  static Future<Map<String, dynamic>> fetchUserPayments() async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/payments/my');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true) {
+          return {
+            'success': true,
+            'data': data['data'] ?? [],
+            'message': data['message'] ?? 'Payments retrieved successfully',
+          };
+        }
+        return {
+          'success': false,
+          'data': [],
+          'message': data['message'] ?? 'Failed to fetch payments',
+        };
+      } else {
+        return {
+          'success': false,
+          'data': [],
+          'message': 'Failed to fetch user payments: ${response.statusMessage}',
+        };
+      }
+    } on DioException catch (e) {
+      print('Error fetching user payments: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        return {
+          'success': false,
+          'data': [],
+          'message': e.response?.data?['error'] ?? 'Failed to fetch user payments',
+        };
+      }
+      return {
+        'success': false,
+        'data': [],
+        'message': 'Network error while fetching payments: ${e.message}',
+      };
+    } catch (e) {
+      print('General error fetching user payments: $e');
+      return {
+        'success': false,
+        'data': [],
+        'message': 'An unexpected error occurred while fetching payments',
+      };
+    }
+  }
+
+  /// Get all payments for the captain's team
+  /// GET /api/payments/team (admin endpoint for captains)
+  static Future<Map<String, dynamic>> fetchTeamPayments() async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/payments/team');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true) {
+          return {
+            'success': true,
+            'data': data['data'] ?? [],
+            'message': data['message'] ?? 'Team payments retrieved successfully',
+          };
+        }
+        return {
+          'success': false,
+          'data': [],
+          'message': data['message'] ?? 'Failed to fetch team payments',
+        };
+      } else {
+        return {
+          'success': false,
+          'data': [],
+          'message': 'Failed to fetch team payments: ${response.statusMessage}',
+        };
+      }
+    } on DioException catch (e) {
+      print('Error fetching team payments: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+        return {
+          'success': false,
+          'data': [],
+          'message': e.response?.data?['error'] ?? 'Failed to fetch team payments',
+        };
+      }
+      return {
+        'success': false,
+        'data': [],
+        'message': 'Network error while fetching team payments: ${e.message}',
+      };
+    } catch (e) {
+      print('General error fetching team payments: $e');
+      return {
+        'success': false,
+        'data': [],
+        'message': 'An unexpected error occurred while fetching team payments',
+      };
+    }
+  }
+
   /// GET /api/user
   static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     try {
@@ -180,41 +286,64 @@ class PaymentService {
     try {
       final dio = await _getAuthenticatedDio();
 
+      // Format data according to backend expectations
+      // Backend expects: cardNumber, expiryDate (MM/YY), cvv
       final data = {
         'paymentId': paymentId,
-        'payment_id': paymentId,
-        'id': paymentId,
         'paymentMethod': paymentMethod,
-        'payment_method': paymentMethod,
-        ...cardDetails,
+        'cardNumber': cardDetails['number'] ?? cardDetails['cardNumber'],
+        'expiryDate': cardDetails['exp_date'] ?? cardDetails['expiryDate'] ?? cardDetails['expiry'],
+        'cvv': cardDetails['cvc'] ?? cardDetails['cvv'],
       };
 
       print('🚀 Request Payload: $data');
       print('💳 Sending payment request to /payments/process');
       print('   - Payment ID: $paymentId');
       print('   - Payment Method: $paymentMethod');
+      print('   - Card Number: **** **** **** ${data['cardNumber']?.toString().substring(data['cardNumber'].toString().length - 4)}');
+
+      // Send as JSON data with detailed error logging
+      print('📡 Making authenticated request to: ${dio.options.baseUrl}/payments/process');
+      print('🔐 Auth headers: ${dio.options.headers}');
 
       final response = await dio.post('/payments/process', data: data);
 
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'message': response.data['message'] ?? 'Payment successful',
-          'data': response.data['data'],
+          'message': response.data?['message'] ?? 'Payment successful',
+          'data': response.data?['data'],
         };
       } else {
         return {
           'success': false,
-          'message': response.data['error'] ?? 'Payment failed',
+          'message': response.data?['error'] ?? 'Payment failed',
         };
       }
     } on DioException catch (e) {
       print('❌ Payment Error: ${e.message}');
+      print('❌ Error type: ${e.type}');
+      print('❌ Error code: ${e.response?.statusCode}');
+
       if (e.response != null) {
-        print('❌ Error response: ${e.response?.data}');
+        print('❌ Full error response: ${e.response?.data}');
+        print('❌ Response headers: ${e.response?.headers}');
+
+        // Check if it's a server error (5xx)
+        if (e.response!.statusCode! >= 500) {
+          print('🚨 SERVER ERROR: Backend threw an exception!');
+          print('💡 This means the backend received the request but failed to process it with Stripe');
+          print('🔧 Backend developer needs to check:');
+          print('   - Stripe API keys');
+          print('   - Stripe SDK version');
+          print('   - Backend payment processing code');
+          print('   - Server logs for the actual Stripe error');
+        }
+
         return {
           'success': false,
           'message': e.response?.data['error'] ?? 'Payment service error',
+          'statusCode': e.response?.statusCode,
         };
       }
       return {

@@ -59,6 +59,13 @@ class LeagueSelectionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void selectLeague(LeagueModel league) {
+    if (!isLeagueSelected(league)) {
+      _selectedLeagues.add(league);
+      notifyListeners();
+    }
+  }
+
   void clearAllSelections() {
     _selectedLeagues.clear();
     notifyListeners();

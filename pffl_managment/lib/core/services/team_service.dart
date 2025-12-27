@@ -312,4 +312,64 @@ class TeamService {
       throw Exception('Failed to invite player: ${e.toString()}');
     }
   }
+
+  /// Find the league that contains a specific team
+  /// GET /api/league?teamId=xxx (this would need a backend endpoint)
+  /// For now, we'll query all leagues and find the one containing the team
+  static Future<Map<String, dynamic>?> findLeagueForTeam(String teamId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+
+      // Get all leagues (we need to find which league contains this team)
+      final response = await dio.get('/league');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true && data['data'] != null) {
+          final leagues = data['data'] as List<dynamic>;
+
+          // Find the league that contains this team in its teams array
+          for (var league in leagues) {
+            final leagueData = league as Map<String, dynamic>;
+            final teams = leagueData['teams'] as List<dynamic>? ?? [];
+
+            // Check if teamId is in this league's teams array
+            if (teams.any((team) {
+              if (team is Map<String, dynamic>) {
+                return team['_id'] == teamId || team['id'] == teamId;
+              } else if (team is String) {
+                return team == teamId;
+              }
+              return false;
+            })) {
+              return {
+                'success': true,
+                'data': leagueData,
+              };
+            }
+          }
+        }
+      }
+
+      return {
+        'success': false,
+        'message': 'League not found for team',
+      };
+    } on DioException catch (e) {
+      print('Error finding league for team: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return {
+        'success': false,
+        'message': 'Failed to find league for team: ${e.message}',
+      };
+    } catch (e) {
+      print('General error finding league for team: $e');
+      return {
+        'success': false,
+        'message': 'Failed to find league for team: ${e.toString()}',
+      };
+    }
+  }
 }

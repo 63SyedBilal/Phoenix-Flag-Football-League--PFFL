@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
+import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
+import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
+import 'package:pffl_managment/core/services/league_service.dart'; // For LeagueModel if needed
+import 'package:pffl_managment/routes/app_routes.dart';
 
 class FreeAgentPaymentHistoryScreen extends StatefulWidget {
   const FreeAgentPaymentHistoryScreen({super.key});
@@ -17,7 +22,10 @@ class _FreeAgentPaymentHistoryScreenState
   @override
   void initState() {
     super.initState();
-    _loadPaymentHistory();
+    // Force reload pending payment to ensure fresh data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPaymentHistory();
+    });
   }
 
   Future<void> _loadPaymentHistory() async {
@@ -25,59 +33,68 @@ class _FreeAgentPaymentHistoryScreenState
       _isLoading = true;
     });
 
-    // TODO: Replace with actual API call
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final pendingProvider = Provider.of<PendingPaymentProvider>(
+        context,
+        listen: false,
+      );
+      await pendingProvider.loadPendingPayment(context);
 
-    // Mock data based on your design
-    _payments = [
-      PaymentHistoryItem(
-        id: "01",
-        date: DateTime(2025, 12, 9),
-        amount: 250.0,
-        method: "Stripe",
-        status: "Paid",
-        type: PaymentType.league,
-        leagueName: "Phoenix Winter 2025",
-        leagueDetails: LeagueDetails(
-          format: "5v5",
-          fee: 250.0,
-          startDate: DateTime(2025, 12, 10),
-          endDate: DateTime(2026, 2, 25),
-        ),
-      ),
-      PaymentHistoryItem(
-        id: "01",
-        date: DateTime(2025, 12, 9),
-        amount: 250.0,
-        method: "Stripe",
-        status: "Paid",
-        type: PaymentType.league,
-        leagueName: "Phoenix Winter 2025",
-        leagueDetails: LeagueDetails(
-          format: "5v5",
-          fee: 250.0,
-          startDate: DateTime(2025, 12, 10),
-          endDate: DateTime(2026, 2, 25),
-        ),
-      ),
-      PaymentHistoryItem(
-        id: "01",
-        date: DateTime(2025, 12, 9),
-        amount: 25.0,
-        method: "Stripe",
-        status: "Paid",
-        type: PaymentType.match,
-        leagueName: "Phoenix Winter 2025",
-        matchDetails: MatchDetails(
-          matchTime: DateTime(2025, 12, 10, 1, 5),
-          teams: "RC vs STA",
-        ),
-      ),
-    ];
+      _payments = [];
 
-    setState(() {
-      _isLoading = false;
-    });
+      // Add pending payment if exists
+      if (pendingProvider.hasPendingPayment &&
+          pendingProvider.pendingPayment != null) {
+        final pending = pendingProvider.pendingPayment!;
+        // Parse amount string "$200" -> 200.0
+        double amount = 0.0;
+        try {
+          amount = double.parse(pending.amount.replaceAll('\$', '').trim());
+        } catch (e) {
+          print('Error parsing amount: $e');
+        }
+
+        // Parse dates
+        DateTime start = DateTime.now();
+        DateTime end = DateTime.now();
+        // Assuming format is "10 Dec 2025"
+        // For now, let's just use current date or try to parse if robust parser available.
+        // Or keep it simple for UI display as string in details.
+        // Since PaymentHistoryItem expects DateTime, we might need to be careful.
+        // Ideally PendingPaymentModel should store DateTime objects too.
+        // For MVP, we'll just new DateTime() for dates if parsing is complex.
+
+        _payments.add(
+          PaymentHistoryItem(
+            id: "PENDING",
+            date: DateTime.now(),
+            amount: amount,
+            method: "Pending",
+            status: "Pending",
+            type: PaymentType.league,
+            leagueName: pending.leagueName,
+            leagueId: pending.leagueId, // Added field
+            leagueDetails: LeagueDetails(
+              format: pending.format,
+              fee: amount,
+              startDate: start, // Placeholder or parse real date
+              endDate: end,
+            ),
+          ),
+        );
+      }
+
+      // TODO: Fetch real paid history from PaymentService if available
+      // For now, you can append mock paid items if you want to show history too.
+    } catch (e) {
+      print('Error loading payment history: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -186,6 +203,7 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
   @override
   Widget build(BuildContext context) {
     final payment = widget.payment;
+    final isPending = payment.status.toLowerCase() == 'pending';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -211,7 +229,7 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Payment #${payment.id}",
+                  isPending ? "Pending Payment" : "Payment #${payment.id}",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -280,21 +298,94 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
 
                 const Spacer(),
 
-                GestureDetector(
-                  onTap: () {
-                    // TODO: Show/download receipt
-                    _showReceipt(payment);
-                  },
-                  child: Text(
-                    "View Receipt",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue.shade700,
-                      fontWeight: FontWeight.w500,
-                      decoration: TextDecoration.underline,
+                if (isPending)
+                  ElevatedButton(
+                    onPressed: () async {
+                      // Handle Pay Now
+                      if (payment.leagueId != null) {
+                        // We need to set the selected league in LeagueSelectionProvider
+                        // But LeagueSelectionProvider expects LeagueModel.
+                        // We might need to fetch it or create a minimal one.
+                        // Let's fetch it to be safe and correct.
+                        try {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+
+                          final league = await LeagueService.getLeagueById(
+                            payment.leagueId!,
+                          );
+                          Navigator.pop(context); // Close loader
+
+                          if (league != null) {
+                            // Map LeagueDetailModel to LeagueModel (simplified for provider)
+                            // Or adjust provider to accept Detail.
+                            // LeagueSelectionProvider list uses LeagueModel.
+                            // Let's assume we can cast or convert.
+                            // Actually LeagueDetailModel fields overlap with LeagueModel.
+
+                            final leagueModel = LeagueModel(
+                              id: league.id,
+                              leagueName: league.leagueName,
+                              format: league.format,
+                              startDate: league.startDate,
+                              endDate: league.endDate,
+                              minimumPlayers: 0, // Not needed for payment
+                              perPlayerLeagueFee: league.perPlayerLeagueFee,
+                              status: 'open',
+                              logo: null,
+                            );
+
+                            final leagueProvider =
+                                Provider.of<LeagueSelectionProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            leagueProvider.clearAllSelections();
+                            leagueProvider.selectLeague(
+                              leagueModel,
+                            ); // Select this league
+
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.freeAgentAddPaymentDetails,
+                            );
+                          }
+                        } catch (e) {
+                          Navigator.pop(context); // Close loader
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error loading league: $e')),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: const Text('Pay Now'),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () {
+                      // TODO: Show/download receipt
+                      _showReceipt(payment);
+                    },
+                    child: Text(
+                      "View Receipt",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
 
@@ -559,6 +650,7 @@ class PaymentHistoryItem {
   final String status;
   final PaymentType type;
   final String leagueName;
+  final String? leagueId; // Added for Pay Now
   final LeagueDetails? leagueDetails;
   final MatchDetails? matchDetails;
 
@@ -570,6 +662,7 @@ class PaymentHistoryItem {
     required this.status,
     required this.type,
     required this.leagueName,
+    this.leagueId,
     this.leagueDetails,
     this.matchDetails,
   });

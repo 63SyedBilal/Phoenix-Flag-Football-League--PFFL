@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
-import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
 import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
 import 'package:provider/provider.dart';
 
-class CaptainPaymentHistory extends StatefulWidget {
-  const CaptainPaymentHistory({super.key});
+class PlayerPaymentHistory extends StatefulWidget {
+  const PlayerPaymentHistory({super.key});
 
   @override
-  State<CaptainPaymentHistory> createState() => _CaptainPaymentHistoryState();
+  State<PlayerPaymentHistory> createState() => _PlayerPaymentHistoryState();
 }
 
-class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
+class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
   final Map<int, bool> _expandedCards = {};
 
   @override
@@ -19,7 +18,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
     super.initState();
     // Load payment history when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CaptainPaymentHistoryProvider>().loadPaymentHistory();
+      context.read<PlayerPaymentHistoryProvider>().loadPaymentHistory();
     });
   }
 
@@ -29,7 +28,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
       appBar: AppBar(leading: ArrowBackButton()),
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Consumer<CaptainPaymentHistoryProvider>(
+        child: Consumer<PlayerPaymentHistoryProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
               return const Center(
@@ -82,12 +81,12 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No Team Payments',
+                      'No Payment History',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'No team members have made league payments yet.',
+                      'You haven\'t made any league payments yet.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -105,7 +104,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       const Text(
-                        'Team Payment History',
+                        'Payment History',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
@@ -115,7 +114,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Track payments made by your team members.',
+                        'Track all your league payments and receipts.',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -123,9 +122,6 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                           color: Colors.grey[600],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      // Summary cards
-                      _buildSummaryCard(provider),
                       const SizedBox(height: 24),
                       ...provider.payments.asMap().entries.map((entry) {
                         final index = entry.key;
@@ -147,120 +143,6 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryCard(CaptainPaymentHistoryProvider provider) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildSummaryItem(
-                'Total Revenue',
-                '\$${provider.totalTeamRevenue.toStringAsFixed(0)}',
-                Colors.green,
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: const Color(0xFFE5E7EB),
-              ),
-              _buildSummaryItem(
-                'Paid',
-                '${provider.paidPaymentsCount}',
-                Colors.green,
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: const Color(0xFFE5E7EB),
-              ),
-              _buildSummaryItem(
-                'Pending',
-                '${provider.pendingPaymentsCount}',
-                Colors.orange,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryItem(String label, String value, Color valueColor) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: valueColor,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusRow(String label, String status) {
-    Color statusColor;
-    switch (status.toLowerCase()) {
-      case 'paid':
-        statusColor = Colors.green;
-        break;
-      case 'pending':
-        statusColor = Colors.orange;
-        break;
-      case 'failed':
-        statusColor = Colors.red;
-        break;
-      default:
-        statusColor = Colors.grey;
-    }
-
-    return Row(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Colors.grey[600],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: statusColor,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -369,25 +251,27 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
-                        child: payment.leagueLogo != null
-                            ? Image.network(
-                                payment.leagueLogo!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.shield,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                              )
-                            : const Icon(
+                    child: ClipOval(
+                      child: payment.leagueLogo != null
+                          ? Image.network(
+                              payment.leagueLogo!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
                                 Icons.shield,
                                 size: 16,
                                 color: Colors.grey,
                               ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        payment.leagueName,
+                            )
+                          : const Icon(
+                              Icons.shield,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    payment.leagueName,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -403,22 +287,22 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                              Text(
-                                'Format:',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                payment.leagueFormat,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
+                        Text(
+                          'Format:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          payment.leagueFormat,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -433,16 +317,16 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                                Text(
-                                  'League Fee:',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '\$${payment.amount}',
+                          Text(
+                            'League Fee:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '\$${payment.amount}',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -462,22 +346,22 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                              Text(
-                                'Start Date:',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                payment.leagueStartDate,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
+                        Text(
+                          'Start Date:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          payment.leagueStartDate,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -492,16 +376,16 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                                Text(
-                                  'End Date:',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  payment.leagueEndDate,
+                          Text(
+                            'End Date:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            payment.leagueEndDate,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -541,6 +425,52 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF000000),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusRow(String label, String status) {
+    Color statusColor;
+    switch (status.toLowerCase()) {
+      case 'paid':
+        statusColor = Colors.green;
+        break;
+      case 'pending':
+        statusColor = Colors.orange;
+        break;
+      case 'failed':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            status,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: statusColor,
+            ),
           ),
         ),
       ],
@@ -692,7 +622,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   _buildDetailRow(
                     'Status:',
                     widget.payment.status,
-                    statusColor: const Color(0xFF3B82F6),
+                    statusColor: _getStatusColor(widget.payment.status),
                   ),
                   const SizedBox(height: 24),
                   GestureDetector(
@@ -734,21 +664,23 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                             shape: BoxShape.circle,
                             border: Border.all(color: const Color(0xFFE5E7EB)),
                           ),
-                          child: widget.payment.leagueLogo != null
-                              ? Image.network(
-                                  widget.payment.leagueLogo!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
+                          child: ClipOval(
+                            child: widget.payment.leagueLogo != null
+                                ? Image.network(
+                                    widget.payment.leagueLogo!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.shield,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                : const Icon(
                                     Icons.shield,
                                     size: 16,
                                     color: Colors.grey,
                                   ),
-                                )
-                              : const Icon(
-                                  Icons.shield,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -890,6 +822,19 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'failed':
+        return Colors.red;
+      default:
+        return const Color(0xFF000000);
+    }
   }
 
   Widget _buildHeader(BuildContext context) {

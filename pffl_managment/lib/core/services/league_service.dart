@@ -745,6 +745,7 @@ class LeagueDetailModel {
   final String format;
   final DateTime startDate;
   final DateTime endDate;
+  final double perPlayerLeagueFee;
   final List<TeamModel> teams;
   final List<UserModel>
   referees; // Referees assigned to the league (when they accept invitation)
@@ -757,6 +758,7 @@ class LeagueDetailModel {
     required this.format,
     required this.startDate,
     required this.endDate,
+    required this.perPlayerLeagueFee,
     required this.teams,
     required this.referees,
     required this.statKeepers,
@@ -909,6 +911,7 @@ class LeagueDetailModel {
       format: json['format'] ?? '5v5',
       startDate: parseDate(json['startDate']),
       endDate: parseDate(json['endDate']),
+      perPlayerLeagueFee: (json['perPlayerLeagueFee'] ?? 0).toDouble(),
       teams: teams,
       referees: referees,
       statKeepers: statKeepers,

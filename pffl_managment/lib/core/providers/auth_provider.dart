@@ -27,6 +27,9 @@ class AuthProvider extends ChangeNotifier {
   // Loading state
   bool _isLoggingIn = false;
 
+  // User data object
+  UserData? _userData;
+
   bool get isLoggedIn => _isLoggedIn;
   bool get isLoggingIn => _isLoggingIn;
   String get userToken => _userToken;
@@ -36,6 +39,7 @@ class AuthProvider extends ChangeNotifier {
   String get userName => _userName;
   bool get needsProfileForm => _needsProfileForm;
   bool get needsTeamForm => _needsTeamForm;
+  UserData? get userData => _userData;
 
   // Password visibility getters
   bool get isLoginPasswordVisible => _isLoginPasswordVisible;
@@ -130,6 +134,9 @@ class AuthProvider extends ChangeNotifier {
             : userData.email;
         _needsProfileForm = userData.needsProfileForm;
         _needsTeamForm = userData.needsTeamForm;
+
+        // Store the complete user data object
+        _userData = userData;
 
         // Save to UserPreferenceProvider
         await _userPreferenceProvider.setUserToken(_userToken);
@@ -304,5 +311,50 @@ class AuthProvider extends ChangeNotifier {
   void clearLoginPasswordError() {
     _loginPasswordError = null;
     notifyListeners();
+  }
+
+  /// Refresh user data from backend after payment or other updates
+  Future<void> refreshUserData() async {
+    if (_userData == null) return;
+
+    try {
+      debugPrint('🔄 [AUTH PROVIDER] Refreshing user data...');
+
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.get('/user/${_userData!.id}');
+
+      if (response.statusCode == 200) {
+        final userDataResponse = response.data['data'] ?? response.data;
+        if (userDataResponse != null) {
+          // Update user data while preserving token
+          final updatedUserData = UserData(
+            id: userDataResponse['_id'] ?? userDataResponse['id'] ?? _userData!.id,
+            firstName: userDataResponse['firstName'] ?? _userData!.firstName,
+            lastName: userDataResponse['lastName'] ?? _userData!.lastName,
+            email: userDataResponse['email'] ?? _userData!.email,
+            phone: userDataResponse['phone'] ?? _userData!.phone,
+            role: _userData!.role, // Keep existing role
+            needsProfileCompletion: userDataResponse['needsProfileCompletion'] ?? _userData!.needsProfileCompletion,
+            needsProfileForm: userDataResponse['needsProfileForm'] ?? _userData!.needsProfileForm,
+            needsTeamForm: userDataResponse['needsTeamForm'] ?? _userData!.needsTeamForm,
+          );
+
+          _userData = updatedUserData;
+
+          // Also update individual fields for consistency
+          _userName = updatedUserData.firstName != null && updatedUserData.lastName != null
+              ? '${updatedUserData.firstName} ${updatedUserData.lastName}'.trim()
+              : updatedUserData.email;
+          _needsProfileForm = updatedUserData.needsProfileForm;
+          _needsTeamForm = updatedUserData.needsTeamForm;
+
+          debugPrint('✅ [AUTH PROVIDER] User data refreshed successfully');
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AUTH PROVIDER] Failed to refresh user data: $e');
+      // Don't throw error, just log it
+    }
   }
 }

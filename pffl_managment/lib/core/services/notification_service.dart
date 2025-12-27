@@ -385,4 +385,131 @@ class NotificationService {
       return false;
     }
   }
+
+  /// Get notifications filtered by user role
+  /// This ensures each role sees only relevant notifications
+  static List<NotificationModel> filterNotificationsByRole(
+    List<NotificationModel> allNotifications,
+    String userRole,
+  ) {
+    print('🎯 Filtering ${allNotifications.length} notifications for role: $userRole');
+    print('📋 All notification types: ${allNotifications.map((n) => n.type).toSet()}');
+
+    // Convert role to lowercase for consistent comparison
+    final normalizedRole = userRole.toLowerCase();
+
+    final filteredNotifications = allNotifications.where((notification) {
+      final type = notification.type.toLowerCase();
+      final message = notification.displayMessage.toLowerCase();
+
+      switch (normalizedRole) {
+        case 'player':
+          // Players see: team invites, payment reminders, league updates, general notifications
+          return type.contains('team_invite') ||
+                 type.contains('payment') ||
+                 type.contains('league') ||
+                 type.contains('general') ||
+                 message.contains('payment') ||
+                 message.contains('league') ||
+                 message.contains('team');
+
+        case 'captain':
+          // Captains see: team management, league updates, payment confirmations, admin messages
+          return type.contains('team') ||
+                 type.contains('league') ||
+                 type.contains('payment') ||
+                 type.contains('admin') ||
+                 type.contains('captain') ||
+                 message.contains('team') ||
+                 message.contains('captain');
+
+        case 'admin':
+        case 'superadmin':
+          // Admins see: all notifications, system alerts, user registrations, payment issues
+          return type.contains('admin') ||
+                 type.contains('system') ||
+                 type.contains('payment') ||
+                 type.contains('user') ||
+                 type.contains('registration') ||
+                 message.contains('admin') ||
+                 message.contains('system');
+
+        case 'referee':
+          // Referees see: match assignments, league updates, admin messages
+          return type.contains('match') ||
+                 type.contains('referee') ||
+                 type.contains('league') ||
+                 type.contains('admin') ||
+                 message.contains('match') ||
+                 message.contains('referee');
+
+        case 'statkeeper':
+        case 'stat-keeper':
+          // Stat keepers see: match stats, league updates, admin messages
+          return type.contains('stats') ||
+                 type.contains('match') ||
+                 type.contains('league') ||
+                 type.contains('admin') ||
+                 message.contains('stats') ||
+                 message.contains('match');
+
+        case 'freeagent':
+        case 'free-agent':
+          // Free agents see: league invitations, payment reminders, team invites
+          return type.contains('league_invite') ||
+                 type.contains('team_invite') ||
+                 type.contains('payment') ||
+                 type.contains('free_agent') ||
+                 message.contains('league') ||
+                 message.contains('payment');
+
+        default:
+          // Unknown role - show general notifications only
+          return type.contains('general') ||
+                 type.contains('system') ||
+                 message.contains('general');
+      }
+    }).toList();
+
+    print('✅ Filtered to ${filteredNotifications.length} notifications for role: $userRole');
+    print('📋 Filtered notification types: ${filteredNotifications.map((n) => n.type).toSet()}');
+
+    return filteredNotifications;
+  }
+
+  /// Get player-specific notifications
+  static Future<List<NotificationModel>> getPlayerNotifications() async {
+    final allNotifications = await getAllNotifications();
+    return filterNotificationsByRole(allNotifications, 'player');
+  }
+
+  /// Get captain-specific notifications
+  static Future<List<NotificationModel>> getCaptainNotifications() async {
+    final allNotifications = await getAllNotifications();
+    return filterNotificationsByRole(allNotifications, 'captain');
+  }
+
+  /// Get admin-specific notifications
+  static Future<List<NotificationModel>> getAdminNotifications() async {
+    final allNotifications = await getAllNotifications();
+    return filterNotificationsByRole(allNotifications, 'admin');
+  }
+
+  /// Get referee-specific notifications
+  static Future<List<NotificationModel>> getRefereeNotifications() async {
+    final allNotifications = await getAllNotifications();
+    return filterNotificationsByRole(allNotifications, 'referee');
+  }
+
+  /// Get stat keeper-specific notifications
+  static Future<List<NotificationModel>> getStatKeeperNotifications() async {
+    final allNotifications = await getAllNotifications();
+    return filterNotificationsByRole(allNotifications, 'stat-keeper');
+  }
+
+  /// Get free agent-specific notifications
+  static Future<List<NotificationModel>> getFreeAgentNotifications() async {
+    final allNotifications = await getAllNotifications();
+    return filterNotificationsByRole(allNotifications, 'free-agent');
+  }
 }
