@@ -295,6 +295,114 @@ export async function getMyPayment(req: NextRequest) {
 }
 
 /**
+ * Get all payments for the current user
+ * GET /api/payments/my (without leagueId parameter)
+ */
+export async function getAllMyPayments(req: NextRequest) {
+  try {
+    await connectDB();
+    const decoded = await verifyUserToken(req);
+
+    const userId = toObjectId(decoded.userId);
+
+    // Find all payments for the user
+    const payments = await Payment.find({ userId })
+      .populate({
+        path: "leagueId",
+        select: "leagueName logo format startDate endDate",
+        model: "League",
+      })
+      .populate({
+        path: "userId",
+        select: "firstName lastName email role",
+        model: "User",
+      })
+      .sort({ createdAt: -1 }); // Most recent first
+
+    console.log(`✅ Found ${payments.length} payments for user ${decoded.userId}`);
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: payments,
+        message: `Found ${payments.length} payments`,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error in getAllMyPayments:", error);
+    if (error.message === "No token provided" || error.message === "Invalid token") {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 401 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to get payments" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Get all payments for the captain's team
+ * GET /api/payments/team
+ */
+export async function getTeamPayments(req: NextRequest) {
+  try {
+    await connectDB();
+    const decoded = await verifyUserToken(req);
+
+    // First, find the team where this user is the captain
+    const team = await Team.findOne({ captainId: decoded.userId });
+
+    if (!team) {
+      return NextResponse.json(
+        { success: false, error: "You are not a captain of any team" },
+        { status: 403 }
+      );
+    }
+
+    // Get all payments for team members
+    const payments = await Payment.find({ leagueId: team.leagueId })
+      .populate({
+        path: "leagueId",
+        select: "leagueName logo format startDate endDate",
+        model: "League",
+      })
+      .populate({
+        path: "userId",
+        select: "firstName lastName email role",
+        model: "User",
+      })
+      .sort({ createdAt: -1 }); // Most recent first
+
+    console.log(`✅ Found ${payments.length} team payments for captain ${decoded.userId}`);
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: payments,
+        message: `Found ${payments.length} team payments`,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error in getTeamPayments:", error);
+    if (error.message === "No token provided" || error.message === "Invalid token") {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 401 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to get team payments" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * Update payment to paid status
  * PATCH /api/payments/pay
  * Body: { leagueId: string, transactionId: string, paymentMethod: "stripe" | "paypal" }

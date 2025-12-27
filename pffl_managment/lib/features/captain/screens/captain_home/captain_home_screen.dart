@@ -5,173 +5,26 @@ import 'package:pffl_managment/features/captain/widgets/league_payment_card.dart
 import 'package:pffl_managment/core/widgets/upcomingmatches/shared_upcoming_matches.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.dart';
 import 'package:pffl_managment/features/player/providers/player_dashboard_provider.dart';
-import 'package:pffl_managment/core/services/payment_service.dart';
-import 'package:pffl_managment/core/services/league_service.dart';
-import 'package:pffl_managment/core/services/match_service.dart';
-import 'package:pffl_managment/core/services/team_service.dart';
-import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
+import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
 
-class CaptainHomeScreen extends StatelessWidget {
+class CaptainHomeScreen extends StatefulWidget {
   const CaptainHomeScreen({super.key});
 
-  Future<_PendingLeaguePaymentInfo?> _loadPendingPaymentInfo() async {
-    try {
-      final unpaid = await PaymentService.fetchUnpaidPayments();
-      if (unpaid.isNotEmpty) {
-        final first = unpaid.first;
+  @override
+  State<CaptainHomeScreen> createState() => _CaptainHomeScreenState();
+}
 
-        double? amountFromPayment;
-        final amountRaw = first['amount'] ?? first['fee'] ?? first['perPlayerFee'];
-        if (amountRaw is num) {
-          amountFromPayment = amountRaw.toDouble();
-        } else if (amountRaw is String) {
-          final cleaned = amountRaw.replaceAll(RegExp(r'[^0-9\.]'), '');
-          amountFromPayment = double.tryParse(cleaned);
-        }
-
-        String? leagueId;
-        final leagueField = first['league'];
-        if (leagueField is Map) {
-          leagueId = leagueField['_id']?.toString() ?? leagueField['id']?.toString();
-        }
-        leagueId ??= first['leagueId']?.toString() ?? first['league_id']?.toString();
-
-        if (leagueId != null && leagueId.isNotEmpty) {
-          final leagueDetail = await LeagueService.getLeagueById(leagueId);
-          final allLeagues = await LeagueService.getAllLeagues();
-          final leagueModel = allLeagues.where((l) => l.id == leagueId).cast<LeagueModel?>().firstWhere(
-                (l) => l != null,
-                orElse: () => null,
-              );
-
-          if (leagueDetail != null) {
-            final effectiveLeagueModel = leagueModel ??
-                LeagueModel(
-                  id: leagueId,
-                  leagueName: leagueDetail.leagueName,
-                  format: leagueDetail.format,
-                  startDate: leagueDetail.startDate,
-                  endDate: leagueDetail.endDate,
-                  minimumPlayers: 0,
-                  perPlayerLeagueFee: amountFromPayment ?? 0,
-                  logo: null,
-                  status: 'pending',
-                  createdAt: null,
-                );
-
-            return _PendingLeaguePaymentInfo(
-              leagueId: leagueId,
-              leagueName: leagueDetail.leagueName,
-              format: leagueDetail.format,
-              startDate: leagueDetail.startDate,
-              endDate: leagueDetail.endDate,
-              perPlayerFee: effectiveLeagueModel.perPlayerLeagueFee,
-              leagueModel: effectiveLeagueModel,
-            );
-          }
-        }
-      }
-
-      // Fallback: try to infer league via saved leagueId.
-      final prefs = await SharedPreferences.getInstance();
-      final savedLeagueId = prefs.getString('leagueId');
-      if (savedLeagueId != null && savedLeagueId.isNotEmpty) {
-        final leagueDetail = await LeagueService.getLeagueById(savedLeagueId);
-        final allLeagues = await LeagueService.getAllLeagues();
-        final leagueModel = allLeagues.where((l) => l.id == savedLeagueId).cast<LeagueModel?>().firstWhere(
-              (l) => l != null,
-              orElse: () => null,
-            );
-        if (leagueDetail != null) {
-          final effectiveLeagueModel = leagueModel ??
-              LeagueModel(
-                id: savedLeagueId,
-                leagueName: leagueDetail.leagueName,
-                format: leagueDetail.format,
-                startDate: leagueDetail.startDate,
-                endDate: leagueDetail.endDate,
-                minimumPlayers: 0,
-                perPlayerLeagueFee: 0,
-                logo: null,
-                status: 'pending',
-                createdAt: null,
-              );
-          return _PendingLeaguePaymentInfo(
-            leagueId: savedLeagueId,
-            leagueName: leagueDetail.leagueName,
-            format: leagueDetail.format,
-            startDate: leagueDetail.startDate,
-            endDate: leagueDetail.endDate,
-            perPlayerFee: effectiveLeagueModel.perPlayerLeagueFee,
-            leagueModel: effectiveLeagueModel,
-          );
-        }
-      }
-
-      // Fallback: infer league via team -> matches
-      final userId = prefs.getString('userId');
-      if (userId != null && userId.isNotEmpty) {
-        final team = await TeamService.getTeamByCaptain();
-        final teamId = team?['_id']?.toString() ?? team?['id']?.toString();
-        if (teamId != null && teamId.isNotEmpty) {
-          final matches = await MatchService.getAllMatches();
-          if (matches.isEmpty) {
-            return null;
-          }
-
-          final match = matches.firstWhere(
-            (m) => (m.homeTeamId == teamId || m.awayTeamId == teamId) &&
-                (m.leagueId != null && m.leagueId!.isNotEmpty),
-            orElse: () => matches.first,
-          );
-
-          final inferredLeagueId = match.leagueId;
-          if (inferredLeagueId != null && inferredLeagueId.isNotEmpty) {
-            final leagueDetail = await LeagueService.getLeagueById(
-              inferredLeagueId,
-            );
-            final allLeagues = await LeagueService.getAllLeagues();
-            final leagueModel = allLeagues
-                .where((l) => l.id == inferredLeagueId)
-                .cast<LeagueModel?>()
-                .firstWhere(
-                  (l) => l != null,
-                  orElse: () => null,
-                );
-            if (leagueDetail != null) {
-              final effectiveLeagueModel = leagueModel ??
-                  LeagueModel(
-                    id: inferredLeagueId,
-                    leagueName: leagueDetail.leagueName,
-                    format: leagueDetail.format,
-                    startDate: leagueDetail.startDate,
-                    endDate: leagueDetail.endDate,
-                    minimumPlayers: 0,
-                    perPlayerLeagueFee: 0,
-                    logo: null,
-                    status: 'pending',
-                    createdAt: null,
-                  );
-              return _PendingLeaguePaymentInfo(
-                leagueId: inferredLeagueId,
-                leagueName: leagueDetail.leagueName,
-                format: leagueDetail.format,
-                startDate: leagueDetail.startDate,
-                endDate: leagueDetail.endDate,
-                perPlayerFee: effectiveLeagueModel.perPlayerLeagueFee,
-                leagueModel: effectiveLeagueModel,
-              );
-            }
-          }
-        }
-      }
-    } catch (_) {
-      // Silent: keep placeholders
-    }
-    return null;
+class _CaptainHomeScreenState extends State<CaptainHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PendingPaymentProvider>(
+        context,
+        listen: false,
+      ).loadPendingPayment(context);
+    });
   }
 
   @override
@@ -191,68 +44,89 @@ class CaptainHomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Pending Payment',
-                  style: TextStyle(
-                    fontFamily: "Lato",
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FutureBuilder<_PendingLeaguePaymentInfo?>(
-                  future: _loadPendingPaymentInfo(),
-                  builder: (context, snapshot) {
-                    final info = snapshot.data;
+                Consumer<PendingPaymentProvider>(
+                  builder: (context, paymentProvider, child) {
+                    if (paymentProvider.isLoading) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
 
-                    final dateFmt = DateFormat('d MMMM yyyy');
-                    final startDateText = info != null
-                        ? dateFmt.format(info.startDate)
-                        : '10 December 2025';
-                    final endDateText = info != null
-                        ? dateFmt.format(info.endDate)
-                        : '25 February 2026';
+                    if (!paymentProvider.hasPendingPayment ||
+                        paymentProvider.pendingPayment == null) {
+                      // Empty state
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Pending Payment',
+                            style: TextStyle(
+                              fontFamily: "Lato",
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'No pending payments',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    }
 
-                    final fee = info?.perPlayerFee;
-                    final feeText = fee != null ? '\$${fee.toStringAsFixed(0)}' : '\$200';
+                    final payment = paymentProvider.pendingPayment!;
 
-                    return LeaguePaymentCard(
-                      title: info?.leagueName ?? 'Player League',
-                      amount: feeText,
-                      subtitle: 'League Fee Due',
-                      format: info?.format ?? '5v5',
-                      leagueFee: feeText,
-                      startDate: startDateText,
-                      endDate: endDateText,
-                      onPayNow: () async {
-                        var resolvedInfo = info;
-                        resolvedInfo ??= await _loadPendingPaymentInfo();
-
-                        if (resolvedInfo != null) {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setString(
-                            'pendingLeagueId',
-                            resolvedInfo.leagueId,
-                          );
-                        }
-
-                        final leagueProvider =
-                            Provider.of<LeagueSelectionProvider>(context, listen: false);
-                        leagueProvider.clearAllSelections();
-                        if (resolvedInfo?.leagueModel != null) {
-                          leagueProvider.toggleLeagueSelection(
-                            resolvedInfo!.leagueModel!,
-                          );
-                        }
-
-                        if (context.mounted) {
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.freeAgentPaymentOption,
-                          );
-                        }
-                      },
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Pending Payment',
+                          style: TextStyle(
+                            fontFamily: "Lato",
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        LeaguePaymentCard(
+                          title: payment.leagueName,
+                          amount: payment.amount,
+                          subtitle: payment.subTitle,
+                          format: payment.format,
+                          leagueFee: payment.amount,
+                          startDate: payment.startDate,
+                          endDate: payment.endDate,
+                          onPayNow: () {
+                            // Navigate to Payment History Screen as requested
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.freeAgentPaymentHistory,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                     );
                   },
                 ),
@@ -277,6 +151,7 @@ class CaptainHomeScreen extends StatelessWidget {
                       );
                     },
                   ),
+                const SizedBox(height: 12),
                 SponsorBannerScreen(),
 
                 const SizedBox(height: 8),
@@ -305,24 +180,4 @@ class CaptainHomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _PendingLeaguePaymentInfo {
-  final String leagueId;
-  final String leagueName;
-  final String format;
-  final DateTime startDate;
-  final DateTime endDate;
-  final double? perPlayerFee;
-  final LeagueModel? leagueModel;
-
-  const _PendingLeaguePaymentInfo({
-    required this.leagueId,
-    required this.leagueName,
-    required this.format,
-    required this.startDate,
-    required this.endDate,
-    required this.perPlayerFee,
-    required this.leagueModel,
-  });
 }

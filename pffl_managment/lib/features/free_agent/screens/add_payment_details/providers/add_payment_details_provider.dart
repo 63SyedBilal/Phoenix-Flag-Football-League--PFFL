@@ -73,7 +73,20 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
   Future<bool> processMultiLeaguePayment(
     LeagueSelectionProvider leagueProvider,
   ) async {
-    if (!validateForm()) return false;
+    // Debug output for form state before validation
+    debugPrint('📋 Form validation starting...');
+    debugPrint('   - Cardholder: "${_state.cardholderName}"');
+    debugPrint('   - Card Number: "${_state.cardNumber}" (length: ${_state.cardNumber.length})');
+    debugPrint('   - Expiry Date: "${_state.expiryDate}"');
+    debugPrint('   - CVV: "${_state.cvv}" (length: ${_state.cvv.length})');
+    debugPrint('   - ZIP Code: "${_state.zipCode}"');
+    debugPrint('   - Agreed to Terms: ${_state.agreedToTerms}');
+
+    if (!validateForm()) {
+      debugPrint('❌ Form validation failed');
+      return false;
+    }
+    debugPrint('✅ Form validation passed');
 
     _state = _state.copyWith(isLoading: true, clearGeneralError: true);
     notifyListeners();
@@ -152,32 +165,40 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
             ? int.tryParse('20${expiryParts[1]}')
             : null;
 
-        // Exhaustive flat fields to cover every possible backend/Stripe expectation
-        final richCardDetails = {
-          'cardNumber': _state.cardNumber.replaceAll(' ', ''),
+        // Card details in Stripe format - include both formats
+        final cardDetails = {
           'number': _state.cardNumber.replaceAll(' ', ''),
-          'card_number': _state.cardNumber.replaceAll(' ', ''),
-          'expiryDate': _state.expiryDate,
-          'expMonth': expMonth,
-          'expYear': expYear,
           'exp_month': expMonth,
           'exp_year': expYear,
-          'cvv': _state.cvv,
+          'exp_date': _state.expiryDate, // Send expiry date as string "MM/YY"
           'cvc': _state.cvv,
-          'zipCode': _state.zipCode,
-          'address_zip': _state.zipCode,
-          'zip_code': _state.zipCode,
-          'cardholderName': _state.cardholderName.trim(),
           'name': _state.cardholderName.trim(),
+          'address_zip': _state.zipCode,
         };
+
+        // Debug output for card details
+        debugPrint('💳 Processing payment for ${league.leagueName}');
+        debugPrint('   - Payment ID: $paymentId');
+        debugPrint('   - Raw Expiry Date from state: "${_state.expiryDate}"');
+        debugPrint('   - Parsed Month: $expMonth, Year: $expYear');
+        debugPrint('   - Card Number: ${_state.cardNumber.replaceAll(' ', '').replaceRange(0, 12, '*' * 12)}');
+        debugPrint('   - CVV: ***');
+        debugPrint('   - Cardholder: "${_state.cardholderName}"');
+        debugPrint('   - ZIP Code: "${_state.zipCode}"');
+        debugPrint('   - Card Details Object: $cardDetails');
 
         final response = await PaymentService.processPayment(
           paymentId: paymentId,
           paymentMethod: 'stripe',
-          cardDetails: richCardDetails,
+          cardDetails: cardDetails,
         );
 
         if (response['success'] != true) {
+          debugPrint('❌ Payment failed for ${league.leagueName}');
+          debugPrint('   - Response: $response');
+          debugPrint('   - Error: ${response['error']}');
+          debugPrint('   - Message: ${response['message']}');
+
           allSuccessful = false;
           _state = _state.copyWith(
             isLoading: false,
@@ -201,6 +222,7 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
       }
 
       if (allSuccessful) {
+        debugPrint('🎉 All payments processed successfully!');
         _state = _state.copyWith(isLoading: false);
         notifyListeners();
         _clearSensitiveData();

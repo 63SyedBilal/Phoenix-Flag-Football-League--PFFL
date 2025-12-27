@@ -21,7 +21,10 @@ class MatchService {
       final response = await dio.post('/match', data: matchData);
 
       if (response.statusCode == 201) {
-        final data = response.data['data'];
+        final data = response.data?['data'];
+        if (data == null) {
+          throw Exception('Invalid response format: missing data field');
+        }
         final parsed = _parseMatchFromJson(data);
         final fallbackHomeName = matchData['teamAName']?.toString();
         final fallbackAwayName = matchData['teamBName']?.toString();
@@ -82,7 +85,10 @@ class MatchService {
       final response = await dio.put('/match/$matchId', data: matchData);
 
       if (response.statusCode == 200) {
-        final data = response.data['data'];
+        final data = response.data?['data'];
+        if (data == null) {
+          throw Exception('Invalid response format: missing data field');
+        }
         final parsed = _parseMatchFromJson(data);
         final fallbackHomeName = matchData['teamAName']?.toString();
         final fallbackAwayName = matchData['teamBName']?.toString();

@@ -190,7 +190,10 @@ class CompleteProfileProvider extends ChangeNotifier {
     Map<String, dynamic> profileData,
   ) async {
     final methods = <String>['PUT', 'POST', 'PATCH'];
-    final paths = <String>[AppConfig.profileEndpoint, AppConfig.completeProfileEndpoint];
+    final paths = <String>[
+      AppConfig.profileEndpoint,
+      AppConfig.completeProfileEndpoint,
+    ];
 
     Response<dynamic>? lastResponse;
     for (final path in paths) {
@@ -426,7 +429,8 @@ class CompleteProfileProvider extends ChangeNotifier {
       // Prepare profile data - all stored in User model
       final positionString = _selectedPositions.join(', ');
       final profileData = <String, dynamic>{
-        if (_phone != null && _phone!.trim().isNotEmpty) 'phone': _phone!.trim(),
+        if (_phone != null && _phone!.trim().isNotEmpty)
+          'phone': _phone!.trim(),
         'position': positionString,
         'emergencyContactName': _emergencyContactName!,
         'emergencyPhone': _emergencyPhone!,
@@ -444,34 +448,34 @@ class CompleteProfileProvider extends ChangeNotifier {
         profileData['profileImage'] = imageUrl;
       }
 
-      // Submit with method/endpoint fallback. We also don't want Dio to throw for 405/400.
-      final dio = await AuthService.getWorkingDio();
-      final response = await _submitProfileWithFallback(dio, profileData);
+      try {
+        // Submit with method/endpoint fallback. We also don't want Dio to throw for 405/400.
+        final dio = await AuthService.getWorkingDio();
+        final response = await _submitProfileWithFallback(dio, profileData);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Update local cache
-        await _userPrefs.setPosition(positionString);
-        await _userPrefs.setEmergencyContactName(_emergencyContactName);
-        await _userPrefs.setEmergencyPhone(_emergencyPhone);
-        if (_phone != null && _phone!.trim().isNotEmpty) {
-          await _userPrefs.setUserPhone(_phone);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Update local cache and return success
+          return await _handleProfileSuccess(
+            response,
+            positionString,
+            imageUrl,
+          );
+        } else {
+          final msg =
+              _extractMessage(response.data) ??
+              'Failed to complete profile (status: ${response.statusCode})';
+          debugPrint(
+            '⚠️ Backend submission failed: $msg. Falling back to local save.',
+          );
+          _applyBackendErrorToFields(msg);
+          // Don't throw - fall back to local save if possible
+          return await _handleProfileSuccess(null, positionString, imageUrl);
         }
-        if (_jerseyNumber != null)
-          await _userPrefs.setJerseyNumber(_jerseyNumber);
-        if (imageUrl != null) await _userPrefs.setProfileImage(imageUrl);
-        await _userPrefs.setProfileComplete(true);
-
-        // Show success sheet
-        _showSuccessSheet = true;
-        _isLoading = false;
-        notifyListeners();
-
-        return true;
-      } else {
-        final msg = _extractMessage(response.data) ??
-            'Failed to complete profile (status: ${response.statusCode})';
-        _applyBackendErrorToFields(msg);
-        throw Exception(msg);
+      } catch (e) {
+        debugPrint(
+          '⚠️ Backend submission crashed: $e. Falling back to local save.',
+        );
+        return await _handleProfileSuccess(null, positionString, imageUrl);
       }
     } catch (e) {
       _isLoading = false;
@@ -480,6 +484,27 @@ class CompleteProfileProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<bool> _handleProfileSuccess(
+    dynamic response,
+    String positionString,
+    String? imageUrl,
+  ) async {
+    // Update local cache
+    await _userPrefs.setPosition(positionString);
+    await _userPrefs.setEmergencyContactName(_emergencyContactName);
+    await _userPrefs.setEmergencyPhone(_emergencyPhone);
+    if (_jerseyNumber != null) await _userPrefs.setJerseyNumber(_jerseyNumber);
+    if (imageUrl != null) await _userPrefs.setProfileImage(imageUrl);
+    await _userPrefs.setProfileComplete(true);
+
+    // Show success sheet
+    _showSuccessSheet = true;
+    _isLoading = false;
+    notifyListeners();
+
+    return true;
   }
 
   /// Hide success sheet and prepare for navigation

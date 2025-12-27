@@ -68,32 +68,44 @@ class NotificationProvider extends ChangeNotifier {
       print('   - User Role: $userRole');
       print('   - Is Admin: $isAdmin');
 
-      // Parallel fetch
-      final results = await Future.wait([
-        NotificationService.getAllNotifications(),
-        if (isAdmin)
-          _fetchPaymentNotifications()
-        else
-          Future.value(<Map<String, dynamic>>[]),
-      ]);
+      // Fetch role-specific notifications
+      print('🔄 [NOTIFICATION PROVIDER DEBUG] Fetching role-specific notifications for: $userRole');
 
-      print('🔄 [NOTIFICATION PROVIDER DEBUG] Results received');
+      List<NotificationModel> roleSpecificNotifications;
+      switch (userRole) {
+        case 'player':
+          roleSpecificNotifications = await NotificationService.getPlayerNotifications();
+          break;
+        case 'captain':
+          roleSpecificNotifications = await NotificationService.getCaptainNotifications();
+          break;
+        case 'admin':
+        case 'superadmin':
+          roleSpecificNotifications = await NotificationService.getAdminNotifications();
+          break;
+        case 'referee':
+          roleSpecificNotifications = await NotificationService.getRefereeNotifications();
+          break;
+        case 'stat-keeper':
+        case 'statkeeper':
+          roleSpecificNotifications = await NotificationService.getStatKeeperNotifications();
+          break;
+        case 'free-agent':
+        case 'freeagent':
+          roleSpecificNotifications = await NotificationService.getFreeAgentNotifications();
+          break;
+        default:
+          // Fallback to all notifications if role is unknown
+          print('⚠️ [NOTIFICATION PROVIDER DEBUG] Unknown role "$userRole", fetching all notifications');
+          roleSpecificNotifications = await NotificationService.getAllNotifications();
+      }
 
-      // Safe type conversion
-      final List<NotificationModel> regularData = (results[0] as List)
-          .cast<NotificationModel>();
+      print('✅ [NOTIFICATION PROVIDER DEBUG] Fetched ${roleSpecificNotifications.length} role-specific notifications');
 
-      final List<Map<String, dynamic>> paymentMaps = (results[1] as List)
-          .cast<Map<String, dynamic>>();
-
-      print(
-        '🔄 [NOTIFICATION PROVIDER DEBUG] Regular: ${regularData.length}, Payment maps: ${paymentMaps.length}',
-      );
-
-      // Log regular notifications for debugging
-      print('🔄 [NOTIFICATION PROVIDER DEBUG] Regular notifications:');
-      for (int i = 0; i < regularData.length; i++) {
-        final notif = regularData[i];
+      // Log role-specific notifications for debugging
+      print('🔄 [NOTIFICATION PROVIDER DEBUG] Role-specific notifications:');
+      for (int i = 0; i < roleSpecificNotifications.length; i++) {
+        final notif = roleSpecificNotifications[i];
         print(
           '   [$i] ID: ${notif.id}, Type: ${notif.type}, Status: ${notif.status}',
         );
@@ -102,24 +114,28 @@ class NotificationProvider extends ChangeNotifier {
         print('       Team: ${notif.teamName}');
       }
 
-      // Convert payment maps to NotificationModel objects
-      final List<NotificationModel> paymentData = paymentMaps
-          .map((map) {
-            try {
-              return NotificationModel.fromJson(map);
-            } catch (e) {
-              print(
-                '⚠️ [NOTIFICATION PROVIDER DEBUG] Error converting payment: $e',
-              );
-              return null;
-            }
-          })
-          .whereType<NotificationModel>()
-          .toList();
+      // Fetch payment notifications for admin only
+      List<NotificationModel> paymentNotifications = [];
+      if (isAdmin) {
+        final paymentMaps = await _fetchPaymentNotifications();
+        paymentNotifications = paymentMaps
+            .map((map) {
+              try {
+                return NotificationModel.fromJson(map);
+              } catch (e) {
+                print(
+                  '⚠️ [NOTIFICATION PROVIDER DEBUG] Error converting payment: $e',
+                );
+                return null;
+              }
+            })
+            .whereType<NotificationModel>()
+            .toList();
+      }
 
-      _notifications = [...regularData, ...paymentData];
+      _notifications = [...roleSpecificNotifications, ...paymentNotifications];
       print(
-        '✅ [NOTIFICATION PROVIDER DEBUG] Total notifications: ${_notifications.length}',
+        '✅ [NOTIFICATION PROVIDER DEBUG] Total notifications: ${_notifications.length} (${roleSpecificNotifications.length} role-specific + ${paymentNotifications.length} payment)',
       );
 
       // Sort by date descending

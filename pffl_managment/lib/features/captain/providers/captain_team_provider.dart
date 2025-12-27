@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/core/services/profile_service.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
+import 'package:pffl_managment/core/services/payment_service.dart';
 import '../model/player_model.dart';
 import '../model/team_model.dart';
 
@@ -121,6 +122,52 @@ class CaptainTeamProvider extends ChangeNotifier {
     for (var player in players) {
       try {
         final profile = await ProfileService.getProfile(player.id);
+
+          // Check payment status for this league
+          bool isPaid = false;
+          try {
+            // Get current team to find league ID
+            TeamModel? currentTeam;
+            try {
+              currentTeam = _teams.values.firstWhere(
+                (team) => team.players.any((p) => p.id == player.id),
+              );
+            } catch (e) {
+              // Player not found in any team, use first available team as fallback
+              currentTeam = _teams.values.isNotEmpty ? _teams.values.first : null;
+            }
+
+            if (currentTeam != null && currentTeam.id.isNotEmpty) {
+              // First, find the league ID for this team
+              String? leagueId;
+              try {
+                final leagueResponse = await TeamService.findLeagueForTeam(currentTeam.id);
+                if (leagueResponse is Map<String, dynamic> &&
+                    leagueResponse['success'] == true) {
+                  leagueId = leagueResponse['data']['_id'] ?? leagueResponse['data']['id'];
+                }
+              } catch (e) {
+                print('⚠️ Error finding league for team ${currentTeam.id}: $e');
+              }
+
+              // Check if player has paid for this league
+              if (leagueId != null && leagueId.isNotEmpty) {
+                final paymentResponse = await PaymentService.getOrCreatePayment(leagueId);
+                if (paymentResponse is Map<String, dynamic> &&
+                    paymentResponse['success'] == true) {
+                  final paymentData = paymentResponse['data'];
+                  if (paymentData is Map<String, dynamic>) {
+                    isPaid = paymentData['status'] == 'paid';
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            print('⚠️ Error checking payment status for ${player.id}: $e');
+            // Keep existing payment status if check fails
+            isPaid = player.isPaid;
+          }
+
         if (profile != null) {
           // Update player with profile data
           final jerseyNumber = profile['jerseyNumber']?.toString() ?? '';
@@ -138,7 +185,7 @@ class CaptainTeamProvider extends ChangeNotifier {
               ? positions.length - 1
               : 0;
 
-          // Create updated player model
+          // Create updated player model with current payment status
           final updatedPlayer = PlayerModel(
             id: player.id,
             name: player.name,
@@ -149,14 +196,26 @@ class CaptainTeamProvider extends ChangeNotifier {
             imageUrl: image,
             isVerified: player.isVerified,
             hasAlert: player.hasAlert,
-            isPaid: player.isPaid,
+            isPaid: isPaid, // Use updated payment status
             additionalPositionsCount: additionalPositionsCount,
           );
 
           enrichedPlayers.add(updatedPlayer);
         } else {
-          // No profile found, use original player data
-          enrichedPlayers.add(player);
+          // No profile found, use original player data with updated payment status
+          enrichedPlayers.add(PlayerModel(
+            id: player.id,
+            name: player.name,
+            number: player.number,
+            email: player.email,
+            position: player.position,
+            isCaptain: player.isCaptain,
+            imageUrl: player.imageUrl,
+            isVerified: player.isVerified,
+            hasAlert: player.hasAlert,
+            isPaid: isPaid, // Use updated payment status
+            additionalPositionsCount: player.additionalPositionsCount,
+          ));
         }
       } catch (e) {
         print('⚠️ Error fetching profile for ${player.id}: $e');

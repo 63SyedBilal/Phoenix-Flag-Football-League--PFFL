@@ -362,6 +362,38 @@ async function processStripePayment(
       model: "League",
     });
 
+    // 📢 SEND NOTIFICATION TO SUPER ADMIN ABOUT SUCCESSFUL PAYMENT
+    console.log("📢 Sending payment success notification to super admin...");
+    try {
+      const SuperAdmin = (await import("@/modules/superadmin")).default;
+      const Notification = (await import("@/modules/notification")).default;
+
+      // Find super admin to notify
+      const superAdmin = await SuperAdmin.findOne();
+      if (superAdmin) {
+        const user = await User.findById(payment.userId);
+        const league = await League.findById(payment.leagueId);
+
+        const notificationMessage = `${user?.firstName} ${user?.lastName} (${user?.email}) has successfully paid \$${payment.amount} for league "${league?.leagueName}". Transaction ID: ${paymentIntent.id}`;
+
+        await Notification.create({
+          sender: payment.userId, // The user who made the payment
+          receiver: superAdmin._id, // Super admin
+          league: payment.leagueId,
+          type: "PAYMENT_SUCCESS",
+          status: "pending",
+          message: notificationMessage,
+        });
+
+        console.log("✅ Payment success notification sent to super admin");
+      } else {
+        console.log("⚠️ No super admin found to notify about payment");
+      }
+    } catch (notificationError: any) {
+      console.error("⚠️ Failed to send payment notification to super admin:", notificationError.message);
+      // Don't fail the payment if notification fails
+    }
+
     console.log("💳 ========== STRIPE PAYMENT SUCCESSFUL ==========\n");
 
     return NextResponse.json(
@@ -370,6 +402,7 @@ async function processStripePayment(
         message: "Payment processed successfully! Your payment has been confirmed.",
         transactionId: paymentIntent.id,
         data: payment,
+        statusUpdated: true, // Indicate that status was updated
       },
       { status: 200 }
     );

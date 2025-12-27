@@ -6,6 +6,7 @@ class AppRoutes {
   static const String getStarted = '/get-started';
   static const String completeProfile = '/complete-profile';
   static const String completeCaptainProfile = '/complete-captain-profile';
+  static const String changePassword = '/change-password';
 
   // Player Routes
   static const String playerDashboard = '/player-dashboard';
@@ -50,6 +51,7 @@ class AppRoutes {
   static const String freeAgentPaymentOption = '/free-agent/payment-option';
   static const String freeAgentAddPaymentDetails =
       '/free-agent/add-payment-details';
+  static const String freeAgentPaymentHistory = '/free-agent/payment-history';
 
   // Notification Routes
   static const String playerNotification = '/player/notifications';

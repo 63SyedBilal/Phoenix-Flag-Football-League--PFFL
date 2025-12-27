@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:pffl_managment/core/services/admin_service.dart';
 
 class SponsorScreenProvider extends ChangeNotifier {
   final List<Map<String, String>?> _uploadedImages = [null, null, null];
@@ -58,10 +59,10 @@ class SponsorScreenProvider extends ChangeNotifier {
         final filePath = result.files.single.path!;
         final file = File(filePath);
 
-        // Check file size (max 2MB)
+        // Check file size (max 10MB to match other image uploads)
         final fileSize = await file.length();
-        if (fileSize > 2 * 1024 * 1024) {
-          _validationErrors[slotNumber - 1] = 'Image must be less than 2MB';
+        if (fileSize > 10 * 1024 * 1024) {
+          _validationErrors[slotNumber - 1] = 'Image must be less than 10MB';
           notifyListeners();
           return;
         }
@@ -146,8 +147,46 @@ class SponsorScreenProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Small delay to show loading state
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Upload sponsor images to backend
+      final uploadedUrls = <String>[];
+
+      for (int i = 0; i < 3; i++) {
+        if (_uploadedImages[i] != null && _uploadedImages[i]!['type'] == 'file') {
+          try {
+            final filePath = _uploadedImages[i]!['path']!;
+            final imageFile = File(filePath);
+
+            if (await imageFile.exists()) {
+              final uploadedUrl = await AdminService.uploadImage(imageFile);
+              if (uploadedUrl != null) {
+                uploadedUrls.add(uploadedUrl);
+                debugPrint('✅ Sponsor image ${i + 1} uploaded: $uploadedUrl');
+              } else {
+                debugPrint('⚠️ Failed to upload sponsor image ${i + 1}');
+                // Use default image if upload fails
+                uploadedUrls.add('assets/images/sponser/sponser${i + 1}.png');
+              }
+            }
+          } catch (e) {
+            debugPrint('⚠️ Error uploading sponsor image ${i + 1}: $e');
+            // Use default image if upload fails
+            uploadedUrls.add('assets/images/sponser/sponser${i + 1}.png');
+          }
+        } else if (_urlControllers[i].text.trim().isNotEmpty) {
+          // Use URL if provided
+          uploadedUrls.add(_urlControllers[i].text.trim());
+        } else {
+          // Use default image
+          uploadedUrls.add('assets/images/sponser/sponser${i + 1}.png');
+        }
+      }
+
+      // TODO: Save uploaded URLs to backend (league settings, etc.)
+      // For now, we'll just log the URLs
+      debugPrint('📋 Final sponsor image URLs:');
+      for (int i = 0; i < uploadedUrls.length; i++) {
+        debugPrint('   Sponsor ${i + 1}: ${uploadedUrls[i]}');
+      }
 
       _isSaving = false;
       notifyListeners();
@@ -155,7 +194,7 @@ class SponsorScreenProvider extends ChangeNotifier {
     } catch (e) {
       _isSaving = false;
       notifyListeners();
-      debugPrint('Error saving sponsors: $e');
+      debugPrint('❌ Error saving sponsors: $e');
       return false;
     }
   }

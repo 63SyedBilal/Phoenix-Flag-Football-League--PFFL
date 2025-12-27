@@ -172,14 +172,23 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
 
       // 2. Process final payment using the server-side Stripe endpoint
       debugPrint('💳 Step 2: Processing payment with Stripe...');
+
+      // Parse expiry date for consistent format
+      final expiryParts = _expiryDate.split('/');
+      final expMonth = expiryParts.isNotEmpty ? int.tryParse(expiryParts[0]) : null;
+      final expYear = expiryParts.length > 1 ? int.tryParse('20${expiryParts[1]}') : null;
+
       final response = await PaymentService.processPayment(
         paymentId: paymentId,
         paymentMethod: _selectedPaymentMethod, // Pass selected payment method
         cardDetails: {
-          'cardNumber': _cardNumber,
-          'expiryDate': _expiryDate,
-          'cvv': _cvv,
-          'zipCode': _zipCode,
+          'number': _cardNumber.replaceAll(' ', ''),
+          'exp_month': expMonth,
+          'exp_year': expYear,
+          'exp_date': _expiryDate, // Send expiry date as string "MM/YY"
+          'cvc': _cvv,
+          'name': _cardholderName.trim(),
+          'address_zip': _zipCode,
         },
       );
 
@@ -196,6 +205,12 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
         } catch (e) {
           debugPrint('Error sending admin notification: $e');
         }
+
+        // Note: User data refresh happens automatically through AuthProvider
+        // which is a global provider and refreshes user data on login
+
+        // Note: Notification refresh will happen automatically through the NotificationProvider
+        // which is initialized globally and refreshes on app start
 
         _setLoading(false);
         return true;
