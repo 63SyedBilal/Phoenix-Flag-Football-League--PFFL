@@ -39,7 +39,7 @@ class SummaryTab extends StatelessWidget {
           const Text(
             'Actions',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               fontFamily: 'Lato',
               color: Color(0xFF111827),
@@ -54,7 +54,7 @@ class SummaryTab extends StatelessWidget {
           const Text(
             'Game Information',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               fontFamily: 'Lato',
               color: Color(0xFF111827),
@@ -144,8 +144,8 @@ class SummaryTab extends StatelessWidget {
               'Team Performance',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Lato',
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Inter',
                 color: Color(0xFF111827),
               ),
             ),
@@ -156,9 +156,9 @@ class SummaryTab extends StatelessWidget {
                 Text(
                   match.awayScore?.toString() ?? '0',
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Lato',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Inter',
                   ),
                 ),
               ],
@@ -216,9 +216,10 @@ class SummaryTab extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF4B5563),
-              fontFamily: 'Lato',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF000000),
+              fontFamily: 'Inter',
             ),
           ),
           SizedBox(
@@ -352,7 +353,9 @@ class SummaryTab extends StatelessWidget {
                     ),
                     child: const Text(
                       'Half Time',
-                      style: TextStyle(fontSize: 12, fontFamily: 'Lato'),
+                      style: TextStyle(fontSize: 12, fontFamily: 'Lato'
+                      ,fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 );
@@ -370,7 +373,9 @@ class SummaryTab extends StatelessWidget {
                     ),
                     child: const Text(
                       'Full Time',
-                      style: TextStyle(fontSize: 12, fontFamily: 'Lato'),
+                      style: TextStyle(fontSize: 12, fontFamily: 'Lato',
+                      fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 );
@@ -451,13 +456,16 @@ class SummaryTab extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Lato',
+                          color: Color(0xFF000000
+                          ),
                         ),
                       ),
                       Text(
                         role,
                         style: const TextStyle(
                           fontSize: 10,
-                          color: Colors.grey,
+                          color: Color(0xFF000000),
+                          fontWeight: FontWeight.w500,
                           fontFamily: 'Lato',
                         ),
                       ),
@@ -889,9 +897,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'Rank',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                           ),
                         ),
@@ -900,9 +909,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'Team',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                           ),
                         ),
@@ -912,9 +922,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'W',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -925,9 +936,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'D',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -938,9 +950,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'L',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -951,9 +964,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'OD',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -964,9 +978,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'PS',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -977,9 +992,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'PA',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -990,9 +1006,10 @@ class SummaryTab extends StatelessWidget {
                           child: Text(
                             'PTA',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Lato',
+                              color: Color(0xFF000000),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -1062,9 +1079,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               rank,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
             ),
           ),
@@ -1086,9 +1104,10 @@ class SummaryTab extends StatelessWidget {
                   child: Text(
                     team,
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF111827),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Lato',
+                      color: Color(0xFF000000),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1102,9 +1121,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               wins,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111827),
+                 fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1115,9 +1135,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               draws,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1128,9 +1149,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               losses,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1141,9 +1163,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               od,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1154,9 +1177,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               ps,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1167,9 +1191,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               pa,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1180,9 +1205,10 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               pta,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Lato',
+                color: Color(0xFF000000),
               ),
               textAlign: TextAlign.center,
             ),

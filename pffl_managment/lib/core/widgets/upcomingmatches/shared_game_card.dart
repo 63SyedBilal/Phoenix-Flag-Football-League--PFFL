@@ -54,26 +54,7 @@ class SharedGameCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (showYourGameTag && game.isMyGame)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6),
-                      borderRadius: BorderRadius.circular(110),
-                    ),
-                    child: const Text(
-                      'Your Game',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Lato',
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+
               ],
             ),
             const SizedBox(height: 18),

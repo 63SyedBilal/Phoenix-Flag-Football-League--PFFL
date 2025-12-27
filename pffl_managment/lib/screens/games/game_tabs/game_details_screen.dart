@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_tabs_provider.dart';
@@ -34,17 +35,9 @@ class _GameDetailsContent extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.grey[100],
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black, size: 20),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ),
+
+        leading: ArrowBackButton(),
+
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -131,7 +124,7 @@ class _GameDetailsContent extends StatelessWidget {
             text,
             style: TextStyle(
               color: isSelected ? Colors.white : const Color(0xFF374151),
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
               fontSize: 14,
               fontFamily: 'Lato',
             ),
@@ -159,23 +152,25 @@ class _GameDetailsContent extends StatelessWidget {
               Text(
                 shortName,
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+
                   fontFamily: 'Lato',
                 ),
               ),
             ]
           : [
+        const SizedBox(width: 8),
+        _buildLogo(logo),
               Text(
                 shortName,
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                   fontFamily: 'Lato',
                 ),
               ),
-              const SizedBox(width: 8),
-              _buildLogo(logo),
+
             ],
     );
   }
