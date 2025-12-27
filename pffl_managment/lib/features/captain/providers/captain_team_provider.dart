@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
-import 'package:pffl_managment/core/services/profile_service.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
-import 'package:pffl_managment/core/services/payment_service.dart';
-import '../model/player_model.dart';
 import '../model/team_model.dart';
 
 class CaptainTeamProvider extends ChangeNotifier {
@@ -46,7 +43,7 @@ class CaptainTeamProvider extends ChangeNotifier {
       }
 
       print('🔄 Loading team data for captain...');
-      // Fetch team data from API
+      // Fetch team data from API (backend already populates profile data)
       final teamData = await TeamService.getTeamByCaptain();
 
       if (teamData == null) {
@@ -67,39 +64,27 @@ class CaptainTeamProvider extends ChangeNotifier {
       print('   Raw squad5v5 count: ${squad5v5Raw.length}');
       print('   Raw squad7v7 count: ${squad7v7Raw.length}');
 
-      // Create TeamModel for both formats
-      final team5v5Base = TeamModel.fromJson(teamData, '5v5');
-      final team7v7Base = TeamModel.fromJson(teamData, '7v7');
+      // Backend already populates profileImage, jerseyNumber, position
+      // So we can directly use TeamModel.fromJson without additional enrichment
+      print('🔍 [TEAM DEBUG] Raw team data: $teamData');
 
-      print('   Parsed 5v5 players: ${team5v5Base.players.length}');
-      print('   Parsed 7v7 players: ${team7v7Base.players.length}');
+      final team5v5 = TeamModel.fromJson(teamData, '5v5');
+      final team7v7 = TeamModel.fromJson(teamData, '7v7');
 
-      // Fetch profiles for all players to get jersey numbers and positions
-      final enrichedPlayers5v5 = await _enrichPlayersWithProfiles(
-        team5v5Base.players,
-      );
-      final enrichedPlayers7v7 = await _enrichPlayersWithProfiles(
-        team7v7Base.players,
-      );
+      // Log the team data to verify profile images are present
+      print('🔍 [TEAM DEBUG] Team 5v5 players (${team5v5.players.length}):');
+      for (var player in team5v5.players) {
+        print(
+          '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
+        );
+      }
 
-      // Create updated team models with enriched players
-      final team5v5 = TeamModel(
-        id: team5v5Base.id,
-        name: team5v5Base.name,
-        logoUrl: team5v5Base.logoUrl,
-        format: '5v5',
-        players: enrichedPlayers5v5,
-        maxPlayers: 8,
-      );
-
-      final team7v7 = TeamModel(
-        id: team7v7Base.id,
-        name: team7v7Base.name,
-        logoUrl: team7v7Base.logoUrl,
-        format: '7v7',
-        players: enrichedPlayers7v7,
-        maxPlayers: 12,
-      );
+      print('🔍 [TEAM DEBUG] Team 7v7 players (${team7v7.players.length}):');
+      for (var player in team7v7.players) {
+        print(
+          '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
+        );
+      }
 
       _teams = {'5v5': team5v5, '7v7': team7v7};
 
@@ -111,120 +96,6 @@ class CaptainTeamProvider extends ChangeNotifier {
       print('❌ Error loading team data: $e');
       notifyListeners();
     }
-  }
-
-  /// Fetch profiles for players to enrich with jersey numbers and positions
-  Future<List<PlayerModel>> _enrichPlayersWithProfiles(
-    List<PlayerModel> players,
-  ) async {
-    final enrichedPlayers = <PlayerModel>[];
-
-    for (var player in players) {
-      try {
-        final profile = await ProfileService.getProfile(player.id);
-
-          // Check payment status for this league
-          bool isPaid = false;
-          try {
-            // Get current team to find league ID
-            TeamModel? currentTeam;
-            try {
-              currentTeam = _teams.values.firstWhere(
-                (team) => team.players.any((p) => p.id == player.id),
-              );
-            } catch (e) {
-              // Player not found in any team, use first available team as fallback
-              currentTeam = _teams.values.isNotEmpty ? _teams.values.first : null;
-            }
-
-            if (currentTeam != null && currentTeam.id.isNotEmpty) {
-              // First, find the league ID for this team
-              String? leagueId;
-              try {
-                final leagueResponse = await TeamService.findLeagueForTeam(currentTeam.id);
-                if (leagueResponse is Map<String, dynamic> &&
-                    leagueResponse['success'] == true) {
-                  leagueId = leagueResponse['data']['_id'] ?? leagueResponse['data']['id'];
-                }
-              } catch (e) {
-                print('⚠️ Error finding league for team ${currentTeam.id}: $e');
-              }
-
-              // Check if player has paid for this league
-              if (leagueId != null && leagueId.isNotEmpty) {
-                final paymentResponse = await PaymentService.getOrCreatePayment(leagueId);
-                if (paymentResponse is Map<String, dynamic> &&
-                    paymentResponse['success'] == true) {
-                  final paymentData = paymentResponse['data'];
-                  if (paymentData is Map<String, dynamic>) {
-                    isPaid = paymentData['status'] == 'paid';
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            print('⚠️ Error checking payment status for ${player.id}: $e');
-            // Keep existing payment status if check fails
-            isPaid = player.isPaid;
-          }
-
-        if (profile != null) {
-          // Update player with profile data
-          final jerseyNumber = profile['jerseyNumber']?.toString() ?? '';
-          final position = profile['position']?.toString() ?? '';
-          final image = profile['image']?.toString();
-
-          // Parse position string (can be comma-separated)
-          final positions = position
-              .split(',')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .toList();
-          final primaryPosition = positions.isNotEmpty ? positions[0] : '';
-          final additionalPositionsCount = positions.length > 1
-              ? positions.length - 1
-              : 0;
-
-          // Create updated player model with current payment status
-          final updatedPlayer = PlayerModel(
-            id: player.id,
-            name: player.name,
-            number: jerseyNumber,
-            email: player.email,
-            position: primaryPosition,
-            isCaptain: player.isCaptain,
-            imageUrl: image,
-            isVerified: player.isVerified,
-            hasAlert: player.hasAlert,
-            isPaid: isPaid, // Use updated payment status
-            additionalPositionsCount: additionalPositionsCount,
-          );
-
-          enrichedPlayers.add(updatedPlayer);
-        } else {
-          // No profile found, use original player data with updated payment status
-          enrichedPlayers.add(PlayerModel(
-            id: player.id,
-            name: player.name,
-            number: player.number,
-            email: player.email,
-            position: player.position,
-            isCaptain: player.isCaptain,
-            imageUrl: player.imageUrl,
-            isVerified: player.isVerified,
-            hasAlert: player.hasAlert,
-            isPaid: isPaid, // Use updated payment status
-            additionalPositionsCount: player.additionalPositionsCount,
-          ));
-        }
-      } catch (e) {
-        print('⚠️ Error fetching profile for ${player.id}: $e');
-        // Continue with original player data if profile fetch fails
-        enrichedPlayers.add(player);
-      }
-    }
-
-    return enrichedPlayers;
   }
 
   /// Refresh team data

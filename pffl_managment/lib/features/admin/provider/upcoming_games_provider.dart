@@ -613,7 +613,42 @@ class UpcomingGamesProvider extends ChangeNotifier {
           'statKeeperId': _selectedStatKeeperId,
       };
 
+      // 🎮 LOG GAME CREATION REQUEST
+      debugPrint("🎮 [FLUTTER] ================================");
+      debugPrint("🎮 [FLUTTER] Creating new game...");
+      debugPrint("🎮 [FLUTTER] League ID: $_leagueId");
+      debugPrint("🎮 [FLUTTER] Team A ID: $_selectedTeamAId");
+      debugPrint("🎮 [FLUTTER] Team A Name: $_selectedTeamA");
+      debugPrint("🎮 [FLUTTER] Team B ID: $_selectedTeamBId");
+      debugPrint("🎮 [FLUTTER] Team B Name: $_selectedTeamB");
+      debugPrint("🎮 [FLUTTER] Format: ${_leagueFormat ?? '5v5'}");
+      debugPrint("🎮 [FLUTTER] Date: ${gameDateTime.toIso8601String()}");
+      debugPrint("🎮 [FLUTTER] Time: $timeStr");
+      debugPrint("🎮 [FLUTTER] Venue: ${_selectedVenue ?? 'No venue'}");
+      debugPrint("🎮 [FLUTTER] Round: ${_selectedRoundName ?? 'Group Stage'}");
+      if (_selectedRefereeId != null) {
+        debugPrint("🎮 [FLUTTER] Referee ID: $_selectedRefereeId");
+      } else {
+        debugPrint("🎮 [FLUTTER] No referee assigned");
+      }
+      if (_selectedStatKeeperId != null) {
+        debugPrint("🎮 [FLUTTER] Stat Keeper ID: $_selectedStatKeeperId");
+      } else {
+        debugPrint("🎮 [FLUTTER] No stat keeper assigned");
+      }
+      debugPrint("🎮 [FLUTTER] ================================");
+
       final createdMatch = await MatchService.createMatch(matchData);
+
+      // 🎮 LOG SUCCESSFUL CREATION
+      debugPrint("🎮 [FLUTTER] ================================");
+      debugPrint("🎮 [FLUTTER] Game created successfully!");
+      debugPrint("🎮 [FLUTTER] Created Match ID: ${createdMatch.id}");
+      debugPrint("🎮 [FLUTTER] Match Status: ${createdMatch.status}");
+      debugPrint("🎮 [FLUTTER] Home Team: ${createdMatch.homeTeam}");
+      debugPrint("🎮 [FLUTTER] Away Team: ${createdMatch.awayTeam}");
+      debugPrint("🎮 [FLUTTER] League: ${createdMatch.leagueName}");
+      debugPrint("🎮 [FLUTTER] ================================");
 
       // Send notifications to assigned referee and StatKeeper
       await _sendAssignmentNotifications(createdMatch);
@@ -622,6 +657,7 @@ class UpcomingGamesProvider extends ChangeNotifier {
       notifyListeners();
       return createdMatch;
     } catch (e) {
+      debugPrint("❌ [FLUTTER] Game creation failed: ${e.toString()}");
       _errorMessage = 'Failed to create match: ${e.toString()}';
       notifyListeners();
       rethrow;
@@ -738,16 +774,24 @@ class UpcomingGamesProvider extends ChangeNotifier {
 
         if (shouldNotifyReferee) {
           final refereeMessage = isUpdate
-              ? 'You have been assigned as referee for updated game: $gameInfo on $dateStr$timeStr$venueStr'
-              : 'You have been assigned as referee for game: $gameInfo on $dateStr$timeStr$venueStr';
+              ? 'You\'re the Referee for $gameInfo (Updated). Match starts $dateStr$timeStr. Venue: ${match.venue ?? 'TBD'}.'
+              : 'You\'re the Referee for $gameInfo. Match starts $dateStr$timeStr. Venue: ${match.venue ?? 'TBD'}.';
 
           final refereeNotificationSent =
               await NotificationService.sendNotification(
                 receiverId: match.refereeId!,
-                type: 'GAME_ASSIGNMENT_REFEREE',
+                type: 'GAME_ASSIGNED',
                 message: refereeMessage,
                 leagueId: match.leagueId,
+                matchId: match.id,
               );
+
+          debugPrint('🔔 [FLUTTER] Referee notification details:');
+          debugPrint('   - Receiver ID: ${match.refereeId}');
+          debugPrint('   - Message: $refereeMessage');
+          debugPrint('   - League ID: ${match.leagueId}');
+          debugPrint('   - Match ID: ${match.id}');
+          debugPrint('   - Notification sent: $refereeNotificationSent');
 
           if (refereeNotificationSent) {
             debugPrint('✅ Referee assignment notification sent successfully');
@@ -768,16 +812,24 @@ class UpcomingGamesProvider extends ChangeNotifier {
 
         if (shouldNotifyStatKeeper) {
           final statKeeperMessage = isUpdate
-              ? 'You have been assigned as stat keeper for updated game: $gameInfo on $dateStr$timeStr$venueStr'
-              : 'You have been assigned as stat keeper for game: $gameInfo on $dateStr$timeStr$venueStr';
+              ? 'You\'re the Stat Keeper for $gameInfo (Updated). Match starts $dateStr$timeStr. Venue: ${match.venue ?? 'TBD'}.'
+              : 'You\'re the Stat Keeper for $gameInfo. Match starts $dateStr$timeStr. Venue: ${match.venue ?? 'TBD'}.';
 
           final statKeeperNotificationSent =
               await NotificationService.sendNotification(
                 receiverId: match.statKeeperId!,
-                type: 'GAME_ASSIGNMENT_STATKEEPER',
+                type: 'GAME_ASSIGNED',
                 message: statKeeperMessage,
                 leagueId: match.leagueId,
+                matchId: match.id,
               );
+
+          debugPrint('🔔 [FLUTTER] Stat keeper notification details:');
+          debugPrint('   - Receiver ID: ${match.statKeeperId}');
+          debugPrint('   - Message: $statKeeperMessage');
+          debugPrint('   - League ID: ${match.leagueId}');
+          debugPrint('   - Match ID: ${match.id}');
+          debugPrint('   - Notification sent: $statKeeperNotificationSent');
 
           if (statKeeperNotificationSent) {
             debugPrint(

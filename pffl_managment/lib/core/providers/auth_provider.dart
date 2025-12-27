@@ -272,21 +272,44 @@ class AuthProvider extends ChangeNotifier {
 
   // Logout method
   Future<void> logout(BuildContext context) async {
-    _isLoggedIn = false;
-    _userToken = '';
-    _userRole = '';
-    _userId = '';
-    _userEmail = '';
-    _userName = '';
-    _needsProfileForm = false;
-    _needsTeamForm = false;
+    try {
+      print('🔄 [AUTH PROVIDER] Starting logout process...');
 
-    await _userPreferenceProvider.logout();
+      // Clear all user data
+      _isLoggedIn = false;
+      _userToken = '';
+      _userRole = '';
+      _userId = '';
+      _userEmail = '';
+      _userName = '';
+      _needsProfileForm = false;
+      _needsTeamForm = false;
+      _userData = null;
 
-    // Also clear token from AuthService
-    await AuthService.clearToken();
+      print('🔄 [AUTH PROVIDER] Clearing user preferences...');
+      await _userPreferenceProvider.logout();
 
-    notifyListeners();
+      print('🔄 [AUTH PROVIDER] Clearing auth service token...');
+      // Also clear token from AuthService
+      await AuthService.clearToken();
+
+      print('✅ [AUTH PROVIDER] Logout completed successfully');
+      notifyListeners();
+    } catch (e) {
+      print('❌ [AUTH PROVIDER] Error during logout: $e');
+      // Even if there's an error, we should still clear local data
+      _isLoggedIn = false;
+      _userToken = '';
+      _userRole = '';
+      _userId = '';
+      _userEmail = '';
+      _userName = '';
+      _needsProfileForm = false;
+      _needsTeamForm = false;
+      _userData = null;
+      notifyListeners();
+      rethrow;
+    }
   }
 
   // Check if user is already logged in (deprecated, using constructor sync)

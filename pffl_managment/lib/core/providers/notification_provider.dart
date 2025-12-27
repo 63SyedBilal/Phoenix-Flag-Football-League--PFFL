@@ -69,38 +69,63 @@ class NotificationProvider extends ChangeNotifier {
       print('   - Is Admin: $isAdmin');
 
       // Fetch role-specific notifications
-      print('🔄 [NOTIFICATION PROVIDER DEBUG] Fetching role-specific notifications for: $userRole');
+      print(
+        '🔄 [NOTIFICATION PROVIDER DEBUG] Fetching role-specific notifications for: $userRole',
+      );
 
       List<NotificationModel> roleSpecificNotifications;
       switch (userRole) {
         case 'player':
-          roleSpecificNotifications = await NotificationService.getPlayerNotifications();
+          roleSpecificNotifications =
+              await NotificationService.getPlayerNotifications();
           break;
         case 'captain':
-          roleSpecificNotifications = await NotificationService.getCaptainNotifications();
+          roleSpecificNotifications =
+              await NotificationService.getCaptainNotifications();
           break;
         case 'admin':
         case 'superadmin':
-          roleSpecificNotifications = await NotificationService.getAdminNotifications();
+          roleSpecificNotifications =
+              await NotificationService.getAdminNotifications();
           break;
         case 'referee':
-          roleSpecificNotifications = await NotificationService.getRefereeNotifications();
+          roleSpecificNotifications =
+              await NotificationService.getRefereeNotifications();
+          print(
+            '🎯 [NOTIFICATION PROVIDER] Referee notifications: ${roleSpecificNotifications.length}',
+          );
+          for (final notif in roleSpecificNotifications) {
+            print('   - ${notif.type}: ${notif.message}');
+          }
           break;
         case 'stat-keeper':
         case 'statkeeper':
-          roleSpecificNotifications = await NotificationService.getStatKeeperNotifications();
+          roleSpecificNotifications =
+              await NotificationService.getStatKeeperNotifications();
+          print(
+            '🎯 [NOTIFICATION PROVIDER] Stat keeper notifications: ${roleSpecificNotifications.length}',
+          );
+          for (final notif in roleSpecificNotifications) {
+            print('   - ${notif.type}: ${notif.message}');
+          }
           break;
         case 'free-agent':
         case 'freeagent':
-          roleSpecificNotifications = await NotificationService.getFreeAgentNotifications();
+          roleSpecificNotifications =
+              await NotificationService.getFreeAgentNotifications();
           break;
         default:
           // Fallback to all notifications if role is unknown
-          print('⚠️ [NOTIFICATION PROVIDER DEBUG] Unknown role "$userRole", fetching all notifications');
-          roleSpecificNotifications = await NotificationService.getAllNotifications();
+          print(
+            '⚠️ [NOTIFICATION PROVIDER DEBUG] Unknown role "$userRole", fetching all notifications',
+          );
+          roleSpecificNotifications =
+              await NotificationService.getAllNotifications();
       }
 
-      print('✅ [NOTIFICATION PROVIDER DEBUG] Fetched ${roleSpecificNotifications.length} role-specific notifications');
+      print(
+        '✅ [NOTIFICATION PROVIDER DEBUG] Fetched ${roleSpecificNotifications.length} role-specific notifications',
+      );
 
       // Log role-specific notifications for debugging
       print('🔄 [NOTIFICATION PROVIDER DEBUG] Role-specific notifications:');

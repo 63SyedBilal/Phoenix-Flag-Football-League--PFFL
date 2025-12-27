@@ -69,6 +69,9 @@ class TeamModel {
           isCaptain: true,
           imageUrl: captainProfileImage.isNotEmpty ? captainProfileImage : null,
           additionalPositionsCount: additionalPositionsCount,
+          isPaid: false, // Payment status not available in team data
+          isVerified: false, // Verification status not available in team data
+          hasAlert: false, // Alert status not available in team data
         ),
       );
     }
@@ -118,6 +121,10 @@ class TeamModel {
               isCaptain: false,
               imageUrl: profileImage.isNotEmpty ? profileImage : null,
               additionalPositionsCount: additionalPositionsCount,
+              isPaid: false, // Payment status not available in team data
+              isVerified:
+                  false, // Verification status not available in team data
+              hasAlert: false, // Alert status not available in team data
             ),
           );
         }
@@ -134,6 +141,10 @@ class TeamModel {
               email: '',
               position: '',
               isCaptain: false,
+              isPaid: false, // Payment status not available in team data
+              isVerified:
+                  false, // Verification status not available in team data
+              hasAlert: false, // Alert status not available in team data
             ),
           );
         }

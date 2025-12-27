@@ -66,8 +66,19 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
           debugPrint('   - Match: ${match.homeTeam} vs ${match.awayTeam}');
           debugPrint('   - Status: ${match.status}');
           debugPrint('   - Date: ${match.date}');
+          debugPrint(
+            '   - StatKeeper ID matches: ${match.statKeeperId == currentUserId}',
+          );
         }
       }
+
+      // Also log current user info for debugging
+      final userEmail = prefs.getString('userEmail') ?? '';
+      final userRole = prefs.getString('userRole') ?? '';
+      debugPrint('📋 Current user info:');
+      debugPrint('   - User ID: $currentUserId');
+      debugPrint('   - Email: $userEmail');
+      debugPrint('   - Role: $userRole');
 
       // Filter matches for StatKeeper dashboard
       final relevantMatches = allMatches.where((match) {
@@ -77,6 +88,23 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
           debugPrint(
             '✅ Found assigned match: ${match.homeTeam} vs ${match.awayTeam} (Status: ${match.status})',
           );
+          debugPrint('   - Match ID: ${match.id}');
+          debugPrint('   - StatKeeper ID: ${match.statKeeperId}');
+          debugPrint('   - Current User ID: $currentUserId');
+          debugPrint('   - Date: ${match.date}');
+          debugPrint('   - Time: ${match.time}');
+        } else if (match.statKeeperId != null &&
+            match.statKeeperId!.isNotEmpty) {
+          debugPrint(
+            '❌ Match NOT assigned to me: ${match.homeTeam} vs ${match.awayTeam}',
+          );
+          debugPrint('   - Match StatKeeper ID: ${match.statKeeperId}');
+          debugPrint('   - Current User ID: $currentUserId');
+          debugPrint('   - IDs match: ${match.statKeeperId == currentUserId}');
+          debugPrint(
+            '   - StatKeeper ID type: ${match.statKeeperId.runtimeType}',
+          );
+          debugPrint('   - Current User ID type: ${currentUserId.runtimeType}');
         }
 
         // For StatKeeper assigned games: Show ALL assigned games regardless of status

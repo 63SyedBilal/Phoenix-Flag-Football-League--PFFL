@@ -72,7 +72,9 @@ class NotificationCard extends StatelessWidget {
                             ? Icons.group
                             : (notification.type == 'STATS_APPROVAL_REQUEST'
                                   ? Icons.analytics
-                                  : Icons.emoji_events),
+                                  : (notification.type == 'GAME_ASSIGNED'
+                                        ? Icons.sports_soccer
+                                        : Icons.emoji_events)),
                         color: Colors.grey[600],
                         size: 24,
                       )
@@ -83,12 +85,18 @@ class NotificationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      notification.displayMessage,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    // Use rich text formatting for GAME_ASSIGNED notifications
+                    notification.type == 'GAME_ASSIGNED'
+                        ? _buildGameAssignmentMessage(
+                            context,
+                            notification.displayMessage,
+                          )
+                        : Text(
+                            notification.displayMessage,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                     const SizedBox(height: 4),
                     Text(
                       _getTimeAgo(notification.createdAt),
@@ -284,5 +292,90 @@ class NotificationCard extends StatelessWidget {
     } else {
       return 'Just now';
     }
+  }
+
+  /// Build formatted message for game assignment notifications with colored text
+  Widget _buildGameAssignmentMessage(BuildContext context, String message) {
+    final theme = Theme.of(context);
+
+    // Parse the message to extract different parts
+    // Expected format: "You're the [Role] for [Game]. Match starts [Date] at [Time]. Venue: [Venue]."
+
+    // Use regex to find date, time, and venue patterns
+    final dateTimeRegex = RegExp(r'Match starts (.+?) at (.+?)\.');
+    final venueRegex = RegExp(r'Venue: (.+?)\.');
+    final roleRegex = RegExp(r"You're the (.+?) for (.+?)\.");
+
+    final dateTimeMatch = dateTimeRegex.firstMatch(message);
+    final venueMatch = venueRegex.firstMatch(message);
+    final roleMatch = roleRegex.firstMatch(message);
+
+    if (dateTimeMatch != null && venueMatch != null && roleMatch != null) {
+      final role = roleMatch.group(1) ?? '';
+      final game = roleMatch.group(2) ?? '';
+      final date = dateTimeMatch.group(1) ?? '';
+      final time = dateTimeMatch.group(2) ?? '';
+      final venue = venueMatch.group(1) ?? '';
+
+      return RichText(
+        text: TextSpan(
+          style: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
+          children: [
+            TextSpan(text: "You're the "),
+            TextSpan(
+              text: role,
+              style: TextStyle(
+                color: role.contains('Referee')
+                    ? Colors.orange.shade700
+                    : Colors.blue.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(text: " for "),
+            TextSpan(
+              text: game,
+              style: TextStyle(
+                color: Colors.green.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(text: ". Match starts "),
+            TextSpan(
+              text: date,
+              style: TextStyle(
+                color: Colors.purple.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(text: " at "),
+            TextSpan(
+              text: time,
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(text: ". Venue: "),
+            TextSpan(
+              text: venue,
+              style: TextStyle(
+                color: Colors.teal.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(text: "."),
+          ],
+        ),
+      );
+    }
+
+    // Fallback to regular text if parsing fails
+    return Text(
+      message,
+      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+    );
   }
 }

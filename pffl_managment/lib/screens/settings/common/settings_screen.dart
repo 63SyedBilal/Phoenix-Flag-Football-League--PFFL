@@ -68,16 +68,103 @@ class SettingsScreen extends StatelessWidget {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () async {
-                        final authProvider = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
+                        // Show confirmation dialog
+                        final shouldLogout = await showDialog<bool>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Confirm Logout'),
+                              content: const Text(
+                                'Are you sure you want to log out?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF0F172A),
+                                  ),
+                                  child: const Text('Log Out'),
+                                ),
+                              ],
+                            );
+                          },
                         );
-                        await authProvider.logout(context);
-                        if (context.mounted) {
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                            AppRoutes.login,
-                            (route) => false,
-                          );
+
+                        if (shouldLogout == true && context.mounted) {
+                          try {
+                            print(
+                              '🔄 [SETTINGS] User confirmed logout, starting process...',
+                            );
+
+                            // Show loading indicator
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (BuildContext context) {
+                                return const AlertDialog(
+                                  content: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      CircularProgressIndicator(),
+                                      SizedBox(width: 16),
+                                      Text('Logging out...'),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+
+                            final authProvider = Provider.of<AuthProvider>(
+                              context,
+                              listen: false,
+                            );
+
+                            await authProvider.logout(context);
+
+                            print(
+                              '✅ [SETTINGS] Logout successful, navigating to login...',
+                            );
+
+                            if (context.mounted) {
+                              // Close loading dialog
+                              Navigator.of(context).pop();
+
+                              // Navigate to login screen
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                AppRoutes.login,
+                                (route) => false,
+                              );
+                            }
+                          } catch (e) {
+                            print('❌ [SETTINGS] Logout error: $e');
+
+                            if (context.mounted) {
+                              // Close loading dialog
+                              Navigator.of(context).pop();
+
+                              // Show error message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Logout failed: ${e.toString()}',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+
+                              // Still navigate to login as a fallback
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                AppRoutes.login,
+                                (route) => false,
+                              );
+                            }
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(

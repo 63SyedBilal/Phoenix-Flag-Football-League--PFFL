@@ -79,12 +79,12 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                     const Icon(Icons.payment, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
                     Text(
-                      'No Payment History',
+                      'No Paid Leagues',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'You haven\'t made any league payments yet.',
+                      'You haven\'t paid for any leagues yet.\nComplete your league payments to see them here.',
                       style: Theme.of(
                         context,
                       ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -102,7 +102,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       const Text(
-                        'Payment History',
+                        'Paid Leagues History',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
@@ -112,7 +112,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Track all your league payments and receipts.',
+                        'View receipts and details for leagues you\'ve paid for.',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -188,16 +188,28 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F173E),
+                    color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green.withOpacity(0.3)),
                   ),
-                  child: Text(
-                    payment.formattedDate,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 14,
+                        color: Colors.green[700],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'PAID',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -586,7 +598,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   const Text(
-                    'Payment Receipt',
+                    'League Payment Receipt',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
@@ -595,7 +607,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Transaction details for your league payment.',
+                    'Receipt for your paid league registration.',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
