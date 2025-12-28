@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/models/notification_model.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
-import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository.dart';
+import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_fixed.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Provider for managing notifications
@@ -332,7 +332,7 @@ class NotificationProvider extends ChangeNotifier {
         return false;
       }
 
-      await StatKeeperRepository.approveStats(matchId, senderId);
+      await StatKeeperRepositoryFixed.approveStats(matchId, senderId);
 
       await loadNotifications();
       return true;

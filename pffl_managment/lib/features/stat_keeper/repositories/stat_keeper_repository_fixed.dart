@@ -11,9 +11,6 @@ import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart'
 
 /// Fixed repository for Stat Keeper API operations with proper error handling
 class StatKeeperRepositoryFixed {
-  static const int _maxRetries = 3;
-  static const Duration _retryDelay = Duration(seconds: 2);
-
   /// Get Dio instance with authentication token
   static Future<Dio> _getAuthenticatedDio() async {
     return await AuthService.getWorkingDio();
@@ -153,159 +150,50 @@ class StatKeeperRepositoryFixed {
     }
   }
 
-  /// FIXED: Add/Update stats via match action endpoint with proper error handling
+  /// FIXED: Add/Update stats via the correct /api/stats endpoint
   static Future<void> saveStatFixed({
     required String matchId,
     required String teamId,
     required String playerId,
     required Map<String, dynamic> stats,
   }) async {
-    int retryCount = 0;
+    try {
+      final dio = await _getAuthenticatedDio();
 
-    while (retryCount < _maxRetries) {
-      try {
-        final dio = await _getAuthenticatedDio();
-
-        // Log the full request details for debugging
-        final requestUrl = '/match/$matchId/stats';
-        final requestData = {
-          'teamId': teamId,
-          'playerId': playerId,
-          'stats': stats,
-        };
-
-        print('📤 [STAT SAVE DEBUG] Attempt ${retryCount + 1}/$_maxRetries');
-        print(
-          '📤 [STAT SAVE DEBUG] Full URL: ${dio.options.baseUrl}$requestUrl',
-        );
-        print('📤 [STAT SAVE DEBUG] Request payload: $requestData');
-
-        final response = await dio.post(requestUrl, data: requestData);
-
-        print('✅ [STAT SAVE DEBUG] Response status: ${response.statusCode}');
-        print('✅ [STAT SAVE DEBUG] Response data: ${response.data}');
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          print('✅ Stats saved successfully');
-          return; // Success - exit retry loop
-        } else {
-          throw DioException(
-            requestOptions: response.requestOptions,
-            response: response,
-            message: 'Unexpected status code: ${response.statusCode}',
-          );
-        }
-      } on DioException catch (e) {
-        retryCount++;
-
-        print('❌ [STAT SAVE DEBUG] DioException on attempt $retryCount:');
-        print('❌ [STAT SAVE DEBUG] Status: ${e.response?.statusCode}');
-        print('❌ [STAT SAVE DEBUG] Message: ${e.message}');
-        print('❌ [STAT SAVE DEBUG] Response: ${e.response?.data}');
-
-        // Handle specific error cases
-        if (e.response?.statusCode == 404) {
-          // Try alternative endpoint on 404
-          if (retryCount == 1) {
-            print('🔄 [STAT SAVE DEBUG] Trying alternative endpoint: /stats');
-            try {
-              final altDio = await _getAuthenticatedDio();
-              final alternativeResponse = await altDio.post(
-                '/stats',
-                data: {
-                  'matchId': matchId,
-                  'teamId': teamId,
-                  'playerId': playerId,
-                  'stats': stats,
-                },
-              );
-
-              if (alternativeResponse.statusCode == 200 ||
-                  alternativeResponse.statusCode == 201) {
-                print('✅ Stats saved via alternative endpoint');
-                return;
-              }
-            } catch (altError) {
-              print('❌ Alternative endpoint also failed: $altError');
-            }
-          }
-
-          // Try match action endpoint
-          if (retryCount == 2) {
-            print('🔄 [STAT SAVE DEBUG] Trying match action endpoint');
-            try {
-              await _saveViaMatchAction(matchId, teamId, playerId, stats);
-              return;
-            } catch (actionError) {
-              print('❌ Match action endpoint failed: $actionError');
-            }
-          }
-        }
-
-        // If this was the last retry, throw the error
-        if (retryCount >= _maxRetries) {
-          throw Exception(
-            'Failed to save stat after $_maxRetries attempts. '
-            'Last error: ${e.response?.statusCode} - ${e.message}. '
-            'Response: ${e.response?.data}',
-          );
-        }
-
-        // Wait before retrying
-        print(
-          '⏳ [STAT SAVE DEBUG] Waiting ${_retryDelay.inSeconds}s before retry...',
-        );
-        await Future.delayed(_retryDelay);
-      } catch (e) {
-        retryCount++;
-        print('❌ [STAT SAVE DEBUG] General error on attempt $retryCount: $e');
-
-        if (retryCount >= _maxRetries) {
-          throw Exception('Failed to save stat: ${e.toString()}');
-        }
-
-        await Future.delayed(_retryDelay);
+      // Get match to find leagueId (required by the stats API)
+      final match = await MatchService.getMatchById(matchId);
+      if (match.leagueId == null || match.leagueId!.isEmpty) {
+        throw Exception('Match does not have a valid league ID');
       }
-    }
-  }
 
-  /// Try saving stats via match action endpoint as fallback
-  static Future<void> _saveViaMatchAction(
-    String matchId,
-    String teamId,
-    String playerId,
-    Map<String, dynamic> stats,
-  ) async {
-    final dio = await _getAuthenticatedDio();
+      // Use the correct /api/stats endpoint
+      final requestUrl = '/stats';
+      final requestData = {
+        'leagueId': match.leagueId,
+        'matchId': matchId,
+        'teamId': teamId,
+        'playerId': playerId,
+        'stats': stats,
+      };
 
-    // Convert stats to individual actions
-    final actions = <String, dynamic>{};
+      print('📤 [STAT SAVE DEBUG] Using correct endpoint: $requestUrl');
+      print('📤 [STAT SAVE DEBUG] Full URL: ${dio.options.baseUrl}$requestUrl');
+      print('📤 [STAT SAVE DEBUG] Request payload: $requestData');
 
-    // Map stats to action types
-    if (stats['touchdowns'] != null && stats['touchdowns'] > 0) {
-      actions['actionType'] = 'TOUCHDOWN';
-      actions['count'] = stats['touchdowns'];
-    }
+      final response = await dio.post(requestUrl, data: requestData);
 
-    final requestData = {
-      'teamId': teamId,
-      'playerId': playerId,
-      'actionType': 'STAT_UPDATE',
-      'stats': stats,
-    };
+      print('✅ [STAT SAVE DEBUG] Response status: ${response.statusCode}');
+      print('✅ [STAT SAVE DEBUG] Response data: ${response.data}');
 
-    print('📤 [MATCH ACTION DEBUG] URL: /match/$matchId/action');
-    print('📤 [MATCH ACTION DEBUG] Data: $requestData');
-
-    final response = await dio.post(
-      '/match/$matchId/action',
-      data: requestData,
-    );
-
-    print('✅ [MATCH ACTION DEBUG] Status: ${response.statusCode}');
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Match action endpoint failed: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Stats saved successfully via /api/stats endpoint');
+        return;
+      } else {
+        throw Exception('Unexpected status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ [STAT SAVE DEBUG] Error: $e');
+      throw Exception('Failed to save stat: ${e.toString()}');
     }
   }
 
@@ -362,6 +250,32 @@ class StatKeeperRepositoryFixed {
     } catch (e) {
       print('❌ Error submitting stats: $e');
       throw Exception('Failed to submit stats: ${e.toString()}');
+    }
+  }
+
+  /// Approve stats for a match (Admin only)
+  static Future<void> approveStats(String matchId, String statkeeperId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+
+      print('📤 [APPROVE STATS DEBUG] URL: /stats/approve');
+      print(
+        '📤 [APPROVE STATS DEBUG] Data: {matchId: $matchId, statkeeperId: $statkeeperId}',
+      );
+
+      final response = await dio.post(
+        '/stats/approve',
+        data: {'matchId': matchId, 'statkeeperId': statkeeperId},
+      );
+
+      print('✅ [APPROVE STATS DEBUG] Status: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to approve stats');
+      }
+    } catch (e) {
+      print('❌ Error approving stats: $e');
+      throw Exception('Failed to approve stats: ${e.toString()}');
     }
   }
 
@@ -443,6 +357,9 @@ class StatKeeperRepositoryFixed {
       final dio = await _getAuthenticatedDio();
       final response = await dio.get('/match/$matchId');
 
+      print('📤 [GET MATCH STATS DEBUG] URL: /match/$matchId');
+      print('✅ [GET MATCH STATS DEBUG] Status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final data = response.data['data'];
         if (data == null) return null;
@@ -484,7 +401,7 @@ class StatKeeperRepositoryFixed {
       }
       return null;
     } catch (e) {
-      print('Error fetching match stats: $e');
+      print('❌ Error fetching match stats: $e');
       throw Exception('Failed to fetch match stats: ${e.toString()}');
     }
   }

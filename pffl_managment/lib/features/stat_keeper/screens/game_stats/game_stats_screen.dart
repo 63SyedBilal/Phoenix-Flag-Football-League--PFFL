@@ -30,10 +30,45 @@ class _GameStatsScreenContent extends StatelessWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    if (provider.errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Game Stats')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              const Text(
+                'Failed to load game stats',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  provider.errorMessage!.contains('timeout')
+                      ? 'Connection timeout. Please check your internet connection and try again.'
+                      : provider.errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => provider.refreshStats(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (stats == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Game Stats')),
-        body: const Center(child: Text('Failed to load stats')),
+        body: const Center(child: Text('No stats available')),
       );
     }
 

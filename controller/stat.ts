@@ -5,6 +5,7 @@ import Stat from "@/modules/stat";
 import Match from "@/modules/match";
 import Notification from "@/modules/notification";
 import SuperAdmin from "@/modules/superadmin";
+import User from "@/modules/user";
 import { verifyAccessToken } from "@/lib/jwt";
 
 // Helper to get token from request
@@ -142,25 +143,67 @@ export async function submitStatsForApproval(req: NextRequest) {
         const { matchId } = await req.json();
         if (!matchId) return NextResponse.json({ error: "Match ID is required" }, { status: 400 });
 
+        console.log("🔍 [SUBMIT STATS DEBUG] Starting submission process...");
+        console.log("🔍 [SUBMIT STATS DEBUG] User ID:", userId);
+        console.log("🔍 [SUBMIT STATS DEBUG] Match ID:", matchId);
+
+        // Check if there are any DRAFT stats for this user and match
+        const draftStats = await Stat.find({
+            matchId: toObjectId(matchId),
+            createdBy: toObjectId(userId),
+            status: "DRAFT"
+        });
+        console.log("🔍 [SUBMIT STATS DEBUG] Found DRAFT stats count:", draftStats.length);
+
+        if (draftStats.length === 0) {
+            console.log("⚠️ [SUBMIT STATS DEBUG] No DRAFT stats found to submit");
+            return NextResponse.json({ message: "No draft stats found to submit", count: 0 }, { status: 200 });
+        }
+
         // Update all DRAFT stats for this match by this user to PENDING_APPROVAL
         const result = await Stat.updateMany(
             { matchId: toObjectId(matchId), createdBy: toObjectId(userId), status: "DRAFT" },
             { $set: { status: "PENDING_APPROVAL" } }
         );
 
+        console.log("🔍 [SUBMIT STATS DEBUG] Update result:", result);
+
         if (result.matchedCount > 0) {
             // Create notification for Admin
-            // For simplicity, we find the first superadmin or a designated admin
-            const admin = await SuperAdmin.findOne();
+            // Look for a User with role "superadmin" first, then fallback to SuperAdmin collection
+            console.log("🔍 Looking for SuperAdmin to send notification...");
+            let admin = await User.findOne({ role: "superadmin" });
+            let allAdmins = [];
+            
+            if (!admin) {
+                console.log("🔍 No User with superadmin role found, checking SuperAdmin collection...");
+                // Get ALL SuperAdmins instead of just the first one
+                const superAdmins = await SuperAdmin.find({});
+                allAdmins = superAdmins;
+                console.log("🔍 Found SuperAdmins:", superAdmins.length);
+                
+                if (superAdmins.length > 0) {
+                    admin = superAdmins[0]; // Use first one for match lookup, but we'll notify all
+                }
+            } else {
+                allAdmins = [admin];
+            }
+            
+            console.log("🔍 Found admin for match lookup:", admin ? admin._id.toString() : "null");
+            console.log("🔍 Will notify admins:", allAdmins.map(a => a._id.toString()));
+            
             const match = await Match.findById(toObjectId(matchId)).populate("leagueId");
+            console.log("🔍 Found match:", match ? `${(match as any).teamAName} vs ${(match as any).teamBName}` : "null");
 
-            if (admin && match) {
+            if (admin && match && allAdmins.length > 0) {
                 // Construct a detailed message for Requirement #4
                 const statsToSubmit = await Stat.find({
                     matchId: toObjectId(matchId),
                     createdBy: toObjectId(userId),
                     status: "PENDING_APPROVAL"
                 }).populate("playerId", "firstName lastName").populate("teamId", "teamName");
+
+                console.log("🔍 Stats to submit count:", statsToSubmit.length);
 
                 let detailedMessage = `League: ${(match as any).leagueId?.leagueName || "N/A"}\n`;
                 detailedMessage += `Match: ${(match as any).teamAName} vs ${(match as any).teamBName}\n\n`;
@@ -173,19 +216,76 @@ export async function submitStatsForApproval(req: NextRequest) {
                     detailedMessage += `- [${tName}] ${pName}: TD: ${st.touchdowns || 0}, Catches: ${st.catches || 0}, Pass Yds: ${st.passYards || 0}\n`;
                 });
 
-                await Notification.create({
-                    sender: toObjectId(userId),
-                    receiver: admin._id,
-                    match: toObjectId(matchId),
-                    league: (match as any).leagueId?._id,
-                    type: "STATS_APPROVAL_REQUEST",
-                    status: "pending",
-                    message: detailedMessage,
-                    data: {
-                        matchName: `${(match as any).teamAName} vs ${(match as any).teamBName}`,
-                        leagueName: (match as any).leagueId?.leagueName
+                console.log("📧 Creating notifications for all admins...");
+                console.log("   - Sender:", userId);
+                console.log("   - Type: STATS_APPROVAL_REQUEST");
+                console.log("   - Match:", matchId);
+                console.log("   - League:", (match as any).leagueId?._id?.toString());
+                console.log("   - Message:", detailedMessage);
+
+                // Create notification for each admin
+                const notificationPromises = allAdmins.map(async (adminUser) => {
+                    try {
+                        // Ensure receiver ID is properly formatted as ObjectId
+                        const receiverId = toObjectId(adminUser._id.toString());
+                        
+                        console.log(`🔍 Creating notification for admin: ${adminUser.email}`);
+                        console.log(`🔍 Admin ID: ${adminUser._id.toString()}`);
+                        console.log(`🔍 Receiver ID (ObjectId): ${receiverId.toString()}`);
+                        console.log(`🔍 Sender ID: ${userId}`);
+                        console.log(`🔍 Match ID: ${matchId}`);
+                        console.log(`🔍 League ID: ${(match as any).leagueId?._id?.toString()}`);
+                        
+                        const notification = await Notification.create({
+                            sender: toObjectId(userId),
+                            receiver: receiverId,
+                            match: toObjectId(matchId),
+                            league: (match as any).leagueId?._id ? toObjectId((match as any).leagueId._id.toString()) : null,
+                            type: "STATS_APPROVAL_REQUEST",
+                            status: "pending",
+                            message: detailedMessage,
+                            data: {
+                                matchName: `${(match as any).teamAName} vs ${(match as any).teamBName}`,
+                                leagueName: (match as any).leagueId?.leagueName
+                            }
+                        });
+
+                        console.log(`✅ Notification created successfully!`);
+                        console.log(`✅ Notification ID: ${notification._id.toString()}`);
+                        console.log(`✅ Notification receiver: ${notification.receiver.toString()}`);
+                        console.log(`✅ Notification type: ${notification.type}`);
+                        console.log(`✅ Admin email: ${adminUser.email}`);
+                        
+                        // Verify the notification was saved correctly
+                        const savedNotification = await Notification.findById(notification._id).lean();
+                        if (savedNotification) {
+                            console.log(`✅ Verification: Notification saved with receiver: ${savedNotification.receiver.toString()}`);
+                        } else {
+                            console.error(`❌ Verification failed: Notification not found after creation`);
+                        }
+                        
+                        return notification;
+                    } catch (notificationError: any) {
+                        console.error(`❌ Failed to create notification for admin ${adminUser._id.toString()}:`, notificationError);
+                        console.error("❌ Notification error details:", notificationError.message);
+                        console.error("❌ Notification error stack:", notificationError.stack);
+                        return null;
                     }
                 });
+
+                // Wait for all notifications to be created
+                const createdNotifications = await Promise.allSettled(notificationPromises);
+                const successCount = createdNotifications.filter(result => result.status === 'fulfilled' && result.value !== null).length;
+                console.log(`✅ Successfully created ${successCount} out of ${allAdmins.length} notifications`);
+            } else {
+                console.log("❌ Failed to create notification - missing admin or match");
+                console.log("   - Admin found:", !!admin);
+                console.log("   - Match found:", !!match);
+                console.log("   - Admins to notify:", allAdmins.length);
+                if (admin) {
+                    console.log("   - Admin ID:", admin._id.toString());
+                    console.log("   - Admin email:", admin.email);
+                }
             }
         }
 

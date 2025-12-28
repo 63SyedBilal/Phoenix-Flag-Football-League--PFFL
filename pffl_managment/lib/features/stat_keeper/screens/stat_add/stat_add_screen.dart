@@ -199,8 +199,6 @@ class _StatAddScreenContent extends StatelessWidget {
                           provider.setSelectedMatch(val);
                       },
                       hintText: 'Select Game',
-                      
-                      
                     ),
                   const SizedBox(height: 20),
 
@@ -387,7 +385,7 @@ class _HeaderSection extends StatelessWidget {
             'Add Game Stats',
             style: AppTextStyles.headlineSmall.copyWith(
               color: AppColors.textPrimary,
-             fontSize: 22,
+              fontSize: 22,
             ),
           ),
           const SizedBox(height: 8),

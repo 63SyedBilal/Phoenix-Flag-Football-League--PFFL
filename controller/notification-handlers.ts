@@ -29,7 +29,21 @@ async function verifyUserToken(req: NextRequest) {
   if (!token) throw new Error("No token provided");
 
   const decoded = verifyAccessToken(token);
-  return decoded;
+  
+  // Extract user ID using the same logic as login controller
+  const userId = decoded.userId || (decoded as any).id || (decoded as any)._id;
+  
+  console.log("🔍 [TOKEN DEBUG] Token verification:");
+  console.log("   - Decoded payload:", decoded);
+  console.log("   - Extracted userId:", userId);
+  console.log("   - UserId type:", typeof userId);
+  
+  if (!userId) {
+    console.error("❌ [TOKEN DEBUG] No userId found in token payload");
+    throw new Error("Invalid token: no user ID");
+  }
+  
+  return { ...decoded, userId };
 }
 
 /**
@@ -43,9 +57,48 @@ export async function getAllNotifications(req: NextRequest) {
 
     const userId = toObjectId(decoded.userId);
 
-    console.log("Getting notifications for user:", userId.toString());
-    console.log("UserId type:", typeof userId);
-    console.log("UserId instance:", userId instanceof mongoose.Types.ObjectId);
+    console.log("🔍 [NOTIFICATION DEBUG] Getting notifications for user:", userId.toString());
+    console.log("🔍 [NOTIFICATION DEBUG] Token payload:", {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role
+    });
+
+    // ENHANCED DEBUG: Check what collections the user exists in
+    const userInUserCollection = await User.findById(userId).lean();
+    const userInSuperAdminCollection = await SuperAdmin.findById(userId).lean();
+    
+    console.log(`🔍 [USER LOOKUP] User ${userId.toString()}:`);
+    console.log(`   - Exists in User collection: ${!!userInUserCollection}`);
+    console.log(`   - Exists in SuperAdmin collection: ${!!userInSuperAdminCollection}`);
+    
+    if (userInUserCollection) {
+      console.log(`   - User role: ${userInUserCollection.role}`);
+      console.log(`   - User email: ${userInUserCollection.email}`);
+    }
+    
+    if (userInSuperAdminCollection) {
+      console.log(`   - SuperAdmin role: ${userInSuperAdminCollection.role}`);
+      console.log(`   - SuperAdmin email: ${userInSuperAdminCollection.email}`);
+    }
+
+    // ENHANCED DEBUG: Check for STATS_APPROVAL_REQUEST notifications specifically
+    const statsApprovalNotifications = await Notification.find({
+      type: "STATS_APPROVAL_REQUEST"
+    }).lean();
+    console.log(`📊 [DEBUG] Total STATS_APPROVAL_REQUEST notifications in system: ${statsApprovalNotifications.length}`);
+    if (statsApprovalNotifications.length > 0) {
+      console.log("📊 [DEBUG] STATS_APPROVAL_REQUEST notifications details:", statsApprovalNotifications.map((n: any) => ({
+        id: n._id.toString(),
+        receiver: n.receiver?.toString(),
+        sender: n.sender?.toString(),
+        match: n.match?.toString() || "null",
+        league: n.league?.toString() || "null",
+        status: n.status,
+        createdAt: n.createdAt,
+        message: n.message?.substring(0, 100) + "..."
+      })));
+    }
 
     // Find all pending notifications for the user
     // Check both ObjectId and String formats to be robust
@@ -55,6 +108,38 @@ export async function getAllNotifications(req: NextRequest) {
     const receiverString = userId.toString();
 
     console.log(`🔍 Searching for notifications with receiver: ${receiverString} (String) or ${receiverObjectId} (ObjectId), status: pending`);
+
+    // ENHANCED DEBUG: Check exact receiver matches
+    const exactObjectIdMatches = await Notification.find({
+      receiver: receiverObjectId
+    }).lean();
+    console.log(`📊 Exact ObjectId matches: ${exactObjectIdMatches.length}`);
+    
+    const exactStringMatches = await Notification.find({
+      receiver: receiverString
+    }).lean();
+    console.log(`📊 Exact String matches: ${exactStringMatches.length}`);
+    
+    // Check if there are any notifications with this receiver ID in any format
+    const anyReceiverMatches = await Notification.find({
+      $or: [
+        { receiver: receiverObjectId },
+        { receiver: receiverString },
+        { receiver: { $in: [receiverObjectId, receiverString] } }
+      ]
+    }).lean();
+    console.log(`📊 Any receiver format matches: ${anyReceiverMatches.length}`);
+    
+    if (anyReceiverMatches.length > 0) {
+      console.log("📊 Receiver matches details:", anyReceiverMatches.map((n: any) => ({
+        id: n._id.toString(),
+        type: n.type,
+        receiver: n.receiver?.toString(),
+        receiverType: typeof n.receiver,
+        status: n.status,
+        createdAt: n.createdAt
+      })));
+    }
 
     // Also try to find ALL notifications (pending or not) for debugging
     const allNotificationsForUser = await Notification.find({
@@ -104,7 +189,7 @@ export async function getAllNotifications(req: NextRequest) {
         { receiver: receiverObjectId },
         { receiver: receiverString }
       ]
-      // Remove status filter to show ALL notifications (pending, accepted, rejected)
+      // Show ALL notifications regardless of status (pending, accepted, rejected)
     })
       .populate({
         path: "team",

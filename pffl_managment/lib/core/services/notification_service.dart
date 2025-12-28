@@ -370,7 +370,7 @@ class NotificationService {
       final dio = await _getAuthenticatedDio();
 
       final data = {
-        'type': 'ADMIN_NOTIFICATION',
+        'type': 'STATS_APPROVAL_REQUEST',
         'message': message,
         'isAdmin':
             true, // Assuming backend handles this flag to notify superadmin
@@ -404,6 +404,19 @@ class NotificationService {
     print(
       '📋 All notification types: ${allNotifications.map((n) => n.type).toSet()}',
     );
+
+    // Log STATS_APPROVAL_REQUEST notifications specifically
+    final statsApprovalNotifications = allNotifications
+        .where((n) => n.type == 'STATS_APPROVAL_REQUEST')
+        .toList();
+    print(
+      '📊 Found ${statsApprovalNotifications.length} STATS_APPROVAL_REQUEST notifications:',
+    );
+    for (final notif in statsApprovalNotifications) {
+      print('   - ID: ${notif.id}, Message: ${notif.message}');
+      print('   - Receiver: ${notif.receiver?.id ?? "null"}');
+      print('   - Status: ${notif.status}');
+    }
 
     // Log GAME_ASSIGNED notifications specifically
     final gameAssignedNotifications = allNotifications
@@ -454,15 +467,27 @@ class NotificationService {
 
         case 'admin':
         case 'superadmin':
-          // Admins see: all notifications, system alerts, user registrations, payment issues
+          // Admins see: all notifications, system alerts, user registrations, payment issues, stats approval requests
           shouldInclude =
               type.contains('admin') ||
               type.contains('system') ||
               type.contains('payment') ||
               type.contains('user') ||
               type.contains('registration') ||
+              type.contains('stats_approval') ||
+              notification.type == 'STATS_APPROVAL_REQUEST' ||
               message.contains('admin') ||
-              message.contains('system');
+              message.contains('system') ||
+              message.contains('stats');
+
+          // Debug logging for STATS_APPROVAL_REQUEST
+          if (notification.type == 'STATS_APPROVAL_REQUEST') {
+            print('🔍 [ADMIN FILTER] STATS_APPROVAL_REQUEST notification:');
+            print('   - ID: ${notification.id}');
+            print('   - Type: ${notification.type}');
+            print('   - Should include: $shouldInclude');
+            print('   - Receiver ID: ${notification.receiver?.id ?? "null"}');
+          }
           break;
 
         case 'referee':
@@ -473,10 +498,12 @@ class NotificationService {
               type.contains('league') ||
               type.contains('admin') ||
               type.contains('game_assigned') ||
-              type == 'GAME_ASSIGNED' ||
+              type == 'game_assigned' ||
+              notification.type == 'GAME_ASSIGNED' ||
               message.contains('match') ||
               message.contains('referee') ||
-              message.contains('assigned');
+              message.contains('assigned') ||
+              message.contains('game');
           break;
 
         case 'statkeeper':
@@ -488,10 +515,12 @@ class NotificationService {
               type.contains('league') ||
               type.contains('admin') ||
               type.contains('game_assigned') ||
-              type == 'GAME_ASSIGNED' ||
+              type == 'game_assigned' ||
+              notification.type == 'GAME_ASSIGNED' ||
               message.contains('stats') ||
               message.contains('match') ||
-              message.contains('assigned');
+              message.contains('assigned') ||
+              message.contains('game');
           break;
 
         case 'freeagent':

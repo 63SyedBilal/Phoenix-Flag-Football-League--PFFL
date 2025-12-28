@@ -439,7 +439,20 @@ class StatKeeperRepository {
   static Future<GameStatModel?> getMatchStats(String matchId) async {
     try {
       final dio = await _getAuthenticatedDio();
-      final response = await dio.get('/match/$matchId');
+
+      // Set a reasonable timeout for this specific request
+      final response = await dio
+          .get('/match/$matchId')
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw DioException(
+                requestOptions: RequestOptions(path: '/match/$matchId'),
+                type: DioExceptionType.receiveTimeout,
+                message: 'Request timeout after 30 seconds',
+              );
+            },
+          );
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
@@ -481,6 +494,19 @@ class StatKeeperRepository {
         );
       }
       return null;
+    } on DioException catch (e) {
+      print('Error fetching match stats: $e');
+      if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception(
+          'Connection timeout. Please check your internet connection and try again.',
+        );
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Server response timeout. Please try again later.');
+      } else if (e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Request timeout. Please try again.');
+      } else {
+        throw Exception('Failed to fetch match stats: ${e.message}');
+      }
     } catch (e) {
       print('Error fetching match stats: $e');
       throw Exception('Failed to fetch match stats: ${e.toString()}');
