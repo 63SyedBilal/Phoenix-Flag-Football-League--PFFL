@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Notification from "@/modules/notification";
 import SuperAdmin from "@/modules/superadmin";
+import User from "@/modules/user";
 import { verifyAccessToken } from "@/lib/jwt";
 import mongoose from "mongoose";
 
@@ -33,8 +34,11 @@ export async function POST(req: NextRequest) {
 
         if (isAdmin) {
             // Find a SuperAdmin to send to
-            // Logic: send to the first found superadmin or a specific one if we had logic
-            const admin = await SuperAdmin.findOne();
+            // First check User collection for role "superadmin", then SuperAdmin collection
+            let admin = await User.findOne({ role: "superadmin" });
+            if (!admin) {
+                admin = await SuperAdmin.findOne();
+            }
             if (!admin) {
                 return NextResponse.json(
                     { error: "No Admin found to receive notification" },
@@ -54,7 +58,7 @@ export async function POST(req: NextRequest) {
         const notification = await Notification.create({
             sender: new mongoose.Types.ObjectId(userId),
             receiver: receiverObjectId,
-            type: type || 'SYSTEM',
+            type: type || 'STATS_APPROVAL_REQUEST',
             status: 'pending',
             message: message || '',
         });

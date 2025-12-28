@@ -368,8 +368,11 @@ async function processStripePayment(
       const SuperAdmin = (await import("@/modules/superadmin")).default;
       const Notification = (await import("@/modules/notification")).default;
 
-      // Find super admin to notify
-      const superAdmin = await SuperAdmin.findOne();
+      // Find super admin to notify - check User collection first, then SuperAdmin collection
+      let superAdmin = await User.findOne({ role: "superadmin" });
+      if (!superAdmin) {
+        superAdmin = await SuperAdmin.findOne();
+      }
       if (superAdmin) {
         const user = await User.findById(payment.userId);
         const league = await League.findById(payment.leagueId);

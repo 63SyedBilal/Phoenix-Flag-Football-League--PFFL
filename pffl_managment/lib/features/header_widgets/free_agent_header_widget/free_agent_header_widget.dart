@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/free_agent_navigation_provider.dart';
+import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
 class FreeAgentHeaderWidget extends StatelessWidget {
@@ -10,7 +12,9 @@ class FreeAgentHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final navigationProvider = Provider.of<FreeAgentNavigationProvider>(context);
+    final navigationProvider = Provider.of<FreeAgentNavigationProvider>(
+      context,
+    );
     final textTheme = Theme.of(context).textTheme;
     final brightness = Theme.of(context).brightness;
 
@@ -83,37 +87,67 @@ class FreeAgentHeaderWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              // Notification icon
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.freeAgentNotification);
-                },
-                child: Container(
-                  width: 45,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: brightness == Brightness.light
-                          ? Colors.grey[300]!
-                          : Colors.grey[700]!,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.notifications_outlined,
-                      size: 20,
-                      color: brightness == Brightness.light
-                          ? Colors.black
-                          : Colors.white,
-                    ),
-                  ),
-                ),
-              ),
+              // Enhanced notification icon with badge
+              FreeAgentNotificationButton(),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class FreeAgentNotificationButton extends StatelessWidget {
+  const FreeAgentNotificationButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final notificationProvider = Provider.of<NotificationProvider>(context);
+    final brightness = Theme.of(context).brightness;
+    final scaffoldBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.freeAgentNotification);
+      },
+      child: Container(
+        width: 45,
+        height: 45,
+        decoration: BoxDecoration(
+          color: scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: brightness == Brightness.light
+                ? AppColors.borderDefault
+                : AppColors.borderLight,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Center(
+              child: Icon(
+                Icons.notifications_outlined,
+                size: 20,
+                color: brightness == Brightness.light
+                    ? AppColors.textPrimary
+                    : AppColors.textPrimary,
+              ),
+            ),
+            if (notificationProvider.hasNotifications)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
