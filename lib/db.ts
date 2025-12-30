@@ -27,9 +27,19 @@ if (!global.mongoose) {
   global.mongoose = cached
 }
 
+/**
+ * Convert string or ObjectId to mongoose ObjectId
+ */
+export function toObjectId(id: string | mongoose.Types.ObjectId): mongoose.Types.ObjectId {
+  if (id instanceof mongoose.Types.ObjectId) {
+    return id;
+  }
+  return new mongoose.Types.ObjectId(id);
+}
+
 export async function connectDB() {
   console.log("connectDB called")
-  
+
   // Check if already connected to the correct database
   if (cached.conn) {
     const currentDb = cached.conn.connection.db?.databaseName

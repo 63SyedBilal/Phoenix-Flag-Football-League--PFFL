@@ -5,6 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/unified_games_provider.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 /// Role-based game card widget
 /// Shows different action sections based on user role
@@ -251,44 +254,108 @@ class RoleBasedGameCard extends StatelessWidget {
   }
 
   Widget _buildActionSection(BuildContext context, MatchModel match) {
-    // Captain with unpaid league fee
-    if (shouldShowPaymentPrompt) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Expanded(
-            child: Text(
-              'Your league payment still unpaid.',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Lato',
-                color: Color(0xFF111827), // Red color for warning
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.userId;
+    final role = userRole.toLowerCase();
+    final isCaptainOrPlayer = role == 'captain' || role == 'player';
+
+    // Check payment status for captains and players
+    if (isCaptainOrPlayer && match.leagueId != null && userId.isNotEmpty) {
+      return Consumer<LeaguePaymentProvider>(
+        builder: (context, paymentProvider, child) {
+          final cachedStatus = paymentProvider.getCachedPaymentStatus(
+            match.leagueId!,
+            userId,
+          );
+          final isLoading = paymentProvider.isLoading(match.leagueId!, userId);
+
+          // Trigger load if not in cache
+          if (cachedStatus == null && !isLoading) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              debugPrint(
+                '🎮 [GAME CARD] Checking payment for league: ${match.leagueId}, user: $userId',
+              );
+              paymentProvider.checkLeaguePaymentStatus(match.leagueId!, userId);
+            });
+          }
+
+          final hasPaid = cachedStatus ?? false;
+
+          // If unpaid, show payment prompt
+          if (!hasPaid) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'League Fee: Unpaid',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Lato',
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.freeAgentPaymentHistory,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F173E),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Pay League Fee',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Lato',
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          // If paid, check if user can edit (admin/captain)
+          if (canEdit) {
+            return InkWell(
+              onTap: () => _showEditGameDialog(context, match),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Edit Game',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Lato',
+                          color: Colors.blueGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Icon(Icons.arrow_forward_ios_outlined, size: 12),
+                ],
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: onPayLeagueFee,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F173E),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-             // elevation: 0,
-            ),
-            child: const Text(
-              'Pay League Fee',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Lato',
-              ),
-            ),
-          ),
-        ],
+            );
+          }
+
+          // Paid and no edit permission - no action
+          return const SizedBox.shrink();
+        },
       );
     }
 

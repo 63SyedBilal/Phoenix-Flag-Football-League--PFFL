@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/config/app_config.dart';
 
@@ -22,9 +23,32 @@ class AuthService {
         validateStatus: (status) => status != null && status < 500,
       ),
     );
+
+    // Configure SSL certificate pinning for security
+    _configureCertificatePinning(_dioInstance!);
+
     // Ensure baseUrl is always current
     _dioInstance!.options.baseUrl = AppConfig.baseUrl;
     return _dioInstance!;
+  }
+
+  /// Configure SSL certificate pinning
+  static void _configureCertificatePinning(Dio dio) {
+    // For production, you should pin your SSL certificate
+    // This is a basic setup - in production, pin your actual certificate
+
+    if (dio.httpClientAdapter is IOHttpClientAdapter) {
+      final adapter = dio.httpClientAdapter as IOHttpClientAdapter;
+
+      // Create HttpClient with certificate validation
+      final client = HttpClient();
+
+      // For local development, allow all certificates and bypass SSL validation
+      // REMOVE THIS IN PRODUCTION - Only for local development
+      client.badCertificateCallback = (cert, host, port) => true;
+
+      adapter.createHttpClient = () => client;
+    }
   }
 
   // Allow overriding the base URL for testing

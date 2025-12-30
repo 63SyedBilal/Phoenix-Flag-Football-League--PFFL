@@ -17,7 +17,7 @@ class PayNowButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(30), // Pill shape as in image
         ),
         elevation: 0,
-        disabledBackgroundColor: const Color(0xFF0F173E).withOpacity(0.6),
+        disabledBackgroundColor: const Color(0xFF0F173E).withValues(alpha: 0.6),
       ),
       child: isLoading
           ? const SizedBox(

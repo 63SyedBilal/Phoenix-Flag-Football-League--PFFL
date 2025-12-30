@@ -1,275 +1,154 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
+import 'package:pffl_managment/features/payment_history/models/payment_history_item.dart';
+import 'package:intl/intl.dart';
 
-class CaptainPaymentHistoryView extends StatefulWidget {
-  const CaptainPaymentHistoryView({Key? key}) : super(key: key);
-
-  @override
-  State<CaptainPaymentHistoryView> createState() =>
-      _CaptainPaymentHistoryViewState();
-}
-
-class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
-  int selectedTabIndex = 0;
-
-  // Sample data for demonstration
-  final List<Map<String, dynamic>> completedPayments = [
-    {
-      'id': 'PMT-001',
-      'date': 'Dec 15, 2025',
-      'league': 'Summer Championship League',
-      'team': 'Red Dragons',
-      'amount': '\$250.00',
-      'method': 'Stripe',
-      'status': 'Completed',
-    },
-    {
-      'id': 'PMT-002',
-      'date': 'Nov 28, 2025',
-      'league': 'Fall Tournament Series',
-      'team': 'Red Dragons',
-      'amount': '\$200.00',
-      'method': 'PayPal',
-      'status': 'Completed',
-    },
-    {
-      'id': 'PMT-003',
-      'date': 'Oct 10, 2025',
-      'league': 'Autumn League',
-      'team': 'Red Dragons',
-      'amount': '\$300.00',
-      'method': 'Credit Card',
-      'status': 'Completed',
-    },
-  ];
-
-  final List<Map<String, dynamic>> pendingPayments = [
-    {
-      'id': 'PMT-004',
-      'date': 'Jan 5, 2026',
-      'league': 'Winter Elite League',
-      'team': 'Red Dragons',
-      'amount': '\$350.00',
-      'method': 'Stripe',
-      'status': 'Pending',
-    },
-    {
-      'id': 'PMT-005',
-      'date': 'Feb 12, 2026',
-      'league': 'Spring Championship',
-      'team': 'Red Dragons',
-      'amount': '\$275.00',
-      'method': 'Bank Transfer',
-      'status': 'Pending',
-    },
-  ];
-
-  final List<Map<String, dynamic>> refundedPayments = [
-    {
-      'id': 'PMT-006',
-      'date': 'Sep 22, 2025',
-      'league': 'Regional Tournament',
-      'team': 'Red Dragons',
-      'amount': '\$150.00',
-      'method': 'Stripe',
-      'status': 'Refunded',
-      'refundDate': 'Sep 25, 2025',
-    },
-  ];
+class CaptainPaymentHistoryView extends StatelessWidget {
+  const CaptainPaymentHistoryView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Payment History'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+    return ChangeNotifierProvider<CaptainPaymentHistoryProvider>(
+      create: (_) => CaptainPaymentHistoryProvider()..loadPaymentHistory(),
+      child: Consumer<CaptainPaymentHistoryProvider>(
+        builder: (context, provider, child) {
+          return Scaffold(
+            appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: const Text('Payment History'),
+              backgroundColor: Colors.white,
+              elevation: 0,
+            ),
+            body: SafeArea(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Payment History',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  // Header section
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Payment History',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'View and manage all your team payments',
+                          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'View and manage all your team payments',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
+
+                  // Loading state
+                  if (provider.isLoading)
+                    const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+
+                  // Error state
+                  else if (provider.errorMessage != null)
+                    Expanded(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Error loading payment history',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                provider.errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () => provider.refresh(),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+
+                  // Payment data
+                  else
+                    Expanded(
+                      child: FutureBuilder<List<PaymentHistoryItem>>(
+                        future: Future.value(provider.payments),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+
+                          final payments = snapshot.data ?? [];
+                          if (payments.isEmpty) {
+                            return _buildNoPaymentsView(context, provider);
+                          }
+
+                          return _buildPaymentContent(context, provider);
+                        },
+                      ),
+                    ),
                 ],
               ),
             ),
-
-            // Search bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search payments...',
-                    prefixIcon: Icon(Icons.search),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Filter chips
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    FilterChip(
-                      label: const Text('All Leagues'),
-                      selected: true,
-                      onSelected: (bool selected) {},
-                      backgroundColor: Colors.grey[200],
-                      selectedColor: const Color(0xFF3B82F6),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('This Year'),
-                      selected: false,
-                      onSelected: (bool selected) {},
-                      backgroundColor: Colors.grey[200],
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('High Amount'),
-                      selected: false,
-                      onSelected: (bool selected) {},
-                      backgroundColor: Colors.grey[200],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Tab bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    _buildTab('Completed', 0),
-                    _buildTab('Pending', 1),
-                    _buildTab('Refunded', 2),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Payment list
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildPaymentList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTab(String title, int index) {
-    final isSelected = selectedTabIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedTabIndex = index;
-          });
+          );
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF0F172A) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey[700],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildPaymentList() {
-    List<Map<String, dynamic>> payments;
+  Widget _buildPaymentContent(BuildContext context, CaptainPaymentHistoryProvider provider) {
+    final allPayments = provider.payments;
 
-    switch (selectedTabIndex) {
-      case 0:
-        payments = completedPayments;
-        break;
-      case 1:
-        payments = pendingPayments;
-        break;
-      case 2:
-        payments = refundedPayments;
-        break;
-      default:
-        payments = completedPayments;
-    }
-
-    if (payments.isEmpty) {
+    if (allPayments.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.payment_outlined, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text(
-              'No ${['Completed', 'Pending', 'Refunded'][selectedTabIndex]} Payments',
+            const Text(
+              'No Payments Found',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: Colors.grey,
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'All your ${['completed', 'pending', 'refunded'][selectedTabIndex]} payments will appear here',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            const Text(
+              'Your team payments will appear here',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ],
@@ -277,18 +156,89 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
       );
     }
 
+    // Group payments by league
+    final paymentsByLeague = provider.paymentsByLeague;
+
     return ListView.builder(
-      itemCount: payments.length,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      itemCount: paymentsByLeague.length,
       itemBuilder: (context, index) {
-        final payment = payments[index];
-        return _buildPaymentCard(payment);
+        final leagueName = paymentsByLeague.keys.elementAt(index);
+        final leaguePayments = paymentsByLeague[leagueName]!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // League header
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Text(
+                leagueName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+
+            // League payments
+            ...leaguePayments.map((payment) => _buildPaymentCard(context, payment)),
+
+            // League summary
+            Container(
+              margin: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'League Summary: $leagueName',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Total Paid: \$${leaguePayments.where((p) => p.status.toLowerCase() == 'paid').fold(0.0, (sum, p) => sum + p.amount).toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  Text(
+                    'Paid Players: ${leaguePayments.where((p) => p.status.toLowerCase() == 'paid').length}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  Text(
+                    'Pending Payments: ${leaguePayments.where((p) => p.status.toLowerCase() == 'pending').length}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
       },
     );
   }
 
-  Widget _buildPaymentCard(Map<String, dynamic> payment) {
+  Widget _buildPaymentCard(BuildContext context, PaymentHistoryItem payment) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -305,15 +255,18 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row with ID and date
+            // Header row with player ID and status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  payment['id'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Player ${payment.userId.substring(0, 8)}...',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
@@ -322,11 +275,11 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(payment['status']),
+                    color: _getStatusColor(payment.status),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    payment['status'],
+                    payment.status.toUpperCase(),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -340,14 +293,12 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
             const SizedBox(height: 12),
 
             // Payment details
-            _buildDetailRow('Date', payment['date']),
-            _buildDetailRow('League', payment['league']),
-            _buildDetailRow('Team', payment['team']),
-            _buildDetailRow('Amount', payment['amount'], isAmount: true),
-            _buildDetailRow('Method', payment['method']),
+            _buildDetailRow('Date', DateFormat('MMM dd, yyyy').format(payment.createdAt)),
+            _buildDetailRow('Amount', '\$${payment.amount.toStringAsFixed(2)}', isAmount: true),
+            _buildDetailRow('Method', payment.paymentMethod),
 
-            if (payment.containsKey('refundDate'))
-              _buildDetailRow('Refund Date', payment['refundDate']),
+            if (payment.transactionId != 'N/A')
+              _buildDetailRow('Transaction ID', payment.transactionId),
 
             const SizedBox(height: 16),
 
@@ -355,10 +306,7 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // View payment details
-                  _showPaymentDetails(payment);
-                },
+                onPressed: () => _showPaymentDetails(context, payment),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0F172A),
                   foregroundColor: Colors.white,
@@ -368,11 +316,11 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                   ),
                 ),
                 child: Text(
-                  selectedTabIndex == 0
+                  payment.status.toLowerCase() == 'paid'
                       ? 'View Receipt'
-                      : selectedTabIndex == 1
-                      ? 'Pay Now'
-                      : 'View Refund Details',
+                      : payment.status.toLowerCase() == 'pending'
+                      ? 'Payment Pending'
+                      : 'View Details',
                 ),
               ),
             ),
@@ -404,10 +352,13 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
+      case 'paid':
       case 'completed':
         return Colors.green;
       case 'pending':
         return Colors.orange;
+      case 'failed':
+        return Colors.red;
       case 'refunded':
         return Colors.blue;
       default:
@@ -415,7 +366,45 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
     }
   }
 
-  void _showPaymentDetails(Map<String, dynamic> payment) {
+  Widget _buildNoPaymentsView(BuildContext context, CaptainPaymentHistoryProvider provider) {
+    // Get leagues from team data if available
+    // For now, show a generic message
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.payment_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          const Text(
+            'No Payments Found',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Your team has not made any payments yet.\nPayments will appear here once completed.',
+            style: TextStyle(fontSize: 14, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => provider.refresh(),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Refresh'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0F172A),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentDetails(BuildContext context, PaymentHistoryItem payment) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -464,16 +453,15 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
               const SizedBox(height: 20),
 
               // Details
-              _buildDetailRow('Payment ID', payment['id']),
-              _buildDetailRow('Date', payment['date']),
-              _buildDetailRow('League', payment['league']),
-              _buildDetailRow('Team', payment['team']),
-              _buildDetailRow('Amount', payment['amount'], isAmount: true),
-              _buildDetailRow('Method', payment['method']),
-              _buildDetailRow('Status', payment['status']),
+              _buildDetailRow('Player', 'Player ${payment.userId.substring(0, 8)}...'),
+              _buildDetailRow('Date', DateFormat('MMM dd, yyyy').format(payment.createdAt)),
+              _buildDetailRow('League', payment.leagueName),
+              _buildDetailRow('Amount', '\$${payment.amount.toStringAsFixed(2)}', isAmount: true),
+              _buildDetailRow('Method', payment.paymentMethod),
+              _buildDetailRow('Status', payment.status.toUpperCase()),
 
-              if (payment.containsKey('refundDate'))
-                _buildDetailRow('Refund Date', payment['refundDate']),
+              if (payment.transactionId != 'N/A')
+                _buildDetailRow('Transaction ID', payment.transactionId),
 
               const SizedBox(height: 20),
 
@@ -498,23 +486,15 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                       onPressed: () {
                         Navigator.pop(context);
                         // Handle primary action based on status
-                        if (payment['status'] == 'Completed') {
-                          // Download receipt
+                        if (payment.status.toLowerCase() == 'paid') {
+                          // Download receipt functionality would go here
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Receipt downloaded')),
+                            const SnackBar(content: Text('Receipt download feature coming soon')),
                           );
-                        } else if (payment['status'] == 'Pending') {
-                          // Process payment
+                        } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Processing payment...'),
-                            ),
-                          );
-                        } else if (payment['status'] == 'Refunded') {
-                          // Show refund details
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Refund details displayed'),
+                            SnackBar(
+                              content: Text('Payment is ${payment.status.toLowerCase()}'),
                             ),
                           );
                         }
@@ -528,11 +508,9 @@ class _CaptainPaymentHistoryViewState extends State<CaptainPaymentHistoryView> {
                         ),
                       ),
                       child: Text(
-                        payment['status'] == 'Completed'
+                        payment.status.toLowerCase() == 'paid'
                             ? 'Download Receipt'
-                            : payment['status'] == 'Pending'
-                            ? 'Pay Now'
-                            : 'Refund Info',
+                            : 'View Status',
                       ),
                     ),
                   ),

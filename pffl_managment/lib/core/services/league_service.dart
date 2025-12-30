@@ -542,6 +542,91 @@ class LeagueService {
       rethrow;
     }
   }
+
+  /// Check league payment status for a user (captain or player)
+  /// GET /api/league/:leagueId/payment-status/:userId
+  static Future<Map<String, dynamic>> checkLeaguePaymentStatus(
+    String leagueId,
+    String userId,
+  ) async {
+    try {
+      print(
+        '💳 Checking league payment status: league=$leagueId, user=$userId',
+      );
+      final dio = await _getAuthenticatedDio();
+
+      final response = await dio.get(
+        '/league/$leagueId/payment-status/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ League payment status checked successfully');
+        return response.data;
+      } else {
+        print(
+          '❌ Failed to check league payment status: ${response.statusMessage}',
+        );
+        return {
+          'success': false,
+          'message':
+              response.statusMessage ?? 'Failed to check league payment status',
+        };
+      }
+    } on DioException catch (e) {
+      print('❌ DioException checking league payment status: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return {
+        'success': false,
+        'message':
+            e.response?.data?['error'] ??
+            'Failed to check league payment status: ${e.message}',
+      };
+    } catch (e) {
+      print('❌ General error checking league payment status: $e');
+      return {
+        'success': false,
+        'message': 'Error checking league payment status: $e',
+      };
+    }
+  }
+
+  /// Get league summary data
+  /// GET /api/league/:leagueId/summary
+  static Future<Map<String, dynamic>> getLeagueSummary(String leagueId) async {
+    try {
+      print('📊 Getting league summary: $leagueId');
+      final dio = await _getAuthenticatedDio();
+
+      final response = await dio.get('/league/$leagueId/summary');
+
+      if (response.statusCode == 200) {
+        print('✅ League summary fetched successfully');
+        return response.data;
+      } else {
+        print('❌ Failed to get league summary: ${response.statusMessage}');
+        return {
+          'success': false,
+          'message': response.statusMessage ?? 'Failed to get league summary',
+        };
+      }
+    } on DioException catch (e) {
+      print('❌ DioException getting league summary: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return {
+        'success': false,
+        'message':
+            e.response?.data?['error'] ??
+            'Failed to get league summary: ${e.message}',
+      };
+    } catch (e) {
+      print('❌ General error getting league summary: $e');
+      return {'success': false, 'message': 'Error getting league summary: $e'};
+    }
+  }
 }
 
 class TeamModel {

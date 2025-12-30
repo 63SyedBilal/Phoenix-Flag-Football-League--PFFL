@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/core/services/device_service.dart';
+import 'package:pffl_managment/core/services/error_reporting_service.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -162,6 +164,17 @@ class AuthProvider extends ChangeNotifier {
         await _userPreferenceProvider.setUserName(_userName);
         await _userPreferenceProvider.setLoggedIn(true);
 
+        // Register device token for push notifications
+        try {
+          await DeviceService.registerDeviceToken(
+            userId: _userId,
+            platform: 'mobile',
+          );
+        } catch (e) {
+          print('⚠️ Failed to register device token on login: $e');
+          // Don't fail login for this
+        }
+
         _isLoggingIn = false;
         notifyListeners();
         return true;
@@ -175,6 +188,13 @@ class AuthProvider extends ChangeNotifier {
     } on DioException catch (e) {
       // Handle network errors with field-specific error messages
       print('Login API error: ${e.message}');
+
+      // Report non-fatal error to backend
+      await ErrorReportingService.recordNonFatalError(
+        e,
+        StackTrace.current,
+        context: 'AuthProvider.login - Network error',
+      );
 
       if (e.response?.statusCode == 401) {
         // Authentication error - check errorType from backend
@@ -263,6 +283,14 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       // Handle general errors - show error message
       print('Login general error: $e');
+
+      // Report error to backend
+      await ErrorReportingService.recordError(
+        e,
+        StackTrace.current,
+        reason: 'AuthProvider.login - Unexpected error',
+      );
+
       _loginPasswordError = 'An unexpected error occurred. Please try again.';
       _isLoggingIn = false;
       notifyListeners();
@@ -285,6 +313,16 @@ class AuthProvider extends ChangeNotifier {
       _needsProfileForm = false;
       _needsTeamForm = false;
       _userData = null;
+
+      // Unregister device token before clearing preferences
+      if (_userId.isNotEmpty) {
+        try {
+          await DeviceService.unregisterDeviceToken(_userId);
+        } catch (e) {
+          print('⚠️ Failed to unregister device token on logout: $e');
+          // Don't fail logout for this
+        }
+      }
 
       print('🔄 [AUTH PROVIDER] Clearing user preferences...');
       await _userPreferenceProvider.logout();

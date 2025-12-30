@@ -478,91 +478,89 @@ class MatchService {
         : (json['leagueId']?.toString());
 
     // Parse team A data
-    // First check if team name is stored directly in database
-    String teamAName = json['teamAName']?.toString() ?? '';
-    String teamALogo = '';
-    String? homeTeamId;
+    // Prioritize root fields from backend DTO (homeTeam, homeTeamLogo, homeTeamId)
+    String teamAName =
+        json['homeTeam']?.toString() ?? json['teamAName']?.toString() ?? '';
+    String teamALogo = json['homeTeamLogo']?.toString() ?? '';
+    String? homeTeamId = json['homeTeamId']?.toString();
 
-    // If stored name is empty, fallback to existing logic
-    if (teamAName.isEmpty) {
-      final teamAData = json['teamA'];
-
-      if (teamAData == null) {
-        // Team data is null - skip
-        teamAName = '';
-      } else if (teamAData is Map) {
-        // Extract team ID for filtering
+    final teamAData = json['teamA'];
+    if (teamAData is Map) {
+      if (homeTeamId == null || homeTeamId.isEmpty) {
         homeTeamId = _extractTeamId(teamAData);
+      }
 
-        // Check if team is populated (has teamName) or just has _id
-        if (teamAData['teamName'] != null || teamAData['enterCode'] != null) {
-          // Team is populated from backend (real team data)
-          teamAName = teamAData['teamName'] ?? teamAData['enterCode'] ?? '';
-          teamALogo = teamAData['image'] ?? '';
+      // Look for logo in populated teamId object
+      if (teamALogo.isEmpty) {
+        final teamIdObj = teamAData['teamId'];
+        if (teamIdObj is Map && teamIdObj['image'] != null) {
+          teamALogo = teamIdObj['image'].toString();
+        } else if (teamAData['image'] != null) {
+          teamALogo = teamAData['image'].toString();
+        }
+      }
+
+      if (teamAName.isEmpty || teamAName == 'Unknown Team') {
+        final teamIdObj = teamAData['teamId'];
+        if (teamIdObj is Map) {
+          teamAName =
+              teamIdObj['teamName']?.toString() ??
+              teamIdObj['enterCode']?.toString() ??
+              '';
         } else {
-          // Team has _id but not populated - look up from dummy teams
-          teamAName = _lookupTeamName(homeTeamId);
+          teamAName =
+              teamAData['teamName']?.toString() ??
+              teamAData['enterCode']?.toString() ??
+              _lookupTeamName(homeTeamId);
         }
-      } else if (teamAData is String) {
-        // Team is just an ObjectId string - look up from dummy teams
-        homeTeamId = teamAData;
+      }
+    } else if (teamAData is String) {
+      if (homeTeamId == null || homeTeamId.isEmpty) homeTeamId = teamAData;
+      if (teamAName.isEmpty || teamAName == 'Unknown Team')
         teamAName = _lookupTeamName(homeTeamId);
-      }
-    } else {
-      // Stored name exists, but try to get logo from populated data if available
-      final teamAData = json['teamA'];
-      if (teamAData is Map) {
-        homeTeamId = _extractTeamId(teamAData);
-        if (teamAData['image'] != null) {
-          teamALogo = teamAData['image'] ?? '';
-        }
-      } else if (teamAData is String) {
-        homeTeamId = teamAData;
-      }
     }
 
     // Parse team B data
-    // First check if team name is stored directly in database
-    String teamBName = json['teamBName']?.toString() ?? '';
-    String teamBLogo = '';
-    String? awayTeamId;
+    // Prioritize root fields from backend DTO (awayTeam, awayTeamLogo, awayTeamId)
+    String teamBName =
+        json['awayTeam']?.toString() ?? json['teamBName']?.toString() ?? '';
+    String teamBLogo = json['awayTeamLogo']?.toString() ?? '';
+    String? awayTeamId = json['awayTeamId']?.toString();
 
-    // If stored name is empty, fallback to existing logic
-    if (teamBName.isEmpty) {
-      final teamBData = json['teamB'];
-
-      if (teamBData == null) {
-        // Team data is null - skip
-        teamBName = '';
-      } else if (teamBData is Map) {
-        // Extract team ID for filtering
+    final teamBData = json['teamB'];
+    if (teamBData is Map) {
+      if (awayTeamId == null || awayTeamId.isEmpty) {
         awayTeamId = _extractTeamId(teamBData);
+      }
 
-        // Check if team is populated (has teamName) or just has _id
-        if (teamBData['teamName'] != null || teamBData['enterCode'] != null) {
-          // Team is populated from backend (real team data)
-          teamBName = teamBData['teamName'] ?? teamBData['enterCode'] ?? '';
-          teamBLogo = teamBData['image'] ?? '';
+      // Look for logo in populated teamId object
+      if (teamBLogo.isEmpty) {
+        final teamIdObj = teamBData['teamId'];
+        if (teamIdObj is Map && teamIdObj['image'] != null) {
+          teamBLogo = teamIdObj['image'].toString();
+        } else if (teamBData['image'] != null) {
+          teamBLogo = teamBData['image'].toString();
+        }
+      }
+
+      if (teamBName.isEmpty || teamBName == 'Unknown Team') {
+        final teamIdObj = teamBData['teamId'];
+        if (teamIdObj is Map) {
+          teamBName =
+              teamIdObj['teamName']?.toString() ??
+              teamIdObj['enterCode']?.toString() ??
+              '';
         } else {
-          // Team has _id but not populated - look up from dummy teams
-          teamBName = _lookupTeamName(awayTeamId);
+          teamBName =
+              teamBData['teamName']?.toString() ??
+              teamBData['enterCode']?.toString() ??
+              _lookupTeamName(awayTeamId);
         }
-      } else if (teamBData is String) {
-        // Team is just an ObjectId string - look up from dummy teams
-        awayTeamId = teamBData;
+      }
+    } else if (teamBData is String) {
+      if (awayTeamId == null || awayTeamId.isEmpty) awayTeamId = teamBData;
+      if (teamBName.isEmpty || teamBName == 'Unknown Team')
         teamBName = _lookupTeamName(awayTeamId);
-      }
-    } else {
-      // Stored name exists, but try to get logo from populated data if available
-      final teamBData = json['teamB'];
-      if (teamBData is Map) {
-        awayTeamId = _extractTeamId(teamBData);
-        if (teamBData['image'] != null) {
-          teamBLogo = teamBData['image'] ?? '';
-        }
-      } else if (teamBData is String) {
-        awayTeamId = teamBData;
-      }
     }
 
     // Parse date and time

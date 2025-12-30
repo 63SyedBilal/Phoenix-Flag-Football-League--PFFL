@@ -235,7 +235,7 @@ class LeagueLeaderboardSection extends StatelessWidget {
                                   bottom: BorderSide(
                                     color: const Color(
                                       0xFFE5E7EB,
-                                    ).withOpacity(0.5),
+                                    ).withValues(alpha: 0.5),
                                     width: 1,
                                   ),
                                 ),

@@ -1,0 +1,14 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/pffl_app_icon.svg"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icons/pffl_app_icon.svg"
+    background_color: "#1a365d"
+    theme_color: "#22c55e"
+  windows:
+    generate: true
+    image_path: "assets/icons/pffl_app_icon.svg"
+    icon_size: 48

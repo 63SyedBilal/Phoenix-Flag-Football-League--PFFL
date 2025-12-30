@@ -362,38 +362,80 @@ async function processStripePayment(
       model: "League",
     });
 
-    // 📢 SEND NOTIFICATION TO SUPER ADMIN ABOUT SUCCESSFUL PAYMENT
-    console.log("📢 Sending payment success notification to super admin...");
+    // 📢 SEND NOTIFICATIONS ABOUT SUCCESSFUL PAYMENT
+    console.log("📢 Sending payment success notifications...");
     try {
       const SuperAdmin = (await import("@/modules/superadmin")).default;
       const Notification = (await import("@/modules/notification")).default;
 
-      // Find super admin to notify - check User collection first, then SuperAdmin collection
-      let superAdmin = await User.findOne({ role: "superadmin" });
+      // Find SPECIFIC super admin: pffl@gmail.com
+      let superAdmin = await User.findOne({
+        email: "pffl@gmail.com",
+        role: "superadmin"
+      });
       if (!superAdmin) {
-        superAdmin = await SuperAdmin.findOne();
+        superAdmin = await SuperAdmin.findOne({ email: "pffl@gmail.com" });
       }
-      if (superAdmin) {
-        const user = await User.findById(payment.userId);
-        const league = await League.findById(payment.leagueId);
 
-        const notificationMessage = `${user?.firstName} ${user?.lastName} (${user?.email}) has successfully paid \$${payment.amount} for league "${league?.leagueName}". Transaction ID: ${paymentIntent.id}`;
+      const user = await User.findById(payment.userId);
+      const league = await League.findById(payment.leagueId);
+      const team = await Team.findOne({
+        $or: [
+          { squad5v5: payment.userId },
+          { squad7v7: payment.userId }
+        ]
+      });
 
+      if (superAdmin && user && league) {
+        const userName = `${user.firstName} ${user.lastName}`;
+        const paymentDate = new Date().toLocaleDateString();
+        const paymentTime = new Date().toLocaleTimeString();
+
+        // 1. Send notification to the user (player)
         await Notification.create({
-          sender: payment.userId, // The user who made the payment
-          receiver: superAdmin._id, // Super admin
+          sender: superAdmin._id,
+          receiver: payment.userId,
           league: payment.leagueId,
           type: "PAYMENT_SUCCESS",
           status: "pending",
-          message: notificationMessage,
+          message: `Your payment of $${payment.amount.toFixed(2)} for ${league.leagueName} has been successfully processed. Receipt ID: ${paymentIntent.id}`,
+          data: {
+            amount: payment.amount,
+            leagueName: league.leagueName,
+            receiptNumber: paymentIntent.id,
+            paymentDate: paymentDate,
+            paymentTime: paymentTime
+          }
         });
 
-        console.log("✅ Payment success notification sent to super admin");
+        // 2. Send detailed notification to admin
+        const teamInfo = team ? ` - ${team.teamName}` : '';
+        await Notification.create({
+          sender: payment.userId,
+          receiver: superAdmin._id,
+          league: payment.leagueId,
+          type: "LEAGUE_PAYMENT_RECEIVED",
+          status: "pending",
+          message: `League Payment: ${userName} paid $${payment.amount.toFixed(2)} for ${league.leagueName}${teamInfo} on ${paymentDate} at ${paymentTime}. Payment ID: ${paymentIntent.id}`,
+          data: {
+            userName: userName,
+            playerName: userName,
+            amount: payment.amount,
+            leagueName: league.leagueName,
+            teamName: team?.teamName,
+            paymentDate: paymentDate,
+            paymentTime: paymentTime,
+            paymentId: paymentIntent.id,
+            transactionId: paymentIntent.id
+          }
+        });
+
+        console.log("✅ Payment success notifications sent to user and admin");
       } else {
-        console.log("⚠️ No super admin found to notify about payment");
+        console.log("⚠️ Missing user, league, or admin data for notifications");
       }
     } catch (notificationError: any) {
-      console.error("⚠️ Failed to send payment notification to super admin:", notificationError.message);
+      console.error("⚠️ Failed to send payment notifications:", notificationError.message);
       // Don't fail the payment if notification fails
     }
 

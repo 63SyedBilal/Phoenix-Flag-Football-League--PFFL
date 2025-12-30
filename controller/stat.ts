@@ -169,28 +169,30 @@ export async function submitStatsForApproval(req: NextRequest) {
         console.log("🔍 [SUBMIT STATS DEBUG] Update result:", result);
 
         if (result.matchedCount > 0) {
-            // Create notification for Admin
-            // Look for a User with role "superadmin" first, then fallback to SuperAdmin collection
-            console.log("🔍 Looking for SuperAdmin to send notification...");
-            let admin = await User.findOne({ role: "superadmin" });
-            let allAdmins = [];
-            
+            // Create notification for SPECIFIC Admin: pffl@gmail.com
+            console.log("🔍 Looking for specific admin: pffl@gmail.com...");
+
+            // Find the specific admin account
+            let admin = await User.findOne({
+                email: "pffl@gmail.com",
+                role: "superadmin"
+            });
+
             if (!admin) {
-                console.log("🔍 No User with superadmin role found, checking SuperAdmin collection...");
-                // Get ALL SuperAdmins instead of just the first one
-                const superAdmins = await SuperAdmin.find({});
-                allAdmins = superAdmins;
-                console.log("🔍 Found SuperAdmins:", superAdmins.length);
-                
-                if (superAdmins.length > 0) {
-                    admin = superAdmins[0]; // Use first one for match lookup, but we'll notify all
-                }
-            } else {
-                allAdmins = [admin];
+                console.log("🔍 Admin pffl@gmail.com not found in User collection, checking SuperAdmin collection...");
+                admin = await SuperAdmin.findOne({ email: "pffl@gmail.com" });
             }
-            
-            console.log("🔍 Found admin for match lookup:", admin ? admin._id.toString() : "null");
-            console.log("🔍 Will notify admins:", allAdmins.map(a => a._id.toString()));
+
+            if (!admin) {
+                console.log("❌ ERROR: Specific admin pffl@gmail.com not found!");
+                return NextResponse.json({
+                    message: "Stats submitted but admin notification failed - admin account not found",
+                    count: result.matchedCount
+                }, { status: 200 });
+            }
+
+            const allAdmins = [admin]; // Only this specific admin
+            console.log("🔍 Found specific admin:", admin._id.toString(), admin.email);
             
             const match = await Match.findById(toObjectId(matchId)).populate("leagueId");
             console.log("🔍 Found match:", match ? `${(match as any).teamAName} vs ${(match as any).teamBName}` : "null");

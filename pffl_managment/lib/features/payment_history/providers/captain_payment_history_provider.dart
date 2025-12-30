@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
-import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
+import 'package:pffl_managment/features/payment_history/models/payment_history_item.dart';
 
 /// Provider for managing captain payment history
 /// Captains can view payments made by their team members
@@ -9,6 +8,9 @@ class CaptainPaymentHistoryProvider extends ChangeNotifier {
   List<PaymentHistoryItem> _payments = [];
   bool _isLoading = false;
   String? _errorMessage;
+  final String? userRole;
+
+  CaptainPaymentHistoryProvider({this.userRole});
 
   // Getters
   List<PaymentHistoryItem> get payments => List.unmodifiable(_payments);
@@ -22,28 +24,131 @@ class CaptainPaymentHistoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('📊 [CAPTAIN PAYMENT HISTORY] Loading team payment history...');
+      debugPrint(
+        '📊 [CAPTAIN PAYMENT HISTORY] Loading team payment history...',
+      );
+      debugPrint('📊 [CAPTAIN PAYMENT HISTORY] User role: $userRole');
 
-      // Get all payments for the captain's team
-      final paymentsResponse = await PaymentService.fetchTeamPayments();
+      // Check if user is actually a captain
+      if (userRole?.toLowerCase() != 'captain') {
+        debugPrint(
+          '⚠️ [CAPTAIN PAYMENT HISTORY] User is not a captain, loading personal payments instead',
+        );
 
-      if (paymentsResponse['success'] == true) {
-        final paymentsData = paymentsResponse['data'] as List<dynamic>? ?? [];
+        // Load personal payments instead
+        final paymentsResponse = await PaymentService.fetchUserPayments();
 
-        _payments = paymentsData
-            .map((payment) => PaymentHistoryItem.fromJson(payment as Map<String, dynamic>))
-            .toList();
+        if (paymentsResponse['success'] == true) {
+          final paymentsData = paymentsResponse['data'] as List<dynamic>? ?? [];
 
-        // Sort by creation date (newest first)
-        _payments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _payments = paymentsData
+              .map(
+                (payment) => PaymentHistoryItem.fromJson(
+                  payment as Map<String, dynamic>,
+                ),
+              )
+              .toList();
 
-        debugPrint('✅ [CAPTAIN PAYMENT HISTORY] Loaded ${_payments.length} team payments');
+          // Sort by creation date (newest first)
+          _payments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          debugPrint(
+            '✅ [CAPTAIN PAYMENT HISTORY] Loaded ${_payments.length} personal payments',
+          );
+        } else {
+          _errorMessage =
+              paymentsResponse['message'] ??
+              paymentsResponse['error'] ??
+              'Failed to load payment history';
+          debugPrint(
+            '❌ [CAPTAIN PAYMENT HISTORY] Failed to load payments: $_errorMessage',
+          );
+        }
       } else {
-        _errorMessage = paymentsResponse['message'] ?? paymentsResponse['error'] ?? 'Failed to load team payment history';
-        debugPrint('❌ [CAPTAIN PAYMENT HISTORY] Failed to load payments: $_errorMessage');
+        // Captain - try to get team payments first
+        debugPrint(
+          '📊 [CAPTAIN PAYMENT HISTORY] Attempting to load team payments...',
+        );
+        final teamPaymentsResponse = await PaymentService.fetchTeamPayments();
+
+        if (teamPaymentsResponse['success'] == true) {
+          final paymentsData =
+              teamPaymentsResponse['data'] as List<dynamic>? ?? [];
+
+          _payments = paymentsData
+              .map(
+                (payment) => PaymentHistoryItem.fromJson(
+                  payment as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+
+          // Sort by creation date (newest first)
+          _payments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          debugPrint(
+            '✅ [CAPTAIN PAYMENT HISTORY] Loaded ${_payments.length} team payments',
+          );
+        } else {
+          // Team payments failed - check if it's because captain has no team
+          final errorMsg =
+              teamPaymentsResponse['message'] ??
+              teamPaymentsResponse['error'] ??
+              '';
+          debugPrint(
+            '⚠️ [CAPTAIN PAYMENT HISTORY] Team payments failed: $errorMsg',
+          );
+
+          // If error is about not having a team, fall back to personal payments
+          if (errorMsg.toLowerCase().contains('not a captain') ||
+              errorMsg.toLowerCase().contains('no team')) {
+            debugPrint(
+              '📊 [CAPTAIN PAYMENT HISTORY] Captain has no team, loading personal payments instead...',
+            );
+
+            // Fall back to personal payments
+            final paymentsResponse = await PaymentService.fetchUserPayments();
+
+            if (paymentsResponse['success'] == true) {
+              final paymentsData =
+                  paymentsResponse['data'] as List<dynamic>? ?? [];
+
+              _payments = paymentsData
+                  .map(
+                    (payment) => PaymentHistoryItem.fromJson(
+                      payment as Map<String, dynamic>,
+                    ),
+                  )
+                  .toList();
+
+              // Sort by creation date (newest first)
+              _payments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+              debugPrint(
+                '✅ [CAPTAIN PAYMENT HISTORY] Loaded ${_payments.length} personal payments',
+              );
+            } else {
+              _errorMessage =
+                  paymentsResponse['message'] ??
+                  paymentsResponse['error'] ??
+                  'Failed to load payment history';
+              debugPrint(
+                '❌ [CAPTAIN PAYMENT HISTORY] Failed to load personal payments: $_errorMessage',
+              );
+            }
+          } else {
+            // Other error - show it
+            _errorMessage = errorMsg.isNotEmpty
+                ? errorMsg
+                : 'Failed to load team payment history';
+            debugPrint(
+              '❌ [CAPTAIN PAYMENT HISTORY] Failed to load payments: $_errorMessage',
+            );
+          }
+        }
       }
     } catch (e) {
-      _errorMessage = 'Failed to load team payment history: ${e.toString()}';
+      _errorMessage = 'Failed to load payment history: ${e.toString()}';
       debugPrint('❌ [CAPTAIN PAYMENT HISTORY] Error: $e');
     } finally {
       _isLoading = false;
@@ -64,14 +169,19 @@ class CaptainPaymentHistoryProvider extends ChangeNotifier {
 
   /// Get payments by status
   List<PaymentHistoryItem> getPaymentsByStatus(String status) {
-    return _payments.where((payment) => payment.status.toLowerCase() == status.toLowerCase()).toList();
+    return _payments
+        .where(
+          (payment) => payment.status.toLowerCase() == status.toLowerCase(),
+        )
+        .toList();
   }
 
   /// Get paid payments
   List<PaymentHistoryItem> get paidPayments => getPaymentsByStatus('paid');
 
   /// Get pending payments
-  List<PaymentHistoryItem> get pendingPayments => getPaymentsByStatus('pending');
+  List<PaymentHistoryItem> get pendingPayments =>
+      getPaymentsByStatus('pending');
 
   /// Get failed payments
   List<PaymentHistoryItem> get failedPayments => getPaymentsByStatus('failed');
@@ -83,7 +193,11 @@ class CaptainPaymentHistoryProvider extends ChangeNotifier {
 
   /// Get payment count by status
   int getPaymentCount(String status) {
-    return _payments.where((payment) => payment.status.toLowerCase() == status.toLowerCase()).length;
+    return _payments
+        .where(
+          (payment) => payment.status.toLowerCase() == status.toLowerCase(),
+        )
+        .length;
   }
 
   /// Get unique payers (team members who have paid)

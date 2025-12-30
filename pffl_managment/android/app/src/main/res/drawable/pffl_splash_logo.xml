@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Football -->
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="@color/pffl_white" />
+            <size android:width="80dp" android:height="80dp" />
+        </shape>
+    </item>
+
+    <!-- Football laces -->
+    <item android:gravity="center">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/pffl_primary" />
+            <size android:width="40dp" android:height="4dp" />
+        </shape>
+    </item>
+
+    <!-- PFFL Text -->
+    <item android:gravity="center" android:top="100dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <size android:width="200dp" android:height="60dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -6,6 +6,7 @@ import 'package:pffl_managment/core/services/league_service.dart'
 import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
 import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
+import 'package:pffl_managment/features/admin/provider/match_provider.dart';
 
 class UpcomingGamesProvider extends ChangeNotifier {
   MatchModel? _editingMatch;
@@ -573,72 +574,79 @@ class UpcomingGamesProvider extends ChangeNotifier {
     return true;
   }
 
-  /// Create a new match
+  /// Create a new match using MatchProvider for validations
+  /// This method uses MatchProvider which handles:
+  /// - Round-Robin duplicate match validation
+  /// - Maximum matches limit validation
+  /// - Time slot clash validation
+  /// - Automatic notifications to referee and statkeeper
   Future<MatchModel> createMatch() async {
+    // Basic field validation
     if (!await validateFields()) {
       throw Exception(_errorMessage ?? 'Validation failed');
     }
 
-    try {
-      // Format time as HH:mm
-      final timeStr =
-          '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+    // Validate league ID is set
+    if (_leagueId == null || _leagueId!.isEmpty) {
+      _errorMessage = 'League ID is required';
+      notifyListeners();
+      throw Exception(_errorMessage!);
+    }
 
-      // Combine date and time for gameDate
-      final gameDateTime = DateTime(
-        _selectedDate!.year,
-        _selectedDate!.month,
-        _selectedDate!.day,
-        _selectedTime!.hour,
-        _selectedTime!.minute,
+    // Validate team IDs are set
+    if (_selectedTeamAId == null ||
+        _selectedTeamBId == null ||
+        _selectedTeamA == null ||
+        _selectedTeamB == null) {
+      _errorMessage = 'Both teams must be selected';
+      notifyListeners();
+      throw Exception(_errorMessage!);
+    }
+
+    // Validate date and time are set
+    if (_selectedDate == null || _selectedTime == null) {
+      _errorMessage = 'Date and time must be selected';
+      notifyListeners();
+      throw Exception(_errorMessage!);
+    }
+
+    try {
+      // Create MatchProvider instance and initialize with league
+      final matchProvider = MatchProvider();
+      await matchProvider.initialize(_leagueId!);
+
+      // Use MatchProvider.addMatch() which handles all validations
+      final success = await matchProvider.addMatch(
+        teamOneId: _selectedTeamAId!,
+        teamOneName: _selectedTeamA!,
+        teamTwoId: _selectedTeamBId!,
+        teamTwoName: _selectedTeamB!,
+        matchDate: _selectedDate!,
+        matchTime: _selectedTime!,
+        venue: _selectedVenue,
+        refereeId: _selectedRefereeId,
+        statKeeperId: _selectedStatKeeperId,
+        roundName: _selectedRoundName,
+        format: _leagueFormat,
       );
 
-      final matchData = {
-        'leagueId': _leagueId,
-        'teamA': _selectedTeamAId,
-        'teamAName': _selectedTeamA ?? '',
-        'teamB': _selectedTeamBId,
-        'teamBName': _selectedTeamB ?? '',
-        'format': _leagueFormat ?? '5v5',
-        'gameDate': gameDateTime.toIso8601String(),
-        'gameTime': timeStr,
-        'venue': _selectedVenue ?? '',
-        'roundName': _selectedRoundName ?? 'Group Stage',
-        'gameNumber': '',
-        'status': 'upcoming',
-        'teamAInitialSide': 'offense',
-        'teamBInitialSide': 'defense',
-        if (_selectedRefereeId != null) 'refereeId': _selectedRefereeId,
-        if (_selectedStatKeeperId != null)
-          'statKeeperId': _selectedStatKeeperId,
-      };
-
-      // 🎮 LOG GAME CREATION REQUEST
-      debugPrint("🎮 [FLUTTER] ================================");
-      debugPrint("🎮 [FLUTTER] Creating new game...");
-      debugPrint("🎮 [FLUTTER] League ID: $_leagueId");
-      debugPrint("🎮 [FLUTTER] Team A ID: $_selectedTeamAId");
-      debugPrint("🎮 [FLUTTER] Team A Name: $_selectedTeamA");
-      debugPrint("🎮 [FLUTTER] Team B ID: $_selectedTeamBId");
-      debugPrint("🎮 [FLUTTER] Team B Name: $_selectedTeamB");
-      debugPrint("🎮 [FLUTTER] Format: ${_leagueFormat ?? '5v5'}");
-      debugPrint("🎮 [FLUTTER] Date: ${gameDateTime.toIso8601String()}");
-      debugPrint("🎮 [FLUTTER] Time: $timeStr");
-      debugPrint("🎮 [FLUTTER] Venue: ${_selectedVenue ?? 'No venue'}");
-      debugPrint("🎮 [FLUTTER] Round: ${_selectedRoundName ?? 'Group Stage'}");
-      if (_selectedRefereeId != null) {
-        debugPrint("🎮 [FLUTTER] Referee ID: $_selectedRefereeId");
-      } else {
-        debugPrint("🎮 [FLUTTER] No referee assigned");
+      if (!success) {
+        // MatchProvider validation failed
+        _errorMessage = matchProvider.errorText ?? 'Failed to create match';
+        notifyListeners();
+        throw Exception(_errorMessage!);
       }
-      if (_selectedStatKeeperId != null) {
-        debugPrint("🎮 [FLUTTER] Stat Keeper ID: $_selectedStatKeeperId");
-      } else {
-        debugPrint("🎮 [FLUTTER] No stat keeper assigned");
-      }
-      debugPrint("🎮 [FLUTTER] ================================");
 
-      final createdMatch = await MatchService.createMatch(matchData);
+      // Get the created match from MatchProvider
+      final createdMatches = matchProvider.matches;
+      if (createdMatches.isEmpty) {
+        _errorMessage = 'Match was created but could not be retrieved';
+        notifyListeners();
+        throw Exception(_errorMessage!);
+      }
+
+      // Get the most recently created match (last in list)
+      final createdMatch = createdMatches.last;
 
       // 🎮 LOG SUCCESSFUL CREATION
       debugPrint("🎮 [FLUTTER] ================================");
@@ -650,15 +658,15 @@ class UpcomingGamesProvider extends ChangeNotifier {
       debugPrint("🎮 [FLUTTER] League: ${createdMatch.leagueName}");
       debugPrint("🎮 [FLUTTER] ================================");
 
-      // Send notifications to assigned referee and StatKeeper
-      await _sendAssignmentNotifications(createdMatch);
+      // Notifications are already sent by MatchProvider
+      // No need to call _sendAssignmentNotifications here
 
       _errorMessage = null;
       notifyListeners();
       return createdMatch;
     } catch (e) {
       debugPrint("❌ [FLUTTER] Game creation failed: ${e.toString()}");
-      _errorMessage = 'Failed to create match: ${e.toString()}';
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
       notifyListeners();
       rethrow;
     }
@@ -760,9 +768,6 @@ class UpcomingGamesProvider extends ChangeNotifier {
       final gameInfo = '${match.homeTeam} vs ${match.awayTeam}';
       final dateStr = _formatDate(match.matchDateTime ?? DateTime.now());
       final timeStr = match.time.isNotEmpty ? ' at ${match.time}' : '';
-      final venueStr = (match.venue?.isNotEmpty ?? false)
-          ? ' at ${match.venue}'
-          : '';
 
       // Send notification to referee if assigned
       if (match.refereeId != null && match.refereeId!.isNotEmpty) {

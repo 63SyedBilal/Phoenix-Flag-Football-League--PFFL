@@ -49,6 +49,7 @@ import 'package:pffl_managment/core/providers/change_password_provider.dart';
 import 'package:pffl_managment/core/providers/performance_provider.dart';
 import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
 import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
+import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -116,7 +117,26 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RefundReasonProvider()),
         ChangeNotifierProvider(create: (_) => SponsorScreenProvider()),
         ChangeNotifierProvider(create: (_) => AnimatedFABProvider()),
-        ChangeNotifierProvider(create: (_) => PlayerDashboardProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, PlayerDashboardProvider>(
+          create: (context) => PlayerDashboardProvider(
+            userId: Provider.of<AuthProvider>(context, listen: false).userId,
+            userRole: Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            ).userRole,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null &&
+                previous.userId == auth.userId &&
+                previous.userRole == auth.userRole) {
+              return previous;
+            }
+            return PlayerDashboardProvider(
+              userId: auth.userId,
+              userRole: auth.userRole,
+            );
+          },
+        ),
         ChangeNotifierProvider(create: (_) => RefereeDashboardProvider()),
         ChangeNotifierProvider(create: (_) => StatKeeperDashboardProvider()),
         ChangeNotifierProvider(create: (_) => FreeAgentDashboardProvider()),
@@ -150,7 +170,25 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChangePasswordProvider()),
         ChangeNotifierProvider(create: (_) => PerformanceProvider()),
         ChangeNotifierProvider(create: (_) => PlayerPaymentHistoryProvider()),
-        ChangeNotifierProvider(create: (_) => CaptainPaymentHistoryProvider()),
+        ChangeNotifierProxyProvider<
+          AuthProvider,
+          CaptainPaymentHistoryProvider
+        >(
+          create: (context) => CaptainPaymentHistoryProvider(
+            userRole: Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            ).userRole,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userRole == auth.userRole) {
+              return previous;
+            }
+            return CaptainPaymentHistoryProvider(userRole: auth.userRole);
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => LeaguePaymentProvider()),
+        // TournamentProvider is created dynamically with leagueId parameter
       ],
       child: child,
     );

@@ -165,10 +165,17 @@ class AddPaymentDetailsScreen extends StatelessWidget {
 
     // Debug output for payment initiation
     debugPrint('🚀 Starting payment process...');
-    debugPrint('   - Selected leagues: ${leagueProvider.selectedLeagues.length}');
-    debugPrint('   - Leagues: ${leagueProvider.selectedLeagues.map((l) => l.leagueName).join(', ')}');
+    debugPrint(
+      '   - Selected leagues: ${leagueProvider.selectedLeagues.length}',
+    );
+    debugPrint(
+      '   - Leagues: ${leagueProvider.selectedLeagues.map((l) => l.leagueName).join(', ')}',
+    );
 
-    final success = await provider.processMultiLeaguePayment(leagueProvider);
+    final success = await provider.processMultiLeaguePayment(
+      leagueProvider,
+      context,
+    );
 
     if (success && context.mounted) {
       CustomFlushbarWidget.show(

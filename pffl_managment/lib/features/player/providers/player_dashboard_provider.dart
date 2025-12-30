@@ -4,8 +4,11 @@ import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 
 class PlayerDashboardProvider extends ChangeNotifier {
+  final String? userId;
+  final String? userRole;
+
   // User information
-  String _userName = 'Player';
+  String _userName = 'User';
   bool _hasNotification = true;
 
   // Upcoming games
@@ -20,8 +23,10 @@ class PlayerDashboardProvider extends ChangeNotifier {
   List<GameModel> get upcomingGames => _upcomingGames;
   bool get isLoading => _isLoading;
 
-  PlayerDashboardProvider() {
-    _initializeData();
+  PlayerDashboardProvider({this.userId, this.userRole}) {
+    if (userId != null && userId!.isNotEmpty) {
+      _initializeData();
+    }
   }
 
   void _setLoading(bool value) {
@@ -30,10 +35,20 @@ class PlayerDashboardProvider extends ChangeNotifier {
   }
 
   Future<void> _initializeData() async {
+    if (userId == null || userId!.isEmpty) return;
+
     _setLoading(true);
     try {
-      // 1. Get current user's team
-      final teamData = await TeamService.getTeamByCaptain();
+      // 1. Get current user's team based on role
+      Map<String, dynamic>? teamData;
+      final role = userRole?.toLowerCase() ?? '';
+
+      if (role == 'captain') {
+        teamData = await TeamService.getTeamByCaptain();
+      } else if (role == 'player') {
+        teamData = await TeamService.getTeamByPlayer(userId!);
+      }
+
       if (teamData == null) {
         _upcomingGames = [];
         return;
@@ -54,8 +69,6 @@ class PlayerDashboardProvider extends ChangeNotifier {
         final isMyTeam = m.homeTeamId == teamId || m.awayTeamId == teamId;
         final isFuture =
             m.matchDateTime != null && m.matchDateTime!.isAfter(now);
-        // Also consider 'upcoming' status just in case date is today but later time,
-        // though isAfter works for time too if matchDateTime includes time.
         return isMyTeam && isFuture;
       }).toList();
 
@@ -71,6 +84,7 @@ class PlayerDashboardProvider extends ChangeNotifier {
           .map(
             (m) => GameModel(
               id: m.id ?? '',
+              leagueId: m.leagueId,
               leagueName: m.leagueName,
               team1Name: m.homeTeam,
               team1Logo: m.homeTeamLogo,
@@ -78,13 +92,14 @@ class PlayerDashboardProvider extends ChangeNotifier {
               team2Logo: m.awayTeamLogo,
               date: m.matchDateTime ?? DateTime.now(),
               time: m.time,
-              isFeePaid: true, // Assuming true or logic unavailable
+              isFeePaid:
+                  true, // We check payment in the UI via LeaguePaymentProvider
               isMyGame: true,
             ),
           )
           .toList();
     } catch (e) {
-      debugPrint('Error loading player dashboard data: $e');
+      debugPrint('Error loading dashboard data: $e');
       _upcomingGames = [];
     } finally {
       _setLoading(false);

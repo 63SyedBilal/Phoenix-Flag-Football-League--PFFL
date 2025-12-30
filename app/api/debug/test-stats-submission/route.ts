@@ -19,16 +19,16 @@ export async function POST(req: NextRequest) {
         let admin = await User.findOne({ role: "superadmin" });
         let allAdmins = [];
         
+        // Find SPECIFIC admin for testing: pffl@gmail.com
+        admin = await User.findOne({
+            email: "pffl@gmail.com",
+            role: "superadmin"
+        });
         if (!admin) {
-            console.log("🔍 No User with superadmin role found, checking SuperAdmin collection...");
-            const superAdmins = await SuperAdmin.find({});
-            allAdmins = superAdmins;
-            console.log("🔍 Found SuperAdmins:", superAdmins.length);
-            
-            if (superAdmins.length > 0) {
-                admin = superAdmins[0];
-            }
-        } else {
+            admin = await SuperAdmin.findOne({ email: "pffl@gmail.com" });
+        }
+
+        if (admin) {
             allAdmins = [admin];
         }
         

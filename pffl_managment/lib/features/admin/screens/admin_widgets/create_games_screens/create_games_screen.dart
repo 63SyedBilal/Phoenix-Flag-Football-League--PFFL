@@ -8,40 +8,10 @@ import 'package:pffl_managment/core/services/league_service.dart'
     show TeamModel;
 import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
 
-class CreateUpcomingGamesScreen extends StatefulWidget {
+class CreateUpcomingGamesScreen extends StatelessWidget {
   final LeagueCreationModel league;
 
   const CreateUpcomingGamesScreen({super.key, required this.league});
-
-  @override
-  State<CreateUpcomingGamesScreen> createState() =>
-      _CreateUpcomingGamesScreenState();
-}
-
-class _CreateUpcomingGamesScreenState extends State<CreateUpcomingGamesScreen>
-    with WidgetsBindingObserver {
-  UpcomingGamesProvider? _provider;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    // Refresh data when app comes back to foreground
-    if (state == AppLifecycleState.resumed && _provider != null) {
-      _provider!.refreshData();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,13 +66,11 @@ class _CreateUpcomingGamesScreenState extends State<CreateUpcomingGamesScreen>
           create: (_) => UpcomingGamesProvider(),
           child: Consumer<UpcomingGamesProvider>(
             builder: (context, provider, child) {
-              // Store provider reference for lifecycle callbacks
-              _provider = provider;
 
               // Initialize with league data when provider is first created
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (provider.leagueId != widget.league.id) {
-                  provider.initializeWithLeague(widget.league);
+                if (provider.leagueId != league.id) {
+                  provider.initializeWithLeague(league);
                 }
               });
 
@@ -129,7 +97,7 @@ class _CreateUpcomingGamesScreenState extends State<CreateUpcomingGamesScreen>
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () =>
-                              provider.initializeWithLeague(widget.league),
+                              provider.initializeWithLeague(league),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -203,13 +171,32 @@ class _CreateUpcomingGamesScreenState extends State<CreateUpcomingGamesScreen>
                           _buildRefereeDropdownField(provider),
                           const SizedBox(height: 8),
                           _buildStatKeeperDropdownField(provider),
+                          // Display validation errors from MatchProvider
                           if (provider.errorMessage != null) ...[
                             const SizedBox(height: 8),
-                            Text(
-                              provider.errorMessage!,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red[50],
+                                border: Border.all(color: Colors.red[300]!),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline,
+                                      color: Colors.red[700], size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      provider.errorMessage!,
+                                      style: TextStyle(
+                                        color: Colors.red[700],
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

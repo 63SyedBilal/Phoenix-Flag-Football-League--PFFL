@@ -372,4 +372,152 @@ class TeamService {
       };
     }
   }
+
+  /// Transfer leadership to another player in the team
+  /// PUT /api/team/:teamId/transfer-leadership
+  /// Body: { newCaptainId: string }
+  static Future<bool> transferLeadership({
+    required String teamId,
+    required String newCaptainId,
+  }) async {
+    try {
+      print('🎯 [TEAM SERVICE DEBUG] Starting transferLeadership API call');
+      print('🎯 [TEAM SERVICE DEBUG] Parameters:');
+      print('   - teamId: $teamId');
+      print('   - newCaptainId: $newCaptainId');
+
+      final dio = await _getAuthenticatedDio();
+      final endpoint = '${AppConfig.teamEndpoint}/$teamId/transfer-leadership';
+
+      print('🎯 [TEAM SERVICE DEBUG] Endpoint: $endpoint');
+      print('🎯 [TEAM SERVICE DEBUG] Full URL: ${dio.options.baseUrl}$endpoint');
+
+      final response = await dio.put(
+        endpoint,
+        data: {'newCaptainId': newCaptainId},
+      );
+
+      print('🎯 [TEAM SERVICE DEBUG] Response received');
+      print('🎯 [TEAM SERVICE DEBUG] Status code: ${response.statusCode}');
+      print('🎯 [TEAM SERVICE DEBUG] Response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        print('✅ [TEAM SERVICE DEBUG] Leadership transferred successfully');
+        return true;
+      } else {
+        print(
+            '❌ [TEAM SERVICE DEBUG] Unexpected status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to transfer leadership: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print('❌ [TEAM SERVICE DEBUG] DioException occurred');
+      print('❌ [TEAM SERVICE DEBUG] Type: ${e.type}');
+      print('❌ [TEAM SERVICE DEBUG] Message: ${e.message}');
+
+      if (e.response != null) {
+        print(
+            '❌ [TEAM SERVICE DEBUG] Response status: ${e.response?.statusCode}');
+        print('❌ [TEAM SERVICE DEBUG] Response data: ${e.response?.data}');
+      }
+
+      final errorMessage = e.response?.data['error'] ??
+          'Failed to transfer leadership: ${e.message}';
+      print('❌ [TEAM SERVICE DEBUG] Final error message: $errorMessage');
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ [TEAM SERVICE DEBUG] General error: $e');
+      throw Exception('Failed to transfer leadership: ${e.toString()}');
+    }
+  }
+
+  /// Remove a player from the team
+  /// DELETE /api/team/:teamId/remove-player/:playerId
+  static Future<bool> removePlayerFromTeam({
+    required String teamId,
+    required String playerId,
+  }) async {
+    try {
+      print('🎯 [TEAM SERVICE DEBUG] Starting removePlayerFromTeam API call');
+      print('🎯 [TEAM SERVICE DEBUG] Parameters:');
+      print('   - teamId: $teamId');
+      print('   - playerId: $playerId');
+
+      final dio = await _getAuthenticatedDio();
+      final endpoint = '${AppConfig.teamEndpoint}/$teamId/remove-player/$playerId';
+
+      print('🎯 [TEAM SERVICE DEBUG] Endpoint: $endpoint');
+      print('🎯 [TEAM SERVICE DEBUG] Full URL: ${dio.options.baseUrl}$endpoint');
+
+      final response = await dio.delete(endpoint);
+
+      print('🎯 [TEAM SERVICE DEBUG] Response received');
+      print('🎯 [TEAM SERVICE DEBUG] Status code: ${response.statusCode}');
+      print('🎯 [TEAM SERVICE DEBUG] Response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        print('✅ [TEAM SERVICE DEBUG] Player removed successfully');
+        return true;
+      } else {
+        print(
+            '❌ [TEAM SERVICE DEBUG] Unexpected status code: ${response.statusCode}');
+        throw Exception('Failed to remove player: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print('❌ [TEAM SERVICE DEBUG] DioException occurred');
+      print('❌ [TEAM SERVICE DEBUG] Type: ${e.type}');
+      print('❌ [TEAM SERVICE DEBUG] Message: ${e.message}');
+
+      if (e.response != null) {
+        print(
+            '❌ [TEAM SERVICE DEBUG] Response status: ${e.response?.statusCode}');
+        print('❌ [TEAM SERVICE DEBUG] Response data: ${e.response?.data}');
+      }
+
+      final errorMessage = e.response?.data['error'] ??
+          'Failed to remove player: ${e.message}';
+      print('❌ [TEAM SERVICE DEBUG] Final error message: $errorMessage');
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ [TEAM SERVICE DEBUG] General error: $e');
+      throw Exception('Failed to remove player: ${e.toString()}');
+    }
+  }
+
+  /// Get player payment statuses for a team
+  /// GET /api/team/:teamId/player-payments
+  static Future<Map<String, dynamic>> getTeamPlayerPayments(String teamId) async {
+    try {
+      print('💳 Getting player payment statuses for team: $teamId');
+      final dio = await _getAuthenticatedDio();
+
+      final response = await dio.get('/team/$teamId/player-payments');
+
+      if (response.statusCode == 200) {
+        print('✅ Player payment statuses retrieved successfully');
+        return response.data;
+      } else {
+        print('❌ Failed to get player payment statuses: ${response.statusMessage}');
+        return {
+          'success': false,
+          'message': response.statusMessage ?? 'Failed to get player payment statuses'
+        };
+      }
+    } on DioException catch (e) {
+      print('❌ DioException getting player payment statuses: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return {
+        'success': false,
+        'message': e.response?.data?['error'] ?? 'Failed to get player payment statuses: ${e.message}'
+      };
+    } catch (e) {
+      print('❌ General error getting player payment statuses: $e');
+      return {
+        'success': false,
+        'message': 'Error getting player payment statuses: $e'
+      };
+    }
+  }
 }

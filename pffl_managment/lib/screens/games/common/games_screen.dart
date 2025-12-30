@@ -3,14 +3,23 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/screens/games/common/games_provider.dart';
 import 'package:pffl_managment/screens/games/widgets/game_filter_tabs.dart';
 import 'package:pffl_managment/screens/games/widgets/role_based_game_card.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 class GamesScreen extends StatelessWidget {
   const GamesScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(
-      builder: (context, gamesProvider, child) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.userId;
+    final userRole = authProvider.userRole.toLowerCase();
+    final isCaptain = userRole == 'captain';
+    final isPlayer = userRole == 'player';
+
+    return Consumer2<GamesProvider, LeaguePaymentProvider>(
+      builder: (context, gamesProvider, paymentProvider, child) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!gamesProvider.isLoading &&
               gamesProvider.leagues.isEmpty &&
@@ -125,21 +134,52 @@ class GamesScreen extends StatelessWidget {
                             separatorBuilder: (context, index) =>
                                 const SizedBox(height: 12),
                             itemBuilder: (context, index) {
+                              final match =
+                                  gamesProvider.filteredMatches[index];
+                              bool shouldShowPaymentPrompt = false;
+
+                              if ((isCaptain || isPlayer) &&
+                                  match.leagueId != null &&
+                                  userId.isNotEmpty) {
+                                final hasPaid =
+                                    paymentProvider.getCachedPaymentStatus(
+                                      match.leagueId!,
+                                      userId,
+                                    ) ??
+                                    false;
+                                shouldShowPaymentPrompt = !hasPaid;
+
+                                // Trigger load if not in cache
+                                if (paymentProvider.getCachedPaymentStatus(
+                                      match.leagueId!,
+                                      userId,
+                                    ) ==
+                                    null) {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    paymentProvider.checkLeaguePaymentStatus(
+                                      match.leagueId!,
+                                      userId,
+                                    );
+                                  });
+                                }
+                              }
+
                               return RoleBasedGameCard(
-                                match: gamesProvider.filteredMatches[index],
-                                userRole: gamesProvider.userRole,
+                                match: match,
+                                userRole: userRole,
                                 canEdit: gamesProvider.canEdit,
                                 shouldShowPaymentPrompt:
-                                    gamesProvider.shouldShowPaymentPrompt,
-                                onPayLeagueFee: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Navigate to payment screen',
-                                      ),
-                                    ),
-                                  );
-                                },
+                                    shouldShowPaymentPrompt,
+                                onPayLeagueFee: shouldShowPaymentPrompt
+                                    ? () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.freeAgentPaymentHistory,
+                                        );
+                                      }
+                                    : null,
                                 onTeamTap: (teamId) {
                                   gamesProvider.selectTeam(teamId);
                                 },

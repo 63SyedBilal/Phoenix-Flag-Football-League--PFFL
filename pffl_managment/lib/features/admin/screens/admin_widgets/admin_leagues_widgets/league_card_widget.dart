@@ -20,7 +20,9 @@ class LeagueCardWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF000000).withOpacity(0.12)),
+          border: Border.all(
+            color: const Color(0xFF000000).withValues(alpha: 0.12),
+          ),
         ),
         child: Column(
           children: [
@@ -293,7 +295,7 @@ class LeagueCardWidget extends StatelessWidget {
               child: Container(
                 height: 0.5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF000000).withOpacity(0.12),
+                  color: const Color(0xFF000000).withValues(alpha: 0.12),
                 ),
               ),
             ),
@@ -312,7 +314,11 @@ class LeagueCardWidget extends StatelessWidget {
                       color: Color(0xFF000000),
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF111827),),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 12,
+                    color: Color(0xFF111827),
+                  ),
                 ],
               ),
             ),
@@ -345,7 +351,7 @@ class DottedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF000000).withOpacity(0.5)
+      ..color = const Color(0xFF000000).withValues(alpha: 0.5)
       ..strokeWidth = 0.5
       ..style = PaintingStyle.stroke;
 

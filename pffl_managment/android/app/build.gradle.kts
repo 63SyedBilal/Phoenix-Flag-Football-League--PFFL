@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -13,6 +15,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -20,8 +23,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.pffl_managment"
+        // Production Application ID for PFFL Management App
+        applicationId = "com.pffl.managment"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -30,13 +33,39 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+    signingConfigs {
+        create("release") {
+            // Load keystore properties from local.properties or environment variables
+            // For production, create a keystore using:
+            // keytool -genkey -v -keystore pffl_key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias pffl
+            val keystoreProperties = Properties()
+            val keystorePropertiesFile = rootProject.file("local.properties")
+            if (keystorePropertiesFile.exists()) {
+                keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+            }
+
+            storeFile = file(keystoreProperties.getProperty("storeFile", "pffl_key.jks"))
+            storePassword = keystoreProperties.getProperty("storePassword", "pffl_password")
+            keyAlias = keystoreProperties.getProperty("keyAlias", "pffl")
+            keyPassword = keystoreProperties.getProperty("keyPassword", "pffl_password")
         }
     }
+
+    buildTypes {
+        release {
+            // Enable ProGuard for code obfuscation
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
+            // Use release signing config
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+}
+
+dependencies {
+    // Enable core library desugaring for packages that require Java 8+ features
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
 
 flutter {

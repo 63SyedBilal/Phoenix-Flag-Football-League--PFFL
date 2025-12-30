@@ -9,8 +9,15 @@ import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 class UpcommingMatchesCardWidget extends StatelessWidget {
   final MatchModel match;
+  final bool shouldShowPaymentPrompt;
+  final VoidCallback? onPayLeagueFee;
 
-  const UpcommingMatchesCardWidget({super.key, required this.match});
+  const UpcommingMatchesCardWidget({
+    super.key,
+    required this.match,
+    this.shouldShowPaymentPrompt = false,
+    this.onPayLeagueFee,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -7,6 +7,7 @@ import 'package:pffl_managment/core/widgets/upcomingmatches/all_matches_screen.d
 import 'package:pffl_managment/features/player/providers/player_dashboard_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
+import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
 
 class CaptainHomeScreen extends StatefulWidget {
   const CaptainHomeScreen({super.key});
@@ -24,6 +25,10 @@ class _CaptainHomeScreenState extends State<CaptainHomeScreen> {
         context,
         listen: false,
       ).loadPendingPayment(context);
+
+      // Refresh league payment statuses when screen loads
+      // This ensures that after payment completion, the status is updated
+      Provider.of<LeaguePaymentProvider>(context, listen: false).forceRefresh();
     });
   }
 
@@ -117,12 +122,21 @@ class _CaptainHomeScreenState extends State<CaptainHomeScreen> {
                           leagueFee: payment.amount,
                           startDate: payment.startDate,
                           endDate: payment.endDate,
-                          onPayNow: () {
+                          onPayNow: () async {
                             // Navigate to Payment History Screen as requested
-                            Navigator.pushNamed(
+                            await Navigator.pushNamed(
                               context,
                               AppRoutes.freeAgentPaymentHistory,
                             );
+
+                            // Refresh league payment status after returning from payment screen
+                            // This ensures that if payment was completed, the status is updated
+                            if (mounted) {
+                              Provider.of<LeaguePaymentProvider>(
+                                context,
+                                listen: false,
+                              ).forceRefresh();
+                            }
                           },
                         ),
                         const SizedBox(height: 12),

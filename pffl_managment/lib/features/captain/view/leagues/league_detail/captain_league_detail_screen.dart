@@ -11,6 +11,8 @@ import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.d
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_detail_header.dart';
 import 'package:pffl_managment/features/key_players/league_key_players_section.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/league_team_list.dart';
+import 'package:pffl_managment/features/captain/providers/league_summary_provider.dart';
+import 'package:pffl_managment/features/captain/widgets/league_summary_section.dart';
 
 class CaptainLeagueDetailScreen extends StatelessWidget {
   final LeagueCreationModel league;
@@ -19,10 +21,17 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<CaptainLeagueDetailProvider>(
-      create: (_) => CaptainLeagueDetailProvider(),
-      child: Consumer<CaptainLeagueDetailProvider>(
-        builder: (context, provider, child) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<CaptainLeagueDetailProvider>(
+          create: (_) => CaptainLeagueDetailProvider(),
+        ),
+        ChangeNotifierProvider<LeagueSummaryProvider>(
+          create: (_) => LeagueSummaryProvider(),
+        ),
+      ],
+      child: Consumer2<CaptainLeagueDetailProvider, LeagueSummaryProvider>(
+        builder: (context, leagueProvider, summaryProvider, child) {
           return Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
@@ -35,6 +44,7 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
                     leagueName: league.leagueName,
                     subtitle: 'Stay updated with all details, Games, and stats for this league.',
                     onBackPressed: () => Navigator.of(context).pop(),
+                    logoUrl: league.teamLogo,
                   ),
                   const LeagueDetailTabBar(),
                   const SizedBox(height: 16),
@@ -45,6 +55,9 @@ class CaptainLeagueDetailScreen extends StatelessWidget {
                         builder: (context, tabIndex, _) {
                           return Column(
                             children: [
+                              // League Summary Section - shown on all tabs
+                              LeagueSummarySection(leagueId: league.id),
+                              const SizedBox(height: 16),
                               if (tabIndex == 0) ...[
                                 const upcomming_matches.UpcommingMatches(),
                                 SponsorBannerScreen(),
