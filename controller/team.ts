@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { Team, User } from "@/modules";
+import { Team, User, Notification } from "@/modules";
 import { verifyAccessToken } from "@/lib/jwt";
 import { toObjectId } from "@/lib/db";
 import Payment from "@/modules/payment";
@@ -15,7 +15,7 @@ function getToken(req: NextRequest): string | null {
 async function verifyUser(req: NextRequest) {
   const token = getToken(req);
   if (!token) throw new Error("No token provided");
-  
+
   const decoded = verifyAccessToken(token);
   return decoded;
 }
@@ -28,7 +28,7 @@ export async function createTeam(req: NextRequest) {
   try {
     await connectDB();
     const decoded = await verifyUser(req);
-    
+
     const { teamName, enterCode, location, skillLevel, image, squad5v5, squad7v7 } = await req.json();
 
     // Verify user is a captain
@@ -74,11 +74,11 @@ export async function createTeam(req: NextRequest) {
 
     // Validate squad5v5 if provided
     if (squad5v5 && Array.isArray(squad5v5) && squad5v5.length > 0) {
-      const validPlayers = await User.find({ 
+      const validPlayers = await User.find({
         _id: { $in: squad5v5 },
         role: "player"
       });
-      
+
       if (validPlayers.length !== squad5v5.length) {
         return NextResponse.json({ error: "Some player IDs in squad5v5 are invalid" }, { status: 400 });
       }
@@ -86,18 +86,18 @@ export async function createTeam(req: NextRequest) {
 
     // Validate squad7v7 if provided
     if (squad7v7 && Array.isArray(squad7v7) && squad7v7.length > 0) {
-      const validPlayers = await User.find({ 
+      const validPlayers = await User.find({
         _id: { $in: squad7v7 },
         role: "player"
       });
-      
+
       if (validPlayers.length !== squad7v7.length) {
         return NextResponse.json({ error: "Some player IDs in squad7v7 are invalid" }, { status: 400 });
       }
     }
 
-    if (!teamName || !location) {
-      return NextResponse.json({ error: "Team name and location are required" }, { status: 400 });
+    if (!teamName || !location || !image) {
+      return NextResponse.json({ error: "Team name, location, and image are required" }, { status: 400 });
     }
 
     const teamData: any = {
@@ -222,7 +222,7 @@ export async function getAllTeams(req: NextRequest) {
     // Log the incoming request for debugging
     console.log("🔵 getAllTeams called");
     console.log("🔵 Request URL:", req.url);
-    
+
     // Try to verify user but handle errors gracefully
     let decoded = null;
     try {
@@ -241,13 +241,13 @@ export async function getAllTeams(req: NextRequest) {
 
     let query: any = {};
     let singleTeam = false;
-    
+
     // If captainId is provided, get team for that captain
     if (captainId) {
       query.captain = captainId;
       singleTeam = true;
     }
-    
+
     // If playerId is provided, get team where player is in either squad
     if (playerId) {
       query.$or = [
@@ -289,11 +289,11 @@ export async function getAllTeams(req: NextRequest) {
         data: teams,
       },
       { status: 200 }
-      );
+    );
   } catch (error: any) {
     console.error("❌ getAllTeams error:", error);
     console.error("❌ Error stack:", error.stack);
-    
+
     if (error.message === "No token provided" || error.message === "Invalid token") {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
@@ -329,9 +329,9 @@ export async function updateTeam(req: NextRequest, { params }: { params: { id: s
 
     if (enterCode !== undefined) {
       // Check if enterCode already exists (excluding current team)
-      const existingCode = await Team.findOne({ 
-        enterCode: enterCode.trim(), 
-        _id: { $ne: id } 
+      const existingCode = await Team.findOne({
+        enterCode: enterCode.trim(),
+        _id: { $ne: id }
       });
       if (existingCode) {
         return NextResponse.json({ error: "Enter code already exists" }, { status: 409 });
@@ -357,15 +357,15 @@ export async function updateTeam(req: NextRequest, { params }: { params: { id: s
     if (squad5v5 !== undefined) {
       if (Array.isArray(squad5v5)) {
         // Validate all players exist and have player role
-        const validPlayers = await User.find({ 
+        const validPlayers = await User.find({
           _id: { $in: squad5v5 },
           role: "player"
         });
-        
+
         if (validPlayers.length !== squad5v5.length) {
           return NextResponse.json({ error: "Some player IDs in squad5v5 are invalid" }, { status: 400 });
         }
-        
+
         (team as any).squad5v5 = squad5v5;
       }
     }
@@ -373,15 +373,15 @@ export async function updateTeam(req: NextRequest, { params }: { params: { id: s
     if (squad7v7 !== undefined) {
       if (Array.isArray(squad7v7)) {
         // Validate all players exist and have player role
-        const validPlayers = await User.find({ 
+        const validPlayers = await User.find({
           _id: { $in: squad7v7 },
           role: "player"
         });
-        
+
         if (validPlayers.length !== squad7v7.length) {
           return NextResponse.json({ error: "Some player IDs in squad7v7 are invalid" }, { status: 400 });
         }
-        
+
         (team as any).squad7v7 = squad7v7;
       }
     }
@@ -556,7 +556,7 @@ export async function removePlayer(req: NextRequest, { params }: { params: { id:
     (team as any)[squadField] = squad.filter(
       (p: any) => p.toString() !== playerId
     );
-    
+
     await team.save();
 
     await team.populate("captain", "firstName lastName email role profileImage jerseyNumber position");
@@ -607,7 +607,8 @@ export async function transferLeadership(req: NextRequest, { params }: { params:
     }
 
     // Verify new captain is a member of the team
-    if (!team.players.includes(newCaptainId)) {
+    const isMember = (team as any).squad5v5.includes(newCaptainId) || (team as any).squad7v7.includes(newCaptainId);
+    if (!isMember) {
       return NextResponse.json({ error: "New captain must be a current team member" }, { status: 400 });
     }
 
@@ -628,7 +629,6 @@ export async function transferLeadership(req: NextRequest, { params }: { params:
       sender: decoded.userId,
       receiver: newCaptainId,
       team: teamId,
-      league: team.league,
       type: "LEADERSHIP_RECEIVED",
       status: "pending",
       message: `You are now the captain of ${team.teamName}. Leadership transferred from ${currentCaptain.firstName} ${currentCaptain.lastName}`,
@@ -644,7 +644,6 @@ export async function transferLeadership(req: NextRequest, { params }: { params:
       sender: decoded.userId,
       receiver: decoded.userId,
       team: teamId,
-      league: team.league,
       type: "LEADERSHIP_TRANSFERRED",
       status: "pending",
       message: `Team leadership of ${team.teamName} has been transferred to ${newCaptain.firstName} ${newCaptain.lastName}`,
@@ -709,7 +708,7 @@ export async function removePlayerFromTeam(req: NextRequest, { params }: { param
     }
 
     // Check if player is in the team
-    const isPlayerInTeam = team.players.includes(playerId);
+    const isPlayerInTeam = (team as any).squad5v5.includes(playerId) || (team as any).squad7v7.includes(playerId);
     if (!isPlayerInTeam) {
       return NextResponse.json({ error: "Player is not a member of this team" }, { status: 400 });
     }
@@ -722,8 +721,9 @@ export async function removePlayerFromTeam(req: NextRequest, { params }: { param
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Remove player from team
-    team.players = team.players.filter((player: any) => player.toString() !== playerId);
+    // Remove player from team squads
+    (team as any).squad5v5 = (team as any).squad5v5.filter((p: any) => p.toString() !== playerId);
+    (team as any).squad7v7 = (team as any).squad7v7.filter((p: any) => p.toString() !== playerId);
     await team.save();
 
     // Update user's role back to free agent if they were a player
@@ -734,7 +734,6 @@ export async function removePlayerFromTeam(req: NextRequest, { params }: { param
       sender: decoded.userId,
       receiver: playerId,
       team: teamId,
-      league: team.league,
       type: "REMOVED_FROM_TEAM",
       status: "pending",
       message: `You have been removed from ${team.teamName}`,

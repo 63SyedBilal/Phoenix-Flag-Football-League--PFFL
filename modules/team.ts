@@ -30,7 +30,7 @@ const TeamSchema = new mongoose.Schema(
 
     image: {
       type: String, // cloudinary URL
-      default: ""
+      required: true
     },
 
     captain: {
@@ -59,7 +59,7 @@ const TeamSchema = new mongoose.Schema(
 );
 
 // Virtual to get all unique players from both squads
-TeamSchema.virtual("allPlayers").get(function() {
+TeamSchema.virtual("allPlayers").get(function () {
   const squad5v5Ids = (this.squad5v5 || []).map((id: any) => id.toString())
   const squad7v7Ids = (this.squad7v7 || []).map((id: any) => id.toString())
   const allIds = [...new Set([...squad5v5Ids, ...squad7v7Ids])]

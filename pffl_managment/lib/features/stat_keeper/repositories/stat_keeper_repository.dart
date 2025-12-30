@@ -572,12 +572,26 @@ class StatKeeperRepository {
     String teamName = defaultName;
     String teamLogo = '';
 
-    if (teamData['teamName'] != null)
+    if (teamData['teamName'] != null) {
       teamName = teamData['teamName'];
-    else if (teamData['enterCode'] != null)
+    } else if (teamData['enterCode'] != null) {
       teamName = teamData['enterCode'];
+    } else if (teamData['teamId'] is Map) {
+      final teamIdObj = teamData['teamId'] as Map;
+      teamName =
+          teamIdObj['teamName']?.toString() ??
+          teamIdObj['enterCode']?.toString() ??
+          defaultName;
+    }
 
-    if (teamData['image'] != null) teamLogo = teamData['image'];
+    if (teamData['image'] != null && teamData['image'].toString().isNotEmpty) {
+      teamLogo = teamData['image'].toString();
+    } else if (teamData['teamId'] is Map) {
+      final teamIdObj = teamData['teamId'] as Map;
+      if (teamIdObj['image'] != null) {
+        teamLogo = teamIdObj['image'].toString();
+      }
+    }
 
     return TeamStatModel(
       teamName: teamName,
