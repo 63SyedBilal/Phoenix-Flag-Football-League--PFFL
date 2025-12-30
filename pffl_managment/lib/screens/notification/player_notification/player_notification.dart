@@ -186,14 +186,9 @@ class _PlayerNotificationState extends State<PlayerNotification> {
       );
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      print('🔄 Starting accept invitation process for: $notificationId');
-      print('🔄 User ID: ${authProvider.userId}');
-
       final result = await notificationProvider.acceptNotification(
         notificationId,
       );
-
-      print('🔄 Accept result: $result');
       final success = result['success'] == true;
       final roleChanged = result['roleChanged'] == true;
       final newRole = result['newRole'];
@@ -242,19 +237,14 @@ class _PlayerNotificationState extends State<PlayerNotification> {
 
           // Refresh player team data after accepting invitation
           if (authProvider.userId.isNotEmpty) {
-            print('🔄 Refreshing player team data...');
             await playerTeamProvider.refresh(userId: authProvider.userId);
-            print('✅ Player team data refreshed');
           }
         } catch (e) {
           // Provider not available in context, that's okay
-          print('⚠️ PlayerTeamProvider not available in context: $e');
         }
 
         // Refresh notifications to update status
-        print('🔄 Refreshing notifications...');
         await notificationProvider.refresh();
-        print('✅ Notifications refreshed');
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -269,7 +259,6 @@ class _PlayerNotificationState extends State<PlayerNotification> {
         final errorMsg =
             notificationProvider.errorMessage ??
             'Failed to accept invitation. Please try again.';
-        print('❌ Accept failed: $errorMsg');
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -280,8 +269,6 @@ class _PlayerNotificationState extends State<PlayerNotification> {
         );
       }
     } catch (e) {
-      print('❌ Exception accepting invitation: $e');
-      print('❌ Exception type: ${e.runtimeType}');
 
       if (context.mounted) {
         final errorMsg = e.toString().replaceAll('Exception: ', '');
@@ -323,3 +310,4 @@ class _PlayerNotificationState extends State<PlayerNotification> {
     );
   }
 }
+

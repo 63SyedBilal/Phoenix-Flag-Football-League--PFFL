@@ -76,19 +76,13 @@ class LeagueService {
       } on DioException catch (e) {
         // Retry once on 500 error (might be transient)
         if (retryCount > 0 && e.response?.statusCode == 500) {
-          print('Logo upload failed, retrying... (${retryCount} retries left)');
           await Future.delayed(Duration(seconds: 2));
           return uploadLogo(imageFile, retryCount: retryCount - 1);
         }
         rethrow;
       }
     } on DioException catch (e) {
-      print('Error uploading logo: ${e.message}');
-      print('File path: ${imageFile.path}');
-      print('File size: ${await imageFile.length()} bytes');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
-        print('Error status: ${e.response?.statusCode}');
 
         // Provide specific error message based on status code
         if (e.response?.statusCode == 500) {
@@ -106,8 +100,6 @@ class LeagueService {
       }
       throw Exception('Failed to upload logo: ${e.message}');
     } catch (e) {
-      print('General error uploading logo: $e');
-      print('File path: ${imageFile.path}');
       throw Exception('Failed to upload logo: ${e.toString()}');
     }
   }
@@ -125,17 +117,13 @@ class LeagueService {
         final data = response.data;
         return LeagueResponse.fromJson(data);
       } else {
-        print('Failed to create league: ${response.statusMessage}');
         return null;
       }
     } on DioException catch (e) {
-      print('Error creating league: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       rethrow;
     } catch (e) {
-      print('General error creating league: $e');
       rethrow;
     }
   }
@@ -160,13 +148,10 @@ class LeagueService {
       }
       return false;
     } on DioException catch (e) {
-      print('Error inviting free agent: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return false;
     } catch (e) {
-      print('General error inviting free agent: $e');
       return false;
     }
   }
@@ -195,7 +180,6 @@ class LeagueService {
       print(
         '📤 [inviteRefereeToLeague] Response status: ${response.statusCode}',
       );
-      print('📤 [inviteRefereeToLeague] Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
@@ -208,7 +192,6 @@ class LeagueService {
             return true;
           } else {
             final error = data['error'] ?? 'Unknown error';
-            print('❌ [inviteRefereeToLeague] Invitation failed: $error');
             return false;
           }
         }
@@ -222,13 +205,10 @@ class LeagueService {
       );
       return false;
     } on DioException catch (e) {
-      print('❌ [inviteRefereeToLeague] DioException: ${e.message}');
-      print('❌ [inviteRefereeToLeague] DioException type: ${e.type}');
       if (e.response != null) {
         print(
           '❌ [inviteRefereeToLeague] Response status: ${e.response?.statusCode}',
         );
-        print('❌ [inviteRefereeToLeague] Response data: ${e.response?.data}');
         // Handle 409 - invite already sent (this is actually success)
         if (e.response?.statusCode == 409) {
           print(
@@ -239,7 +219,6 @@ class LeagueService {
       }
       return false;
     } catch (e) {
-      print('❌ [inviteRefereeToLeague] General error: $e');
       return false;
     }
   }
@@ -267,7 +246,6 @@ class LeagueService {
       print(
         '📤 [inviteStatKeeperToLeague] Response status: ${response.statusCode}',
       );
-      print('📤 [inviteStatKeeperToLeague] Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
@@ -280,7 +258,6 @@ class LeagueService {
             return true;
           } else {
             final error = data['error'] ?? 'Unknown error';
-            print('❌ [inviteStatKeeperToLeague] Invitation failed: $error');
             return false;
           }
         }
@@ -294,8 +271,6 @@ class LeagueService {
       );
       return false;
     } on DioException catch (e) {
-      print('❌ [inviteStatKeeperToLeague] DioException: ${e.message}');
-      print('❌ [inviteStatKeeperToLeague] DioException type: ${e.type}');
       if (e.response != null) {
         print(
           '❌ [inviteStatKeeperToLeague] Response status: ${e.response?.statusCode}',
@@ -313,7 +288,6 @@ class LeagueService {
       }
       return false;
     } catch (e) {
-      print('❌ [inviteStatKeeperToLeague] General error: $e');
       return false;
     }
   }
@@ -323,16 +297,11 @@ class LeagueService {
   static Future<bool> inviteTeamToLeague(String leagueId, String teamId) async {
     try {
       final dio = await _getAuthenticatedDio();
-      print('📤 Inviting team to league: leagueId=$leagueId, teamId=$teamId');
-      print('📤 Endpoint: /league/$leagueId/invite/team');
 
       final response = await dio.post(
         '/league/$leagueId/invite/team',
         data: {'teamId': teamId},
       );
-
-      print('📤 Response status: ${response.statusCode}');
-      print('📤 Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
@@ -340,11 +309,9 @@ class LeagueService {
         if (data is Map && data.containsKey('success')) {
           final success = data['success'] == true;
           if (success) {
-            print('✅ Team invitation sent successfully');
             return true;
           } else {
             final error = data['error'] ?? 'Unknown error';
-            print('❌ Team invitation failed: $error');
             throw Exception(error);
           }
         }
@@ -354,14 +321,9 @@ class LeagueService {
         );
         return true;
       }
-      print('❌ Unexpected status code: ${response.statusCode}');
       return false;
     } on DioException catch (e) {
-      print('❌ DioException inviting team: ${e.message}');
-      print('❌ DioException type: ${e.type}');
       if (e.response != null) {
-        print('❌ Response status: ${e.response?.statusCode}');
-        print('❌ Response data: ${e.response?.data}');
         // Handle 409 - invite already sent (this is actually success)
         if (e.response?.statusCode == 409) {
           print(
@@ -373,7 +335,6 @@ class LeagueService {
       // Return false instead of throwing - silent failure for fire-and-forget
       return false;
     } catch (e) {
-      print('❌ General error inviting team: $e');
       // Return false instead of throwing - silent failure for fire-and-forget
       return false;
     }
@@ -396,17 +357,13 @@ class LeagueService {
         }
         return [];
       } else {
-        print('Failed to fetch leagues: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching leagues: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return [];
     } catch (e) {
-      print('General error fetching leagues: $e');
       return [];
     }
   }
@@ -417,19 +374,13 @@ class LeagueService {
   static Future<LeagueDetailModel?> getLeagueById(String leagueId) async {
     try {
       final dio = await _getAuthenticatedDio();
-      print('📡 Fetching league by ID: $leagueId');
       final response = await dio.get('/league/$leagueId');
 
       if (response.statusCode == 200) {
         final data = response.data;
-        print('✅ League API response received');
 
         if (data['data'] != null) {
           final leagueData = data['data'];
-          print('📊 League data structure:');
-          print('   - League Name: ${leagueData['leagueName']}');
-          print('   - Teams field exists: ${leagueData['teams'] != null}');
-          print('   - Teams type: ${leagueData['teams']?.runtimeType}');
 
           if (leagueData['teams'] != null) {
             final teamsArray = leagueData['teams'];
@@ -437,14 +388,12 @@ class LeagueService {
               '   - Teams array length: ${teamsArray is List ? teamsArray.length : 'N/A'}',
             );
             if (teamsArray is List && teamsArray.isNotEmpty) {
-              print('   - First team sample: ${teamsArray[0]}');
             } else if (teamsArray is List && teamsArray.isEmpty) {
               print(
                 '   - ⚠️ Teams array is EMPTY - no teams assigned to this league',
               );
             }
           } else {
-            print('   - ⚠️ Teams field is null or missing');
           }
 
           final league = LeagueDetailModel.fromJson(leagueData);
@@ -458,23 +407,15 @@ class LeagueService {
           }
           return league;
         }
-        print('❌ Response data field is null');
         return null;
       } else {
-        print('❌ Failed to fetch league: ${response.statusMessage}');
         return null;
       }
     } on DioException catch (e) {
-      print('❌ DioException fetching league: ${e.message}');
-      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('❌ Error status: ${e.response?.statusCode}');
-        print('❌ Error response data: ${e.response?.data}');
       }
       return null;
     } catch (e) {
-      print('❌ General error fetching league: $e');
-      print('❌ Error type: ${e.runtimeType}');
       return null;
     }
   }
@@ -484,7 +425,6 @@ class LeagueService {
   static Future<List<TeamModel>> getAllTeams() async {
     try {
       final dio = await _getAuthenticatedDio();
-      print('📡 Calling GET /api/team...');
       final response = await dio.get('/team');
 
       if (response.statusCode == 200) {
@@ -496,49 +436,33 @@ class LeagueService {
 
         if (data['data'] != null) {
           final teamsList = data['data'] as List;
-          print('📊 Found ${teamsList.length} teams in response');
 
           if (teamsList.isEmpty) {
-            print('⚠️ Teams array is empty');
             return [];
           }
 
           final teams = teamsList.map((json) {
             try {
-              print('🔄 Parsing team: ${json['teamName'] ?? 'Unknown'}');
               return TeamModel.fromJson(json);
             } catch (e) {
-              print('❌ Error parsing team: $e');
-              print('❌ Team JSON: $json');
               rethrow;
             }
           }).toList();
-
-          print('✅ Successfully parsed ${teams.length} teams');
           return teams;
         } else {
-          print('⚠️ Response data field is null');
-          print('📋 Full response: $data');
           return [];
         }
       } else {
         print(
           '❌ Failed to fetch teams: ${response.statusCode} - ${response.statusMessage}',
         );
-        print('❌ Response data: ${response.data}');
         return [];
       }
     } on DioException catch (e) {
-      print('❌ DioException fetching teams: ${e.message}');
-      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('❌ Error status: ${e.response?.statusCode}');
-        print('❌ Error response data: ${e.response?.data}');
       }
       rethrow;
     } catch (e) {
-      print('❌ General error fetching teams: $e');
-      print('❌ Error type: ${e.runtimeType}');
       rethrow;
     }
   }
@@ -560,7 +484,6 @@ class LeagueService {
       );
 
       if (response.statusCode == 200) {
-        print('✅ League payment status checked successfully');
         return response.data;
       } else {
         print(
@@ -573,9 +496,7 @@ class LeagueService {
         };
       }
     } on DioException catch (e) {
-      print('❌ DioException checking league payment status: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
@@ -584,7 +505,6 @@ class LeagueService {
             'Failed to check league payment status: ${e.message}',
       };
     } catch (e) {
-      print('❌ General error checking league payment status: $e');
       return {
         'success': false,
         'message': 'Error checking league payment status: $e',
@@ -596,25 +516,20 @@ class LeagueService {
   /// GET /api/league/:leagueId/summary
   static Future<Map<String, dynamic>> getLeagueSummary(String leagueId) async {
     try {
-      print('📊 Getting league summary: $leagueId');
       final dio = await _getAuthenticatedDio();
 
       final response = await dio.get('/league/$leagueId/summary');
 
       if (response.statusCode == 200) {
-        print('✅ League summary fetched successfully');
         return response.data;
       } else {
-        print('❌ Failed to get league summary: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to get league summary',
         };
       }
     } on DioException catch (e) {
-      print('❌ DioException getting league summary: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
@@ -623,7 +538,6 @@ class LeagueService {
             'Failed to get league summary: ${e.message}',
       };
     } catch (e) {
-      print('❌ General error getting league summary: $e');
       return {'success': false, 'message': 'Error getting league summary: $e'};
     }
   }
@@ -885,7 +799,6 @@ class LeagueDetailModel {
     List<TeamModel> teams = [];
     if (json['teams'] != null && json['teams'] is List) {
       final teamsList = json['teams'] as List;
-      print('🔄 Parsing ${teamsList.length} teams from league...');
 
       if (teamsList.isEmpty) {
         print(
@@ -902,20 +815,15 @@ class LeagueDetailModel {
             );
             return TeamModel.fromJson(teamJson);
           } catch (e) {
-            print('   ❌ Error parsing team: $e');
-            print('   ❌ Team JSON: $teamJson');
             rethrow;
           }
         }).toList();
-
-        print('✅ Successfully parsed ${teams.length} teams');
       }
     } else {
       print(
         '⚠️ Teams field is null or not a List. Type: ${json['teams']?.runtimeType}',
       );
       if (json['teams'] != null) {
-        print('⚠️ Teams value: ${json['teams']}');
       }
     }
 
@@ -924,7 +832,6 @@ class LeagueDetailModel {
     List<UserModel> referees = [];
     if (json['referees'] != null && json['referees'] is List) {
       final refereesList = json['referees'] as List;
-      print('🔄 Parsing ${refereesList.length} referees from league...');
 
       if (refereesList.isEmpty) {
         print(
@@ -938,8 +845,6 @@ class LeagueDetailModel {
           try {
             return UserModel.fromJson(refereeJson);
           } catch (e) {
-            print('   ❌ Error parsing referee: $e');
-            print('   ❌ Referee JSON: $refereeJson');
             // Return a default user model to avoid breaking the list
             return UserModel(
               id:
@@ -954,8 +859,6 @@ class LeagueDetailModel {
             );
           }
         }).toList();
-
-        print('✅ Successfully parsed ${referees.length} referees');
       }
     } else {
       print(
@@ -968,7 +871,6 @@ class LeagueDetailModel {
     List<UserModel> statKeepers = [];
     if (json['statKeepers'] != null && json['statKeepers'] is List) {
       final statKeepersList = json['statKeepers'] as List;
-      print('🔄 Parsing ${statKeepersList.length} stat keepers from league...');
 
       if (statKeepersList.isEmpty) {
         print(
@@ -982,8 +884,6 @@ class LeagueDetailModel {
           try {
             return UserModel.fromJson(statKeeperJson);
           } catch (e) {
-            print('   ❌ Error parsing stat keeper: $e');
-            print('   ❌ Stat keeper JSON: $statKeeperJson');
             // Return a default user model to avoid breaking the list
             return UserModel(
               id:
@@ -998,8 +898,6 @@ class LeagueDetailModel {
             );
           }
         }).toList();
-
-        print('✅ Successfully parsed ${statKeepers.length} stat keepers');
       }
     } else {
       print(
@@ -1020,3 +918,4 @@ class LeagueDetailModel {
     );
   }
 }
+

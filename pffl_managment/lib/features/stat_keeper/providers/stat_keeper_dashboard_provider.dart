@@ -43,18 +43,14 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
       final currentUserId = prefs.getString('userId') ?? '';
 
       if (currentUserId.isEmpty) {
-        debugPrint('⚠️ No userId found in SharedPreferences');
         _errorMessage = 'User ID not found. Please login again.';
         _upcomingGames = [];
         _setLoading(false);
         return;
       }
 
-      debugPrint('🔄 Fetching matches assigned to stat keeper: $currentUserId');
-
       // Fetch ALL matches from backend
       final allMatches = await MatchService.getAllMatches();
-      debugPrint('📊 Total matches fetched: ${allMatches.length}');
 
       // Log all matches with statKeeperId for debugging
       for (final match in allMatches) {
@@ -62,10 +58,6 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
           debugPrint(
             '🎯 Match ${match.id} has statKeeperId: ${match.statKeeperId}',
           );
-          debugPrint('   - Current user: $currentUserId');
-          debugPrint('   - Match: ${match.homeTeam} vs ${match.awayTeam}');
-          debugPrint('   - Status: ${match.status}');
-          debugPrint('   - Date: ${match.date}');
           debugPrint(
             '   - StatKeeper ID matches: ${match.statKeeperId == currentUserId}',
           );
@@ -75,10 +67,6 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
       // Also log current user info for debugging
       final userEmail = prefs.getString('userEmail') ?? '';
       final userRole = prefs.getString('userRole') ?? '';
-      debugPrint('📋 Current user info:');
-      debugPrint('   - User ID: $currentUserId');
-      debugPrint('   - Email: $userEmail');
-      debugPrint('   - Role: $userRole');
 
       // Filter matches for StatKeeper dashboard
       final relevantMatches = allMatches.where((match) {
@@ -88,23 +76,14 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
           debugPrint(
             '✅ Found assigned match: ${match.homeTeam} vs ${match.awayTeam} (Status: ${match.status})',
           );
-          debugPrint('   - Match ID: ${match.id}');
-          debugPrint('   - StatKeeper ID: ${match.statKeeperId}');
-          debugPrint('   - Current User ID: $currentUserId');
-          debugPrint('   - Date: ${match.date}');
-          debugPrint('   - Time: ${match.time}');
         } else if (match.statKeeperId != null &&
             match.statKeeperId!.isNotEmpty) {
           debugPrint(
             '❌ Match NOT assigned to me: ${match.homeTeam} vs ${match.awayTeam}',
           );
-          debugPrint('   - Match StatKeeper ID: ${match.statKeeperId}');
-          debugPrint('   - Current User ID: $currentUserId');
-          debugPrint('   - IDs match: ${match.statKeeperId == currentUserId}');
           debugPrint(
             '   - StatKeeper ID type: ${match.statKeeperId.runtimeType}',
           );
-          debugPrint('   - Current User ID type: ${currentUserId.runtimeType}');
         }
 
         // For StatKeeper assigned games: Show ALL assigned games regardless of status
@@ -119,15 +98,11 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
             match.status == MatchStatus.live;
       }).toList();
 
-      debugPrint('📋 Filtered matches count: ${relevantMatches.length}');
-
       // Count assigned vs general matches
       final assignedCount = relevantMatches
           .where((m) => m.statKeeperId == currentUserId)
           .length;
       final generalCount = relevantMatches.length - assignedCount;
-      debugPrint('   - Assigned to me: $assignedCount');
-      debugPrint('   - General upcoming: $generalCount');
 
       // Sort by date (earliest first)
       relevantMatches.sort((a, b) {
@@ -140,11 +115,8 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
           .map((match) => _convertToGameModel(match, currentUserId))
           .toList();
 
-      debugPrint('✅ Dashboard loaded with ${_upcomingGames.length} games');
-
       // Log assigned games specifically
       final assignedGames = _upcomingGames.where((g) => g.isMyGame).toList();
-      debugPrint('🎯 Assigned games for StatKeeper:');
       for (final game in assignedGames) {
         debugPrint(
           '   - ${game.team1Name} vs ${game.team2Name} on ${game.date}',
@@ -153,7 +125,6 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
-      debugPrint('❌ Error fetching stat keeper matches: $e');
       _errorMessage = 'Failed to load assigned games: ${e.toString()}';
       _upcomingGames = [];
     } finally {
@@ -218,3 +189,4 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

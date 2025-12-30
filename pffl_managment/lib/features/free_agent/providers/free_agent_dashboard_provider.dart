@@ -46,22 +46,16 @@ class FreeAgentDashboardProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      debugPrint('🎮 Fetching upcoming games from backend...');
       
       // Fetch all matches from backend
       final allMatches = await MatchService.getAllMatches();
-      debugPrint('📊 Total matches fetched: ${allMatches.length}');
 
       // Filter and sort upcoming games
       final upcomingMatches = _filterUpcomingGames(allMatches);
-      debugPrint('📊 Upcoming games after filter: ${upcomingMatches.length}');
 
       // Convert MatchModel to GameModel for UI
       _upcomingGames = upcomingMatches.map(_convertToGameModel).toList();
-
-      debugPrint('✅ Upcoming games loaded: ${_upcomingGames.length}');
     } catch (e) {
-      debugPrint('❌ Error fetching upcoming games: $e');
       _error = 'Failed to load upcoming games';
       _upcomingGames = [];
     } finally {
@@ -171,3 +165,4 @@ class FreeAgentDashboardProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

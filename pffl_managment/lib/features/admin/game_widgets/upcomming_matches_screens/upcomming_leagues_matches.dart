@@ -67,15 +67,84 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      Text(
-                        match.date,
-                        style: TextStyle(fontSize: 12, color: Color(0xFF111827), fontFamily: 'Lato',fontWeight: FontWeight.w700,),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        match.time,
-                        style: TextStyle(fontSize: 12, color: Color(0xFF111827), fontFamily: 'Lato',fontWeight: FontWeight.w400,),
-                      ),
+                      if (match.status == MatchStatus.upcoming) ...[
+                        Text(
+                          match.date,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF111827),
+                            fontFamily: 'Lato',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          match.time,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF111827),
+                            fontFamily: 'Lato',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ] else ...[
+                        // Score display for Live/Completed
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${match.homeScore ?? 0}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4.0),
+                              child: Text(
+                                '-',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${match.awayScore ?? 0}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Lato',
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: match.status == MatchStatus.live
+                                ? Colors.red
+                                : Colors.grey[700],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            match.status == MatchStatus.live ? 'LIVE' : 'FINAL',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -171,8 +240,6 @@ class UpcommingGamesCardWidget extends StatelessWidget {
             ),
           ),
         ] else ...[
-
-           
           _buildTeamLogo(logo),
           const SizedBox(width: 8),
           Text(

@@ -164,7 +164,6 @@ class AddPaymentDetailsScreen extends StatelessWidget {
     FocusScope.of(context).unfocus();
 
     // Debug output for payment initiation
-    debugPrint('🚀 Starting payment process...');
     debugPrint(
       '   - Selected leagues: ${leagueProvider.selectedLeagues.length}',
     );
@@ -196,3 +195,4 @@ class AddPaymentDetailsScreen extends StatelessWidget {
     }
   }
 }
+

@@ -142,7 +142,6 @@ class SettingsScreen extends StatelessWidget {
                               );
                             }
                           } catch (e) {
-                            print('❌ [SETTINGS] Logout error: $e');
 
                             if (context.mounted) {
                               // Close loading dialog
@@ -226,3 +225,4 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
+

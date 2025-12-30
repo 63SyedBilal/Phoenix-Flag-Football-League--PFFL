@@ -260,7 +260,6 @@ class SignupProvider extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      print('❌ Signup unexpected error: $e');
       _state = _state.copyWith(
         isLoading: false,
         generalError: 'An unexpected error occurred. Please try again.',
@@ -276,3 +275,4 @@ class SignupProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

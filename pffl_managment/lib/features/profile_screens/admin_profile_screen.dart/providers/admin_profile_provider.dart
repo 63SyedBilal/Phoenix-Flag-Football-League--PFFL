@@ -51,7 +51,6 @@ class AdminProfileProvider extends ChangeNotifier {
       _userRole = prefs.getString('userRole');
 
       if (_userId == null) {
-        debugPrint('Warning: User ID not found. Profile update may fail.');
         _isLoading = false;
         notifyListeners();
         return;
@@ -76,7 +75,6 @@ class AdminProfileProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading profile: $e');
       _errorMessage = 'Failed to load profile';
       _isLoading = false;
       notifyListeners();
@@ -123,12 +121,9 @@ class AdminProfileProvider extends ChangeNotifier {
           if (_imageUrl != null) {
             await prefs.setString('admin_image', _imageUrl!);
           }
-
-          debugPrint('✅ Profile synced with backend');
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Backend sync failed: $e');
       // Don't throw error - this is just a background sync
       // The app should work with cached data if sync fails
     }
@@ -214,7 +209,6 @@ class AdminProfileProvider extends ChangeNotifier {
       }
       return null;
     } catch (e) {
-      debugPrint('⚠️ Error uploading image: $e');
 
       // Check for specific Cloudinary configuration errors
       if (e.toString().contains('Cloudinary') ||
@@ -233,10 +227,8 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Save profile to backend using multiple endpoint strategies
   Future<bool> saveProfile() async {
-    print('💾 saveProfile called. userId: $_userId, userRole: $_userRole');
 
     if (_userId == null) {
-      print('❌ userId is null in saveProfile');
       _errorMessage = 'User ID not found. Please login again.';
       notifyListeners();
       return false;
@@ -254,12 +246,9 @@ class AdminProfileProvider extends ChangeNotifier {
           final uploadedUrl = await uploadImage();
           if (uploadedUrl != null) {
             finalImageUrl = uploadedUrl;
-            print('✅ Profile image uploaded: $finalImageUrl');
           } else {
-            print('⚠️ Image upload returned null, continuing without image');
           }
         } catch (e) {
-          print('⚠️ Profile image upload failed: $e');
           // Continue without image - it's completely optional
           // Don't include image in profile data if upload failed
           if (e.toString().contains('Cloudinary')) {
@@ -280,101 +269,80 @@ class AdminProfileProvider extends ChangeNotifier {
           'profileImage': finalImageUrl,
       };
 
-      print('🔄 Profile data prepared: $profileData');
-
       // Try multiple endpoint strategies until one works
       final dio = await AuthService.getWorkingDio();
 
       // Strategy 1: PUT /user/:id (most likely to work based on UserService)
       try {
-        print('🔄 Strategy 1: PUT /user/$_userId');
         final response = await dio.put('/user/$_userId', data: profileData);
-        print('📡 Strategy 1 Response: ${response.statusCode}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           return await _handleSuccessResponse(response);
         }
       } catch (e) {
-        print('❌ Strategy 1 failed: $e');
       }
 
       // Strategy 2: PATCH /user/:id
       try {
-        print('🔄 Strategy 2: PATCH /user/$_userId');
         final response = await dio.patch('/user/$_userId', data: profileData);
-        print('📡 Strategy 2 Response: ${response.statusCode}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           return await _handleSuccessResponse(response);
         }
       } catch (e) {
-        print('❌ Strategy 2 failed: $e');
       }
 
       // Strategy 3: PATCH /profile
       try {
-        print('🔄 Strategy 3: PATCH /profile');
         final response = await dio.patch(
           AppConfig.profileEndpoint,
           data: profileData,
         );
-        print('📡 Strategy 3 Response: ${response.statusCode}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           return await _handleSuccessResponse(response);
         }
       } catch (e) {
-        print('❌ Strategy 3 failed: $e');
       }
 
       // Strategy 4: PUT /user (DISABLED - Backend doesn't support)
-      print('⚠️ Strategy 4: PUT /user - SKIPPED (Backend not supported)');
 
       // Strategy 4: PUT /profile
       try {
-        print('🔄 Strategy 4: PUT /profile');
         final response = await dio.put(
           AppConfig.profileEndpoint,
           data: profileData,
         );
-        print('📡 Strategy 4 Response: ${response.statusCode}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           return await _handleSuccessResponse(response);
         }
       } catch (e) {
-        print('❌ Strategy 4 failed: $e');
       }
 
       // All backend strategies disabled - save locally only
       print(
         '💾 [ADMIN PROFILE] All backend strategies disabled - saving locally only',
       );
-      print('📄 [ADMIN PROFILE] Profile data: $profileData');
 
       // Strategy 5: POST /complete-profile
       try {
-        print('🔄 Strategy 5: POST /complete-profile');
         final response = await dio.post(
           AppConfig.completeProfileEndpoint,
           data: profileData,
         );
-        print('📡 Strategy 5 Response: ${response.statusCode}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           return await _handleSuccessResponse(response);
         }
       } catch (e) {
-        print('❌ Strategy 5 failed: $e');
       }
 
       // Strategy 6: Use UserService.updateProfile (fallback)
       try {
-        print('🔄 Strategy 6: UserService.updateProfile');
         final result = await UserService.updateProfile(_userId!, profileData);
 
         if (result != null) {
-          print('✅ UserService update successful');
 
           // Update local state with response data
           if (result['firstName'] != null)
@@ -396,22 +364,17 @@ class AdminProfileProvider extends ChangeNotifier {
           if (_imageUrl != null) {
             await prefs.setString('admin_image', _imageUrl!);
           }
-
-          print('✅ Profile updated successfully via UserService');
           _isLoading = false;
           notifyListeners();
           return true;
         }
       } catch (e) {
-        print('❌ Strategy 6 failed: $e');
       }
 
       // If all backend strategies failed - save locally only (HEAD fallback)
-      print('⚠️ All backend strategies failed - saving locally only');
       await _updateLocalProfile(profileData);
       return await _handleLocalSuccess();
     } catch (e) {
-      debugPrint('❌ Error saving profile: $e');
 
       // Handle specific error types
       if (e.toString().contains('401')) {
@@ -441,8 +404,6 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Handle successful response from any strategy
   Future<bool> _handleSuccessResponse(dynamic response) async {
-    print('✅ Profile update successful with status: ${response.statusCode}');
-    print('📡 Response data: ${response.data}');
 
     // Handle response data
     final responseData = response.data;
@@ -491,14 +452,10 @@ class AdminProfileProvider extends ChangeNotifier {
     // This prevents unwanted navigation to different dashboards after profile updates
     if (currentRole != null) {
       await prefs.setString('userRole', currentRole);
-      print('✅ User role preserved: $currentRole');
     }
     if (currentUserId != null) {
       await prefs.setString('userId', currentUserId);
-      print('✅ User ID preserved: $currentUserId');
     }
-
-    print('✅ Profile updated successfully');
     _isLoading = false;
     notifyListeners();
     return true;
@@ -506,7 +463,6 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Update local profile storage
   Future<void> _updateLocalProfile(Map<String, dynamic> profileData) async {
-    print('💾 [ADMIN PROFILE] Updating local profile storage...');
 
     // Update in-memory values
     if (profileData.containsKey('firstName')) {
@@ -536,13 +492,10 @@ class AdminProfileProvider extends ChangeNotifier {
     if (profileData.containsKey('phone')) {
       await prefs.setString('userPhone', profileData['phone']);
     }
-
-    print('✅ [ADMIN PROFILE] Local profile storage updated');
   }
 
   /// Handle local success (no API call needed)
   Future<bool> _handleLocalSuccess() async {
-    print('✅ [ADMIN PROFILE] Profile update completed locally');
 
     // CRITICAL: Get and preserve current role and user ID BEFORE any updates
     final prefs = await SharedPreferences.getInstance();
@@ -553,11 +506,9 @@ class AdminProfileProvider extends ChangeNotifier {
     // This prevents unwanted navigation to different dashboards after profile updates
     if (currentRole != null) {
       await prefs.setString('userRole', currentRole);
-      print('✅ [ADMIN PROFILE] User role preserved: $currentRole');
     }
     if (currentUserId != null) {
       await prefs.setString('userId', currentUserId);
-      print('✅ [ADMIN PROFILE] User ID preserved: $currentUserId');
     }
 
     _isLoading = false;
@@ -574,3 +525,4 @@ class AdminProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

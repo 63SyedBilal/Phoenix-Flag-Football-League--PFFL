@@ -45,7 +45,6 @@ class StatKeeperRepositoryFixed {
 
       return assignedMatches;
     } catch (e) {
-      print('Error fetching assigned matches: $e');
       throw Exception('Failed to fetch assigned matches: ${e.toString()}');
     }
   }
@@ -87,7 +86,6 @@ class StatKeeperRepositoryFixed {
 
       return matchTeams;
     } catch (e) {
-      print('Error fetching match teams: $e');
       throw Exception('Failed to fetch match teams: ${e.toString()}');
     }
   }
@@ -102,7 +100,6 @@ class StatKeeperRepositoryFixed {
       final teamData = await TeamService.getTeamById(teamId);
 
       if (teamData == null) {
-        print('❌ Team not found: $teamId');
         return [];
       }
 
@@ -141,11 +138,8 @@ class StatKeeperRepositoryFixed {
       // Extract players from both squads
       processSquad(teamData['squad5v5'] as List?);
       processSquad(teamData['squad7v7'] as List?);
-
-      print('✅ Fetched ${allPlayers.length} players from team roster');
       return allPlayers;
     } catch (e) {
-      print('❌ Error fetching team roster: $e');
       throw Exception('Failed to fetch team players: ${e.toString()}');
     }
   }
@@ -176,23 +170,14 @@ class StatKeeperRepositoryFixed {
         'stats': stats,
       };
 
-      print('📤 [STAT SAVE DEBUG] Using correct endpoint: $requestUrl');
-      print('📤 [STAT SAVE DEBUG] Full URL: ${dio.options.baseUrl}$requestUrl');
-      print('📤 [STAT SAVE DEBUG] Request payload: $requestData');
-
       final response = await dio.post(requestUrl, data: requestData);
 
-      print('✅ [STAT SAVE DEBUG] Response status: ${response.statusCode}');
-      print('✅ [STAT SAVE DEBUG] Response data: ${response.data}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Stats saved successfully via /api/stats endpoint');
         return;
       } else {
         throw Exception('Unexpected status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ [STAT SAVE DEBUG] Error: $e');
       throw Exception('Failed to save stat: ${e.toString()}');
     }
   }
@@ -211,12 +196,7 @@ class StatKeeperRepositoryFixed {
         if (createdBy != null) 'createdBy': createdBy,
       };
 
-      print('📤 [GET STATS DEBUG] URL: /stats');
-      print('📤 [GET STATS DEBUG] Params: $queryParams');
-
       final response = await dio.get('/stats', queryParameters: queryParams);
-
-      print('✅ [GET STATS DEBUG] Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return response.data['data'] as List? ?? [];
@@ -224,7 +204,6 @@ class StatKeeperRepositoryFixed {
         throw Exception('Failed to fetch stats');
       }
     } catch (e) {
-      print('❌ Error fetching stats: $e');
       throw Exception('Failed to fetch stats: ${e.toString()}');
     }
   }
@@ -234,21 +213,15 @@ class StatKeeperRepositoryFixed {
     try {
       final dio = await _getAuthenticatedDio();
 
-      print('📤 [SUBMIT STATS DEBUG] URL: /stats/submit');
-      print('📤 [SUBMIT STATS DEBUG] Data: {matchId: $matchId}');
-
       final response = await dio.post(
         '/stats/submit',
         data: {'matchId': matchId},
       );
 
-      print('✅ [SUBMIT STATS DEBUG] Status: ${response.statusCode}');
-
       if (response.statusCode != 200) {
         throw Exception('Failed to submit stats for approval');
       }
     } catch (e) {
-      print('❌ Error submitting stats: $e');
       throw Exception('Failed to submit stats: ${e.toString()}');
     }
   }
@@ -257,8 +230,6 @@ class StatKeeperRepositoryFixed {
   static Future<void> approveStats(String matchId, String statkeeperId) async {
     try {
       final dio = await _getAuthenticatedDio();
-
-      print('📤 [APPROVE STATS DEBUG] URL: /stats/approve');
       print(
         '📤 [APPROVE STATS DEBUG] Data: {matchId: $matchId, statkeeperId: $statkeeperId}',
       );
@@ -268,13 +239,10 @@ class StatKeeperRepositoryFixed {
         data: {'matchId': matchId, 'statkeeperId': statkeeperId},
       );
 
-      print('✅ [APPROVE STATS DEBUG] Status: ${response.statusCode}');
-
       if (response.statusCode != 200) {
         throw Exception('Failed to approve stats');
       }
     } catch (e) {
-      print('❌ Error approving stats: $e');
       throw Exception('Failed to approve stats: ${e.toString()}');
     }
   }
@@ -304,20 +272,13 @@ class StatKeeperRepositoryFixed {
 
     try {
       // Validate required parameters
-      print('📋 [ADD STATS DEBUG] Validating parameters...');
-      print('📋 [ADD STATS DEBUG] Match ID: $matchId');
-      print('📋 [ADD STATS DEBUG] Team ID: $teamId');
-      print('📋 [ADD STATS DEBUG] Player ID: $playerId');
 
       // Get match to validate it exists and get leagueId
-      print('🔍 [ADD STATS DEBUG] Fetching match details...');
       final match = await MatchService.getMatchById(matchId);
 
       if (match.leagueId == null || match.leagueId!.isEmpty) {
         throw Exception('Match does not have a valid league ID');
       }
-
-      print('✅ [ADD STATS DEBUG] Match found. League ID: ${match.leagueId}');
 
       final statsData = {
         'catches': catches,
@@ -335,18 +296,13 @@ class StatKeeperRepositoryFixed {
         'extraPoints': conversionPoints,
       };
 
-      print('📊 [ADD STATS DEBUG] Stats data: $statsData');
-
       await saveStatFixed(
         matchId: matchId,
         teamId: teamId,
         playerId: playerId,
         stats: statsData,
       );
-
-      print('✅ [ADD STATS DEBUG] Stats saved successfully');
     } catch (e) {
-      print('❌ [ADD STATS DEBUG] Error: $e');
       rethrow;
     }
   }
@@ -356,9 +312,6 @@ class StatKeeperRepositoryFixed {
     try {
       final dio = await _getAuthenticatedDio();
       final response = await dio.get('/match/$matchId');
-
-      print('📤 [GET MATCH STATS DEBUG] URL: /match/$matchId');
-      print('✅ [GET MATCH STATS DEBUG] Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
@@ -401,7 +354,6 @@ class StatKeeperRepositoryFixed {
       }
       return null;
     } catch (e) {
-      print('❌ Error fetching match stats: $e');
       throw Exception('Failed to fetch match stats: ${e.toString()}');
     }
   }
@@ -501,3 +453,4 @@ class StatKeeperRepositoryFixed {
     return StatStatus.draft;
   }
 }
+

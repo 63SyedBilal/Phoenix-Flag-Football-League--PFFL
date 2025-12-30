@@ -75,12 +75,10 @@ class SponsorScreenProvider extends ChangeNotifier {
         _urlControllers[slotNumber - 1].clear();
 
         notifyListeners();
-        debugPrint('Image uploaded for slot $slotNumber: $filePath');
       }
     } catch (e) {
       _validationErrors[slotNumber - 1] = 'Failed to pick image: $e';
       notifyListeners();
-      debugPrint('Error picking image: $e');
     }
   }
 
@@ -161,15 +159,12 @@ class SponsorScreenProvider extends ChangeNotifier {
               final uploadedUrl = await AdminService.uploadImage(imageFile);
               if (uploadedUrl != null) {
                 uploadedUrls.add(uploadedUrl);
-                debugPrint('✅ Sponsor image ${i + 1} uploaded: $uploadedUrl');
               } else {
-                debugPrint('⚠️ Failed to upload sponsor image ${i + 1}');
                 // Use default image if upload fails
                 uploadedUrls.add('assets/images/sponser/sponser${i + 1}.png');
               }
             }
           } catch (e) {
-            debugPrint('⚠️ Error uploading sponsor image ${i + 1}: $e');
             // Use default image if upload fails
             uploadedUrls.add('assets/images/sponser/sponser${i + 1}.png');
           }
@@ -193,19 +188,13 @@ class SponsorScreenProvider extends ChangeNotifier {
         final response = await dio.post('/admin/sponsors', data: sponsorData);
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          debugPrint('✅ Sponsor images saved to backend successfully');
         } else {
-          debugPrint('❌ Failed to save sponsor images to backend: ${response.statusMessage}');
           throw Exception('Failed to save sponsor images');
         }
       } catch (e) {
-        debugPrint('❌ Error saving sponsor images to backend: $e');
         // Don't fail the entire operation for this
       }
-
-      debugPrint('📋 Final sponsor image URLs:');
       for (int i = 0; i < uploadedUrls.length; i++) {
-        debugPrint('   Sponsor ${i + 1}: ${uploadedUrls[i]}');
       }
 
       _isSaving = false;
@@ -214,7 +203,6 @@ class SponsorScreenProvider extends ChangeNotifier {
     } catch (e) {
       _isSaving = false;
       notifyListeners();
-      debugPrint('❌ Error saving sponsors: $e');
       return false;
     }
   }
@@ -227,3 +215,4 @@ class SponsorScreenProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

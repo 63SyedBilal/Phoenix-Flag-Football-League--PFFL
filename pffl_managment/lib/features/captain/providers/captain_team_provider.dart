@@ -41,45 +41,32 @@ class CaptainTeamProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
-
-      print('🔄 Loading team data for captain...');
       // Fetch team data from API (backend already populates profile data)
       final teamData = await TeamService.getTeamByCaptain();
 
       if (teamData == null) {
-        print('⚠️ No team data returned from API');
         _errorMessage = 'No team found. Please create a team first.';
         _isLoading = false;
         notifyListeners();
         return;
       }
 
-      print('✅ Team data received from API');
-      print('   Team ID: ${teamData['_id'] ?? teamData['id']}');
-      print('   Team Name: ${teamData['teamName'] ?? teamData['name']}');
-
       // Log squad data for debugging
       final squad5v5Raw = teamData['squad5v5'] as List? ?? [];
       final squad7v7Raw = teamData['squad7v7'] as List? ?? [];
-      print('   Raw squad5v5 count: ${squad5v5Raw.length}');
-      print('   Raw squad7v7 count: ${squad7v7Raw.length}');
 
       // Backend already populates profileImage, jerseyNumber, position
       // So we can directly use TeamModel.fromJson without additional enrichment
-      print('🔍 [TEAM DEBUG] Raw team data: $teamData');
 
       final team5v5 = TeamModel.fromJson(teamData, '5v5');
       final team7v7 = TeamModel.fromJson(teamData, '7v7');
 
       // Log the team data to verify profile images are present
-      print('🔍 [TEAM DEBUG] Team 5v5 players (${team5v5.players.length}):');
       for (var player in team5v5.players) {
         print(
           '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
         );
       }
-
-      print('🔍 [TEAM DEBUG] Team 7v7 players (${team7v7.players.length}):');
       for (var player in team7v7.players) {
         print(
           '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
@@ -96,7 +83,6 @@ class CaptainTeamProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load team data: ${e.toString()}';
-      print('❌ Error loading team data: $e');
       notifyListeners();
     }
   }
@@ -110,24 +96,19 @@ class CaptainTeamProvider extends ChangeNotifier {
   Future<void> loadPlayerPaymentStatuses() async {
     final currentTeam = team;
     if (currentTeam == null) {
-      print('⚠️ No team available to load payment statuses');
       return;
     }
 
     try {
-      print('💳 Loading payment statuses for team: ${currentTeam.id}');
       final response = await TeamService.getTeamPlayerPayments(currentTeam.id);
 
       if (response['success'] == true && response['data'] != null) {
         final paymentStatuses = response['data']['paymentStatuses'] as Map<String, dynamic>? ?? {};
         _playerPaymentStatuses = paymentStatuses.map((key, value) => MapEntry(key, value == true));
-        print('✅ Loaded payment statuses for ${_playerPaymentStatuses.length} players');
         notifyListeners();
       } else {
-        print('❌ Failed to load payment statuses: ${response['message']}');
       }
     } catch (e) {
-      print('❌ Error loading payment statuses: $e');
     }
   }
 
@@ -180,11 +161,9 @@ class CaptainTeamProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-      print('✅ [TRANSFER LEADERSHIP DEBUG] Leadership transfer process completed successfully.');
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to transfer leadership: ${e.toString().replaceAll('Exception: ', '')}';
-      print('❌ [TRANSFER LEADERSHIP DEBUG] Error transferring leadership: $e');
       notifyListeners();
       rethrow; // Re-throw to show error in UI
     }
@@ -223,23 +202,17 @@ class CaptainTeamProvider extends ChangeNotifier {
 
     // Update the _teams map for the current format
     _teams[_selectedFormat] = updatedTeam;
-
-    print('✅ [TRANSFER LEADERSHIP DEBUG] Local team model updated with new captain: $newCaptainName');
   }
 
   // Renamed and modified from _sendLeadershipInvitation
   /// Send leadership confirmation notification to the new captain
   Future<void> _sendLeadershipConfirmation(String newCaptainId, String newCaptainName) async {
     try {
-      print('📧 [NOTIFICATION DEBUG] Sending leadership confirmation to new captain: $newCaptainId');
-      print('📧 [NOTIFICATION DEBUG] Current team: ${team?.id}');
-      print('📧 [NOTIFICATION DEBUG] Current team name: ${team?.name}');
 
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId');
 
       if (currentUserId == null || currentUserId.isEmpty) {
-        print('⚠️ [NOTIFICATION DEBUG] Current user ID not found in SharedPreferences');
         throw Exception('Current user ID not available');
       }
 
@@ -254,12 +227,9 @@ class CaptainTeamProvider extends ChangeNotifier {
       );
 
       if (success) {
-        print('✅ [NOTIFICATION DEBUG] Leadership confirmation sent successfully to $newCaptainName');
       } else {
-        print('⚠️ [NOTIFICATION DEBUG] Failed to send leadership confirmation');
       }
     } catch (e) {
-      print('⚠️ [NOTIFICATION DEBUG] Failed to send leadership confirmation: $e');
       // Don't re-throw, as the leadership transfer itself was successful
     }
   }
@@ -295,11 +265,9 @@ class CaptainTeamProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-      print('✅ [REMOVE PLAYER DEBUG] Player removal process completed successfully.');
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to remove player: ${e.toString().replaceAll('Exception: ', '')}';
-      print('❌ [REMOVE PLAYER DEBUG] Error removing player: $e');
       notifyListeners();
       rethrow; // Re-throw to show error in UI
     }
@@ -320,8 +288,6 @@ class CaptainTeamProvider extends ChangeNotifier {
 
     // Update the _teams map for the current format
     _teams[_selectedFormat] = updatedTeam;
-
-    print('✅ [REMOVE PLAYER DEBUG] Local team model updated after removing player: $playerId');
   }
 
   /// Send removal notification to a player
@@ -342,8 +308,6 @@ class CaptainTeamProvider extends ChangeNotifier {
         throw Exception('Current user ID not available');
       }
 
-      print('📧 [NOTIFICATION DEBUG] Sender ID (Captain): $currentUserId');
-
       // Use existing NotificationService to send notification
       final success = await NotificationService.sendNotification(
         receiverId: playerId,
@@ -354,13 +318,11 @@ class CaptainTeamProvider extends ChangeNotifier {
       );
 
       if (success) {
-        print('✅ [NOTIFICATION DEBUG] Removal notification sent successfully');
       } else {
-        print('⚠️ [NOTIFICATION DEBUG] Failed to send removal notification');
       }
     } catch (e) {
-      print('⚠️ [NOTIFICATION DEBUG] Failed to send removal notification: $e');
       // Don't throw error for notification failure - removal should still proceed
     }
   }
 }
+

@@ -44,7 +44,6 @@ class UserRoleProvider extends ChangeNotifier {
       notifyListeners();
       return success;
     } catch (e) {
-      print('Error in UserRoleProvider: $e');
       _error = e.toString().replaceAll('Exception:', '').trim();
       _isLoading = false;
       notifyListeners();
@@ -59,3 +58,4 @@ class UserRoleProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

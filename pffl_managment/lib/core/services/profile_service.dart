@@ -17,36 +17,26 @@ class ProfileService {
     Map<String, dynamic> profileData,
   ) async {
     try {
-      print('📡 Creating profile...');
       final dio = await _getAuthenticatedDio();
-      print('📡 API URL: ${dio.options.baseUrl}${AppConfig.profileEndpoint}');
 
       final response = await dio.post(
         AppConfig.profileEndpoint,
         data: profileData,
       );
 
-      print('📡 Response status: ${response.statusCode}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
         if (data['data'] != null) {
-          print('✅ Profile created successfully');
           return data['data'] as Map<String, dynamic>;
         }
         throw Exception('Invalid response format: missing data field');
       } else {
         final errorMessage =
             response.data['error'] ?? 'Failed to create profile';
-        print('❌ Failed to create profile: $errorMessage');
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      print('❌ Error creating profile: ${e.message}');
-      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('❌ Error status: ${e.response?.statusCode}');
-        print('❌ Error response: ${e.response?.data}');
         final errorData = e.response?.data;
         if (errorData != null && errorData['error'] != null) {
           throw Exception(errorData['error']);
@@ -54,7 +44,6 @@ class ProfileService {
       }
       throw Exception('Failed to create profile: ${e.message}');
     } catch (e) {
-      print('❌ General error creating profile: $e');
       throw Exception('Failed to create profile: ${e.toString()}');
     }
   }
@@ -65,7 +54,6 @@ class ProfileService {
   /// Returns combined profile data or null if not found
   static Future<Map<String, dynamic>?> getProfile(String userId) async {
     try {
-      print('📡 Fetching profile for user: $userId');
       final dio = await _getAuthenticatedDio();
 
       // First try to get user data which contains profileImage, jerseyNumber, position
@@ -75,19 +63,14 @@ class ProfileService {
           options: Options(validateStatus: (_) => true),
         );
 
-        print('📡 User API response status: ${userResponse.statusCode}');
-
         if (userResponse.statusCode == 200) {
           final userData = userResponse.data;
-          print('📡 User API response data: $userData');
 
           if (userData is Map && userData['data'] is Map) {
             final user = (userData['data'] as Map).cast<String, dynamic>();
             print(
               '📡 ✅ Got user data with profileImage: ${user['profileImage']}',
             );
-            print('📡 ✅ User jerseyNumber: ${user['jerseyNumber']}');
-            print('📡 ✅ User position: ${user['position']}');
 
             // Return user data which includes profileImage, jerseyNumber, position
             return {
@@ -106,7 +89,6 @@ class ProfileService {
           }
         }
       } catch (e) {
-        print('⚠️ User API failed, trying profile API: $e');
       }
 
       // Fallback to profile collection
@@ -119,7 +101,6 @@ class ProfileService {
         final data = response.data;
         if (data is Map && data['data'] is Map) {
           final profileData = (data['data'] as Map).cast<String, dynamic>();
-          print('📡 ✅ Got profile data with image: ${profileData['image']}');
           return profileData;
         }
         if (data is Map && data['user'] is Map) {
@@ -153,15 +134,12 @@ class ProfileService {
         // Profile not available for this user.
         return null;
       }
-
-      print('❌ Failed to fetch profile: ${response.statusCode}');
       return null;
     } on DioException catch (e) {
-      print('❌ DioException fetching profile: ${e.message}');
       return null;
     } catch (e) {
-      print('❌ General error fetching profile: $e');
       return null;
     }
   }
 }
+

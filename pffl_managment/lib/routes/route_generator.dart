@@ -120,7 +120,6 @@ class RouteGenerator {
         );
 
       case AppRoutes.adminInvite:
-        print('Routing to adminInvite');
         return MaterialPageRoute(builder: (_) => const AdminInviteScreen());
 
       case AppRoutes.paymentReceipt:
@@ -193,13 +192,11 @@ class RouteGenerator {
 
       // Default route
       default:
-        print('Route not found: ${settings.name}');
         return _errorRoute();
     }
   }
 
   static Route<dynamic> _errorRoute() {
-    print('ERROR ROUTE CALLED - Route not found');
     return MaterialPageRoute(
       builder: (_) {
         return Scaffold(
@@ -210,3 +207,4 @@ class RouteGenerator {
     );
   }
 }
+

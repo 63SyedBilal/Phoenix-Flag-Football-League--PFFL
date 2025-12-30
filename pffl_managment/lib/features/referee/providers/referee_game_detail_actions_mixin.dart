@@ -95,7 +95,6 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
       _isFabExpanded = false;
     } catch (e) {
       _error = 'Failed to execute action: ${e.toString()}';
-      debugPrint('❌ Error executing action: $e');
     } finally {
       _isLoading = false;
     _emitStateChange();
@@ -132,7 +131,6 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
       );
     } catch (e) {
       _error = 'Failed to complete toss: ${e.toString()}';
-      debugPrint('❌ Error completing toss: $e');
       rethrow;
     } finally {
       _isLoading = false;
@@ -192,11 +190,8 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
         iconColor: _getColorForAction(actionType),
         isLeft: _isHomeTeam(teamId),
       );
-
-      debugPrint('✅ Game action added successfully');
     } catch (e) {
       _error = 'Failed to add game action: ${e.toString()}';
-      debugPrint('❌ Error adding game action: $e');
       rethrow;
     } finally {
       _isLoading = false;
@@ -257,3 +252,4 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
     });
   }
 }
+

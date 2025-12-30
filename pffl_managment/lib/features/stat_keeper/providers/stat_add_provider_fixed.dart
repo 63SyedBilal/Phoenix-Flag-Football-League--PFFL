@@ -104,7 +104,6 @@ class StatAddProviderFixed extends ChangeNotifier {
       _isReadOnly = match.status == 'completed';
       loadTeams();
     } catch (e) {
-      debugPrint('Error loading specific match: $e');
       _setError('Failed to load match details: ${e.toString()}');
     } finally {
       _isLoadingMatches = false;
@@ -120,7 +119,6 @@ class StatAddProviderFixed extends ChangeNotifier {
     try {
       _assignedMatches = await StatKeeperRepositoryFixed.getAssignedMatches();
     } catch (e) {
-      debugPrint('Error loading assigned matches: $e');
       _assignedMatches = [];
       _setError('Failed to load assigned matches: ${e.toString()}');
     } finally {
@@ -144,7 +142,6 @@ class StatAddProviderFixed extends ChangeNotifier {
       loadTeams();
       notifyListeners();
     } catch (e) {
-      debugPrint('Error selecting match: $e');
       _setError('Failed to select match: ${e.toString()}');
     }
   }
@@ -159,7 +156,6 @@ class StatAddProviderFixed extends ChangeNotifier {
     try {
       _teams = await StatKeeperRepositoryFixed.getMatchTeams(_matchId!);
     } catch (e) {
-      debugPrint('Error loading teams: $e');
       _teams = [];
       _setError('Failed to load teams: ${e.toString()}');
     } finally {
@@ -205,7 +201,6 @@ class StatAddProviderFixed extends ChangeNotifier {
       loadPlayers();
       notifyListeners();
     } catch (e) {
-      debugPrint('Error selecting team: $e');
       _setError('Failed to select team: ${e.toString()}');
     }
   }
@@ -219,7 +214,6 @@ class StatAddProviderFixed extends ChangeNotifier {
       _selectedPlayerId = player.id;
       notifyListeners();
     } catch (e) {
-      debugPrint('Error selecting player: $e');
       _setError('Failed to select player: ${e.toString()}');
     }
   }
@@ -248,12 +242,6 @@ class StatAddProviderFixed extends ChangeNotifier {
     try {
       // Parse input values with validation
       final statsData = _parseStatsFromInputs();
-
-      print('📊 [UPDATE STATS DEBUG] Starting stats update...');
-      print('📊 [UPDATE STATS DEBUG] Match ID: $_matchId');
-      print('📊 [UPDATE STATS DEBUG] Team ID: $_selectedTeamId');
-      print('📊 [UPDATE STATS DEBUG] Player ID: $_selectedPlayerId');
-      print('📊 [UPDATE STATS DEBUG] Stats: $statsData');
 
       await StatKeeperRepositoryFixed.addMatchStatsFixed(
         matchId: _matchId!,
@@ -287,11 +275,8 @@ class StatAddProviderFixed extends ChangeNotifier {
           ),
         );
       }
-
-      print('✅ [UPDATE STATS DEBUG] Stats update completed successfully');
     } catch (e) {
       final errorMessage = 'Failed to update stats: ${e.toString()}';
-      debugPrint('❌ [UPDATE STATS DEBUG] Error: $errorMessage');
 
       _setError(errorMessage);
 
@@ -364,7 +349,6 @@ class StatAddProviderFixed extends ChangeNotifier {
         await statStatsProvider.forceRefreshForMatch(_matchId!);
       }
     } catch (e) {
-      debugPrint('StatStatsProvider not available for refresh: $e');
     }
   }
 
@@ -411,3 +395,4 @@ class StatAddProviderFixed extends ChangeNotifier {
     super.dispose();
   }
 }
+

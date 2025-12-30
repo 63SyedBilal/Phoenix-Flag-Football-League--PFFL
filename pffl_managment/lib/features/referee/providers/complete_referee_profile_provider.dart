@@ -112,7 +112,6 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Referee backend sync failed: $e');
     }
   }
 
@@ -183,3 +182,4 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
     await _userPrefs.setRefereeProfileComplete(false);
   }
 }
+

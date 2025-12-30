@@ -150,7 +150,6 @@ class ApprovedStatsProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
-      debugPrint('Error loading approved stats: $e');
       _approvedStats = [];
       _errorMessage = e.toString();
     } finally {
@@ -196,3 +195,4 @@ class ApprovedStatsProvider extends ChangeNotifier {
     return totals;
   }
 }
+

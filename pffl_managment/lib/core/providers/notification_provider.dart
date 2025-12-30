@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/models/notification_model.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
+import 'package:pffl_managment/core/services/notification_trigger_service.dart';
+import 'package:pffl_managment/core/services/player_freeagent_trigger_service.dart';
+import 'package:pffl_managment/core/services/admin_trigger_service.dart';
 import 'package:pffl_managment/features/stat_keeper/repositories/stat_keeper_repository_fixed.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -33,9 +36,7 @@ class NotificationProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final readIds = prefs.getStringList('read_notifications') ?? [];
       _readNotificationIds = Set<String>.from(readIds);
-    } catch (e) {
-      print('❌ Error loading read status: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> _saveReadStatus() async {
@@ -45,13 +46,10 @@ class NotificationProvider extends ChangeNotifier {
         'read_notifications',
         _readNotificationIds.toList(),
       );
-    } catch (e) {
-      print('❌ Error saving read status: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> loadNotifications() async {
-    print('🔄 [NOTIFICATION PROVIDER DEBUG] Starting loadNotifications...');
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -63,80 +61,24 @@ class NotificationProvider extends ChangeNotifier {
       final userId = prefs.getString('userId') ?? '';
       final isAdmin = userRole == 'admin';
 
-      print('🔄 [NOTIFICATION PROVIDER DEBUG] User info:');
-      print('   - User ID: $userId');
-      print('   - User Role: $userRole');
-      print('   - Is Admin: $isAdmin');
-
       // Fetch role-specific notifications
       print(
         '🔄 [NOTIFICATION PROVIDER DEBUG] Fetching role-specific notifications for: $userRole',
       );
 
-      List<NotificationModel> roleSpecificNotifications;
-      switch (userRole) {
-        case 'player':
-          roleSpecificNotifications =
-              await NotificationService.getPlayerNotifications();
-          break;
-        case 'captain':
-          roleSpecificNotifications =
-              await NotificationService.getCaptainNotifications();
-          break;
-        case 'admin':
-        case 'superadmin':
-          roleSpecificNotifications =
-              await NotificationService.getAdminNotifications();
-          break;
-        case 'referee':
-          roleSpecificNotifications =
-              await NotificationService.getRefereeNotifications();
-          print(
-            '🎯 [NOTIFICATION PROVIDER] Referee notifications: ${roleSpecificNotifications.length}',
-          );
-          for (final notif in roleSpecificNotifications) {
-            print('   - ${notif.type}: ${notif.message}');
-          }
-          break;
-        case 'stat-keeper':
-        case 'statkeeper':
-          roleSpecificNotifications =
-              await NotificationService.getStatKeeperNotifications();
-          print(
-            '🎯 [NOTIFICATION PROVIDER] Stat keeper notifications: ${roleSpecificNotifications.length}',
-          );
-          for (final notif in roleSpecificNotifications) {
-            print('   - ${notif.type}: ${notif.message}');
-          }
-          break;
-        case 'free-agent':
-        case 'freeagent':
-          roleSpecificNotifications =
-              await NotificationService.getFreeAgentNotifications();
-          break;
-        default:
-          // Fallback to all notifications if role is unknown
-          print(
-            '⚠️ [NOTIFICATION PROVIDER DEBUG] Unknown role "$userRole", fetching all notifications',
-          );
-          roleSpecificNotifications =
-              await NotificationService.getAllNotifications();
-      }
+      List<NotificationModel> roleSpecificNotifications =
+          await NotificationService.getNotificationsByRole(userRole);
 
       print(
         '✅ [NOTIFICATION PROVIDER DEBUG] Fetched ${roleSpecificNotifications.length} role-specific notifications',
       );
 
       // Log role-specific notifications for debugging
-      print('🔄 [NOTIFICATION PROVIDER DEBUG] Role-specific notifications:');
       for (int i = 0; i < roleSpecificNotifications.length; i++) {
         final notif = roleSpecificNotifications[i];
         print(
           '   [$i] ID: ${notif.id}, Type: ${notif.type}, Status: ${notif.status}',
         );
-        print('       Message: ${notif.message}');
-        print('       Sender: ${notif.senderName}');
-        print('       Team: ${notif.teamName}');
       }
 
       // Fetch payment notifications for admin only
@@ -173,9 +115,7 @@ class NotificationProvider extends ChangeNotifier {
       print(
         '🎯 [NOTIFICATION PROVIDER DEBUG] Found ${teamInvites.length} team/invite notifications:',
       );
-      for (final invite in teamInvites) {
-        print('   - ${invite.type}: ${invite.message}');
-      }
+      for (final invite in teamInvites) {}
 
       _updateUnreadCount();
 
@@ -184,8 +124,6 @@ class NotificationProvider extends ChangeNotifier {
     } catch (e, stackTrace) {
       _isLoading = false;
       _errorMessage = 'Failed to load notifications: ${e.toString()}';
-      print('❌ [NOTIFICATION PROVIDER DEBUG] Error: $e');
-      print('❌ [NOTIFICATION PROVIDER DEBUG] Stack: $stackTrace');
       notifyListeners();
     }
   }
@@ -252,7 +190,6 @@ class NotificationProvider extends ChangeNotifier {
       }
       return notifications;
     } catch (e) {
-      print('❌ Error fetching payment notifications: $e');
       return [];
     }
   }
@@ -294,10 +231,51 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Get notification details before accepting
+      final notification = _notifications.firstWhere(
+        (n) => n.id == notificationId,
+      );
+
       final result = await NotificationService.acceptNotification(
         notificationId,
       );
       if (result['success'] == true) {
+        // Trigger notifications
+        if (notification.type.contains('TEAM_INVITE') ||
+            notification.type.contains('INVITATION')) {
+          final captainId = notification.sender?.id ?? '';
+          final playerName = notification.receiver?.firstName ?? 'A player';
+          final teamName = notification.team?.teamName ?? 'Team';
+          final teamId = notification.team?.id ?? '';
+          final playerId = notification.receiver?.id ?? '';
+          final captainName = notification.sender?.firstName ?? 'Captain';
+
+          // Notify Captain
+          await NotificationTriggerService.triggerPlayerJoinedTeam(
+            captainId: captainId,
+            playerName: playerName,
+            teamName: teamName,
+            teamId: teamId,
+            playerId: playerId,
+          );
+
+          // Notify Admin
+          await NotificationTriggerService.triggerAdminTeamRegisteredInLeague(
+            teamName: teamName,
+            leagueName: notification.league?.leagueName ?? 'League',
+            captainName: captainName,
+            teamId: teamId,
+            leagueId: notification.league?.id ?? '',
+          );
+
+          // Notify Player (Welcome)
+          await PlayerFreeAgentTriggerService.triggerJoinedTeamSuccess(
+            userId: playerId,
+            teamName: teamName,
+            teamId: teamId,
+          );
+        }
+
         await loadNotifications();
         return result;
       }
@@ -306,7 +284,6 @@ class NotificationProvider extends ChangeNotifier {
       return {'success': false, 'roleChanged': false};
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      print('❌ Error accepting notification: $e');
       notifyListeners();
       return {'success': false, 'roleChanged': false};
     }
@@ -338,7 +315,6 @@ class NotificationProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to approve stats: ${e.toString()}';
-      print('❌ Error approving stats: $e');
       notifyListeners();
       return false;
     }
@@ -349,10 +325,43 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Get notification details before rejecting
+      final notification = _notifications.firstWhere(
+        (n) => n.id == notificationId,
+      );
+
       final success = await NotificationService.rejectNotification(
         notificationId,
       );
       if (success) {
+        // Trigger rejection notifications
+        if (notification.type.contains('TEAM_INVITE') ||
+            notification.type.contains('INVITATION')) {
+          final captainId = notification.sender?.id ?? '';
+          final playerName = notification.receiver?.firstName ?? 'A player';
+          final teamName = notification.team?.teamName ?? 'Team';
+          final teamId = notification.team?.id ?? '';
+          final captainName = notification.sender?.firstName ?? 'Captain';
+          final playerId = notification.receiver?.id ?? '';
+
+          // Notify Captain
+          await NotificationTriggerService.triggerPlayerDeclinedTeamInvite(
+            captainId: captainId,
+            playerName: playerName,
+            teamName: teamName,
+            teamId: teamId,
+          );
+
+          // Notify Admin
+          await AdminTriggerService.triggerPlayerRejectedInvite(
+            playerName: playerName,
+            teamName: teamName,
+            captainName: captainName,
+            teamId: teamId,
+            playerId: playerId,
+          );
+        }
+
         await loadNotifications();
         return true;
       }
@@ -361,7 +370,6 @@ class NotificationProvider extends ChangeNotifier {
       return false;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      print('❌ Error rejecting notification: $e');
       notifyListeners();
       return false;
     }

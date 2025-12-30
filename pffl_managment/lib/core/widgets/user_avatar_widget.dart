@@ -43,8 +43,6 @@ class UserAvatarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('🖼️ [AVATAR DEBUG] Building avatar with imageUrl: "$imageUrl"');
-    print('🖼️ [AVATAR DEBUG] _hasValidImage: $_hasValidImage');
 
     return Container(
       width: size,
@@ -62,7 +60,6 @@ class UserAvatarWidget extends StatelessWidget {
                 height: size,
                 fit: BoxFit.cover,
                 placeholder: (context, url) {
-                  print('🖼️ [AVATAR DEBUG] Loading image: $url');
                   return _buildLoadingIndicator();
                 },
                 errorWidget: (context, url, error) {
@@ -199,3 +196,4 @@ class UserAvatarWithInitials extends StatelessWidget {
     );
   }
 }
+

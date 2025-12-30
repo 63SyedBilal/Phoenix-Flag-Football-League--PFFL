@@ -50,24 +50,16 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('📊 Fetching dashboard stats...');
       final result = await DashboardStatsService.getDashboardStats();
 
       if (result != null) {
         _stats = result;
         _hasFetched = true;
-        debugPrint('✅ Dashboard stats loaded successfully');
-        debugPrint('📊 Total Leagues: ${result.leagues.total}');
-        debugPrint('📊 Total Games: ${result.games.total}');
-        debugPrint('📊 Total Users: ${result.users.total}');
-        debugPrint('📊 Pending Payments: ${result.payments.count}');
       } else {
         _error = 'Failed to load dashboard statistics';
-        debugPrint('❌ Dashboard stats returned null');
       }
     } catch (e) {
       _error = 'Error loading statistics: $e';
-      debugPrint('❌ Exception fetching dashboard stats: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -212,7 +204,6 @@ class DashboardViewModel extends ChangeNotifier {
       title: 'Create League',
       icon: Icons.add,
       onTap: () {
-        debugPrint('Create League tapped');
       },
     ),
     QuickActionModel(
@@ -233,14 +224,12 @@ class DashboardViewModel extends ChangeNotifier {
   ];
 
   void _handleScheduleGame() {
-    debugPrint('Schedule Game tapped');
   }
 
   void _handleManageStats() {
-    debugPrint('Manage Stats tapped');
   }
 
   void _handleViewReports() {
-    debugPrint('View Reports tapped');
   }
 }
+

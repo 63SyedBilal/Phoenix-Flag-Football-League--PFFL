@@ -20,7 +20,6 @@ class TeamManagementScreen extends StatelessWidget {
                 if (!provider.isLoading &&
                     provider.team == null &&
                     provider.errorMessage == null) {
-                  print('🔄 Refreshing team data on screen load...');
                   provider.refresh();
                 }
               });
@@ -100,3 +99,4 @@ class TeamManagementScreen extends StatelessWidget {
     );
   }
 }
+

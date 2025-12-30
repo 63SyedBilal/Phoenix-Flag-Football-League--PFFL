@@ -33,14 +33,11 @@ class AdminLeagueGameCard extends StatelessWidget {
     ).userRole.toLowerCase();
     final isAdmin = userRole == 'admin' || userRole == 'superadmin';
 
-    final bool isCompleted =
-        match.status == MatchStatus.completed &&
-        match.homeScore != null &&
-        match.awayScore != null;
+    final bool showScores = match.status != MatchStatus.upcoming;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: isCompleted
+      child: showScores
           ? _buildCompletedCard(context)
           : _buildUpcomingCard(context, isAdmin),
     );
@@ -265,14 +262,39 @@ class AdminLeagueGameCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    gameNumber,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600, // Bold as per design
-                      color: Color(0xFF111827),
-                      fontFamily: 'Lato',
-                    ),
+                  child: Row(
+                    children: [
+                      Text(
+                        gameNumber,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600, // Bold as per design
+                          color: Color(0xFF111827),
+                          fontFamily: 'Lato',
+                        ),
+                      ),
+                      if (match.status == MatchStatus.live) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'LIVE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 Text(

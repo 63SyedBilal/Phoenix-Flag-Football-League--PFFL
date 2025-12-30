@@ -52,21 +52,12 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
             normalizedRole == 'admin' || normalizedRole == 'superadmin';
 
         // Comprehensive debug logging
-        debugPrint('');
-        debugPrint('═══════════════════════════════════════');
-        debugPrint('LeagueDetailView FAB DEBUG:');
-        debugPrint('  Raw userRole: "$userRole"');
-        debugPrint('  userRole.toLowerCase(): "${userRole.toLowerCase()}"');
-        debugPrint('  isAdmin: $isAdmin');
-        debugPrint('  selectedTabIndex: ${provider.selectedTabIndex}');
         debugPrint(
           '  Tab is Games (index 1): ${provider.selectedTabIndex == 1}',
         );
         debugPrint(
           '  shouldShowFAB: ${provider.selectedTabIndex == 1 && isAdmin}',
         );
-        debugPrint('═══════════════════════════════════════');
-        debugPrint('');
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
@@ -83,11 +74,8 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
         final shouldShowFAB = provider.selectedTabIndex == 1 && isAdmin;
 
         if (shouldShowFAB) {
-          debugPrint('✅ FAB SHOULD BE VISIBLE NOW!');
         } else {
-          debugPrint('❌ FAB HIDDEN - Reason:');
           if (!isAdmin)
-            debugPrint('   - User is not admin (role: "$userRole")');
           if (provider.selectedTabIndex != 1)
             debugPrint(
               '   - Not on Games tab (current tab: ${provider.selectedTabIndex})',
@@ -102,7 +90,6 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
           floatingActionButton: shouldShowFAB
               ? AnimatedFAB(
                   onPressed: () async {
-                    debugPrint('🎯 FAB PRESSED - Navigating to create match');
                     await Navigator.pushNamed(
                       context,
                       AppRoutes.adminCreateMatch,
@@ -170,3 +157,4 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
     );
   }
 }
+

@@ -8,7 +8,6 @@ class TeamService {
   /// Get Dio instance with authentication token and working URL
   static Future<Dio> _getAuthenticatedDio() async {
     final dio = await AuthService.getWorkingDio();
-    print('📡 TeamService using base URL: ${dio.options.baseUrl}');
     return dio;
   }
 
@@ -73,7 +72,6 @@ class TeamService {
       final captainId = prefs.getString('userId');
 
       if (captainId == null || captainId.isEmpty) {
-        print('⚠️ No userId found in SharedPreferences');
         throw Exception('User ID not found. Please login again.');
       }
 
@@ -90,27 +88,20 @@ class TeamService {
 
         // Backend returns single team object when captainId is provided
         if (data == null) {
-          print('⚠️ No team data returned from API');
           return null; // Team not found
         }
 
         if (data is Map) {
-          print('✅ Team data retrieved successfully');
-          print('   Team ID: ${data['_id'] ?? data['id']}');
-          print('   Team Name: ${data['teamName'] ?? data['name']}');
 
           // Log squad sizes for debugging
           final squad5v5 = data['squad5v5'] as List? ?? [];
           final squad7v7 = data['squad7v7'] as List? ?? [];
-          print('   Squad 5v5 size: ${squad5v5.length}');
-          print('   Squad 7v7 size: ${squad7v7.length}');
 
           return data as Map<String, dynamic>;
         }
 
         // Fallback: if data is a list, return first item
         if (data is List && data.isNotEmpty) {
-          print('⚠️ Received list instead of single team, using first item');
           return data[0] as Map<String, dynamic>;
         }
 
@@ -120,15 +111,12 @@ class TeamService {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        print('⚠️ Team not found (404)');
         return null; // Team not found
       }
       final errorMessage =
           e.response?.data['error'] ?? 'Failed to fetch team: ${e.message}';
-      print('❌ Error fetching team: $errorMessage');
       throw Exception(errorMessage);
     } catch (e) {
-      print('❌ General error fetching team: $e');
       throw Exception('Failed to fetch team: ${e.toString()}');
     }
   }
@@ -139,7 +127,6 @@ class TeamService {
       final team = await getTeamByCaptain();
       return team != null;
     } catch (e) {
-      print('⚠️ Error checking team existence: $e');
       return false;
     }
   }
@@ -150,7 +137,6 @@ class TeamService {
   static Future<Map<String, dynamic>?> getTeamById(String teamId) async {
     try {
       final dio = await _getAuthenticatedDio();
-      print('📡 Fetching team by ID: $teamId');
 
       final response = await dio.get('${AppConfig.teamEndpoint}/$teamId');
 
@@ -158,20 +144,14 @@ class TeamService {
         final data = response.data['data'];
 
         if (data == null) {
-          print('⚠️ No team data returned from API');
           return null;
         }
 
         if (data is Map) {
-          print('✅ Team data retrieved successfully');
-          print('   Team ID: ${data['_id'] ?? data['id']}');
-          print('   Team Name: ${data['teamName'] ?? data['name']}');
 
           // Log squad sizes for debugging
           final squad5v5 = data['squad5v5'] as List? ?? [];
           final squad7v7 = data['squad7v7'] as List? ?? [];
-          print('   Squad 5v5 size: ${squad5v5.length}');
-          print('   Squad 7v7 size: ${squad7v7.length}');
 
           return data as Map<String, dynamic>;
         }
@@ -182,15 +162,12 @@ class TeamService {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        print('⚠️ Team not found (404)');
         return null;
       }
       final errorMessage =
           e.response?.data['error'] ?? 'Failed to fetch team: ${e.message}';
-      print('❌ Error fetching team: $errorMessage');
       throw Exception(errorMessage);
     } catch (e) {
-      print('❌ General error fetching team: $e');
       throw Exception('Failed to fetch team: ${e.toString()}');
     }
   }
@@ -241,18 +218,10 @@ class TeamService {
     required String format, // "5v5" or "7v7"
   }) async {
     try {
-      print('🎯 [TEAM SERVICE DEBUG] Starting invitePlayer API call');
-      print('🎯 [TEAM SERVICE DEBUG] Parameters:');
-      print('   - playerId: $playerId');
-      print('   - teamId: $teamId');
-      print('   - format: $format');
 
       final dio = await _getAuthenticatedDio();
-      print('🎯 [TEAM SERVICE DEBUG] Got authenticated Dio instance');
-      print('🎯 [TEAM SERVICE DEBUG] Base URL: ${dio.options.baseUrl}');
 
       if (!['5v5', '7v7'].contains(format)) {
-        print('❌ [TEAM SERVICE DEBUG] Invalid format: $format');
         throw Exception('Format must be either "5v5" or "7v7"');
       }
 
@@ -261,8 +230,6 @@ class TeamService {
         'teamId': teamId,
         'format': format,
       };
-
-      print('🎯 [TEAM SERVICE DEBUG] Request data: $requestData');
       print(
         '🎯 [TEAM SERVICE DEBUG] Endpoint: ${AppConfig.teamInvitePlayerEndpoint}',
       );
@@ -275,12 +242,7 @@ class TeamService {
         data: requestData,
       );
 
-      print('🎯 [TEAM SERVICE DEBUG] Response received');
-      print('🎯 [TEAM SERVICE DEBUG] Status code: ${response.statusCode}');
-      print('🎯 [TEAM SERVICE DEBUG] Response data: ${response.data}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ [TEAM SERVICE DEBUG] Player invited successfully');
         print(
           '🎯 [TEAM SERVICE DEBUG] Backend should have created notification for Free Agent',
         );
@@ -292,23 +254,17 @@ class TeamService {
         throw Exception('Failed to invite player: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('❌ [TEAM SERVICE DEBUG] DioException occurred');
-      print('❌ [TEAM SERVICE DEBUG] Type: ${e.type}');
-      print('❌ [TEAM SERVICE DEBUG] Message: ${e.message}');
 
       if (e.response != null) {
         print(
           '❌ [TEAM SERVICE DEBUG] Response status: ${e.response?.statusCode}',
         );
-        print('❌ [TEAM SERVICE DEBUG] Response data: ${e.response?.data}');
       }
 
       final errorMessage =
           e.response?.data['error'] ?? 'Failed to invite player: ${e.message}';
-      print('❌ [TEAM SERVICE DEBUG] Final error message: $errorMessage');
       throw Exception(errorMessage);
     } catch (e) {
-      print('❌ [TEAM SERVICE DEBUG] General error: $e');
       throw Exception('Failed to invite player: ${e.toString()}');
     }
   }
@@ -356,16 +312,13 @@ class TeamService {
         'message': 'League not found for team',
       };
     } on DioException catch (e) {
-      print('Error finding league for team: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': 'Failed to find league for team: ${e.message}',
       };
     } catch (e) {
-      print('General error finding league for team: $e');
       return {
         'success': false,
         'message': 'Failed to find league for team: ${e.toString()}',
@@ -381,28 +334,16 @@ class TeamService {
     required String newCaptainId,
   }) async {
     try {
-      print('🎯 [TEAM SERVICE DEBUG] Starting transferLeadership API call');
-      print('🎯 [TEAM SERVICE DEBUG] Parameters:');
-      print('   - teamId: $teamId');
-      print('   - newCaptainId: $newCaptainId');
 
       final dio = await _getAuthenticatedDio();
       final endpoint = '${AppConfig.teamEndpoint}/$teamId/transfer-leadership';
-
-      print('🎯 [TEAM SERVICE DEBUG] Endpoint: $endpoint');
-      print('🎯 [TEAM SERVICE DEBUG] Full URL: ${dio.options.baseUrl}$endpoint');
 
       final response = await dio.put(
         endpoint,
         data: {'newCaptainId': newCaptainId},
       );
 
-      print('🎯 [TEAM SERVICE DEBUG] Response received');
-      print('🎯 [TEAM SERVICE DEBUG] Status code: ${response.statusCode}');
-      print('🎯 [TEAM SERVICE DEBUG] Response data: ${response.data}');
-
       if (response.statusCode == 200) {
-        print('✅ [TEAM SERVICE DEBUG] Leadership transferred successfully');
         return true;
       } else {
         print(
@@ -411,22 +352,16 @@ class TeamService {
             'Failed to transfer leadership: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('❌ [TEAM SERVICE DEBUG] DioException occurred');
-      print('❌ [TEAM SERVICE DEBUG] Type: ${e.type}');
-      print('❌ [TEAM SERVICE DEBUG] Message: ${e.message}');
 
       if (e.response != null) {
         print(
             '❌ [TEAM SERVICE DEBUG] Response status: ${e.response?.statusCode}');
-        print('❌ [TEAM SERVICE DEBUG] Response data: ${e.response?.data}');
       }
 
       final errorMessage = e.response?.data['error'] ??
           'Failed to transfer leadership: ${e.message}';
-      print('❌ [TEAM SERVICE DEBUG] Final error message: $errorMessage');
       throw Exception(errorMessage);
     } catch (e) {
-      print('❌ [TEAM SERVICE DEBUG] General error: $e');
       throw Exception('Failed to transfer leadership: ${e.toString()}');
     }
   }
@@ -438,25 +373,13 @@ class TeamService {
     required String playerId,
   }) async {
     try {
-      print('🎯 [TEAM SERVICE DEBUG] Starting removePlayerFromTeam API call');
-      print('🎯 [TEAM SERVICE DEBUG] Parameters:');
-      print('   - teamId: $teamId');
-      print('   - playerId: $playerId');
 
       final dio = await _getAuthenticatedDio();
       final endpoint = '${AppConfig.teamEndpoint}/$teamId/remove-player/$playerId';
 
-      print('🎯 [TEAM SERVICE DEBUG] Endpoint: $endpoint');
-      print('🎯 [TEAM SERVICE DEBUG] Full URL: ${dio.options.baseUrl}$endpoint');
-
       final response = await dio.delete(endpoint);
 
-      print('🎯 [TEAM SERVICE DEBUG] Response received');
-      print('🎯 [TEAM SERVICE DEBUG] Status code: ${response.statusCode}');
-      print('🎯 [TEAM SERVICE DEBUG] Response data: ${response.data}');
-
       if (response.statusCode == 200) {
-        print('✅ [TEAM SERVICE DEBUG] Player removed successfully');
         return true;
       } else {
         print(
@@ -464,22 +387,16 @@ class TeamService {
         throw Exception('Failed to remove player: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('❌ [TEAM SERVICE DEBUG] DioException occurred');
-      print('❌ [TEAM SERVICE DEBUG] Type: ${e.type}');
-      print('❌ [TEAM SERVICE DEBUG] Message: ${e.message}');
 
       if (e.response != null) {
         print(
             '❌ [TEAM SERVICE DEBUG] Response status: ${e.response?.statusCode}');
-        print('❌ [TEAM SERVICE DEBUG] Response data: ${e.response?.data}');
       }
 
       final errorMessage = e.response?.data['error'] ??
           'Failed to remove player: ${e.message}';
-      print('❌ [TEAM SERVICE DEBUG] Final error message: $errorMessage');
       throw Exception(errorMessage);
     } catch (e) {
-      print('❌ [TEAM SERVICE DEBUG] General error: $e');
       throw Exception('Failed to remove player: ${e.toString()}');
     }
   }
@@ -488,32 +405,26 @@ class TeamService {
   /// GET /api/team/:teamId/player-payments
   static Future<Map<String, dynamic>> getTeamPlayerPayments(String teamId) async {
     try {
-      print('💳 Getting player payment statuses for team: $teamId');
       final dio = await _getAuthenticatedDio();
 
       final response = await dio.get('/team/$teamId/player-payments');
 
       if (response.statusCode == 200) {
-        print('✅ Player payment statuses retrieved successfully');
         return response.data;
       } else {
-        print('❌ Failed to get player payment statuses: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to get player payment statuses'
         };
       }
     } on DioException catch (e) {
-      print('❌ DioException getting player payment statuses: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': e.response?.data?['error'] ?? 'Failed to get player payment statuses: ${e.message}'
       };
     } catch (e) {
-      print('❌ General error getting player payment statuses: $e');
       return {
         'success': false,
         'message': 'Error getting player payment statuses: $e'
@@ -521,3 +432,4 @@ class TeamService {
     }
   }
 }
+

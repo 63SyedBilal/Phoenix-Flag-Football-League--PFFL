@@ -45,8 +45,6 @@ class NotificationsProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
-      debugPrint('🔄 Fetching notifications...');
-
       // Fetch both regular notifications and payment data
       final results = await Future.wait([
         NotificationService.getAllNotifications(),
@@ -72,12 +70,9 @@ class NotificationsProvider extends ChangeNotifier {
       // Combine and sort by date (most recent first)
       _notifications = [...convertedNotifications, ...paymentNotifications];
       _notifications.sort((a, b) => b.date.compareTo(a.date));
-
-      debugPrint('✅ Total notifications: ${_notifications.length}');
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error fetching notifications: $e');
       _errorMessage = 'Failed to load notifications';
       _isLoading = false;
       notifyListeners();
@@ -171,7 +166,6 @@ class NotificationsProvider extends ChangeNotifier {
 
       return paymentNotifications;
     } catch (e) {
-      debugPrint('❌ Error fetching payment notifications: $e');
       return [];
     }
   }
@@ -251,3 +245,4 @@ class NotificationsProvider extends ChangeNotifier {
     await fetchNotifications();
   }
 }
+

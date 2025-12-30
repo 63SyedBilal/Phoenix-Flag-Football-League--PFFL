@@ -72,11 +72,7 @@ class FreeAgentActiveLeaguesProvider extends ChangeNotifier {
           .map((league) => _convertToLeagueCreationModel(league))
           .toList();
       _errorMessage = null;
-
-      debugPrint('✅ Fetched ${leagues.length} leagues from backend');
-      debugPrint('✅ Active leagues: ${activeLeagues.length}');
     } catch (e) {
-      debugPrint('❌ Error fetching leagues: $e');
       _errorMessage = 'Failed to load leagues: ${e.toString()}';
       _allLeagues = [];
     } finally {
@@ -107,3 +103,4 @@ class FreeAgentActiveLeaguesProvider extends ChangeNotifier {
     );
   }
 }
+

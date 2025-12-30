@@ -40,7 +40,6 @@ class SponsorBannerProvider extends ChangeNotifier {
     try {
       await _loadSavedImages();
     } catch (e) {
-      debugPrint('Error loading saved images: $e');
       _resetToDefaults();
     }
 
@@ -63,9 +62,7 @@ class SponsorBannerProvider extends ChangeNotifier {
         _sponsorImages = decoded
             .map((item) => Map<String, String>.from(item))
             .toList();
-        debugPrint('Loaded ${_sponsorImages.length} saved sponsor images');
       } catch (e) {
-        debugPrint('Error decoding saved images: $e');
         _resetToDefaults();
       }
     } else {
@@ -77,12 +74,10 @@ class SponsorBannerProvider extends ChangeNotifier {
     _sponsorImages = _defaultImages
         .map((path) => {'type': 'asset', 'path': path})
         .toList();
-    debugPrint('Reset to ${_sponsorImages.length} default images');
   }
 
   Future<void> updateSponsorImages(List<Map<String, String>> newImages) async {
     if (newImages.isEmpty) {
-      debugPrint('Cannot update with empty images, keeping current');
       return;
     }
 
@@ -104,8 +99,6 @@ class SponsorBannerProvider extends ChangeNotifier {
     if (wasPlaying) {
       startAutoPlay();
     }
-
-    debugPrint('Updated sponsor images: ${_sponsorImages.length} images');
   }
 
   Future<void> _saveImages() async {
@@ -113,9 +106,7 @@ class SponsorBannerProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final jsonData = jsonEncode(_sponsorImages);
       await prefs.setString('sponsor_images', jsonData);
-      debugPrint('Saved sponsor images to SharedPreferences');
     } catch (e) {
-      debugPrint('Error saving images: $e');
     }
   }
 
@@ -134,26 +125,20 @@ class SponsorBannerProvider extends ChangeNotifier {
     if (wasPlaying) {
       startAutoPlay();
     }
-
-    debugPrint('Reset to default images');
   }
 
   void startAutoPlay() {
     // Prevent multiple timers
     if (_isAutoPlaying) {
-      debugPrint('Auto play already started, skipping');
       return;
     }
 
     if (_sponsorImages.isEmpty) {
-      debugPrint('No images to play');
       return;
     }
 
     _isAutoPlaying = true;
     _timer?.cancel();
-
-    debugPrint('Starting auto play timer with ${_sponsorImages.length} images');
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_sponsorImages.isNotEmpty) {
         int nextPage = (_currentPage + 1) % _sponsorImages.length;
@@ -164,16 +149,15 @@ class SponsorBannerProvider extends ChangeNotifier {
   }
 
   void stopAutoPlay() {
-    debugPrint('Stopping auto play timer');
     _isAutoPlaying = false;
     _timer?.cancel();
   }
 
   @override
   void dispose() {
-    debugPrint('Disposing SponsorBannerProvider');
     _isAutoPlaying = false;
     _timer?.cancel();
     super.dispose();
   }
 }
+

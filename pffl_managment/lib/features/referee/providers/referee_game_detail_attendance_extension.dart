@@ -146,7 +146,6 @@ extension RefereeGameDetailAttendanceExtension on RefereeGameDetailProvider {
       return true;
     } catch (e) {
       _error = 'Failed to save attendance: $e';
-      debugPrint('❌ Error saving attendance: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -168,3 +167,4 @@ class _AttendanceRefHelper {
     return extractId(data) != null;
   }
 }
+

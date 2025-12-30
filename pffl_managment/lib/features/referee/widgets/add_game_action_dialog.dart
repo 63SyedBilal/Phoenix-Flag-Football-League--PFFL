@@ -136,7 +136,6 @@ class _AddGameActionDialogState extends State<AddGameActionDialog> {
               image ??= profile['image']?.toString();
             }
           } catch (e) {
-            print('Error fetching profile for $playerId: $e');
           }
         }
 
@@ -158,7 +157,6 @@ class _AddGameActionDialogState extends State<AddGameActionDialog> {
         _isLoadingPlayers = false;
       });
     } catch (e) {
-      print('Error loading players: $e');
       setState(() {
         _isLoadingPlayers = false;
       });
@@ -753,3 +751,4 @@ class _AddGameActionDialogState extends State<AddGameActionDialog> {
     }
   }
 }
+

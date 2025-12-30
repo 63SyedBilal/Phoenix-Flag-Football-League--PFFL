@@ -122,8 +122,6 @@ class AuthService {
     // Try each URL until one works
     for (final url in urlsToTry) {
       try {
-        print('=== LOGIN ATTEMPT ===');
-        print('Email: $email');
         print(
           'Platform: ${Platform.isAndroid
               ? "Android"
@@ -131,10 +129,6 @@ class AuthService {
               ? "iOS"
               : "Other"}',
         );
-        print('Trying URL: $url');
-        print('Full login URL: $url${AppConfig.loginEndpoint}');
-        print('Connect timeout: ${AppConfig.connectTimeout.inSeconds}s');
-        print('===================');
 
         // Create a fresh Dio instance for this attempt
         final dio = Dio(
@@ -156,10 +150,6 @@ class AuthService {
           AppConfig.loginEndpoint,
           data: {'email': email.trim(), 'password': password},
         );
-
-        print('✅ Login successful with URL: $url');
-        print('Login response status: ${response.statusCode}');
-        print('Login response data: ${response.data}');
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           final data = response.data;
@@ -189,7 +179,6 @@ class AuthService {
           await saveToken(authResponse.token);
           // Save the working URL for other services to use
           _workingBaseUrl = url;
-          print('💾 Saved working base URL: $url');
           // Update the main Dio instance with working URL
           _dioInstance?.options.baseUrl = url;
           if (_dioInstance != null) {
@@ -204,31 +193,22 @@ class AuthService {
           return null;
         }
       } on DioException catch (e) {
-        print('❌ Failed with URL: $url');
-        print('Error: ${e.message}');
-        print('Error type: ${e.type}');
-        print('Response status: ${e.response?.statusCode}');
-        print('Response data: ${e.response?.data}');
         lastError = e;
 
         // If we got a 401 (Unauthorized), don't try other URLs - this is a valid auth error
         // Rethrow immediately so the auth_provider can handle it
         if (e.response?.statusCode == 401) {
-          print('🔴 401 Unauthorized - rethrowing immediately');
           rethrow;
         }
 
         // If this is not the last URL and it's a connection error, continue to next
         if (url != urlsToTry.last) {
-          print('Trying next URL...');
           continue;
         }
 
         // If all URLs failed, throw the last error
         rethrow;
       } catch (e) {
-        print('❌ Unexpected error with URL: $url');
-        print('Error: $e');
         if (url != urlsToTry.last) {
           continue;
         }
@@ -237,21 +217,15 @@ class AuthService {
     }
 
     // If we get here, all URLs failed
-    print('❌ All URLs failed. Last error: ${lastError?.message}');
 
     // Final error handling
     if (lastError != null) {
-      print('Login Dio error: ${lastError.message}');
-      print('Error type: ${lastError.type}');
 
       // Handle different error types
       if (lastError.type == DioExceptionType.connectionTimeout ||
           lastError.type == DioExceptionType.sendTimeout ||
           lastError.type == DioExceptionType.receiveTimeout) {
-        print('Connection timeout - All URLs failed');
-        print('Tried URLs:');
         for (final url in urlsToTry) {
-          print('  - $url');
         }
       }
 
@@ -272,8 +246,6 @@ class AuthService {
     // Try each URL until one works
     for (final url in urlsToTry) {
       try {
-        print('=== REGISTER ATTEMPT ===');
-        print('Email: ${userData['email']}');
         print(
           'Platform: ${Platform.isAndroid
               ? "Android"
@@ -281,9 +253,6 @@ class AuthService {
               ? "iOS"
               : "Other"}',
         );
-        print('Trying URL: $url');
-        print('Full register URL: $url${AppConfig.registerEndpoint}');
-        print('===================');
 
         // Create a fresh Dio instance for this attempt
         // Use adequate timeout for reliable connections
@@ -304,10 +273,6 @@ class AuthService {
           data: userData,
         );
 
-        print('✅ Register successful with URL: $url');
-        print('Register response status: ${response.statusCode}');
-        print('Register response data: ${response.data}');
-
         if (response.statusCode == 200 || response.statusCode == 201) {
           final data = response.data;
           final authResponse = AuthResponse.fromJson(data);
@@ -317,7 +282,6 @@ class AuthService {
 
           // Save the working URL for other services to use
           _workingBaseUrl = url;
-          print('💾 Saved working base URL: $url');
           // Update the main Dio instance with working URL
           _dioInstance?.options.baseUrl = url;
           if (_dioInstance != null) {
@@ -326,26 +290,19 @@ class AuthService {
 
           return authResponse;
         } else {
-          print('Registration failed with status: ${response.statusCode}');
           return null;
         }
       } on DioException catch (e) {
-        print('❌ Failed with URL: $url');
-        print('Error: ${e.message}');
-        print('Error type: ${e.type}');
         lastError = e;
 
         // If this is not the last URL, continue to next
         if (url != urlsToTry.last) {
-          print('Trying next URL...');
           continue;
         }
 
         // If all URLs failed, throw the last error
         rethrow;
       } catch (e) {
-        print('❌ Unexpected error with URL: $url');
-        print('Error: $e');
         if (url != urlsToTry.last) {
           continue;
         }
@@ -354,21 +311,15 @@ class AuthService {
     }
 
     // If we get here, all URLs failed
-    print('❌ All URLs failed. Last error: ${lastError?.message}');
 
     // Final error handling
     if (lastError != null) {
-      print('Register Dio error: ${lastError.message}');
-      print('Error type: ${lastError.type}');
 
       // Handle different error types
       if (lastError.type == DioExceptionType.connectionTimeout ||
           lastError.type == DioExceptionType.sendTimeout ||
           lastError.type == DioExceptionType.receiveTimeout) {
-        print('Connection timeout - All URLs failed');
-        print('Tried URLs:');
         for (final url in urlsToTry) {
-          print('  - $url');
         }
       }
 
@@ -412,9 +363,6 @@ class AuthService {
     _dio.options.connectTimeout = AppConfig.connectTimeout;
     _dio.options.receiveTimeout = AppConfig.receiveTimeout;
     _dio.options.sendTimeout = AppConfig.sendTimeout;
-
-    print('=== DIO CONFIGURATION ===');
-    print('Base URL: ${_dio.options.baseUrl}');
     print(
       'Platform: ${Platform.isAndroid
           ? "Android"
@@ -422,8 +370,6 @@ class AuthService {
           ? "iOS"
           : "Other"}',
     );
-    print('Connect Timeout: ${_dio.options.connectTimeout?.inSeconds ?? 0}s');
-    print('=======================');
 
     // Add interceptor to automatically attach token to requests
     _dio.interceptors.add(
@@ -454,7 +400,6 @@ class AuthService {
   // Test server connectivity
   static Future<bool> testConnection() async {
     try {
-      print('Testing connection to: $effectiveBaseUrl');
       final response = await _dio.get(
         '/test-db',
         options: Options(
@@ -462,10 +407,8 @@ class AuthService {
           sendTimeout: const Duration(seconds: 300),
         ),
       );
-      print('Connection test successful: ${response.statusCode}');
       return response.statusCode == 200;
     } catch (e) {
-      print('Connection test failed: $e');
       return false;
     }
   }
@@ -477,21 +420,16 @@ class AuthService {
     String newPassword,
   ) async {
     try {
-      print('🔐 [AUTH SERVICE] Starting password change...');
       print(
         '🔐 [AUTH SERVICE] Current password length: ${currentPassword.length}',
       );
-      print('🔐 [AUTH SERVICE] New password length: ${newPassword.length}');
 
       // Check if token exists
       final token = await getToken();
-      print('🔐 [AUTH SERVICE] Token exists: ${token != null}');
       if (token != null) {
-        print('🔐 [AUTH SERVICE] Token preview: ${token.substring(0, 20)}...');
       }
 
       final dio = await getWorkingDio();
-      print('🔐 [AUTH SERVICE] Dio base URL: ${dio.options.baseUrl}');
       print(
         '🔐 [AUTH SERVICE] Making request to: ${dio.options.baseUrl}/user/change-password',
       );
@@ -501,21 +439,13 @@ class AuthService {
         data: {'currentPassword': currentPassword, 'newPassword': newPassword},
       );
 
-      print('🔐 [AUTH SERVICE] Response status: ${response.statusCode}');
-      print('🔐 [AUTH SERVICE] Response data: ${response.data}');
-
       if (response.statusCode == 200) {
-        print('✅ [AUTH SERVICE] Password changed successfully');
         return true;
       } else {
         final error = response.data['error'] ?? 'Failed to change password';
-        print('❌ [AUTH SERVICE] Password change failed: $error');
         throw Exception(error);
       }
     } on DioException catch (e) {
-      print('❌ [AUTH SERVICE] DioException: ${e.message}');
-      print('❌ [AUTH SERVICE] Response status: ${e.response?.statusCode}');
-      print('❌ [AUTH SERVICE] Response data: ${e.response?.data}');
 
       if (e.response != null) {
         final errorData = e.response?.data;
@@ -526,7 +456,6 @@ class AuthService {
       }
       throw Exception('Failed to connect to server');
     } catch (e) {
-      print('❌ [AUTH SERVICE] General error: $e');
       rethrow;
     }
   }
@@ -610,3 +539,4 @@ class UserData {
     };
   }
 }
+

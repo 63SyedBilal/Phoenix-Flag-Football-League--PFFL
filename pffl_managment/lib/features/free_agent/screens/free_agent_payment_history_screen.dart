@@ -52,9 +52,7 @@ class _FreeAgentPaymentHistoryScreenState
         double amount = 0.0;
         try {
           amount = double.parse(pending.amount.replaceAll('\$', '').trim());
-        } catch (e) {
-          print('Error parsing amount: $e');
-        }
+        } catch (e) {}
 
         // Parse dates
         DateTime start = DateTime.now();
@@ -136,11 +134,9 @@ class _FreeAgentPaymentHistoryScreenState
           }
         }
       } catch (e) {
-        print('Error fetching paid payment history: $e');
         // Continue without paid history
       }
     } catch (e) {
-      print('Error loading payment history: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -432,7 +428,6 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
                 else
                   GestureDetector(
                     onTap: () {
-                      // TODO: Show/download receipt
                       _showReceipt(payment);
                     },
                     child: Text(

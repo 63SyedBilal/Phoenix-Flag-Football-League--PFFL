@@ -29,7 +29,6 @@ class GamesProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       // Provider was disposed, ignore
-      debugPrint('GamesProvider: Cannot notify listeners (disposed)');
     }
   }
 
@@ -202,9 +201,7 @@ class GamesProvider extends ChangeNotifier {
     try {
       final leagues = await LeagueService.getAllLeagues();
       _leagues = leagues;
-      debugPrint('✅ Fetched ${leagues.length} leagues');
     } catch (e) {
-      debugPrint('❌ Error fetching leagues: $e');
       _errorMessage = 'Failed to load leagues: ${e.toString()}';
     }
   }
@@ -214,9 +211,7 @@ class GamesProvider extends ChangeNotifier {
     try {
       final matches = await MatchService.getAllMatches();
       _allMatches = matches;
-      debugPrint('✅ Fetched ${matches.length} matches');
     } catch (e) {
-      debugPrint('❌ Error fetching matches: $e');
       _errorMessage = 'Failed to load matches: ${e.toString()}';
     }
   }
@@ -234,7 +229,6 @@ class GamesProvider extends ChangeNotifier {
       await Future.wait([fetchLeagues(), fetchAllMatches()]);
       _errorMessage = null;
     } catch (e) {
-      debugPrint('❌ Error initializing GamesProvider: $e');
       _errorMessage = 'Failed to load data: ${e.toString()}';
     } finally {
       _isLoading = false;
@@ -258,3 +252,4 @@ class GamesProvider extends ChangeNotifier {
     return userRole == 'captain' && isLeagueFeeUnpaid;
   }
 }
+

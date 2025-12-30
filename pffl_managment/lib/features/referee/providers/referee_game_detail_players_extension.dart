@@ -8,8 +8,6 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       );
       return;
     }
-
-    debugPrint('📡 Starting to fetch players for team: $teamId');
     _isLoadingPlayers = true;
     _emitStateChange();
 
@@ -17,7 +15,6 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       final teamData = await TeamService.getTeamById(teamId);
 
       if (teamData == null) {
-        debugPrint('⚠️ No team data found for teamId: $teamId');
         _teamPlayers[teamId] = [];
         return;
       }
@@ -46,9 +43,7 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       for (final player in players) {
         _playerTeamMap[player.id] = teamId;
       }
-      debugPrint('✅ Loaded ${players.length} players for team: $teamId');
     } catch (e) {
-      debugPrint('❌ Error fetching team players: $e');
       _teamPlayers[teamId] = [];
       _error = 'Failed to fetch team players: ${e.toString()}';
     } finally {
@@ -92,7 +87,6 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
         position: 'Unknown',
       );
     } catch (e) {
-      debugPrint('⚠️ Error parsing player data: $e');
       return null;
     }
   }
@@ -246,7 +240,6 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       return true;
     } catch (e) {
       _error = 'Failed to confirm players: $e';
-      debugPrint('❌ Error confirming players: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -264,3 +257,4 @@ class _RefHelper {
     return null;
   }
 }
+

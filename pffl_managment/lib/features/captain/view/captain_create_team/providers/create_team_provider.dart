@@ -251,7 +251,6 @@ class CreateTeamProvider extends ChangeNotifier {
 
       // Update local cache
       await _userPrefs.setHasCreatedTeam(true);
-      print('✅ Team creation saved to local cache');
 
       // Show success sheet
       _showSuccessSheet = true;
@@ -262,7 +261,6 @@ class CreateTeamProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      print('❌ Error submitting team: $e');
       notifyListeners();
       return false;
     }
@@ -290,3 +288,4 @@ class CreateTeamProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

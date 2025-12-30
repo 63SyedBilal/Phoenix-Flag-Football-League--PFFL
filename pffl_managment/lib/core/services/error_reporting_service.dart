@@ -43,11 +43,9 @@ class ErrorReportingService {
 
       _initialized = true;
       if (kDebugMode) {
-        print('✅ Backend-based error reporting initialized');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Failed to initialize error reporting: $e');
       }
     }
   }
@@ -95,7 +93,6 @@ class ErrorReportingService {
     try {
       // Don't report errors in debug mode to avoid spam during development
       if (kDebugMode && !kProfileMode) {
-        print('🐛 [DEBUG ERROR] $title: $error');
         return;
       }
 
@@ -115,13 +112,11 @@ class ErrorReportingService {
       // Send error to backend (fire and forget - don't await)
       unawaited(_sendErrorToBackend(errorData).catchError((e) {
         if (kDebugMode) {
-          print('❌ Failed to send error to backend: $e');
         }
       }));
 
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error in error reporting: $e');
       }
     }
   }
@@ -139,7 +134,6 @@ class ErrorReportingService {
       } catch (e2) {
         // Last resort - just log locally
         if (kDebugMode) {
-          print('❌ All error reporting methods failed: $e, $e2');
         }
       }
     }
@@ -161,7 +155,6 @@ class ErrorReportingService {
     );
 
     if (kDebugMode) {
-      print('📊 Error recorded: $exception');
     }
   }
 
@@ -181,7 +174,6 @@ class ErrorReportingService {
     );
 
     if (kDebugMode) {
-      print('📊 Non-fatal error recorded: $exception');
     }
   }
 
@@ -190,7 +182,6 @@ class ErrorReportingService {
     // Store user ID for future error reports
     _deviceId = userId; // Override device ID with user ID for better tracking
     if (kDebugMode) {
-      print('👤 User ID set for error reporting: $userId');
     }
   }
 
@@ -208,16 +199,13 @@ class ErrorReportingService {
       // Send log to backend (fire and forget)
       unawaited(_sendLogToBackend(logData).catchError((e) {
         if (kDebugMode) {
-          print('❌ Failed to send log to backend: $e');
         }
       }));
 
       if (kDebugMode) {
-        print('📝 Error log: $message');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error in logging: $e');
       }
     }
   }
@@ -251,3 +239,4 @@ class ErrorReportingService {
   static bool get isInitialized => _initialized;
   static String? get deviceId => _deviceId;
 }
+

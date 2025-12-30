@@ -69,11 +69,9 @@ class _ChangePassowrdState extends State<ChangePassowrd> {
     setState(() => _isLoading = true);
 
     try {
-      print('🔐 Attempting to change password...');
       final success = await AuthService.changePassword(current, newPass);
 
       if (success && mounted) {
-        print('✅ Password changed successfully');
         _showSnackBar('Password changed successfully', Colors.green);
 
         // Clear fields
@@ -87,7 +85,6 @@ class _ChangePassowrdState extends State<ChangePassowrd> {
         });
       }
     } catch (e) {
-      print('❌ Password change error: $e');
       if (mounted) {
         String errorMessage = e.toString().replaceAll('Exception: ', '');
 
@@ -249,3 +246,4 @@ class _ChangePassowrdState extends State<ChangePassowrd> {
     );
   }
 }
+

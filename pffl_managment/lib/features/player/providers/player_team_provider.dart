@@ -56,20 +56,16 @@ class PlayerTeamProvider extends ChangeNotifier {
 
       // Create TeamModel for both formats
       // The team API returns players with profileImage, jerseyNumber, position populated
-      print('🔍 [TEAM DEBUG] Raw team data: $teamData');
 
       final team5v5 = TeamModel.fromJson(teamData, '5v5');
       final team7v7 = TeamModel.fromJson(teamData, '7v7');
 
       // Log the team data to verify profile images are present
-      print('🔍 [TEAM DEBUG] Team 5v5 players (${team5v5.players.length}):');
       for (var player in team5v5.players) {
         print(
           '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
         );
       }
-
-      print('🔍 [TEAM DEBUG] Team 7v7 players (${team7v7.players.length}):');
       for (var player in team7v7.players) {
         print(
           '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
@@ -83,7 +79,6 @@ class PlayerTeamProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load team data: ${e.toString()}';
-      print('❌ Error loading team data: $e');
       notifyListeners();
     }
   }
@@ -93,3 +88,4 @@ class PlayerTeamProvider extends ChangeNotifier {
     await loadTeamData(userId: userId);
   }
 }
+

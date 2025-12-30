@@ -16,32 +16,26 @@ class TournamentService {
   /// GET /api/league/:leagueId/top-teams
   Future<Map<String, dynamic>> getTopTeams(String leagueId) async {
     try {
-      debugPrint('🏆 Getting top teams for league: $leagueId');
       final dio = await _getAuthenticatedDio();
 
       final response = await dio.get('${AppConfig.baseUrl}/league/$leagueId/top-teams');
 
       if (response.statusCode == 200) {
-        debugPrint('✅ Top teams fetched successfully');
         return response.data;
       } else {
-        debugPrint('❌ Failed to get top teams: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to get top teams'
         };
       }
     } on DioException catch (e) {
-      debugPrint('❌ DioException getting top teams: ${e.message}');
       if (e.response != null) {
-        debugPrint('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': e.response?.data?['error'] ?? 'Failed to get top teams: ${e.message}'
       };
     } catch (e) {
-      debugPrint('❌ General error getting top teams: $e');
       return {
         'success': false,
         'message': 'Error getting top teams: $e'
@@ -59,7 +53,6 @@ class TournamentService {
     List<String>? statKeeperIds,
   }) async {
     try {
-      debugPrint('🏆 Creating semi-finals for league: $leagueId');
       final dio = await _getAuthenticatedDio();
 
       final data = {
@@ -75,26 +68,21 @@ class TournamentService {
       );
 
       if (response.statusCode == 201) {
-        debugPrint('✅ Semi-final matches created successfully');
         return response.data;
       } else {
-        debugPrint('❌ Failed to create semi-finals: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to create semi-finals'
         };
       }
     } on DioException catch (e) {
-      debugPrint('❌ DioException creating semi-finals: ${e.message}');
       if (e.response != null) {
-        debugPrint('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': e.response?.data?['error'] ?? 'Failed to create semi-finals: ${e.message}'
       };
     } catch (e) {
-      debugPrint('❌ General error creating semi-finals: $e');
       return {
         'success': false,
         'message': 'Error creating semi-finals: $e'
@@ -112,7 +100,6 @@ class TournamentService {
     required String statKeeperId,
   }) async {
     try {
-      debugPrint('🏆 Creating final for league: $leagueId');
       final dio = await _getAuthenticatedDio();
 
       final data = {
@@ -128,26 +115,21 @@ class TournamentService {
       );
 
       if (response.statusCode == 201) {
-        debugPrint('✅ Final match created successfully');
         return response.data;
       } else {
-        debugPrint('❌ Failed to create final: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to create final'
         };
       }
     } on DioException catch (e) {
-      debugPrint('❌ DioException creating final: ${e.message}');
       if (e.response != null) {
-        debugPrint('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': e.response?.data?['error'] ?? 'Failed to create final: ${e.message}'
       };
     } catch (e) {
-      debugPrint('❌ General error creating final: $e');
       return {
         'success': false,
         'message': 'Error creating final: $e'
@@ -159,32 +141,26 @@ class TournamentService {
   /// POST /api/league/:leagueId/complete-tournament
   Future<Map<String, dynamic>> completeTournament(String leagueId) async {
     try {
-      debugPrint('🏆 Completing tournament for league: $leagueId');
       final dio = await _getAuthenticatedDio();
 
       final response = await dio.post('${AppConfig.baseUrl}/league/$leagueId/complete-tournament');
 
       if (response.statusCode == 200) {
-        debugPrint('✅ Tournament completed successfully');
         return response.data;
       } else {
-        debugPrint('❌ Failed to complete tournament: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to complete tournament'
         };
       }
     } on DioException catch (e) {
-      debugPrint('❌ DioException completing tournament: ${e.message}');
       if (e.response != null) {
-        debugPrint('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': e.response?.data?['error'] ?? 'Failed to complete tournament: ${e.message}'
       };
     } catch (e) {
-      debugPrint('❌ General error completing tournament: $e');
       return {
         'success': false,
         'message': 'Error completing tournament: $e'
@@ -196,32 +172,26 @@ class TournamentService {
   /// GET /api/league/:leagueId/bracket
   Future<Map<String, dynamic>> getTournamentBracket(String leagueId) async {
     try {
-      debugPrint('🏆 Getting tournament bracket for league: $leagueId');
       final dio = await _getAuthenticatedDio();
 
       final response = await dio.get('${AppConfig.baseUrl}/league/$leagueId/bracket');
 
       if (response.statusCode == 200) {
-        debugPrint('✅ Tournament bracket fetched successfully');
         return response.data;
       } else {
-        debugPrint('❌ Failed to get tournament bracket: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to get tournament bracket'
         };
       }
     } on DioException catch (e) {
-      debugPrint('❌ DioException getting tournament bracket: ${e.message}');
       if (e.response != null) {
-        debugPrint('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': e.response?.data?['error'] ?? 'Failed to get tournament bracket: ${e.message}'
       };
     } catch (e) {
-      debugPrint('❌ General error getting tournament bracket: $e');
       return {
         'success': false,
         'message': 'Error getting tournament bracket: $e'
@@ -238,7 +208,6 @@ class TournamentService {
     String? tiebreakerType,
   }) async {
     try {
-      debugPrint('🏆 Setting winner for match: $matchId');
       final dio = await _getAuthenticatedDio();
 
       final data = {
@@ -253,26 +222,21 @@ class TournamentService {
       );
 
       if (response.statusCode == 200) {
-        debugPrint('✅ Match winner set successfully');
         return response.data;
       } else {
-        debugPrint('❌ Failed to set match winner: ${response.statusMessage}');
         return {
           'success': false,
           'message': response.statusMessage ?? 'Failed to set match winner'
         };
       }
     } on DioException catch (e) {
-      debugPrint('❌ DioException setting match winner: ${e.message}');
       if (e.response != null) {
-        debugPrint('Error response: ${e.response?.data}');
       }
       return {
         'success': false,
         'message': e.response?.data?['error'] ?? 'Failed to set match winner: ${e.message}'
       };
     } catch (e) {
-      debugPrint('❌ General error setting match winner: $e');
       return {
         'success': false,
         'message': 'Error setting match winner: $e'
@@ -280,3 +244,4 @@ class TournamentService {
     }
   }
 }
+

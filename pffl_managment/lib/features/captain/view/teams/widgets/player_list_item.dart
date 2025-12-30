@@ -19,9 +19,6 @@ class PlayerListItem extends StatelessWidget {
         final canRemove = isCaptain && !player.isCaptain;
         // Get actual payment status from provider
         final actualPaymentStatus = teamProvider.getPlayerPaymentStatus(player.id);
-
-        print('🔍 [PLAYER LIST DEBUG] User role: "${authProvider.userRole}"');
-        print('🔍 [PLAYER LIST DEBUG] Is captain: $isCaptain');
         print(
           '🔍 [PLAYER LIST DEBUG] Player: ${player.name}, isCaptain: ${player.isCaptain}',
         );
@@ -40,7 +37,6 @@ class PlayerListItem extends StatelessWidget {
               // Debug logging for image URL
               Builder(
                 builder: (context) {
-                  print('🖼️ [PLAYER IMAGE DEBUG] ==================');
                   print(
                     '🖼️ [PLAYER IMAGE DEBUG] Player: ${player.name}',
                   );
@@ -65,7 +61,6 @@ class PlayerListItem extends StatelessWidget {
                   print(
                     '🖼️ [PLAYER IMAGE DEBUG] Position: "${player.position}"',
                   );
-                  print('🖼️ [PLAYER IMAGE DEBUG] ==================');
                   return UserAvatarWidget(
                     imageUrl: player.imageUrl,
                     size: 48,
@@ -295,3 +290,4 @@ class PlayerListItem extends StatelessWidget {
     );
   }
 }
+

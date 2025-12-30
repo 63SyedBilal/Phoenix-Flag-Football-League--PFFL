@@ -116,7 +116,6 @@ class AuthProvider extends ChangeNotifier {
     String password,
     BuildContext context,
   ) async {
-    print('Attempting login with email: $email');
     // Clear previous errors
     clearLoginErrors();
 
@@ -171,7 +170,6 @@ class AuthProvider extends ChangeNotifier {
             platform: 'mobile',
           );
         } catch (e) {
-          print('⚠️ Failed to register device token on login: $e');
           // Don't fail login for this
         }
 
@@ -187,7 +185,6 @@ class AuthProvider extends ChangeNotifier {
       }
     } on DioException catch (e) {
       // Handle network errors with field-specific error messages
-      print('Login API error: ${e.message}');
 
       // Report non-fatal error to backend
       await ErrorReportingService.recordNonFatalError(
@@ -199,7 +196,6 @@ class AuthProvider extends ChangeNotifier {
       if (e.response?.statusCode == 401) {
         // Authentication error - check errorType from backend
         final errorData = e.response?.data;
-        print('🔴 401 Error Data: $errorData');
 
         final errorType = errorData is Map
             ? (errorData['errorType'] ?? '').toString()
@@ -208,16 +204,11 @@ class AuthProvider extends ChangeNotifier {
             ? (errorData['error'] ?? '').toString()
             : '';
 
-        print('🔴 errorType: $errorType');
-        print('🔴 errorMessage: $errorMessage');
-
         // Handle specific error types from backend
         if (errorType == 'email_not_found') {
           _loginEmailError = 'Email does not exist.';
-          print('✅ Setting email error: Email does not exist.');
         } else if (errorType == 'invalid_password') {
           _loginPasswordError = 'Password is wrong';
-          print('✅ Setting password error: Password is wrong');
         } else if (errorType == 'password_not_set') {
           _loginPasswordError =
               'Account setup incomplete. Please reset your password.';
@@ -225,17 +216,14 @@ class AuthProvider extends ChangeNotifier {
         // Fallback: parse error message for password
         else if (errorMessage.toLowerCase().contains('password')) {
           _loginPasswordError = 'Password is wrong';
-          print('✅ Fallback - Setting password error: Password is wrong');
         }
         // Fallback: parse error message for email
         else if (errorMessage.toLowerCase().contains('email')) {
           _loginEmailError = 'Email does not exist.';
-          print('✅ Fallback - Setting email error: Email does not exist.');
         }
         // Default - password error
         else {
           _loginPasswordError = 'Password is wrong';
-          print('✅ Default - Setting password error: Password is wrong');
         }
       } else if (e.response?.statusCode == 404) {
         // Service not found - show connection error
@@ -282,7 +270,6 @@ class AuthProvider extends ChangeNotifier {
       return false;
     } catch (e) {
       // Handle general errors - show error message
-      print('Login general error: $e');
 
       // Report error to backend
       await ErrorReportingService.recordError(
@@ -301,7 +288,6 @@ class AuthProvider extends ChangeNotifier {
   // Logout method
   Future<void> logout(BuildContext context) async {
     try {
-      print('🔄 [AUTH PROVIDER] Starting logout process...');
 
       // Clear all user data
       _isLoggedIn = false;
@@ -319,22 +305,14 @@ class AuthProvider extends ChangeNotifier {
         try {
           await DeviceService.unregisterDeviceToken(_userId);
         } catch (e) {
-          print('⚠️ Failed to unregister device token on logout: $e');
           // Don't fail logout for this
         }
       }
-
-      print('🔄 [AUTH PROVIDER] Clearing user preferences...');
       await _userPreferenceProvider.logout();
-
-      print('🔄 [AUTH PROVIDER] Clearing auth service token...');
       // Also clear token from AuthService
       await AuthService.clearToken();
-
-      print('✅ [AUTH PROVIDER] Logout completed successfully');
       notifyListeners();
     } catch (e) {
-      print('❌ [AUTH PROVIDER] Error during logout: $e');
       // Even if there's an error, we should still clear local data
       _isLoggedIn = false;
       _userToken = '';
@@ -396,8 +374,6 @@ class AuthProvider extends ChangeNotifier {
     if (_userData == null) return;
 
     try {
-      debugPrint('🔄 [AUTH PROVIDER] Refreshing user data...');
-      debugPrint('🔄 [AUTH PROVIDER] Current role: ${_userData!.role}');
 
       final dio = await AuthService.getWorkingDio();
       final response = await dio.get('/user/${_userData!.id}');
@@ -443,14 +419,10 @@ class AuthProvider extends ChangeNotifier {
 
           // Ensure role is not changed in preferences
           await _userPreferenceProvider.setUserRole(originalRole);
-
-          debugPrint('✅ [AUTH PROVIDER] User data refreshed successfully');
-          debugPrint('✅ [AUTH PROVIDER] Role preserved: $originalRole');
           notifyListeners();
         }
       }
     } catch (e) {
-      debugPrint('⚠️ [AUTH PROVIDER] Failed to refresh user data: $e');
       // Don't throw error, just log it
     }
   }
@@ -467,8 +439,6 @@ class AuthProvider extends ChangeNotifier {
     if (_userData == null) return;
 
     try {
-      debugPrint('🔄 [AUTH PROVIDER] Updating profile data...');
-      debugPrint('🔄 [AUTH PROVIDER] Preserving role: ${_userData!.role}');
 
       // Update user data while preserving role and other critical fields
       final updatedUserData = UserData(
@@ -506,12 +476,9 @@ class AuthProvider extends ChangeNotifier {
       if (imageUrl != null) {
         await _userPreferenceProvider.setProfileImage(imageUrl);
       }
-
-      debugPrint('✅ [AUTH PROVIDER] Profile data updated successfully');
-      debugPrint('✅ [AUTH PROVIDER] Role preserved: ${_userData!.role}');
       notifyListeners();
     } catch (e) {
-      debugPrint('⚠️ [AUTH PROVIDER] Failed to update profile data: $e');
     }
   }
 }
+

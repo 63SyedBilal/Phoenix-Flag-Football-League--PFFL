@@ -13,24 +13,18 @@ class ApprovedStatsService {
     try {
       final dio = await _getAuthenticatedDio();
 
-      print('📤 [APPROVED STATS DEBUG] Fetching all approved stats...');
-
       final response = await dio.get(
         '/stats',
         queryParameters: {'status': 'APPROVED'},
       );
 
-      print('✅ [APPROVED STATS DEBUG] Status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? [];
-        print('✅ [APPROVED STATS DEBUG] Found ${data.length} approved stats');
         return data.cast<Map<String, dynamic>>();
       } else {
         throw Exception('Failed to fetch approved stats');
       }
     } catch (e) {
-      print('❌ Error fetching approved stats: $e');
       throw Exception('Failed to fetch approved stats: ${e.toString()}');
     }
   }
@@ -51,8 +45,6 @@ class ApprovedStatsService {
         queryParameters: {'status': 'APPROVED', 'leagueId': leagueId},
       );
 
-      print('✅ [APPROVED STATS DEBUG] Status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? [];
         print(
@@ -63,7 +55,6 @@ class ApprovedStatsService {
         throw Exception('Failed to fetch approved stats for league');
       }
     } catch (e) {
-      print('❌ Error fetching approved stats for league: $e');
       throw Exception(
         'Failed to fetch approved stats for league: ${e.toString()}',
       );
@@ -86,8 +77,6 @@ class ApprovedStatsService {
         queryParameters: {'status': 'APPROVED', 'matchId': matchId},
       );
 
-      print('✅ [APPROVED STATS DEBUG] Status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? [];
         print(
@@ -98,10 +87,10 @@ class ApprovedStatsService {
         throw Exception('Failed to fetch approved stats for match');
       }
     } catch (e) {
-      print('❌ Error fetching approved stats for match: $e');
       throw Exception(
         'Failed to fetch approved stats for match: ${e.toString()}',
       );
     }
   }
 }
+

@@ -296,7 +296,6 @@ class LeagueGamesProvider extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Failed to load data: ${e.toString()}';
-      debugPrint('Error initializing LeagueGamesProvider: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -312,7 +311,6 @@ class LeagueGamesProvider extends ChangeNotifier {
     try {
       _allGames = await MatchService.getMatchesByLeague(leagueId);
     } catch (e) {
-      debugPrint('Error fetching games: $e');
       rethrow;
     }
   }
@@ -324,7 +322,6 @@ class LeagueGamesProvider extends ChangeNotifier {
         _leagueTeams = league.teams;
       }
     } catch (e) {
-      debugPrint('Error fetching teams: $e');
       rethrow;
     }
   }
@@ -376,3 +373,4 @@ class FinalMatch {
     this.game,
   });
 }
+

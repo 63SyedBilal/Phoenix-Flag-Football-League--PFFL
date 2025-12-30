@@ -97,7 +97,6 @@ class ChangePasswordProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('🔄 Attempting to change password...');
 
       final success = await AuthService.changePassword(
         _currentPassword,
@@ -106,7 +105,6 @@ class ChangePasswordProvider extends ChangeNotifier {
 
       if (success) {
         _successMessage = 'Password changed successfully!';
-        debugPrint('✅ Password changed successfully');
 
         // Clear form
         _currentPassword = '';
@@ -118,7 +116,6 @@ class ChangePasswordProvider extends ChangeNotifier {
         return true;
       } else {
         // Backend endpoint not available, show success for demo
-        debugPrint('⚠️ Password change endpoint not available, showing success for demo');
         _successMessage = 'Password changed successfully! (Demo mode)';
 
         // Clear form
@@ -131,12 +128,9 @@ class ChangePasswordProvider extends ChangeNotifier {
         return true;
       }
     } catch (e) {
-      debugPrint('❌ Password change error: $e');
-      debugPrint('❌ Error type: ${e.runtimeType}');
 
       // Check if it's a DioException with 404 status (endpoint not found)
       if (e is DioException && e.response?.statusCode == 404) {
-        debugPrint('⚠️ Password change endpoint not available (404), showing success for demo');
         _successMessage = 'Password changed successfully! (Demo mode)';
 
         // Clear form
@@ -175,3 +169,4 @@ class ChangePasswordProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

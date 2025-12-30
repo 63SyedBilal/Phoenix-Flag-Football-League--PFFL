@@ -54,7 +54,6 @@ class PendingPaymentProvider extends ChangeNotifier {
 
       // 1. Get User's Team
       Map<String, dynamic>? team;
-      print('🔍 Checking team for Role: $userRole');
 
       if (userRole?.toLowerCase() == 'captain') {
         team = await TeamService.getTeamByCaptain();
@@ -63,18 +62,13 @@ class PendingPaymentProvider extends ChangeNotifier {
       }
 
       if (team == null) {
-        print('⚠️ No team found for user $userId');
         _isLoading = false;
         notifyListeners();
         return;
       }
 
-      print('✅ Found Team: ${team['teamName']}');
-      print('   Team Keys: ${team.keys.toList()}');
-
       // 2. Get League for the Team
       final unpaidPayments = await PaymentService.fetchUnpaidPayments();
-      print('💰 Unpaid Payments: ${unpaidPayments.length}');
 
       if (unpaidPayments.isNotEmpty) {
         final leaguePayment = unpaidPayments.firstWhere(
@@ -93,8 +87,6 @@ class PendingPaymentProvider extends ChangeNotifier {
           } else if (leagueIdRaw is String) {
             leagueId = leagueIdRaw;
           }
-
-          print('🔗 Found unpaid payment for league: $leagueId');
 
           if (leagueId != null) {
             final league = await LeagueService.getLeagueById(leagueId);
@@ -130,13 +122,9 @@ class PendingPaymentProvider extends ChangeNotifier {
           leagueId = team['league'];
         }
 
-        print('🔍 Extracted League ID from Team: $leagueId');
-
         if (leagueId != null && leagueId.isNotEmpty) {
           // Check payment status for this league
-          print('💳 Checking payment status for league $leagueId...');
           final payment = await PaymentService.getOrCreatePayment(leagueId);
-          print('   Payment Status: ${payment?['status']}');
 
           if (payment != null && payment['status'] != 'paid') {
             final league = await LeagueService.getLeagueById(leagueId);
@@ -159,7 +147,6 @@ class PendingPaymentProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print('Error loading pending payment: $e');
       _error = e.toString();
     } finally {
       _isLoading = false;
@@ -185,3 +172,4 @@ class PendingPaymentProvider extends ChangeNotifier {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }
+

@@ -984,7 +984,6 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
         );
       }
     } catch (e) {
-      print('❌ Error downloading receipt: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1041,3 +1040,4 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
     );
   }
 }
+

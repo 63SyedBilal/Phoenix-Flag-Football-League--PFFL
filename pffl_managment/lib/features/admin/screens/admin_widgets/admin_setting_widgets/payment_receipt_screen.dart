@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/core/services/pdf_service.dart';
 import 'refund_reason_provider.dart';
 import 'refund_dropdown.dart';
 
@@ -10,9 +11,7 @@ Future<void> showRefundDialog(BuildContext context) {
     context: context,
     builder: (context) {
       return Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
           child: Column(
@@ -23,10 +22,7 @@ Future<void> showRefundDialog(BuildContext context) {
               Center(
                 child: Text(
                   "Refund Payment",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
               ),
 
@@ -37,10 +33,7 @@ Future<void> showRefundDialog(BuildContext context) {
                 child: Text(
                   "Are you sure you want to refund\nthis payment?",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ),
 
@@ -49,10 +42,7 @@ Future<void> showRefundDialog(BuildContext context) {
               // Refund Reason label
               Text(
                 "Refund Reason",
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
               ),
 
               SizedBox(height: 8),
@@ -61,8 +51,6 @@ Future<void> showRefundDialog(BuildContext context) {
               RefundDropdown(),
 
               SizedBox(height: 12),
-
-            
 
               SizedBox(height: 25),
 
@@ -102,7 +90,7 @@ class PaymentReceiptScreen extends StatefulWidget {
   final Map<String, dynamic> paymentData;
 
   const PaymentReceiptScreen({Key? key, required this.paymentData})
-      : super(key: key);
+    : super(key: key);
 
   @override
   _PaymentReceiptScreenState createState() => _PaymentReceiptScreenState();
@@ -125,9 +113,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
-                      ArrowBackButton(
-                        onPressed: () => Navigator.pop(context),
-                      ),
+                      ArrowBackButton(onPressed: () => Navigator.pop(context)),
                     ],
                   ),
                 ),
@@ -165,9 +151,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.black,
-                              ),
+                              border: Border.all(color: Colors.black),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,22 +168,50 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                 const SizedBox(height: 12),
 
                                 // Transaction Details
-                                _buildDetailRow('Transaction ID:', 'STRP-98234723'),
-                                _buildDetailRow('Date:', '09 Dec 2025'),
-                                _buildDetailRow('Email:', 'alexmorgan@pffl.com'),
-                                _buildDetailRow('Player:', 'Alex Morgan'),
-                                _buildDetailRow('Team:', 'Red Cobras'),
-                                _buildDetailRow('Refund Reason', 'Others'),
-                                _buildDetailRow('League:', 'Phoenix Winter 2025'),
-                                _buildDetailRow('Total Amount:', '\$25'),
-                                _buildDetailRow('Method:', 'Stripe'),
-                                
+                                _buildDetailRow(
+                                  'Transaction ID:',
+                                  widget.paymentData['transactionId'] ?? 'N/A',
+                                ),
+                                _buildDetailRow(
+                                  'Date:',
+                                  widget.paymentData['date'] ?? 'N/A',
+                                ),
+                                _buildDetailRow(
+                                  'Email:',
+                                  widget.paymentData['email'] ?? 'N/A',
+                                ),
+                                _buildDetailRow(
+                                  'Player:',
+                                  widget.paymentData['player'] ?? 'Unknown',
+                                ),
+                                _buildDetailRow(
+                                  'Team:',
+                                  widget.paymentData['team'] ?? 'Unknown',
+                                ),
+                                if (widget.paymentData['refundReason'] != null)
+                                  _buildDetailRow(
+                                    'Refund Reason',
+                                    widget.paymentData['refundReason'],
+                                  ),
+                                _buildDetailRow(
+                                  'League:',
+                                  widget.paymentData['league'] ?? 'Unknown',
+                                ),
+                                _buildDetailRow(
+                                  'Total Amount:',
+                                  widget.paymentData['amount'] ?? '\$0',
+                                ),
+                                _buildDetailRow(
+                                  'Method:',
+                                  widget.paymentData['method'] ?? 'N/A',
+                                ),
+
                                 // Status
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: Row(
-                                    children: const [
-                                      Text(
+                                    children: [
+                                      const Text(
                                         'Status: ',
                                         style: TextStyle(
                                           fontSize: 16,
@@ -207,8 +219,8 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                         ),
                                       ),
                                       Text(
-                                        'Paid',
-                                        style: TextStyle(
+                                        widget.paymentData['status'] ?? 'Paid',
+                                        style: const TextStyle(
                                           fontSize: 16,
                                           color: Color(0xFF3B82F6),
                                         ),
@@ -219,10 +231,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                 const SizedBox(height: 6),
 
                                 // Divider
-                                Container(
-                                  height: 1,
-                                  color: Colors.black,
-                                ),
+                                Container(height: 1, color: Colors.black),
                                 const SizedBox(height: 18),
 
                                 // View League Details
@@ -233,7 +242,8 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                     });
                                   },
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text(
                                         'View League Details',
@@ -262,7 +272,9 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                         height: 30,
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(50),
+                                          borderRadius: BorderRadius.circular(
+                                            50,
+                                          ),
                                           border: Border.all(
                                             color: Colors.black,
                                             width: 0.5,
@@ -291,7 +303,8 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
 
                                   // Format and League Fee
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text(
                                         'Format',
@@ -313,7 +326,8 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text(
                                         'League Fee',
@@ -335,7 +349,8 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text(
                                         'Refundable',
@@ -365,7 +380,8 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                                       borderRadius: BorderRadius.circular(200),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         const Text(
                                           'View League',
@@ -389,7 +405,60 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          CustomButton(text: "Download receipt", onPressed: () {}),
+                          CustomButton(
+                            text: "Download receipt",
+                            onPressed: () async {
+                              final paymentId = widget.paymentData['id'];
+                              if (paymentId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Payment ID not found'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              try {
+                                // Show loading indicator
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+
+                                await PdfService.generateAndShareReceipt(
+                                  paymentId,
+                                );
+
+                                // Close loading dialog
+                                if (mounted) Navigator.pop(context);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Receipt downloaded successfully',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e) {
+                                // Close loading dialog
+                                if (mounted) Navigator.pop(context);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Failed to download receipt: $e',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
                           const SizedBox(height: 12),
 
                           CustomButton(
@@ -418,19 +487,13 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF6A7282),
-            ),
+            style: const TextStyle(fontSize: 16, color: Color(0xFF6A7282)),
           ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF6A7282),
-              ),
+              style: const TextStyle(fontSize: 16, color: Color(0xFF6A7282)),
             ),
           ),
         ],

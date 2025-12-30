@@ -91,11 +91,9 @@ class PerformanceProvider extends ChangeNotifier {
       if (_performance == null) {
         _errorMessage = 'No performance data available';
       } else {
-        debugPrint('✅ Performance data loaded successfully');
       }
     } catch (e) {
       _errorMessage = 'Failed to load performance data: ${e.toString()}';
-      debugPrint('❌ Error loading performance: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -142,3 +140,4 @@ class PerformanceProvider extends ChangeNotifier {
     }
   }
 }
+
