@@ -52,8 +52,7 @@ class _FreeAgentPaymentHistoryScreenState
         double amount = 0.0;
         try {
           amount = double.parse(pending.amount.replaceAll('\$', '').trim());
-        } catch (e) {
-        }
+        } catch (e) {}
 
         // Parse dates
         DateTime start = DateTime.now();
@@ -429,7 +428,6 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
                 else
                   GestureDetector(
                     onTap: () {
-                      // TODO: Show/download receipt
                       _showReceipt(payment);
                     },
                     child: Text(
@@ -763,4 +761,3 @@ class MatchDetails {
 
   MatchDetails({required this.matchTime, required this.teams});
 }
-

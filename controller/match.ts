@@ -18,7 +18,7 @@ function getToken(req: NextRequest): string | null {
 async function verifyUser(req: NextRequest) {
   const token = getToken(req);
   if (!token) throw new Error("No token provided");
-  
+
   const decoded = verifyAccessToken(token);
   return decoded;
 }
@@ -103,6 +103,38 @@ function toMatchDTO(match: any) {
     match.teamA?.score ?? match.homeScore ?? 0;
   dto.awayScore =
     match.teamB?.score ?? match.awayScore ?? 0;
+
+  // Merge player actions into a unified timeline
+  const actions: any[] = [];
+  if (match.teamA?.playerActions) {
+    match.teamA.playerActions.forEach((a: any) => {
+      actions.push({
+        ...a,
+        teamId: homeTeamId,
+        teamName: homeTeam,
+        isHome: true
+      });
+    });
+  }
+  if (match.teamB?.playerActions) {
+    match.teamB.playerActions.forEach((a: any) => {
+      actions.push({
+        ...a,
+        teamId: awayTeamId,
+        teamName: awayTeam,
+        isHome: false
+      });
+    });
+  }
+
+  // Sort actions by timestamp
+  actions.sort((a, b) => {
+    const timeA = new Date(a.timestamp || 0).getTime();
+    const timeB = new Date(b.timestamp || 0).getTime();
+    return timeA - timeB;
+  });
+
+  dto.actions = actions;
 
   return dto;
 }
@@ -284,19 +316,19 @@ export async function createMatch(req: NextRequest) {
     console.log("🎮 [GAME CREATED] Team A Initial Side:", teamASide);
     console.log("🎮 [GAME CREATED] Team B Initial Side:", teamBSide);
     console.log("🎮 [GAME CREATED] Created By (Admin ID):", createdByObjectId.toString());
-    
+
     if (refereeId) {
       console.log("🎮 [GAME CREATED] Referee Assigned:", refereeId);
     } else {
       console.log("🎮 [GAME CREATED] No referee assigned");
     }
-    
+
     if (statKeeperId) {
       console.log("🎮 [GAME CREATED] Stat Keeper Assigned:", statKeeperId);
     } else {
       console.log("🎮 [GAME CREATED] No stat keeper assigned");
     }
-    
+
     console.log("🎮 [GAME CREATED] ================================");
 
     // Create notifications for assigned referee and stat keeper
@@ -313,7 +345,7 @@ export async function createMatch(req: NextRequest) {
       try {
         const refereeObjectId = toObjectId(refereeId);
         console.log("🔔 [REFEREE NOTIFICATION] Creating notification for referee:", refereeObjectId.toString());
-        
+
         // Verify the referee user exists
         const refereeUser = await User.findById(refereeObjectId);
         if (!refereeUser) {
@@ -328,7 +360,7 @@ export async function createMatch(req: NextRequest) {
             lastName: refereeUser.lastName
           });
         }
-        
+
         console.log("🔔 [REFEREE NOTIFICATION] Notification data:", {
           sender: senderId.toString(),
           receiver: refereeObjectId.toString(),
@@ -337,7 +369,7 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
-        
+
         const refereeNotification = await Notification.create({
           sender: senderId,
           receiver: refereeObjectId,
@@ -346,7 +378,7 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
-        
+
         notifications.push(refereeNotification);
         console.log("✅ [REFEREE NOTIFICATION] Notification created successfully:", {
           notificationId: refereeNotification._id.toString(),
@@ -357,7 +389,7 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
-        
+
         // Verify the notification was saved correctly
         const savedNotification = await Notification.findById(refereeNotification._id);
         if (savedNotification) {
@@ -393,13 +425,13 @@ export async function createMatch(req: NextRequest) {
       try {
         const statKeeperObjectId = toObjectId(statKeeperId);
         console.log("🔔 [STATKEEPER NOTIFICATION] Creating notification for stat keeper:", statKeeperObjectId.toString());
-        
+
         // Verify the stat keeper user exists
         const statKeeperUser = await User.findById(statKeeperObjectId);
         if (!statKeeperUser) {
           console.error("❌ [STATKEEPER NOTIFICATION] Stat keeper user not found in database:", statKeeperObjectId.toString());
           console.error("❌ [STATKEEPER NOTIFICATION] This means the admin panel passed an invalid user ID");
-          
+
           // Try to find the user by email to help debug
           const statKeeperByEmail = await User.findOne({ email: "statkeeper1@gmail.com" });
           if (statKeeperByEmail) {
@@ -422,7 +454,7 @@ export async function createMatch(req: NextRequest) {
             lastName: statKeeperUser.lastName
           });
         }
-        
+
         console.log("🔔 [STATKEEPER NOTIFICATION] Notification data:", {
           sender: senderId.toString(),
           receiver: statKeeperObjectId.toString(),
@@ -431,7 +463,7 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
-        
+
         const statKeeperNotification = await Notification.create({
           sender: senderId,
           receiver: statKeeperObjectId,
@@ -440,7 +472,7 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
-        
+
         notifications.push(statKeeperNotification);
         console.log("✅ [STATKEEPER NOTIFICATION] Notification created successfully:", {
           notificationId: statKeeperNotification._id.toString(),
@@ -451,7 +483,7 @@ export async function createMatch(req: NextRequest) {
           type: "GAME_ASSIGNED",
           status: "pending"
         });
-        
+
         // Verify the notification was saved correctly
         const savedNotification = await Notification.findById(statKeeperNotification._id);
         if (savedNotification) {
@@ -530,7 +562,7 @@ export async function getAllMatches(req: NextRequest) {
     console.log("🔵 getAllMatches called");
     await connectDB();
     console.log("✅ Database connected");
-    
+
     try {
       await verifyUser(req);
       console.log("✅ User verified");
@@ -560,7 +592,7 @@ export async function getAllMatches(req: NextRequest) {
       }
       query.status = status;
     }
-    
+
     console.log("🔍 Query:", JSON.stringify(query));
 
     const matches = await Match.find(query)
@@ -596,13 +628,13 @@ export async function getAllMatches(req: NextRequest) {
     console.error("❌ Get matches error:", error);
     console.error("Error message:", error.message);
     console.error("Error stack:", error.stack);
-    
+
     if (error.message === "No token provided" || error.message === "Invalid token") {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: error.message || "Failed to get matches",
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
@@ -761,7 +793,7 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
         );
       }
       (match as any).status = "completed";
-      
+
       // Set completedAt when status is completed
       if (!(match as any).completedAt) {
         (match as any).completedAt = new Date();
@@ -1069,7 +1101,7 @@ export async function addGameAction(req: NextRequest, { params }: { params: { id
       team.playerActions = [];
     }
     team.playerActions.push(newAction);
-    
+
     // Mark the array as modified for Mongoose
     (match as any).markModified(isTeamA ? "teamA.playerActions" : "teamB.playerActions");
 
@@ -1077,7 +1109,7 @@ export async function addGameAction(req: NextRequest, { params }: { params: { id
     team.score = (team.score || 0) + actionScore;
 
     // Update player stats
-    let playerStat = team.playerStats.find((ps: any) => 
+    let playerStat = team.playerStats.find((ps: any) =>
       ps.playerId.toString() === playerId
     );
 
@@ -1195,14 +1227,14 @@ export async function switchHalfTime(req: NextRequest, { params }: { params: { i
 
     const teamA = (existingMatch as any).teamA;
     const teamB = (existingMatch as any).teamB;
-    
+
     // Check if teamA/teamB are ObjectIds (old format) or objects (new format)
     const isTeamAObjectId = teamA && (teamA.buffer !== undefined || (typeof teamA === 'object' && !teamA.teamId && !teamA.teamName && !teamA.side));
     const isTeamBObjectId = teamB && (teamB.buffer !== undefined || (typeof teamB === 'object' && !teamB.teamId && !teamB.teamName && !teamB.side));
-    
+
     let teamASide: string;
     let teamBSide: string;
-    
+
     if (isTeamAObjectId || isTeamBObjectId) {
       // Old format - can't swap sides, need to restructure first
       return NextResponse.json(
@@ -1214,7 +1246,7 @@ export async function switchHalfTime(req: NextRequest, { params }: { params: { i
       teamASide = teamA?.side || "offense";
       teamBSide = teamB?.side || "defense";
     }
-    
+
     const newTeamASide = teamASide === "offense" ? "defense" : "offense";
     const newTeamBSide = teamBSide === "offense" ? "defense" : "offense";
 
@@ -1293,14 +1325,14 @@ export async function switchFullTime(req: NextRequest, { params }: { params: { i
 
     const teamA = (existingMatch as any).teamA;
     const teamB = (existingMatch as any).teamB;
-    
+
     // Check if teamA/teamB are ObjectIds (old format) or objects (new format)
     const isTeamAObjectId = teamA && (teamA.buffer !== undefined || (typeof teamA === 'object' && !teamA.teamId && !teamA.teamName && !teamA.side));
     const isTeamBObjectId = teamB && (teamB.buffer !== undefined || (typeof teamB === 'object' && !teamB.teamId && !teamB.teamName && !teamB.side));
-    
+
     let teamASide: string;
     let teamBSide: string;
-    
+
     if (isTeamAObjectId || isTeamBObjectId) {
       // Old format - can't swap sides, need to restructure first
       return NextResponse.json(
@@ -1312,7 +1344,7 @@ export async function switchFullTime(req: NextRequest, { params }: { params: { i
       teamASide = teamA?.side || "offense";
       teamBSide = teamB?.side || "defense";
     }
-    
+
     const newTeamASide = teamASide === "offense" ? "defense" : "offense";
     const newTeamBSide = teamBSide === "offense" ? "defense" : "offense";
 
@@ -1408,7 +1440,7 @@ export async function completeToss(
 
     // Get match - use lean() to get plain object with raw ObjectIds (not populated)
     const existingMatch = await Match.findById(matchId).lean();
-    
+
     if (!existingMatch) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
@@ -1419,10 +1451,10 @@ export async function completeToss(
     // Safely get team IDs - handle both ObjectId and object formats
     const teamA = (matchObj as any).teamA;
     const teamB = (matchObj as any).teamB;
-    
+
     if (!teamA || !teamB) {
-      console.error("❌ Match team data missing:", { 
-        hasTeamA: !!teamA, 
+      console.error("❌ Match team data missing:", {
+        hasTeamA: !!teamA,
         hasTeamB: !!teamB,
         matchId: matchId.toString(),
         matchKeys: Object.keys(matchObj)
@@ -1436,10 +1468,10 @@ export async function completeToss(
     // Check if teamA/teamB are ObjectIds (old format) or objects (new format)
     const isTeamAObjectId = teamA.buffer !== undefined || (typeof teamA === 'object' && !teamA.teamId && !teamA.teamName);
     const isTeamBObjectId = teamB.buffer !== undefined || (typeof teamB === 'object' && !teamB.teamId && !teamB.teamName);
-    
+
     let teamAIdValue: any;
     let teamBIdValue: any;
-    
+
     if (isTeamAObjectId) {
       // Old format: teamA is directly an ObjectId
       teamAIdValue = teamA;
@@ -1451,7 +1483,7 @@ export async function completeToss(
         teamAIdValue = teamAIdValue._id;
       }
     }
-    
+
     if (isTeamBObjectId) {
       // Old format: teamB is directly an ObjectId
       teamBIdValue = teamB;
@@ -1463,16 +1495,16 @@ export async function completeToss(
         teamBIdValue = teamBIdValue._id;
       }
     }
-    
+
     if (!teamAIdValue || !teamBIdValue) {
-      console.error("❌ Match team IDs missing:", { 
+      console.error("❌ Match team IDs missing:", {
         teamAIdValue: teamAIdValue,
         teamBIdValue: teamBIdValue,
         teamAKeys: Object.keys(teamA),
         teamBKeys: Object.keys(teamB),
         isTeamAObjectId,
         isTeamBObjectId,
-        matchId: matchId.toString() 
+        matchId: matchId.toString()
       });
       return NextResponse.json(
         { error: "Match team IDs are missing. The match may not have been created properly. Please recreate the match." },
@@ -1499,13 +1531,13 @@ export async function completeToss(
 
     // Check if teamA/teamB are ObjectIds (old format) - need to restructure
     const needsRestructure = isTeamAObjectId || isTeamBObjectId;
-    
+
     if (needsRestructure) {
       // Old format: teamA/teamB are ObjectIds, need to convert to proper structure
       const updateData: any = {
         status: "continue",
       };
-      
+
       if (isTeamAObjectId) {
         // Restructure teamA from ObjectId to proper object
         updateData.teamA = {
@@ -1522,7 +1554,7 @@ export async function completeToss(
         // Just update the side
         updateData["teamA.side"] = teamASide;
       }
-      
+
       if (isTeamBObjectId) {
         // Restructure teamB from ObjectId to proper object
         updateData.teamB = {
@@ -1539,7 +1571,7 @@ export async function completeToss(
         // Just update the side
         updateData["teamB.side"] = teamBSide;
       }
-      
+
       await Match.updateOne(
         { _id: matchId },
         { $set: updateData }

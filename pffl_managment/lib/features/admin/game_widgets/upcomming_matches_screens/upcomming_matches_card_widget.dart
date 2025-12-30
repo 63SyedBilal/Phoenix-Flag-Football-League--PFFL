@@ -64,19 +64,78 @@ class UpcommingMatchesCardWidget extends StatelessWidget {
               ),
               Column(
                 children: [
-                  Text(
-                    match.date,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                  if (match.status == MatchStatus.upcoming) ...[
+                    Text(
+                      match.date,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
-                  ),
-                  Text(
-                    match.time,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: colorScheme.onSurface,
+                    Text(
+                      match.time,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    // Score display for Live/Completed
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${match.homeScore ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Lato',
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4.0),
+                          child: Text(
+                            '-',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${match.awayScore ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Lato',
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: match.status == MatchStatus.live
+                            ? Colors.red
+                            : Colors.grey[700],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        match.status == MatchStatus.live ? 'LIVE' : 'FINAL',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               TeamWidget(
