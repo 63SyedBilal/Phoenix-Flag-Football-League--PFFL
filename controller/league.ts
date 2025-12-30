@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { League, User, Team, Notification } from "@/modules";
+import { League, User, Team, Notification, Match } from "@/modules";
 import { verifyAccessToken } from "@/lib/jwt";
 import mongoose from "mongoose";
 
@@ -1233,22 +1233,17 @@ export async function getLeagueSummary(req: NextRequest, { params }: { params: {
     const league = await League.findById(leagueObjectId)
       .populate({
         path: 'teams',
-        select: 'teamName captain players squad5v5 squad7v7'
-      })
-      .populate({
-        path: 'matches',
-        select: 'date time status'
+        select: 'teamName captain squad5v5 squad7v7'
       });
 
     if (!league) {
       return NextResponse.json({ error: "League not found" }, { status: 404 });
     }
 
-    // Count total matches
-    const totalMatches = league.matches?.length ?? 0;
+    const totalMatches = await Match.countDocuments({ leagueId: leagueObjectId });
 
     // Count total teams
-    const totalTeams = league.teams?.length ?? 0;
+    const totalTeams = (league as any).teams?.length ?? 0;
 
     // Calculate match format (5v5, 7v7, 11v11)
     const format = league.format || '5v5';
@@ -1270,15 +1265,14 @@ export async function getLeagueSummary(req: NextRequest, { params }: { params: {
     let captainTeamInfo = null;
 
     if (currentUserId) {
-      const captainTeam = league.teams?.find(team =>
+      const captainTeam = (league as any).teams?.find((team: any) =>
         team.captain?.toString() === currentUserId.toString()
       );
 
       if (captainTeam) {
         // Count players in the captain's team
-        const playerCount = (captainTeam.squad5v5?.length ?? 0) +
-          (captainTeam.squad7v7?.length ?? 0) +
-          (captainTeam.players?.length ?? 0);
+        const playerCount = ((captainTeam as any).squad5v5?.length ?? 0) +
+          ((captainTeam as any).squad7v7?.length ?? 0);
 
         captainTeamInfo = {
           teamId: captainTeam._id,
@@ -1299,7 +1293,7 @@ export async function getLeagueSummary(req: NextRequest, { params }: { params: {
       endDate: league.endDate,
       matchFormat: format,
       leagueStatus: status,
-      perPlayerFee: league.perPlayerLeagueFee,
+      perPlayerFee: (league as any).perPlayerLeagueFee,
       captainTeam: captainTeamInfo,
     };
 
