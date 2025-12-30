@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
-import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/services/referee_statkeeper_trigger_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 
 /// Provider for managing match creation with Round-Robin validation
@@ -263,56 +263,36 @@ class MatchProvider extends ChangeNotifier {
     String? refereeId,
     String? statKeeperId,
   }) async {
-    // Format date and time for notification message
-    final dateStr =
-        '${matchDate.day}/${matchDate.month}/${matchDate.year}';
+    final dateStr = '${matchDate.day}/${matchDate.month}/${matchDate.year}';
     final timeStr =
         '${matchTime.hour.toString().padLeft(2, '0')}:${matchTime.minute.toString().padLeft(2, '0')}';
-    final endTime = matchTime.replacing(
-      hour: (matchTime.hour + 1) % 24,
-      minute: matchTime.minute,
-    );
-    final endTimeStr =
-        '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
-
-    final leagueNameStr = _leagueName ?? 'the league';
-
-    // Notification message template
-    final messageTemplate =
-        '$teamOneName vs $teamTwoName\nDate: $dateStr\nTime: $timeStr - $endTimeStr\nLeague: $leagueNameStr';
 
     // Send notification to referee
     if (refereeId != null && match.id != null) {
-      try {
-        await NotificationService.sendNotification(
-          receiverId: refereeId,
-          type: 'GAME_ASSIGNED',
-          message: messageTemplate,
-          leagueId: _leagueId,
-          matchId: match.id,
-        );
-        debugPrint('✅ Notification sent to referee: $refereeId');
-      } catch (e) {
-        debugPrint('⚠️ Failed to send notification to referee: $e');
-        // Don't fail match creation if notification fails
-      }
+      await RefereeStatKeeperTriggerService.triggerRefereeAssigned(
+        refereeId: refereeId,
+        refereeName: 'Referee',
+        teamA: teamOneName,
+        teamB: teamTwoName,
+        venue: match.venue ?? 'TBD',
+        date: dateStr,
+        time: timeStr,
+        matchId: match.id!,
+      );
     }
 
     // Send notification to statkeeper
     if (statKeeperId != null && match.id != null) {
-      try {
-        await NotificationService.sendNotification(
-          receiverId: statKeeperId,
-          type: 'GAME_ASSIGNED',
-          message: messageTemplate,
-          leagueId: _leagueId,
-          matchId: match.id,
-        );
-        debugPrint('✅ Notification sent to statkeeper: $statKeeperId');
-      } catch (e) {
-        debugPrint('⚠️ Failed to send notification to statkeeper: $e');
-        // Don't fail match creation if notification fails
-      }
+      await RefereeStatKeeperTriggerService.triggerStatKeeperAssigned(
+        statKeeperId: statKeeperId,
+        statKeeperName: 'Stat Keeper',
+        teamA: teamOneName,
+        teamB: teamTwoName,
+        venue: match.venue ?? 'TBD',
+        date: dateStr,
+        time: timeStr,
+        matchId: match.id!,
+      );
     }
   }
 
@@ -327,4 +307,3 @@ class MatchProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
-import 'package:pffl_managment/core/services/notification_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
+import 'package:pffl_managment/core/services/player_freeagent_trigger_service.dart';
+import 'package:pffl_managment/core/services/admin_trigger_service.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/models/payment_state.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/utils/payment_validators.dart';
@@ -78,21 +79,13 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
     BuildContext context,
   ) async {
     // Debug output for form state before validation
-    debugPrint('📋 Form validation starting...');
-    debugPrint('   - Cardholder: "${_state.cardholderName}"');
     debugPrint(
       '   - Card Number: "${_state.cardNumber}" (length: ${_state.cardNumber.length})',
     );
-    debugPrint('   - Expiry Date: "${_state.expiryDate}"');
-    debugPrint('   - CVV: "${_state.cvv}" (length: ${_state.cvv.length})');
-    debugPrint('   - ZIP Code: "${_state.zipCode}"');
-    debugPrint('   - Agreed to Terms: ${_state.agreedToTerms}');
 
     if (!validateForm()) {
-      debugPrint('❌ Form validation failed');
       return false;
     }
-    debugPrint('✅ Form validation passed');
 
     _state = _state.copyWith(isLoading: true, clearGeneralError: true);
     notifyListeners();
@@ -152,7 +145,6 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
       bool allSuccessful = true;
       for (var league in leagueProvider.selectedLeagues) {
         final paymentData = await PaymentService.getOrCreatePayment(league.id);
-        debugPrint('🔍 Raw Payment Initialization Data: $paymentData');
         if (paymentData == null) {
           allSuccessful = false;
           continue;
@@ -181,17 +173,9 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
         };
 
         // Debug output for card details
-        debugPrint('💳 Processing payment for ${league.leagueName}');
-        debugPrint('   - Payment ID: $paymentId');
-        debugPrint('   - Raw Expiry Date from state: "${_state.expiryDate}"');
-        debugPrint('   - Parsed Month: $expMonth, Year: $expYear');
         debugPrint(
           '   - Card Number: ${_state.cardNumber.replaceAll(' ', '').replaceRange(0, 12, '*' * 12)}',
         );
-        debugPrint('   - CVV: ***');
-        debugPrint('   - Cardholder: "${_state.cardholderName}"');
-        debugPrint('   - ZIP Code: "${_state.zipCode}"');
-        debugPrint('   - Card Details Object: $cardDetails');
 
         final response = await PaymentService.processPayment(
           paymentId: paymentId,
@@ -200,11 +184,6 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
         );
 
         if (response['success'] != true) {
-          debugPrint('❌ Payment failed for ${league.leagueName}');
-          debugPrint('   - Response: $response');
-          debugPrint('   - Error: ${response['error']}');
-          debugPrint('   - Message: ${response['message']}');
-
           allSuccessful = false;
           _state = _state.copyWith(
             isLoading: false,
@@ -217,19 +196,43 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
           return false;
         }
 
+        // Trigger Notifications
         try {
-          await NotificationService.sendAdminNotification(
-            message:
-                'Free Agent has completed league payment for ${league.leagueName}',
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          final userName = authProvider.userName;
+          final userId = authProvider.userId;
+          final teamName =
+              'Free Agent Team'; // Would be better to get real team name if available
+          final amount = league.perPlayerLeagueFee.toDouble();
+          final timestamp = DateTime.now().toString();
+
+          // Notify Player
+          await PlayerFreeAgentTriggerService.triggerPlayerLeaguePayment(
+            userId: userId,
+            leagueName: league.leagueName,
+            amount: amount,
+            teamName: teamName,
+          );
+
+          // Notify Admin
+          await AdminTriggerService.triggerPlayerLeaguePayment(
+            playerName: userName,
+            amount: amount,
+            leagueName: league.leagueName,
+            teamName: teamName,
+            timestamp: timestamp,
+            paymentId: paymentId,
+            playerId: userId,
           );
         } catch (e) {
-          debugPrint('Error sending admin notification: $e');
+          // Don't fail payment if notification fails
         }
       }
 
       if (allSuccessful) {
-        debugPrint('🎉 All payments processed successfully!');
-
         // REFRESH LEAGUE PAYMENT STATUS IN REAL-TIME
         try {
           final leaguePaymentProvider = Provider.of<LeaguePaymentProvider>(
@@ -254,13 +257,9 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
                 league.id,
                 captainId,
               );
-              debugPrint('✅ Payment status refreshed for ${league.leagueName}');
             }
-            debugPrint('✅ All payment statuses refreshed successfully!');
           }
-        } catch (e) {
-          debugPrint('⚠️ Could not refresh LeaguePaymentProvider: $e');
-        }
+        } catch (e) {}
 
         _state = _state.copyWith(isLoading: false);
         notifyListeners();

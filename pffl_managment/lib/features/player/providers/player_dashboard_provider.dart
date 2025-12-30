@@ -99,7 +99,6 @@ class PlayerDashboardProvider extends ChangeNotifier {
           )
           .toList();
     } catch (e) {
-      debugPrint('Error loading dashboard data: $e');
       _upcomingGames = [];
     } finally {
       _setLoading(false);
@@ -115,3 +114,4 @@ class PlayerDashboardProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

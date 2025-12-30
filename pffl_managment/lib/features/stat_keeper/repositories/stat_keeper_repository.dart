@@ -45,7 +45,6 @@ class StatKeeperRepository {
 
       return assignedMatches;
     } catch (e) {
-      print('Error fetching assigned matches: $e');
       throw Exception('Failed to fetch assigned matches: ${e.toString()}');
     }
   }
@@ -92,7 +91,6 @@ class StatKeeperRepository {
 
       return matchTeams;
     } catch (e) {
-      print('Error fetching match teams: $e');
       throw Exception('Failed to fetch match teams: ${e.toString()}');
     }
   }
@@ -109,7 +107,6 @@ class StatKeeperRepository {
       final teamData = await TeamService.getTeamById(teamId);
 
       if (teamData == null) {
-        print('❌ Team not found: $teamId');
         return [];
       }
 
@@ -150,11 +147,8 @@ class StatKeeperRepository {
       // 2. Extract players from both squads
       processSquad(teamData['squad5v5'] as List?);
       processSquad(teamData['squad7v7'] as List?);
-
-      print('✅ Fetched ${allPlayers.length} players from team roster');
       return allPlayers;
     } catch (e) {
-      print('❌ Error fetching team roster: $e');
       throw Exception('Failed to fetch team players: ${e.toString()}');
     }
   }
@@ -199,11 +193,9 @@ class StatKeeperRepository {
 
         return allPlayers;
       } else {
-        print('❌ Failed to fetch match data: ${response.statusMessage}');
         return [];
       }
     } catch (e) {
-      print('❌ Error fetching match players: $e');
       throw Exception('Failed to fetch match players: ${e.toString()}');
     }
   }
@@ -279,7 +271,6 @@ class StatKeeperRepository {
         throw Exception('Failed to save stat');
       }
     } catch (e) {
-      print('Error saving stat: $e');
       throw Exception('Failed to save stat: ${e.toString()}');
     }
   }
@@ -306,7 +297,6 @@ class StatKeeperRepository {
         throw Exception('Failed to fetch stats');
       }
     } catch (e) {
-      print('Error fetching stats: $e');
       throw Exception('Failed to fetch stats: ${e.toString()}');
     }
   }
@@ -324,7 +314,6 @@ class StatKeeperRepository {
         throw Exception('Failed to submit stats for approval');
       }
     } catch (e) {
-      print('Error submitting stats: $e');
       throw Exception('Failed to submit stats: ${e.toString()}');
     }
   }
@@ -342,7 +331,6 @@ class StatKeeperRepository {
         throw Exception('Failed to approve stats');
       }
     } catch (e) {
-      print('Error approving stats: $e');
       throw Exception('Failed to approve stats: ${e.toString()}');
     }
   }
@@ -495,7 +483,6 @@ class StatKeeperRepository {
       }
       return null;
     } on DioException catch (e) {
-      print('Error fetching match stats: $e');
       if (e.type == DioExceptionType.connectionTimeout) {
         throw Exception(
           'Connection timeout. Please check your internet connection and try again.',
@@ -508,7 +495,6 @@ class StatKeeperRepository {
         throw Exception('Failed to fetch match stats: ${e.message}');
       }
     } catch (e) {
-      print('Error fetching match stats: $e');
       throw Exception('Failed to fetch match stats: ${e.toString()}');
     }
   }
@@ -625,3 +611,4 @@ class StatKeeperRepository {
     return StatStatus.draft;
   }
 }
+

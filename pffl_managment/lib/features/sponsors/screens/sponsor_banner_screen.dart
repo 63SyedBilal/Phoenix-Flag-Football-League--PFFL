@@ -18,7 +18,6 @@ class SponsorBannerScreen extends StatelessWidget {
           height: 110,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            debugPrint('Failed to load file image: $path, Error: $error');
             return _buildPlaceholder();
           },
         );
@@ -41,7 +40,6 @@ class SponsorBannerScreen extends StatelessWidget {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            debugPrint('Failed to load network image: $path, Error: $error');
             return _buildPlaceholder();
           },
         );
@@ -53,7 +51,6 @@ class SponsorBannerScreen extends StatelessWidget {
           height: 110,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            debugPrint('Failed to load asset image: $path, Error: $error');
             return _buildPlaceholder();
           },
         );
@@ -152,3 +149,4 @@ class SponsorBannerScreen extends StatelessWidget {
     );
   }
 }
+

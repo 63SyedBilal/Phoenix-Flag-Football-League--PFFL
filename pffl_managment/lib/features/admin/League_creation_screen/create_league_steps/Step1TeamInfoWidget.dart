@@ -679,7 +679,6 @@ class _Step1TeamInfoWidgetState extends State<Step1TeamInfoWidget> {
         }
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -702,3 +701,4 @@ class _Step1TeamInfoWidgetState extends State<Step1TeamInfoWidget> {
     return _formKey.currentState?.validate() ?? false;
   }
 }
+

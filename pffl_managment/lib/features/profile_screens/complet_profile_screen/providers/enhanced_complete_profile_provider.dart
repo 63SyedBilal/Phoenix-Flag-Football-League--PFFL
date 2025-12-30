@@ -118,7 +118,6 @@ class EnhancedCompleteProfileProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error initializing provider: $e');
     }
   }
 
@@ -163,7 +162,6 @@ class EnhancedCompleteProfileProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Profile backend sync failed: $e');
     }
   }
 
@@ -210,11 +208,9 @@ class EnhancedCompleteProfileProvider extends ChangeNotifier {
 
           _profileImagePath = file.path!;
           _clearFieldError('profileImage');
-          debugPrint('✅ Image selected: ${file.path}');
         }
       }
     } catch (e) {
-      debugPrint('❌ Error picking image: $e');
       _setFieldError('profileImage', 'Error selecting image: ${e.toString()}');
     } finally {
       _isUploadingImage = false;
@@ -443,10 +439,8 @@ class EnhancedCompleteProfileProvider extends ChangeNotifier {
           if (await imageFile.exists()) {
             imageUrl = await AdminService.uploadImage(imageFile);
             _profileImageUrl = imageUrl;
-            debugPrint('✅ Image uploaded: $imageUrl');
           }
         } catch (e) {
-          debugPrint('❌ Image upload failed: $e');
           _setFieldError(
             'profileImage',
             'Failed to upload image. Please try again.',
@@ -509,7 +503,6 @@ class EnhancedCompleteProfileProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      debugPrint('❌ Error submitting profile: $e');
       notifyListeners();
       return false;
     }
@@ -540,7 +533,6 @@ class EnhancedCompleteProfileProvider extends ChangeNotifier {
       // Could also check via API if needed
       return false;
     } catch (e) {
-      debugPrint('❌ Error checking profile completion: $e');
       return false;
     }
   }
@@ -560,3 +552,4 @@ class EnhancedCompleteProfileProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

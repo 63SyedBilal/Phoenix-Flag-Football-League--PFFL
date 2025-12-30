@@ -34,14 +34,11 @@ class SignupRepository {
   /// Register a new user
   static Future<SignupResult> signup(Map<String, dynamic> userData) async {
     try {
-      print('📝 Attempting signup with data: ${userData['email']}');
-      print('📝 Role: ${userData['role']} (hardcoded)');
 
       // Call AuthService register method
       final authResponse = await AuthService.register(userData);
 
       if (authResponse != null) {
-        print('✅ Signup successful');
         return SignupResult.success();
       } else {
         // This should not happen as exceptions are re-thrown, but handle it anyway
@@ -50,14 +47,9 @@ class SignupRepository {
         );
       }
     } on DioException catch (e) {
-      print('❌ Signup Dio error: ${e.message}');
-      print('❌ Error type: ${e.type}');
-      print('❌ Response status: ${e.response?.statusCode}');
-      print('❌ Response data: ${e.response?.data}');
 
       return _handleDioError(e);
     } catch (e) {
-      print('❌ Signup general error: $e');
       return SignupResult.failure(
         generalError: 'An unexpected error occurred. Please try again.',
       );
@@ -126,3 +118,4 @@ class SignupRepository {
     }
   }
 }
+

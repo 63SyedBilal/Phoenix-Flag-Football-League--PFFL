@@ -13,13 +13,9 @@ class UserService {
   /// GET /api/user?role=free-agent
   static Future<List<UserModel>> getUsersByRole(String role) async {
     try {
-      print('📡 Fetching users with role: $role');
       final dio = await _getAuthenticatedDio();
-      print('📡 API URL: ${dio.options.baseUrl}/user?role=$role');
 
       final response = await dio.get('/user', queryParameters: {'role': role});
-
-      print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -27,25 +23,17 @@ class UserService {
           final users = (data['data'] as List)
               .map((json) => UserModel.fromJson(json))
               .toList();
-          print('✅ Fetched ${users.length} users with role: $role');
           return users;
         }
-        print('⚠️ No data field in response');
         return [];
       } else {
-        print('❌ Failed to fetch users: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
-      print('❌ Error fetching users by role: ${e.message}');
-      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('❌ Error status: ${e.response?.statusCode}');
-        print('❌ Error response: ${e.response?.data}');
       }
       rethrow;
     } catch (e) {
-      print('❌ General error fetching users: $e');
       return [];
     }
   }
@@ -88,17 +76,13 @@ class UserService {
         }
         return [];
       } else {
-        print('Failed to fetch all users: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching all users: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return [];
     } catch (e) {
-      print('General error fetching all users: $e');
       return [];
     }
   }
@@ -117,17 +101,13 @@ class UserService {
         }
         return [];
       } else {
-        print('Failed to fetch profiles: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching profiles: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       return [];
     } catch (e) {
-      print('General error fetching profiles: $e');
       return [];
     }
   }
@@ -137,7 +117,6 @@ class UserService {
   static Future<bool> updateUserRole(String userId, String newRole) async {
     final trimmedId = userId.trim();
     try {
-      print('🔄 API Request: PUT role=$newRole for user=$trimmedId');
       print(
         '🔄 ID Length: ${trimmedId.length}, CodeUnits: ${trimmedId.codeUnits}',
       );
@@ -145,11 +124,8 @@ class UserService {
       final dio = await _getAuthenticatedDio();
 
       final path = '/user/$trimmedId';
-      print('🔄 Request Path: ${dio.options.baseUrl}$path');
 
       final response = await dio.put(path, data: {'role': newRole});
-
-      print('✅ Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return true;
@@ -159,11 +135,8 @@ class UserService {
         'Failed to update user role: Status ${response.statusCode}',
       );
     } on DioException catch (e) {
-      print('❌ Error updating user role: ${e.message}');
-      print('❌ Request URI: ${e.requestOptions.uri}');
 
       if (e.response != null) {
-        print('❌ Error response: ${e.response?.data}');
 
         if (e.response?.statusCode == 404) {
           throw Exception(
@@ -178,7 +151,6 @@ class UserService {
       }
       rethrow;
     } catch (e) {
-      print('General error updating user role: $e');
       rethrow;
     }
   }
@@ -190,12 +162,9 @@ class UserService {
     Map<String, dynamic> profileData,
   ) async {
     try {
-      print('🔄 UserService: Updating profile for ID: $userId');
-      print('🔄 UserService: Data: $profileData');
 
       final dio = await _getAuthenticatedDio();
       final url = '/user/${userId.trim()}';
-      print('🔄 UserService: API URL: ${dio.options.baseUrl}$url');
 
       final response = await dio.put(url, data: profileData);
 
@@ -212,16 +181,12 @@ class UserService {
         return null;
       }
     } on DioException catch (e) {
-      print('❌ UserService: DioException: ${e.message}');
       if (e.response != null) {
-        print('❌ UserService: Status Code: ${e.response?.statusCode}');
-        print('❌ UserService: Response Data: ${e.response?.data}');
         final error = e.response?.data['error'] ?? 'Failed to update profile';
         throw Exception(error);
       }
       throw Exception('Failed to update profile');
     } catch (e) {
-      print('❌ UserService: General error: $e');
       rethrow;
     }
   }
@@ -254,9 +219,7 @@ class UserService {
         };
       }
     } on DioException catch (e) {
-      print('❌ Error checking jersey number: ${e.message}');
       if (e.response != null) {
-        print('❌ Error response: ${e.response?.data}');
         final errorData = e.response?.data;
         if (errorData is Map && errorData['message'] != null) {
           return {'available': false, 'message': errorData['message']};
@@ -267,7 +230,6 @@ class UserService {
         'message': 'Failed to check jersey number availability',
       };
     } catch (e) {
-      print('❌ General error checking jersey number: $e');
       return {
         'available': false,
         'message': 'Failed to check jersey number availability',
@@ -344,17 +306,12 @@ class InviteService {
   /// Returns true for both new user creation (201) and existing user role invitation (200)
   static Future<bool> sendInvite(String email, String role) async {
     try {
-      print('📧 Sending invite to: $email with role: $role');
       final dio = await _getAuthenticatedDio();
-      print('📧 API URL: ${dio.options.baseUrl}/invite');
 
       final response = await dio.post(
         '/invite',
         data: {'email': email.trim(), 'role': role},
       );
-
-      print('📧 Response status: ${response.statusCode}');
-      print('📧 Response data: ${response.data}');
 
       // Both 200 (existing user - role invitation sent) and 201 (new user created) are success
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -362,7 +319,6 @@ class InviteService {
         final emailSent = responseData['emailSent'] ?? true;
 
         if (emailSent) {
-          print('✅ Invite sent successfully');
         } else {
           print(
             '⚠️ Invite processed successfully, but email was not sent (SMTP not configured)',
@@ -370,16 +326,10 @@ class InviteService {
         }
         return true;
       } else {
-        print('❌ Failed to send invite: ${response.statusMessage}');
-        print('❌ Response: ${response.data}');
         return false;
       }
     } on DioException catch (e) {
-      print('❌ Error sending invite: ${e.message}');
-      print('❌ Error type: ${e.type}');
       if (e.response != null) {
-        print('❌ Error status: ${e.response?.statusCode}');
-        print('❌ Error response: ${e.response?.data}');
 
         // Handle 409 Conflict - user already exists, but we can still send role invitation
         if (e.response?.statusCode == 409) {
@@ -393,8 +343,8 @@ class InviteService {
       }
       return false;
     } catch (e) {
-      print('❌ General error sending invite: $e');
       return false;
     }
   }
 }
+

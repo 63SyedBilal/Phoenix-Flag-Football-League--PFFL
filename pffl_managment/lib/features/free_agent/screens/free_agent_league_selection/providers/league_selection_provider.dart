@@ -40,11 +40,8 @@ class LeagueSelectionProvider extends ChangeNotifier {
         final dateB = b.createdAt ?? b.startDate;
         return dateB.compareTo(dateA);
       });
-
-      debugPrint('Fetched ${_availableLeagues.length} leagues.');
     } catch (e) {
       _errorMessage = 'Failed to load leagues: ${e.toString()}';
-      debugPrint('Error fetching leagues: $e');
     } finally {
       _setLoading(false);
     }
@@ -81,3 +78,4 @@ class LeagueSelectionProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

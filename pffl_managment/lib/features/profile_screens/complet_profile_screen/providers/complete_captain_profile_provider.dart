@@ -123,7 +123,6 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error initializing provider: $e');
     }
   }
 
@@ -207,7 +206,6 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Backend sync failed: $e');
       // Don't throw error - this is just a background sync
       // The app should work with cached data if sync fails
     }
@@ -304,7 +302,6 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
         setProfileImage(result.files.single.path!);
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
       _errorMessage = 'Failed to pick image. Please try again.';
       notifyListeners();
     }
@@ -357,7 +354,6 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
 
   /// Submit profile to backend
   Future<bool> submitProfile() async {
-    debugPrint('➡️ CompleteCaptainProfileProvider: submitProfile() called');
     debugPrint(
       '➡️ CompleteCaptainProfileProvider: position=$position jersey=$jerseyNumber emergencyName=$emergencyContactName emergencyPhone=$emergencyPhone agreed=$_agreedToTerms imagePath=$_profileImagePath',
     );
@@ -403,7 +399,6 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
             }
           }
         } catch (e) {
-          debugPrint('⚠️ Image upload failed: $e');
         }
       }
 
@@ -448,7 +443,6 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
       ) async {
         try {
           final res = await request();
-          debugPrint('➡️ CompleteCaptainProfileProvider: $label status=${res.statusCode}');
           return res;
         } on DioException catch (e) {
           debugPrint(
@@ -569,7 +563,6 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
       return false;
     } catch (e) {
       _isLoading = false;
-      debugPrint('❌ CompleteCaptainProfileProvider: Unexpected error: $e');
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       notifyListeners();
       return false;
@@ -586,3 +579,4 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
     await _userPrefs.setCaptainProfileComplete(false);
   }
 }
+

@@ -25,7 +25,6 @@ class UsersProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       // Provider was disposed, ignore
-      debugPrint('UsersProvider: Cannot notify listeners (disposed)');
     }
   }
 
@@ -141,12 +140,10 @@ class UsersProvider extends ChangeNotifier {
   }
 
   void inviteUser() {
-    debugPrint('Invite user button clicked');
     // Add invite logic here
   }
 
   void showUserMenu(UserModel user) {
-    debugPrint('Show menu for user: ${user.name}');
     // Add menu logic here
   }
 
@@ -309,7 +306,6 @@ class UsersProvider extends ChangeNotifier {
   /// Fetch all users, profiles, teams, and leagues from backend
   Future<void> fetchAllUsers() async {
     try {
-      debugPrint('🔄 Fetching all users data...');
 
       // Fetch all data in parallel
       final results = await Future.wait([
@@ -348,11 +344,8 @@ class UsersProvider extends ChangeNotifier {
         final profile = profileMap[backendUser.id];
         return _mapBackendToUIModel(backendUser, profile, _teams, _leagues);
       }).toList();
-
-      debugPrint('✅ Mapped ${_allUsers.length} users to UI format');
       _errorMessage = null;
     } catch (e) {
-      debugPrint('❌ Error fetching users: $e');
       _errorMessage = 'Failed to load users: ${e.toString()}';
       _allUsers = [];
     }
@@ -369,7 +362,6 @@ class UsersProvider extends ChangeNotifier {
     try {
       await fetchAllUsers();
     } catch (e) {
-      debugPrint('❌ Error initializing UsersProvider: $e');
       _errorMessage = 'Failed to load users: ${e.toString()}';
     } finally {
       _isLoading = false;
@@ -388,3 +380,4 @@ class UsersProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

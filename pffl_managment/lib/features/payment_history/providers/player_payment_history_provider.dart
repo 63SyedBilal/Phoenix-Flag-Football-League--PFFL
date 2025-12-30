@@ -21,7 +21,6 @@ class PlayerPaymentHistoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('📊 [PAYMENT HISTORY] Loading player payment history...');
 
       // Get all payments for the current user
       final paymentsResponse = await PaymentService.fetchUserPayments();
@@ -69,7 +68,6 @@ class PlayerPaymentHistoryProvider extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = 'Failed to load payment history: ${e.toString()}';
-      debugPrint('❌ [PAYMENT HISTORY] Error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -134,3 +132,4 @@ class PlayerPaymentHistoryProvider extends ChangeNotifier {
     return _payments.first; // Already sorted by date
   }
 }
+

@@ -272,10 +272,8 @@ class PdfService {
       final file = File('${receiptsDir.path}/$fileName');
 
       await file.writeAsBytes(pdfBytes);
-      print('✅ PDF receipt saved: ${file.path}');
       return file.path;
     } catch (e) {
-      print('❌ Error saving PDF receipt: $e');
       rethrow;
     }
   }
@@ -289,9 +287,7 @@ class PdfService {
         text: 'PFFL Payment Receipt - Transaction $paymentId',
         subject: 'Phoenix Flag Football League Receipt',
       );
-      print('✅ PDF receipt shared successfully');
     } catch (e) {
-      print('❌ Error sharing PDF receipt: $e');
       rethrow;
     }
   }
@@ -314,7 +310,6 @@ class PdfService {
 
       return filePath;
     } catch (e) {
-      print('❌ Error generating and saving receipt: $e');
       rethrow;
     }
   }
@@ -325,8 +320,8 @@ class PdfService {
       final filePath = await generateAndSaveReceipt(paymentId);
       await shareReceiptPdf(filePath, paymentId);
     } catch (e) {
-      print('❌ Error generating and sharing receipt: $e');
       rethrow;
     }
   }
 }
+

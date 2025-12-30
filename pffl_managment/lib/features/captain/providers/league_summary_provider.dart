@@ -109,7 +109,6 @@ class LeagueSummaryProvider extends ChangeNotifier {
         throw Exception(response['message'] ?? 'Failed to get league summary');
       }
     } catch (e) {
-      debugPrint('❌ Error getting league summary: $e');
       _errorMessages[leagueId] = e.toString();
       _loadingStatus[leagueId] = false;
       notifyListeners();
@@ -154,3 +153,4 @@ class LeagueSummaryProvider extends ChangeNotifier {
     return await getLeagueSummary(leagueId);
   }
 }
+

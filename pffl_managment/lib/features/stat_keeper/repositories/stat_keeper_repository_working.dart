@@ -45,7 +45,6 @@ class StatKeeperRepositoryWorking {
 
       return assignedMatches;
     } catch (e) {
-      print('Error fetching assigned matches: $e');
       throw Exception('Failed to fetch assigned matches: ${e.toString()}');
     }
   }
@@ -87,7 +86,6 @@ class StatKeeperRepositoryWorking {
 
       return matchTeams;
     } catch (e) {
-      print('Error fetching match teams: $e');
       throw Exception('Failed to fetch match teams: ${e.toString()}');
     }
   }
@@ -102,7 +100,6 @@ class StatKeeperRepositoryWorking {
       final teamData = await TeamService.getTeamById(teamId);
 
       if (teamData == null) {
-        print('❌ Team not found: $teamId');
         return [];
       }
 
@@ -141,11 +138,8 @@ class StatKeeperRepositoryWorking {
       // Extract players from both squads
       processSquad(teamData['squad5v5'] as List?);
       processSquad(teamData['squad7v7'] as List?);
-
-      print('✅ Fetched ${allPlayers.length} players from team roster');
       return allPlayers;
     } catch (e) {
-      print('❌ Error fetching team roster: $e');
       throw Exception('Failed to fetch team players: ${e.toString()}');
     }
   }
@@ -174,10 +168,6 @@ class StatKeeperRepositoryWorking {
     }
 
     try {
-      print('📋 [WORKING STATS] Starting stats save...');
-      print('📋 [WORKING STATS] Match ID: $matchId');
-      print('📋 [WORKING STATS] Team ID: $teamId');
-      print('📋 [WORKING STATS] Player ID: $playerId');
 
       final dio = await _getAuthenticatedDio();
 
@@ -294,15 +284,9 @@ class StatKeeperRepositoryWorking {
         });
       }
 
-      print('📤 [WORKING STATS] Sending ${actions.length} actions...');
-
       // Send each action individually using the existing endpoint
       for (int i = 0; i < actions.length; i++) {
         final action = actions[i];
-
-        print('📤 [WORKING STATS] Action ${i + 1}/${actions.length}:');
-        print('📤 [WORKING STATS] URL: /match/$matchId/action');
-        print('📤 [WORKING STATS] Data: $action');
 
         try {
           final response = await dio.post(
@@ -320,21 +304,16 @@ class StatKeeperRepositoryWorking {
             );
           }
         } catch (actionError) {
-          print('❌ [WORKING STATS] Action ${i + 1} failed: $actionError');
 
           // Continue with other actions even if one fails
           if (actionError is DioException) {
             print(
               '❌ [WORKING STATS] Status: ${actionError.response?.statusCode}',
             );
-            print('❌ [WORKING STATS] Response: ${actionError.response?.data}');
           }
         }
       }
-
-      print('✅ [WORKING STATS] All actions processed');
     } catch (e) {
-      print('❌ [WORKING STATS] Error: $e');
       rethrow;
     }
   }
@@ -386,7 +365,6 @@ class StatKeeperRepositoryWorking {
       }
       return null;
     } catch (e) {
-      print('Error fetching match stats: $e');
       throw Exception('Failed to fetch match stats: ${e.toString()}');
     }
   }
@@ -423,7 +401,6 @@ class StatKeeperRepositoryWorking {
 
       return statsList;
     } catch (e) {
-      print('Error fetching match stats list: $e');
       return [];
     }
   }
@@ -431,7 +408,6 @@ class StatKeeperRepositoryWorking {
   /// Submit stats for approval - use match status update
   static Future<void> submitStatsForApproval(String matchId) async {
     try {
-      print('📤 [SUBMIT STATS] Submitting stats for match: $matchId');
 
       // Since there's no separate stats approval endpoint,
       // we'll update the match status to indicate stats are ready for review
@@ -445,13 +421,10 @@ class StatKeeperRepositoryWorking {
         },
       );
 
-      print('✅ [SUBMIT STATS] Status: ${response.statusCode}');
-
       if (response.statusCode != 200) {
         throw Exception('Failed to submit stats for approval');
       }
     } catch (e) {
-      print('❌ Error submitting stats: $e');
       throw Exception('Failed to submit stats: ${e.toString()}');
     }
   }
@@ -551,3 +524,4 @@ class StatKeeperRepositoryWorking {
     return StatStatus.draft;
   }
 }
+

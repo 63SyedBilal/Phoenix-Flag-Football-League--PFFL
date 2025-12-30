@@ -32,19 +32,11 @@ class AdminService {
     Map<String, dynamic> profileData,
   ) async {
     try {
-      print('🔄 AdminService: Updating profile for ID: $adminId');
-      print('🔄 AdminService: Data: $profileData');
 
       final dio = await _getAuthenticatedDio();
       final url = '/superadmin/${adminId.trim()}';
-      print('🔄 AdminService: API URL: ${dio.options.baseUrl}$url');
-
-      print('🔄 AdminService: PUT $url');
-      print('🔄 AdminService: Payload: $profileData');
 
       final response = await dio.put(url, data: profileData);
-
-      print('✅ AdminService: Status ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         final data = response.data;
@@ -56,14 +48,10 @@ class AdminService {
         }
         return {};
       } else {
-        print('❌ AdminService: Failed: ${response.statusCode}');
         return null;
       }
     } on DioException catch (e) {
-      print('❌ AdminService: DioException [${e.type}]: ${e.message}');
       if (e.response != null) {
-        print('❌ AdminService: Status: ${e.response?.statusCode}');
-        print('❌ AdminService: Response: ${e.response?.data}');
 
         String errorMessage = 'Failed to update profile';
         final data = e.response?.data;
@@ -79,7 +67,6 @@ class AdminService {
       }
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      print('❌ AdminService: Unexpected error: $e');
       rethrow;
     }
   }
@@ -94,12 +81,7 @@ class AdminService {
       final dio = await _getAuthenticatedDio();
       final url = '/superadmin/${adminId.trim()}';
 
-      print('🔄 AdminService (PATCH): PATCH $url');
-      print('🔄 AdminService (PATCH): Payload: $profileData');
-
       final response = await dio.patch(url, data: profileData);
-
-      print('✅ AdminService (PATCH): Status ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         final data = response.data;
@@ -111,14 +93,10 @@ class AdminService {
         }
         return {};
       } else {
-        print('❌ AdminService (PATCH): Failed: ${response.statusCode}');
         return null;
       }
     } on DioException catch (e) {
-      print('❌ AdminService (PATCH): DioException [${e.type}]: ${e.message}');
       if (e.response != null) {
-        print('❌ AdminService (PATCH): Status: ${e.response?.statusCode}');
-        print('❌ AdminService (PATCH): Response: ${e.response?.data}');
 
         String errorMessage = 'Failed to update profile';
         final data = e.response?.data;
@@ -134,7 +112,6 @@ class AdminService {
       }
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      print('❌ AdminService (PATCH): Unexpected error: $e');
       rethrow;
     }
   }
@@ -145,8 +122,6 @@ class AdminService {
     Map<String, dynamic> profileData,
   ) async {
     try {
-      print('🔄 AdminService (No ID in URL): Updating profile');
-      print('🔄 AdminService (No ID in URL): Data: $profileData');
 
       final dio = await _getAuthenticatedDio();
       const url = '/superadmin';
@@ -154,12 +129,7 @@ class AdminService {
         '🔄 AdminService (No ID in URL): API URL: ${dio.options.baseUrl}$url',
       );
 
-      print('🔄 AdminService (No ID in URL): PUT $url');
-      print('🔄 AdminService (No ID in URL): Payload: $profileData');
-
       final response = await dio.put(url, data: profileData);
-
-      print('✅ AdminService (No ID in URL): Status ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         final data = response.data;
@@ -171,7 +141,6 @@ class AdminService {
         }
         return {};
       } else {
-        print('❌ AdminService (No ID in URL): Failed: ${response.statusCode}');
         return null;
       }
     } on DioException catch (e) {
@@ -182,7 +151,6 @@ class AdminService {
         print(
           '❌ AdminService (No ID in URL): Status: ${e.response?.statusCode}',
         );
-        print('❌ AdminService (No ID in URL): Response: ${e.response?.data}');
 
         String errorMessage = 'Failed to update profile';
         final data = e.response?.data;
@@ -198,7 +166,6 @@ class AdminService {
       }
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      print('❌ AdminService (No ID in URL): Unexpected error: $e');
       rethrow;
     }
   }
@@ -218,8 +185,8 @@ class AdminService {
       }
       return null;
     } catch (e) {
-      print('Error getting current admin ID: $e');
       return null;
     }
   }
 }
+

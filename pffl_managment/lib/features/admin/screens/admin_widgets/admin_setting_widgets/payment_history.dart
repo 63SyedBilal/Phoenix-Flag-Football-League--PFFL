@@ -37,14 +37,15 @@ class PaymentHistory extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 8),
-                            
+
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Payment History',
@@ -98,9 +99,13 @@ class PaymentHistory extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 GestureDetector(
-                                  onTap: () => _showTeamDropdown(context, provider),
+                                  onTap: () =>
+                                      _showTeamDropdown(context, provider),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 14,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(8),
@@ -112,11 +117,14 @@ class PaymentHistory extends StatelessWidget {
                                     child: Row(
                                       children: [
                                         Text(
-                                          provider.selectedTeamName ?? 'Select Teams',
+                                          provider.selectedTeamName ??
+                                              'Select Teams',
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: provider.selectedTeamName != null 
-                                                ? Colors.black 
+                                            color:
+                                                provider.selectedTeamName !=
+                                                    null
+                                                ? Colors.black
                                                 : const Color(0xFF9CA3AF),
                                           ),
                                         ),
@@ -133,22 +141,37 @@ class PaymentHistory extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 18),
-                            
+
                             // Tabs
                             SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
-                                  _buildTab(context, provider, 'Completed Payments', 0),
+                                  _buildTab(
+                                    context,
+                                    provider,
+                                    'Completed Payments',
+                                    0,
+                                  ),
                                   const SizedBox(width: 8),
-                                  _buildTab(context, provider, 'Pending Payments', 1),
+                                  _buildTab(
+                                    context,
+                                    provider,
+                                    'Pending Payments',
+                                    1,
+                                  ),
                                   const SizedBox(width: 8),
-                                  _buildTab(context, provider, 'Refunded Payments', 2),
+                                  _buildTab(
+                                    context,
+                                    provider,
+                                    'Refunded Payments',
+                                    2,
+                                  ),
                                 ],
                               ),
                             ),
                             const SizedBox(height: 18),
-                            
+
                             // Payment Cards
                             if (provider.payments.isEmpty) ...[
                               Center(
@@ -188,7 +211,11 @@ class PaymentHistory extends StatelessWidget {
                               ...provider.payments.map((payment) {
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 18),
-                                  child: _buildPaymentCard(context, payment, provider.selectedTabIndex),
+                                  child: _buildPaymentCard(
+                                    context,
+                                    payment,
+                                    provider.selectedTabIndex,
+                                  ),
                                 );
                               }).toList(),
                             ],
@@ -197,7 +224,7 @@ class PaymentHistory extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   // Bottom Navigation
                   Container(
                     decoration: BoxDecoration(
@@ -219,7 +246,10 @@ class PaymentHistory extends StatelessWidget {
     );
   }
 
-  void _showTeamDropdown(BuildContext context, PaymentHistoryProvider provider) {
+  void _showTeamDropdown(
+    BuildContext context,
+    PaymentHistoryProvider provider,
+  ) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -237,7 +267,8 @@ class PaymentHistory extends StatelessWidget {
               ),
               const Divider(),
               ...provider.teams.map((team) {
-                final teamId = team['_id']?.toString() ?? team['id']?.toString();
+                final teamId =
+                    team['_id']?.toString() ?? team['id']?.toString();
                 final teamName = team['teamName'] as String? ?? 'Unknown Team';
                 return ListTile(
                   title: Text(teamName),
@@ -254,7 +285,12 @@ class PaymentHistory extends StatelessWidget {
     );
   }
 
-  Widget _buildTab(BuildContext context, PaymentHistoryProvider provider, String title, int index) {
+  Widget _buildTab(
+    BuildContext context,
+    PaymentHistoryProvider provider,
+    String title,
+    int index,
+  ) {
     final isSelected = provider.selectedTabIndex == index;
     return GestureDetector(
       onTap: () {
@@ -285,7 +321,11 @@ class PaymentHistory extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentCard(BuildContext context, PaymentModel payment, int tabIndex) {
+  Widget _buildPaymentCard(
+    BuildContext context,
+    PaymentModel payment,
+    int tabIndex,
+  ) {
     if (tabIndex == 0) {
       return _buildCompletedPaymentCard(context, payment);
     } else if (tabIndex == 1) {
@@ -293,18 +333,18 @@ class PaymentHistory extends StatelessWidget {
     } else {
       return _buildRefundPaymentCard(context, payment);
     }
-  } 
+  }
 
-  Widget _buildCompletedPaymentCard(BuildContext context, PaymentModel payment) {
+  Widget _buildCompletedPaymentCard(
+    BuildContext context,
+    PaymentModel payment,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,17 +361,17 @@ class PaymentHistory extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F173E),
                   borderRadius: BorderRadius.circular(200),
                 ),
                 child: Text(
                   payment.date,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
               ),
             ],
@@ -363,20 +403,14 @@ class PaymentHistory extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Container(
-            height: 1,
-            color: const Color(0xFFE5E7EB),
-          ),
+          Container(height: 1, color: const Color(0xFFE5E7EB)),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'View League Details',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6A7282),
-                ),
+                style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
               ),
               Icon(
                 Icons.keyboard_arrow_down,
@@ -393,6 +427,7 @@ class PaymentHistory extends StatelessWidget {
                 context,
                 AppRoutes.paymentReceipt,
                 arguments: {
+                  'id': payment.id,
                   'recordNumber': payment.recordNumber,
                   'date': payment.date,
                   'player': payment.player,
@@ -416,10 +451,7 @@ class PaymentHistory extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,17 +468,17 @@ class PaymentHistory extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F173E),
                   borderRadius: BorderRadius.circular(200),
                 ),
                 child: Text(
                   payment.date,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
               ),
             ],
@@ -478,20 +510,14 @@ class PaymentHistory extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Container(
-            height: 1,
-            color: Colors.black,
-          ),
+          Container(height: 1, color: Colors.black),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'View League Details',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6A7282),
-                ),
+                style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
               ),
               Icon(
                 Icons.keyboard_arrow_down,
@@ -517,10 +543,7 @@ class PaymentHistory extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1.0,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

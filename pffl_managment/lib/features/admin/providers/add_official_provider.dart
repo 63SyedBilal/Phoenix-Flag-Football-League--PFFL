@@ -94,7 +94,6 @@ class AddOfficialProvider extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Failed to load officials: ${e.toString()}';
-      debugPrint('Error initializing AddOfficialProvider: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -117,9 +116,7 @@ class AddOfficialProvider extends ChangeNotifier {
     try {
       final apiUsers = await UserService.getReferees();
       _referees = apiUsers.map((user) => _mapToOfficialUser(user)).toList();
-      debugPrint('✅ Fetched ${_referees.length} referees');
     } catch (e) {
-      debugPrint('Error fetching referees: $e');
       _referees = [];
       rethrow;
     }
@@ -129,9 +126,7 @@ class AddOfficialProvider extends ChangeNotifier {
     try {
       final apiUsers = await UserService.getStatKeepers();
       _statKeepers = apiUsers.map((user) => _mapToOfficialUser(user)).toList();
-      debugPrint('✅ Fetched ${_statKeepers.length} stat keepers');
     } catch (e) {
-      debugPrint('Error fetching stat keepers: $e');
       _statKeepers = [];
       rethrow;
     }
@@ -141,9 +136,7 @@ class AddOfficialProvider extends ChangeNotifier {
     try {
       final apiUsers = await UserService.getFreeAgents();
       _freeAgents = apiUsers.map((user) => _mapToOfficialUser(user)).toList();
-      debugPrint('✅ Fetched ${_freeAgents.length} free agents');
     } catch (e) {
-      debugPrint('Error fetching free agents: $e');
       _freeAgents = [];
       rethrow;
     }
@@ -180,8 +173,8 @@ class AddOfficialProvider extends ChangeNotifier {
       }
       return false;
     } catch (e) {
-      debugPrint('Error sending invitation: $e');
       return false;
     }
   }
 }
+

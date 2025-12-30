@@ -86,16 +86,13 @@ class PaymentHistoryProvider extends ChangeNotifier {
     if (_disposed) return;
 
     try {
-      debugPrint('🔄 Fetching teams...');
       final teamsList = await PaymentService.getAllTeams();
 
       if (_disposed) return; // Check again after async operation
 
       _teams = teamsList;
-      debugPrint('✅ Fetched ${_teams.length} teams');
       _safeNotifyListeners();
     } catch (e) {
-      debugPrint('❌ Error fetching teams: $e');
     }
   }
 
@@ -108,14 +105,10 @@ class PaymentHistoryProvider extends ChangeNotifier {
       _errorMessage = null;
       _safeNotifyListeners();
 
-      debugPrint('🔄 Fetching payments...');
-
       // Fetch all payments (we'll filter by status on the client side)
       final paymentsList = await PaymentService.getAllPayments('all');
 
       if (_disposed) return; // Check again after async operation
-
-      debugPrint('✅ Fetched ${paymentsList.length} payments');
 
       // Convert to PaymentModel
       _allPayments = paymentsList.asMap().entries.map((entry) {
@@ -131,8 +124,6 @@ class PaymentHistoryProvider extends ChangeNotifier {
       _safeNotifyListeners();
     } catch (e) {
       if (_disposed) return; // Don't update state if disposed
-
-      debugPrint('❌ Error fetching payments: $e');
       _errorMessage = 'Failed to load payment history';
       _isLoading = false;
       _safeNotifyListeners();
@@ -327,3 +318,4 @@ class PaymentHistoryProvider extends ChangeNotifier {
     await fetchPayments();
   }
 }
+

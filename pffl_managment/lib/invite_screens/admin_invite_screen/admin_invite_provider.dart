@@ -62,8 +62,6 @@ class AdminInviteProvider extends ChangeNotifier {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
-
-      debugPrint('🔄 Fetching free agents...');
       final backendUsers = await user_service.UserService.getFreeAgents();
       
       _freeAgents = backendUsers.map((user) {
@@ -77,12 +75,9 @@ class AdminInviteProvider extends ChangeNotifier {
           imageUrl: imageUrl,
         );
       }).toList();
-
-      debugPrint('✅ Fetched ${_freeAgents.length} free agents');
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error fetching free agents: $e');
       _errorMessage = 'Failed to load free agents';
       _isLoading = false;
       notifyListeners();
@@ -132,15 +127,12 @@ class AdminInviteProvider extends ChangeNotifier {
       _isSendingInvite = true;
       _errorMessage = null;
       notifyListeners();
-
-      debugPrint('📧 Sending invite to: $_manualEmail with role: $_manualSelectedRole');
       
       // Map role to backend format
       final backendRole = _mapRoleToBackend(_manualSelectedRole!);
       final success = await user_service.InviteService.sendInvite(_manualEmail.trim(), backendRole);
 
       if (success) {
-        debugPrint('✅ Invite sent successfully (new user created or role invitation sent)');
         // Clear form
         _manualEmail = '';
         _manualSelectedRole = null;
@@ -154,7 +146,6 @@ class AdminInviteProvider extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Error sending invite: $e');
       _errorMessage = 'Failed to send invitation: ${e.toString()}';
       _isSendingInvite = false;
       notifyListeners();
@@ -177,15 +168,12 @@ class AdminInviteProvider extends ChangeNotifier {
       _agentInviteSending[agentId] = true;
       _errorMessage = null;
       notifyListeners();
-
-      debugPrint('📧 Sending invite to agent: ${agent.email} with role: $selectedRole');
       
       // Map role to backend format
       final backendRole = _mapRoleToBackend(selectedRole);
       final success = await user_service.InviteService.sendInvite(agent.email, backendRole);
 
       if (success) {
-        debugPrint('✅ Invite sent successfully (new user created or role invitation sent)');
         // Clear agent role selection and collapse card
         _agentSelectedRoles[agentId] = null;
         _agentExpanded[agentId] = false;
@@ -199,7 +187,6 @@ class AdminInviteProvider extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Error sending invite: $e');
       _errorMessage = 'Failed to send invitation: ${e.toString()}';
       _agentInviteSending[agentId] = false;
       notifyListeners();
@@ -235,3 +222,4 @@ class AdminInviteProvider extends ChangeNotifier {
     await fetchFreeAgents();
   }
 }
+

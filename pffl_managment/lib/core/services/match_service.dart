@@ -62,14 +62,11 @@ class MatchService {
         throw Exception('Failed to create match: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('Error creating match: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(e.response?.data['error'] ?? 'Failed to create match');
       }
       rethrow;
     } catch (e) {
-      print('General error creating match: $e');
       rethrow;
     }
   }
@@ -126,14 +123,11 @@ class MatchService {
         throw Exception('Failed to update match: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('Error updating match: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(e.response?.data['error'] ?? 'Failed to update match');
       }
       rethrow;
     } catch (e) {
-      print('General error updating match: $e');
       rethrow;
     }
   }
@@ -306,17 +300,13 @@ class MatchService {
         }
         return [];
       } else {
-        print('Failed to fetch matches: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
-      print('Error fetching matches: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
       }
       rethrow;
     } catch (e) {
-      print('General error fetching matches: $e');
       rethrow;
     }
   }
@@ -353,14 +343,11 @@ class MatchService {
         throw Exception('Failed to get match: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('Error fetching match: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(e.response?.data['error'] ?? 'Failed to get match');
       }
       rethrow;
     } catch (e) {
-      print('General error fetching match: $e');
       rethrow;
     }
   }
@@ -861,16 +848,13 @@ class MatchService {
         );
       }
     } on DioException catch (e) {
-      print('Error switching half time: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(
           e.response?.data['error'] ?? 'Failed to switch half time',
         );
       }
       rethrow;
     } catch (e) {
-      print('General error switching half time: $e');
       rethrow;
     }
   }
@@ -891,16 +875,13 @@ class MatchService {
         );
       }
     } on DioException catch (e) {
-      print('Error switching full time: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(
           e.response?.data['error'] ?? 'Failed to switch full time',
         );
       }
       rethrow;
     } catch (e) {
-      print('General error switching full time: $e');
       rethrow;
     }
   }
@@ -919,16 +900,13 @@ class MatchService {
         throw Exception('Failed to switch overtime: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('Error switching overtime: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(
           e.response?.data['error'] ?? 'Failed to switch overtime',
         );
       }
       rethrow;
     } catch (e) {
-      print('General error switching overtime: $e');
       rethrow;
     }
   }
@@ -963,14 +941,11 @@ class MatchService {
         throw Exception('Failed to complete toss: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('Error completing toss: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(e.response?.data['error'] ?? 'Failed to complete toss');
       }
       rethrow;
     } catch (e) {
-      print('General error completing toss: $e');
       rethrow;
     }
   }
@@ -995,8 +970,6 @@ class MatchService {
         if (quarter != null) 'quarter': quarter,
       };
 
-      print('📤 Adding game action: $requestData');
-
       final response = await dio.post(
         '/match/$matchId/action',
         data: requestData,
@@ -1004,23 +977,20 @@ class MatchService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data['data'];
-        print('✅ Game action added successfully');
         return _parseMatchFromJson(data);
       } else {
         throw Exception('Failed to add game action: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      print('❌ Error adding game action: ${e.message}');
       if (e.response != null) {
-        print('Error response: ${e.response?.data}');
         throw Exception(
           e.response?.data['error'] ?? 'Failed to add game action',
         );
       }
       rethrow;
     } catch (e) {
-      print('❌ General error adding game action: $e');
       rethrow;
     }
   }
 }
+

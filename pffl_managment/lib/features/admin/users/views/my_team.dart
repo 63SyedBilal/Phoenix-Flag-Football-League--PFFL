@@ -83,7 +83,6 @@ class UsersView extends StatelessWidget {
                   // Invite button
                   ElevatedButton.icon(
                     onPressed: () {
-                      print('Invite button pressed');
                       print(
                         'Current route: ${ModalRoute.of(context)?.settings.name}',
                       );
@@ -94,11 +93,8 @@ class UsersView extends StatelessWidget {
                           context,
                           AppRoutes.adminInvite,
                         );
-                        print('Navigation attempted, result: $result');
                       } catch (e, stackTrace) {
                         // Print error for debugging
-                        print('Error navigating to invite screen: $e');
-                        print('Stack trace: $stackTrace');
                         // Show a snackbar to inform the user
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -636,3 +632,4 @@ String _getRoleDisplayName(String role) {
           .join(' ');
   }
 }
+

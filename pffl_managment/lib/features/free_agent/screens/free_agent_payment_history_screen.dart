@@ -53,7 +53,6 @@ class _FreeAgentPaymentHistoryScreenState
         try {
           amount = double.parse(pending.amount.replaceAll('\$', '').trim());
         } catch (e) {
-          print('Error parsing amount: $e');
         }
 
         // Parse dates
@@ -136,11 +135,9 @@ class _FreeAgentPaymentHistoryScreenState
           }
         }
       } catch (e) {
-        print('Error fetching paid payment history: $e');
         // Continue without paid history
       }
     } catch (e) {
-      print('Error loading payment history: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -766,3 +763,4 @@ class MatchDetails {
 
   MatchDetails({required this.matchTime, required this.teams});
 }
+

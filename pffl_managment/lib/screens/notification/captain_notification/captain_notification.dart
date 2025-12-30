@@ -160,7 +160,6 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                                   '✅ Team data refreshed after viewing TEAM_INVITE_ACCEPTED',
                                 );
                               } catch (e) {
-                                print('⚠️ Could not refresh team data: $e');
                               }
                             });
                           }
@@ -466,10 +465,8 @@ class _CaptainNotificationState extends State<CaptainNotification> {
               listen: false,
             );
             await captainTeamProvider.refresh();
-            print('✅ Captain team data refreshed after player acceptance');
           } catch (e) {
             // Provider not available in context, that's okay
-            print('⚠️ CaptainTeamProvider not available in context: $e');
           }
         }
 
@@ -567,3 +564,4 @@ class _CaptainNotificationState extends State<CaptainNotification> {
     }
   }
 }
+

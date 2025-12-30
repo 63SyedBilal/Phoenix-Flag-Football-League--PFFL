@@ -103,7 +103,6 @@ class CompleteProfileProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error initializing provider: $e');
     }
   }
 
@@ -151,7 +150,6 @@ class CompleteProfileProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Profile backend sync failed: $e');
     }
   }
 
@@ -312,7 +310,6 @@ class CompleteProfileProvider extends ChangeNotifier {
           notifyListeners();
         }
       } catch (e) {
-        debugPrint('Error checking jersey number uniqueness: $e');
         // Don't show error to user for API failures
       }
     });
@@ -450,10 +447,8 @@ class CompleteProfileProvider extends ChangeNotifier {
           if (await imageFile.exists()) {
             imageUrl = await AdminService.uploadImage(imageFile);
             _profileImageUrl = imageUrl;
-            debugPrint('✅ Image uploaded: $imageUrl');
           }
         } catch (e) {
-          debugPrint('⚠️ Image upload failed: $e');
           // Continue without image - it's optional
         }
       }
@@ -512,7 +507,6 @@ class CompleteProfileProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      debugPrint('❌ Error submitting profile: $e');
       notifyListeners();
       return false;
     }
@@ -542,11 +536,9 @@ class CompleteProfileProvider extends ChangeNotifier {
     // This prevents unwanted navigation to different dashboards after profile updates
     if (currentRole != null) {
       await prefs.setString('userRole', currentRole);
-      print('✅ [COMPLETE PROFILE] User role preserved: $currentRole');
     }
     if (currentUserId != null) {
       await prefs.setString('userId', currentUserId);
-      print('✅ [COMPLETE PROFILE] User ID preserved: $currentUserId');
     }
 
     // Show success sheet
@@ -582,7 +574,6 @@ class CompleteProfileProvider extends ChangeNotifier {
       // Could also check via API if needed
       return false;
     } catch (e) {
-      debugPrint('❌ Error checking profile completion: $e');
       return false;
     }
   }
@@ -603,3 +594,4 @@ class CompleteProfileProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

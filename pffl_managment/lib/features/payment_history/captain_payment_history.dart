@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
 import 'package:pffl_managment/features/payment_history/models/payment_history_item.dart';
+import 'package:pffl_managment/core/services/pdf_service.dart';
 import 'package:provider/provider.dart';
 
 class CaptainPaymentHistory extends StatefulWidget {
@@ -499,7 +500,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
               ),
             ],
             const SizedBox(height: 16),
-            _buildViewReceiptButton(),
+            _buildViewReceiptButton(payment),
           ],
         ),
       ),
@@ -532,7 +533,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
     );
   }
 
-  Widget _buildViewReceiptButton() {
+  Widget _buildViewReceiptButton(PaymentHistoryItem payment) {
     return Container(
       width: double.infinity,
       height: 40,
@@ -544,7 +545,14 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaymentReceiptScreen(payment: payment),
+              ),
+            );
+          },
           child: const Center(
             child: Text(
               'View Receipt',
@@ -905,7 +913,47 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
-          onTap: () {},
+          onTap: () async {
+            // Show loading indicator
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            );
+
+            try {
+              // Generate and share receipt
+              await PdfService.generateAndShareReceipt(widget.payment.id);
+
+              // Close loading dialog
+              if (mounted) Navigator.pop(context);
+
+              // Show success message
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Receipt downloaded successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              // Close loading dialog
+              if (mounted) Navigator.pop(context);
+
+              // Show error message
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to download receipt: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
           child: const Center(
             child: Text(
               'Download Receipt',

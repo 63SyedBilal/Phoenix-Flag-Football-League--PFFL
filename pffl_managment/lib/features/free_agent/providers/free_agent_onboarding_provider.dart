@@ -46,10 +46,8 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
       _availableLeagues = allLeagues
           .where((league) => league.status.toLowerCase() == 'active')
           .toList();
-      print('Fetched ${_availableLeagues.length} active leagues.');
     } catch (e) {
       _errorMessage = 'Failed to load leagues: ${e.toString()}';
-      print('Error fetching leagues: $e');
     } finally {
       _setLoading(false);
     }
@@ -168,10 +166,8 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
 
       final String paymentId = (paymentData['_id'] ?? paymentData['id'])
           .toString();
-      debugPrint('✅ Payment record found/created. ID: $paymentId');
 
       // 2. Process final payment using the server-side Stripe endpoint
-      debugPrint('💳 Step 2: Processing payment with Stripe...');
 
       // Parse expiry date for consistent format
       final expiryParts = _expiryDate.split('/');
@@ -194,7 +190,6 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
 
       if (response['success'] == true) {
         _successMessage = 'Payment successful!';
-        debugPrint('✅ Payment processed successfully!');
 
         // Notify Admin
         try {
@@ -203,7 +198,6 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
                 'Free Agent has completed league payment for ${_selectedLeague!.leagueName}',
           );
         } catch (e) {
-          debugPrint('Error sending admin notification: $e');
         }
 
         // Note: User data refresh happens automatically through AuthProvider
@@ -219,12 +213,10 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
             response['error'] ??
             response['message'] ??
             'Payment failed. Please try again.';
-        debugPrint('❌ Payment failed: $_errorMessage');
         _setLoading(false);
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Unexpected error during payment: $e');
       _errorMessage = 'An unexpected error occurred: ${e.toString()}';
       _setLoading(false);
       return false;
@@ -243,3 +235,4 @@ class FreeAgentOnboardingProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

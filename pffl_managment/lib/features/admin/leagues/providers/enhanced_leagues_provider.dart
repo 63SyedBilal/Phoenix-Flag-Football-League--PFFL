@@ -41,7 +41,6 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
-      debugPrint('Error fetching leagues: $e');
       _errorMessage = 'Failed to load leagues: ${e.toString()}';
       _allLeagues = [];
     } finally {
@@ -92,7 +91,7 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
 
   // Load more matches (fake service)
   void loadMoreMatches() {
-    debugPrint('Loading more matches...');
     // Add logic to load more matches
   }
 }
+

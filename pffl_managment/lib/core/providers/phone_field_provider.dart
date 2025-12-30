@@ -54,12 +54,6 @@ class PhoneFieldProvider extends ChangeNotifier {
     _countryISOCode = number.countryISOCode;
 
     // Debug logging
-    debugPrint('🌍 Phone input changed');
-    debugPrint('🌍 Previous country: $previousCountry');
-    debugPrint('🌍 New country: $newCountry');
-    debugPrint('🌍 Country changed: $countryChanged');
-    debugPrint('🌍 Country code: ${number.countryCode}');
-    debugPrint('🌍 Phone number: ${number.number}');
 
     // Notify listeners to rebuild UI
     notifyListeners();
@@ -95,3 +89,4 @@ class PhoneFieldProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

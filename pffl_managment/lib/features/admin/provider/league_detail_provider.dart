@@ -60,7 +60,6 @@ class LeagueDetailProvider extends ChangeNotifier {
               }
               return team;
             } catch (e) {
-              print('⚠️ Failed to fetch details for team ${team.teamName}: $e');
               return team;
             }
           });
@@ -74,7 +73,6 @@ class LeagueDetailProvider extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = e.toString();
-      print('❌ Error initializing league detail: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -380,3 +378,4 @@ class ColorPair {
   final Color end;
   ColorPair(this.start, this.end);
 }
+

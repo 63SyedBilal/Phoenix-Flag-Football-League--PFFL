@@ -86,7 +86,6 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
           });
         }
       } catch (e) {
-        print("Error fetching teams: $e");
         setState(() {
           teams = [widget.match.homeTeam, widget.match.awayTeam];
         });
@@ -376,3 +375,4 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
     );
   }
 }
+

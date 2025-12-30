@@ -127,7 +127,6 @@ class StatStatsProvider extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      print('Error fetching matches: $e');
     } finally {
       _setLoading(false);
     }
@@ -163,12 +162,7 @@ class StatStatsProvider extends ChangeNotifier {
 
       // FIX 2: Always notify listeners after loading stats
       notifyListeners();
-
-      debugPrint('✅ Loaded ${_allStats.length} stats for match $matchId');
-      debugPrint('   - Draft stats: ${draftStats.length}');
-      debugPrint('   - Approved stats: ${approvedStats.length}');
     } catch (e) {
-      debugPrint('❌ Error loading stats: $e');
     } finally {
       _setLoading(false);
     }
@@ -250,10 +244,7 @@ class StatStatsProvider extends ChangeNotifier {
 
       // Reload stats to reflect new status
       await loadStats(_selectedMatchId!);
-
-      debugPrint('✅ Stats submitted for approval and admin notified');
     } catch (e) {
-      debugPrint('❌ Error submitting stats: $e');
     } finally {
       _setSubmitting(false);
     }
@@ -282,10 +273,7 @@ class StatStatsProvider extends ChangeNotifier {
           'Stats submitted for approval: ${match.homeTeam} vs ${match.awayTeam} in ${match.leagueName}';
 
       await NotificationService.sendAdminNotification(message: message);
-
-      debugPrint('✅ Admin notification sent for stats approval');
     } catch (e) {
-      debugPrint('❌ Error sending admin notification: $e');
       // Don't throw error - notification failure shouldn't block stats submission
     }
   }
@@ -308,3 +296,4 @@ class StatStatsProvider extends ChangeNotifier {
     // No-op or call submitForApproval if intended for single stat (though system is match-wide)
   }
 }
+

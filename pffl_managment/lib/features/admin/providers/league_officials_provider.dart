@@ -58,10 +58,8 @@ class LeagueOfficialsProvider extends ChangeNotifier {
       }).toList();
 
       _errorMessage = null;
-      debugPrint('✅ Loaded ${_referees.length} referees, ${_statKeepers.length} stat keepers');
     } catch (e) {
       _errorMessage = 'Failed to load officials: ${e.toString()}';
-      debugPrint('Error initializing LeagueOfficialsProvider: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -91,7 +89,6 @@ class LeagueOfficialsProvider extends ChangeNotifier {
       }
       return false;
     } catch (e) {
-      debugPrint('Error sending invitation: $e');
       return false;
     }
   }
@@ -111,3 +108,4 @@ class OfficialUser {
     this.imageUrl,
   });
 }
+

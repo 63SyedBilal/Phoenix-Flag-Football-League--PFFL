@@ -117,12 +117,10 @@ class UsersProvider extends ChangeNotifier {
   }
 
   void inviteUser() {
-    debugPrint('Invite user button clicked');
     // Add invite logic here
   }
 
   void showUserMenu(UserModel user) {
-    debugPrint('Show menu for user: ${user.name}');
     // Add menu logic here
   }
 
@@ -222,7 +220,6 @@ class UsersProvider extends ChangeNotifier {
   /// Fetch all users, profiles, teams, and leagues from backend
   Future<void> fetchAllUsers() async {
     try {
-      debugPrint('🔄 Fetching all users data...');
       
       // Fetch all data in parallel
       final results = await Future.wait([
@@ -236,8 +233,6 @@ class UsersProvider extends ChangeNotifier {
       _profiles = results[1] as List<Map<String, dynamic>>;
       _teams = results[2] as List<TeamModel>;
       _leagues = results[3] as List<LeagueModel>;
-
-      debugPrint('✅ Fetched ${backendUsers.length} users, ${_profiles.length} profiles, ${_teams.length} teams, ${_leagues.length} leagues');
 
       // Create profile map by userId
       final profileMap = <String, Map<String, dynamic>>{};
@@ -255,11 +250,8 @@ class UsersProvider extends ChangeNotifier {
         final profile = profileMap[backendUser.id];
         return _mapBackendToUIModel(backendUser, profile, _teams, _leagues);
       }).toList();
-
-      debugPrint('✅ Mapped ${_allUsers.length} users to UI format');
       _errorMessage = null;
     } catch (e) {
-      debugPrint('❌ Error fetching users: $e');
       _errorMessage = 'Failed to load users: ${e.toString()}';
       _allUsers = [];
     }
@@ -268,7 +260,6 @@ class UsersProvider extends ChangeNotifier {
   /// Update user role
   Future<bool> updateUserRole(String userId, String newRole) async {
     try {
-      debugPrint('🔄 Updating user role: userId=$userId, newRole=$newRole');
       
       // Map UI role to backend role string
       String backendRole;
@@ -333,15 +324,12 @@ class UsersProvider extends ChangeNotifier {
 
           _allUsers[userIndex] = updatedUser;
           notifyListeners();
-          debugPrint('✅ User role updated successfully');
         }
         return true;
       } else {
-        debugPrint('❌ Failed to update user role');
         return false;
       }
     } catch (e) {
-      debugPrint('❌ Error updating user role: $e');
       return false;
     }
   }
@@ -357,7 +345,6 @@ class UsersProvider extends ChangeNotifier {
     try {
       await fetchAllUsers();
     } catch (e) {
-      debugPrint('❌ Error initializing UsersProvider: $e');
       _errorMessage = 'Failed to load users: ${e.toString()}';
     } finally {
       _isLoading = false;
@@ -376,3 +363,4 @@ class UsersProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
 import 'package:pffl_managment/features/payment_history/models/payment_history_item.dart';
 import 'package:intl/intl.dart';
+import 'package:pffl_managment/core/services/pdf_service.dart';
 
 class CaptainPaymentHistoryView extends StatelessWidget {
   const CaptainPaymentHistoryView({super.key});
@@ -44,7 +45,10 @@ class CaptainPaymentHistoryView extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           'View and manage all your team payments',
-                          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ],
                     ),
@@ -55,7 +59,6 @@ class CaptainPaymentHistoryView extends StatelessWidget {
                     const Expanded(
                       child: Center(child: CircularProgressIndicator()),
                     )
-
                   // Error state
                   else if (provider.errorMessage != null)
                     Expanded(
@@ -98,15 +101,17 @@ class CaptainPaymentHistoryView extends StatelessWidget {
                         ),
                       ),
                     )
-
                   // Payment data
                   else
                     Expanded(
                       child: FutureBuilder<List<PaymentHistoryItem>>(
                         future: Future.value(provider.payments),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
 
                           final payments = snapshot.data ?? [];
@@ -127,7 +132,10 @@ class CaptainPaymentHistoryView extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentContent(BuildContext context, CaptainPaymentHistoryProvider provider) {
+  Widget _buildPaymentContent(
+    BuildContext context,
+    CaptainPaymentHistoryProvider provider,
+  ) {
     final allPayments = provider.payments;
 
     if (allPayments.isEmpty) {
@@ -183,7 +191,9 @@ class CaptainPaymentHistoryView extends StatelessWidget {
             ),
 
             // League payments
-            ...leaguePayments.map((payment) => _buildPaymentCard(context, payment)),
+            ...leaguePayments.map(
+              (payment) => _buildPaymentCard(context, payment),
+            ),
 
             // League summary
             Container(
@@ -208,24 +218,15 @@ class CaptainPaymentHistoryView extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'Total Paid: \$${leaguePayments.where((p) => p.status.toLowerCase() == 'paid').fold(0.0, (sum, p) => sum + p.amount).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.blue),
                   ),
                   Text(
                     'Paid Players: ${leaguePayments.where((p) => p.status.toLowerCase() == 'paid').length}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.blue),
                   ),
                   Text(
                     'Pending Payments: ${leaguePayments.where((p) => p.status.toLowerCase() == 'pending').length}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.blue),
                   ),
                 ],
               ),
@@ -293,8 +294,15 @@ class CaptainPaymentHistoryView extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Payment details
-            _buildDetailRow('Date', DateFormat('MMM dd, yyyy').format(payment.createdAt)),
-            _buildDetailRow('Amount', '\$${payment.amount.toStringAsFixed(2)}', isAmount: true),
+            _buildDetailRow(
+              'Date',
+              DateFormat('MMM dd, yyyy').format(payment.createdAt),
+            ),
+            _buildDetailRow(
+              'Amount',
+              '\$${payment.amount.toStringAsFixed(2)}',
+              isAmount: true,
+            ),
             _buildDetailRow('Method', payment.paymentMethod),
 
             if (payment.transactionId != 'N/A')
@@ -366,7 +374,10 @@ class CaptainPaymentHistoryView extends StatelessWidget {
     }
   }
 
-  Widget _buildNoPaymentsView(BuildContext context, CaptainPaymentHistoryProvider provider) {
+  Widget _buildNoPaymentsView(
+    BuildContext context,
+    CaptainPaymentHistoryProvider provider,
+  ) {
     // Get leagues from team data if available
     // For now, show a generic message
     return Center(
@@ -453,10 +464,20 @@ class CaptainPaymentHistoryView extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Details
-              _buildDetailRow('Player', 'Player ${payment.userId.substring(0, 8)}...'),
-              _buildDetailRow('Date', DateFormat('MMM dd, yyyy').format(payment.createdAt)),
+              _buildDetailRow(
+                'Player',
+                'Player ${payment.userId.substring(0, 8)}...',
+              ),
+              _buildDetailRow(
+                'Date',
+                DateFormat('MMM dd, yyyy').format(payment.createdAt),
+              ),
               _buildDetailRow('League', payment.leagueName),
-              _buildDetailRow('Amount', '\$${payment.amount.toStringAsFixed(2)}', isAmount: true),
+              _buildDetailRow(
+                'Amount',
+                '\$${payment.amount.toStringAsFixed(2)}',
+                isAmount: true,
+              ),
               _buildDetailRow('Method', payment.paymentMethod),
               _buildDetailRow('Status', payment.status.toUpperCase()),
 
@@ -483,18 +504,56 @@ class CaptainPaymentHistoryView extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(context);
                         // Handle primary action based on status
                         if (payment.status.toLowerCase() == 'paid') {
-                          // Download receipt functionality would go here
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Receipt download feature coming soon')),
-                          );
+                          try {
+                            // Show loading indicator
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+
+                            await PdfService.generateAndShareReceipt(
+                              payment.id,
+                            );
+
+                            // Close loading dialog
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Receipt downloaded successfully',
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } catch (e) {
+                            // Close loading dialog
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to download receipt: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Payment is ${payment.status.toLowerCase()}'),
+                              content: Text(
+                                'Payment is ${payment.status.toLowerCase()}',
+                              ),
                             ),
                           );
                         }

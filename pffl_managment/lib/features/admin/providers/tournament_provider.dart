@@ -93,15 +93,11 @@ class TournamentProvider extends ChangeNotifier {
           _championTeamId = champion['_id'] ?? champion['id'];
           _championTeamName = champion['teamName'];
         }
-
-        debugPrint('✅ Tournament initialized: Stage $_tournamentStage, Top teams: ${_topTeams.length}');
       } else {
         _errorMessage = bracketResponse['message'] ?? 'Failed to load tournament data';
-        debugPrint('❌ Failed to initialize tournament: $_errorMessage');
       }
     } catch (e) {
       _errorMessage = 'Error initializing tournament: $e';
-      debugPrint('❌ Error initializing tournament: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -122,7 +118,6 @@ class TournamentProvider extends ChangeNotifier {
         throw Exception(response['message'] ?? 'Failed to get top teams');
       }
     } catch (e) {
-      debugPrint('❌ Error getting top teams: $e');
       rethrow;
     }
   }
@@ -153,15 +148,11 @@ class TournamentProvider extends ChangeNotifier {
         // Update semi-final matches
         final matchesData = response['data']['matches'] as List<dynamic>;
         _semiFinalMatches = matchesData.map((match) => _createMatchModelFromJson(match)).toList();
-
-        debugPrint('✅ Semi-final matches created successfully');
       } else {
         _errorMessage = response['message'] ?? 'Failed to create semi-finals';
-        debugPrint('❌ Failed to create semi-finals: $_errorMessage');
       }
     } catch (e) {
       _errorMessage = 'Error creating semi-finals: $e';
-      debugPrint('❌ Error creating semi-finals: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -194,15 +185,11 @@ class TournamentProvider extends ChangeNotifier {
         // Update final match
         final matchData = response['data']['match'];
         _finalMatch = _createMatchModelFromJson(matchData);
-
-        debugPrint('✅ Final match created successfully');
       } else {
         _errorMessage = response['message'] ?? 'Failed to create final';
-        debugPrint('❌ Failed to create final: $_errorMessage');
       }
     } catch (e) {
       _errorMessage = 'Error creating final: $e';
-      debugPrint('❌ Error creating final: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -225,15 +212,11 @@ class TournamentProvider extends ChangeNotifier {
         final championData = response['data'];
         _championTeamId = championData['champion'];
         _championTeamName = 'Champion Team'; // Would be populated from API
-
-        debugPrint('✅ Tournament completed successfully');
       } else {
         _errorMessage = response['message'] ?? 'Failed to complete tournament';
-        debugPrint('❌ Failed to complete tournament: $_errorMessage');
       }
     } catch (e) {
       _errorMessage = 'Error completing tournament: $e';
-      debugPrint('❌ Error completing tournament: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -275,12 +258,10 @@ class TournamentProvider extends ChangeNotifier {
         await _checkTournamentProgression();
 
         notifyListeners();
-        debugPrint('✅ Match winner set successfully');
       } else {
         throw Exception(response['message'] ?? 'Failed to set match winner');
       }
     } catch (e) {
-      debugPrint('❌ Error setting match winner: $e');
       rethrow;
     }
   }
@@ -295,7 +276,6 @@ class TournamentProvider extends ChangeNotifier {
         _semiFinalMatches.length == 2 &&
         _semiFinalMatches.every((match) => match.status?.name == 'completed')) {
       // Semi-finals complete, can create final
-      debugPrint('🎯 Semi-finals completed - ready to create final');
     }
 
     // Check if final is complete and can complete tournament
@@ -303,7 +283,6 @@ class TournamentProvider extends ChangeNotifier {
         _finalMatch?.status?.name == 'completed' &&
         _finalMatch?.winner != null) {
       // Tournament complete
-      debugPrint('🏆 Tournament completed - champion determined');
     }
   }
 
@@ -423,3 +402,4 @@ class TopTeam {
     );
   }
 }
+

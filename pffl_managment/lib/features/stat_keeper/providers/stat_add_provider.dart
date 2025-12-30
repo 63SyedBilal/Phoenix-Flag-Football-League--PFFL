@@ -82,7 +82,6 @@ class StatAddProvider extends ChangeNotifier {
       _isReadOnly = match.status == 'completed';
       loadTeams();
     } catch (e) {
-      debugPrint('Error loading specific match: $e');
     } finally {
       _isLoadingMatches = false;
       notifyListeners();
@@ -95,7 +94,6 @@ class StatAddProvider extends ChangeNotifier {
     try {
       _assignedMatches = await StatKeeperRepositoryFixed.getAssignedMatches();
     } catch (e) {
-      debugPrint('Error loading assigned matches: $e');
       _assignedMatches = [];
     } finally {
       _isLoadingMatches = false;
@@ -117,7 +115,6 @@ class StatAddProvider extends ChangeNotifier {
       loadTeams();
       notifyListeners();
     } catch (e) {
-      debugPrint('Error selecting match: $e');
     }
   }
 
@@ -128,7 +125,6 @@ class StatAddProvider extends ChangeNotifier {
     try {
       _teams = await StatKeeperRepositoryFixed.getMatchTeams(_matchId!);
     } catch (e) {
-      debugPrint('Error loading teams: $e');
       _teams = [];
     } finally {
       _isLoadingTeams = false;
@@ -238,7 +234,6 @@ class StatAddProvider extends ChangeNotifier {
         );
       }
     } catch (e) {
-      debugPrint('Error updating stats: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error updating stats: ${e.toString()}')),
@@ -265,7 +260,6 @@ class StatAddProvider extends ChangeNotifier {
       }
     } catch (e) {
       // StatStatsProvider might not be available in current context
-      debugPrint('StatStatsProvider not available for refresh: $e');
     }
   }
 
@@ -314,3 +308,4 @@ class StatAddProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

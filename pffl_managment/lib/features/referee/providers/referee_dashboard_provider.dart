@@ -46,22 +46,17 @@ class RefereeDashboardProvider extends ChangeNotifier {
       final currentUserId = prefs.getString('userId') ?? '';
       
       if (currentUserId.isEmpty) {
-        debugPrint('⚠️ No userId found in SharedPreferences');
         _errorMessage = 'User ID not found. Please login again.';
         _upcomingGames = [];
         _setLoading(false);
         return;
       }
-
-      debugPrint('🔄 Fetching matches assigned to referee: $currentUserId');
       
       // Fetch assigned games via repository
       _upcomingGames = await _repository.fetchAssignedGames(currentUserId);
-      debugPrint('✅ Assigned games loaded: ${_upcomingGames.length}');
 
       _errorMessage = null;
     } catch (e) {
-      debugPrint('❌ Error fetching referee matches: $e');
       _errorMessage = 'Failed to load assigned games: ${e.toString()}';
 
       _upcomingGames = [];
@@ -80,3 +75,4 @@ class RefereeDashboardProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

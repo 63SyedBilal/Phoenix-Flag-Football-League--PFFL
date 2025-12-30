@@ -50,7 +50,6 @@ class GameStatsProvider extends ChangeNotifier {
       _gameStats = await StatKeeperRepositoryFixed.getMatchStats(matchId!);
       _errorMessage = null;
     } catch (e) {
-      debugPrint('Error loading game stats: $e');
       _gameStats = null;
       _errorMessage = e.toString();
     } finally {
@@ -73,3 +72,4 @@ class GameStatsProvider extends ChangeNotifier {
   // Refresh stats (e.g., after navigating back from adding stats)
   Future<void> refreshStats() => loadStats();
 }
+

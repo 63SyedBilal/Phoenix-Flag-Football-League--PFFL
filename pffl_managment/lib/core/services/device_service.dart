@@ -60,7 +60,6 @@ class DeviceService {
       await _requestNotificationPermissions();
 
     } catch (e) {
-      print('❌ Error initializing DeviceService: $e');
       rethrow;
     }
   }
@@ -83,7 +82,6 @@ class DeviceService {
         return 'device_${timestamp}_$random';
       }
     } catch (e) {
-      print('❌ Error generating device ID: $e');
       // Fallback to timestamp-based ID
       return 'fallback_${DateTime.now().millisecondsSinceEpoch}';
     }
@@ -102,15 +100,12 @@ class DeviceService {
         if (result.isGranted) {
           _notificationPermissionGranted = true;
           await _saveNotificationPermission(true);
-          print('✅ Notification permission granted');
         } else {
           _notificationPermissionGranted = false;
           await _saveNotificationPermission(false);
-          print('⚠️ Notification permission denied');
         }
       } else if (status.isGranted) {
         _notificationPermissionGranted = true;
-        print('✅ Notification permission already granted');
       }
 
       // Request iOS-specific permissions if needed
@@ -124,7 +119,6 @@ class DeviceService {
             );
       }
     } catch (e) {
-      print('❌ Error requesting notification permissions: $e');
     }
   }
 
@@ -135,7 +129,6 @@ class DeviceService {
   }) async {
     try {
       if (_deviceId == null) {
-        print('⚠️ Device ID not available');
         return false;
       }
 
@@ -155,14 +148,11 @@ class DeviceService {
         if (deviceToken != null) {
           await _saveDeviceToken(deviceToken);
         }
-        print('✅ Device token registered successfully');
         return true;
       } else {
-        print('❌ Failed to register device token: ${response.statusMessage}');
         return false;
       }
     } catch (e) {
-      print('❌ Error registering device token: $e');
       return false;
     }
   }
@@ -183,14 +173,11 @@ class DeviceService {
       if (response.statusCode == 200) {
         _deviceToken = null;
         await _clearStoredData();
-        print('✅ Device token unregistered successfully');
         return true;
       } else {
-        print('❌ Failed to unregister device token: ${response.statusMessage}');
         return false;
       }
     } catch (e) {
-      print('❌ Error unregistering device token: $e');
       return false;
     }
   }
@@ -204,7 +191,6 @@ class DeviceService {
   }) async {
     try {
       if (!_notificationPermissionGranted) {
-        print('⚠️ Notification permission not granted, skipping notification');
         return;
       }
 
@@ -235,16 +221,12 @@ class DeviceService {
         notificationDetails,
         payload: payload,
       );
-
-      print('✅ Local notification shown: $title');
     } catch (e) {
-      print('❌ Error showing notification: $e');
     }
   }
 
   /// Handle notification tap in foreground/background
   static void _onNotificationTapped(NotificationResponse response) {
-    print('📱 Notification tapped: ${response.payload}');
 
     if (response.payload != null) {
       _handleNotificationPayload(response.payload!);
@@ -254,7 +236,6 @@ class DeviceService {
   /// Handle notification tap in background/terminated state
   @pragma('vm:entry-point')
   static void _onBackgroundNotificationTapped(NotificationResponse response) {
-    print('📱 Background notification tapped: ${response.payload}');
 
     if (response.payload != null) {
       _handleNotificationPayload(response.payload!);
@@ -269,8 +250,6 @@ class DeviceService {
       final type = data['type'];
       final id = data['id'];
 
-      print('🧭 Handling notification navigation - Type: $type, ID: $id');
-
       // Store payload for app launch navigation
       _storePendingNotification(data);
 
@@ -278,7 +257,6 @@ class DeviceService {
       // when the app becomes active
 
     } catch (e) {
-      print('❌ Error handling notification payload: $e');
     }
   }
 
@@ -288,7 +266,6 @@ class DeviceService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('pending_notification', json.encode(data));
     } catch (e) {
-      print('❌ Error storing pending notification: $e');
     }
   }
 
@@ -303,7 +280,6 @@ class DeviceService {
         return json.decode(data);
       }
     } catch (e) {
-      print('❌ Error getting pending notification: $e');
     }
     return null;
   }
@@ -316,7 +292,6 @@ class DeviceService {
       _deviceId = prefs.getString(_deviceIdKey);
       _notificationPermissionGranted = prefs.getBool(_notificationPermissionKey) ?? false;
     } catch (e) {
-      print('❌ Error loading stored device data: $e');
     }
   }
 
@@ -326,7 +301,6 @@ class DeviceService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_deviceTokenKey, token);
     } catch (e) {
-      print('❌ Error saving device token: $e');
     }
   }
 
@@ -336,7 +310,6 @@ class DeviceService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_deviceIdKey, deviceId);
     } catch (e) {
-      print('❌ Error saving device ID: $e');
     }
   }
 
@@ -346,7 +319,6 @@ class DeviceService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_notificationPermissionKey, granted);
     } catch (e) {
-      print('❌ Error saving notification permission: $e');
     }
   }
 
@@ -358,7 +330,6 @@ class DeviceService {
       await prefs.remove(_deviceIdKey);
       await prefs.remove(_notificationPermissionKey);
     } catch (e) {
-      print('❌ Error clearing stored device data: $e');
     }
   }
 
@@ -368,3 +339,4 @@ class DeviceService {
   static bool get notificationPermissionGranted => _notificationPermissionGranted;
   static FlutterLocalNotificationsPlugin? get notificationsPlugin => _flutterLocalNotificationsPlugin;
 }
+

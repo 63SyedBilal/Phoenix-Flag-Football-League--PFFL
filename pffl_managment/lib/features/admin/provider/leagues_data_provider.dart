@@ -35,7 +35,7 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
 
   // Load more matches (fake service)
   void loadMoreMatches() {
-    debugPrint('Loading more matches...');
     // Add logic to load more matches
   }
 }
+

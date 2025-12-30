@@ -312,9 +312,6 @@ class TeamInfoSection extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         final isCaptain = authProvider.userRole.toLowerCase() == 'captain';
-
-        print('🔍 [TEAM INFO DEBUG] User role: "${authProvider.userRole}"');
-        print('🔍 [TEAM INFO DEBUG] Is captain: $isCaptain');
         print(
           '🔍 [TEAM INFO DEBUG] 3-dot icon will be ${isCaptain ? "visible" : "hidden"}',
         );
@@ -609,3 +606,4 @@ class TeamInfoSection extends StatelessWidget {
     );
   }
 }
+

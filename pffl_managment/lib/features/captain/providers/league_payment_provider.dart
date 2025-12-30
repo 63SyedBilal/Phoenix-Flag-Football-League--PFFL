@@ -50,7 +50,6 @@ class LeaguePaymentProvider extends ChangeNotifier {
             response['message']?.toString() ??
             response['error']?.toString() ??
             '';
-        debugPrint('⚠️ League payment status check failed: $errorMsg');
 
         // Check if error is about "no team" - this is a backend issue
         if (errorMsg.toLowerCase().contains('no team') ||
@@ -76,7 +75,6 @@ class LeaguePaymentProvider extends ChangeNotifier {
       }
     } catch (e) {
       final errorStr = e.toString();
-      debugPrint('❌ Error checking league payment status: $errorStr');
 
       // Check if it's the "no team" error
       if (errorStr.toLowerCase().contains('no team') ||
@@ -159,3 +157,4 @@ class LeaguePaymentProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+

@@ -81,7 +81,7 @@ class LeaguesProvider extends ChangeNotifier {
   }
 
   void loadMoreMatches() {
-    debugPrint('Loading more matches...');
     // Add logic to load more matches
   }
 }
+

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/profile_service.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/core/services/user_service.dart';
+import 'package:pffl_managment/core/services/player_freeagent_trigger_service.dart';
+import 'package:pffl_managment/core/services/notification_trigger_service.dart';
 import '../models/inviteable_user_model.dart';
 
 /// Provider for managing captain invite screen state and logic
@@ -83,7 +86,6 @@ class CaptainInviteProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load data: ${e.toString()}';
-      print('❌ Error initializing CaptainInviteProvider: $e');
       notifyListeners();
     }
   }
@@ -183,7 +185,6 @@ class CaptainInviteProvider extends ChangeNotifier {
       }
       _errorMessage =
           'Failed to fetch ${role == 'player' ? 'players' : 'free agents'}: ${e.toString()}';
-      print('❌ Error fetching $role: $e');
       notifyListeners();
     }
   }
@@ -216,7 +217,6 @@ class CaptainInviteProvider extends ChangeNotifier {
           enrichedUsers.add(user);
         }
       } catch (e) {
-        print('⚠️ Error fetching profile for ${user.id}: $e');
         // Continue with original user data if profile fetch fails
         enrichedUsers.add(user);
       }
@@ -271,37 +271,26 @@ class CaptainInviteProvider extends ChangeNotifier {
 
   /// Invite a user to the team
   Future<bool> inviteUser(String userId) async {
-    print('🎯 [INVITE DEBUG] Starting invite process for user: $userId');
-
     if (_teamId == null || _teamId!.isEmpty) {
-      print('❌ [INVITE DEBUG] Team ID not found');
       _errorMessage = 'Team ID not found';
       notifyListeners();
       return false;
     }
-
-    print('🎯 [INVITE DEBUG] Team ID: $_teamId');
-    print('🎯 [INVITE DEBUG] Selected format: $_selectedFormat');
 
     // Find user and immediately set invited state
     final users = _selectedTab == 'Players' ? _players : _freeAgents;
     final userIndex = users.indexWhere((u) => u.id == userId);
 
     if (userIndex == -1) {
-      print('❌ [INVITE DEBUG] User not found in list');
       _errorMessage = 'User not found';
       notifyListeners();
       return false;
     }
 
     final user = users[userIndex];
-    print('🎯 [INVITE DEBUG] Found user: ${user.fullName} (${user.email})');
-    print('🎯 [INVITE DEBUG] User role: ${user.role}');
-    print('🎯 [INVITE DEBUG] Current invite status: ${user.isInvited}');
 
     // Check if already invited
     if (user.isInvited) {
-      print('⚠️ [INVITE DEBUG] User is already invited, skipping');
       return false;
     }
 
@@ -311,16 +300,9 @@ class CaptainInviteProvider extends ChangeNotifier {
     } else {
       _freeAgents[userIndex] = _freeAgents[userIndex].copyWith(isInvited: true);
     }
-    print('✅ [INVITE DEBUG] Updated UI state to invited');
     notifyListeners();
 
     try {
-      print('🎯 [INVITE DEBUG] Calling TeamService.invitePlayer...');
-      print('🎯 [INVITE DEBUG] Parameters:');
-      print('   - playerId: $userId');
-      print('   - teamId: $_teamId');
-      print('   - format: $_selectedFormat');
-
       // Call API to invite player
       await TeamService.invitePlayer(
         playerId: userId,
@@ -328,17 +310,35 @@ class CaptainInviteProvider extends ChangeNotifier {
         format: _selectedFormat,
       );
 
-      print('✅ [INVITE DEBUG] TeamService.invitePlayer completed successfully');
-      print('🎯 [INVITE DEBUG] Invite should now be sent to Free Agent');
-      print(
-        '🎯 [INVITE DEBUG] Expected notification: "This captain has invited you"',
+      // Trigger Notifications
+      final prefs = await SharedPreferences.getInstance();
+      final captainId = prefs.getString('userId') ?? '';
+      final captainName = prefs.getString('fullName') ?? 'Captain';
+      final teamData = await TeamService.getTeamByCaptain();
+      final teamName = teamData?['teamName'] ?? 'Team';
+
+      // Notify Player
+      await PlayerFreeAgentTriggerService.triggerPlayerInvitationReceived(
+        playerId: userId,
+        playerName: user.fullName,
+        teamName: teamName,
+        captainName: captainName,
+        teamId: _teamId!,
+        captainId: captainId,
+      );
+
+      // Notify Captain (Confirmation)
+      await NotificationTriggerService.triggerInvitationSent(
+        captainId: captainId,
+        playerName: user.fullName,
+        teamName: teamName,
+        teamId: _teamId!,
+        playerId: userId,
       );
 
       // Invite successful - state already updated above
       return true;
     } catch (e) {
-      print('❌ [INVITE DEBUG] Error during invite API call: $e');
-
       // Reset invited state on error
       if (_selectedTab == 'Players') {
         _players[userIndex] = _players[userIndex].copyWith(isInvited: false);
@@ -349,7 +349,6 @@ class CaptainInviteProvider extends ChangeNotifier {
       }
 
       _errorMessage = 'Failed to invite user: ${e.toString()}';
-      print('❌ [INVITE DEBUG] Reset UI state due to error');
       notifyListeners();
       return false;
     }

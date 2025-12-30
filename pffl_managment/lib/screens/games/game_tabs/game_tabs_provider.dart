@@ -91,10 +91,10 @@ class GameTabsProvider extends ChangeNotifier {
         _upcomingGames = related.take(5).toList();
       }
     } catch (e) {
-      print('Error loading upcoming games: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 }
+

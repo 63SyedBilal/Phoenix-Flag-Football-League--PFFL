@@ -27,7 +27,6 @@ class CaptainPaymentHistoryProvider extends ChangeNotifier {
       debugPrint(
         '📊 [CAPTAIN PAYMENT HISTORY] Loading team payment history...',
       );
-      debugPrint('📊 [CAPTAIN PAYMENT HISTORY] User role: $userRole');
 
       // Check if user is actually a captain
       if (userRole?.toLowerCase() != 'captain') {
@@ -149,7 +148,6 @@ class CaptainPaymentHistoryProvider extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = 'Failed to load payment history: ${e.toString()}';
-      debugPrint('❌ [CAPTAIN PAYMENT HISTORY] Error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -246,3 +244,4 @@ class CaptainPaymentHistoryProvider extends ChangeNotifier {
   /// Get paid payments count
   int get paidPaymentsCount => paidPayments.length;
 }
+
