@@ -924,6 +924,17 @@ export async function updateMatch(req: NextRequest, { params }: { params: { id: 
 
     await match.save();
 
+    // Check tournament progression if this was a league match completion
+    if (status === "completed" && (match as any).matchType === "league") {
+      try {
+        const { checkTournamentProgression } = await import("@/controller/tournament");
+        await checkTournamentProgression((match as any).leagueId.toString());
+      } catch (progressionError) {
+        console.error("Error checking tournament progression:", progressionError);
+        // Don't fail the match update if progression check fails
+      }
+    }
+
     // Populate references
     await match.populate("leagueId", "leagueName format startDate endDate logo");
     await match.populate("createdBy", "firstName lastName email role");

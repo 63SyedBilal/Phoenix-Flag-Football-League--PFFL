@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:pffl_managment/core/services/admin_service.dart';
+import 'package:pffl_managment/core/services/auth_service.dart';
 
 class SponsorScreenProvider extends ChangeNotifier {
   final List<Map<String, String>?> _uploadedImages = [null, null, null];
@@ -181,8 +182,27 @@ class SponsorScreenProvider extends ChangeNotifier {
         }
       }
 
-      // TODO: Save uploaded URLs to backend (league settings, etc.)
-      // For now, we'll just log the URLs
+      // Save uploaded URLs to backend
+      try {
+        final dio = await AuthService.getWorkingDio();
+        final sponsorData = {
+          'sponsorImages': uploadedUrls,
+          'updatedAt': DateTime.now().toIso8601String(),
+        };
+
+        final response = await dio.post('/admin/sponsors', data: sponsorData);
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          debugPrint('✅ Sponsor images saved to backend successfully');
+        } else {
+          debugPrint('❌ Failed to save sponsor images to backend: ${response.statusMessage}');
+          throw Exception('Failed to save sponsor images');
+        }
+      } catch (e) {
+        debugPrint('❌ Error saving sponsor images to backend: $e');
+        // Don't fail the entire operation for this
+      }
+
       debugPrint('📋 Final sponsor image URLs:');
       for (int i = 0; i < uploadedUrls.length; i++) {
         debugPrint('   Sponsor ${i + 1}: ${uploadedUrls[i]}');

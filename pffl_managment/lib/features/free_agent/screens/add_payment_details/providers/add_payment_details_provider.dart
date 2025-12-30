@@ -6,6 +6,9 @@ import 'package:pffl_managment/features/free_agent/screens/free_agent_league_sel
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/models/payment_state.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/utils/payment_validators.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 class AddPaymentDetailsProvider extends ChangeNotifier {
   PaymentState _state = const PaymentState();
@@ -72,11 +75,14 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
 
   Future<bool> processMultiLeaguePayment(
     LeagueSelectionProvider leagueProvider,
+    BuildContext context,
   ) async {
     // Debug output for form state before validation
     debugPrint('📋 Form validation starting...');
     debugPrint('   - Cardholder: "${_state.cardholderName}"');
-    debugPrint('   - Card Number: "${_state.cardNumber}" (length: ${_state.cardNumber.length})');
+    debugPrint(
+      '   - Card Number: "${_state.cardNumber}" (length: ${_state.cardNumber.length})',
+    );
     debugPrint('   - Expiry Date: "${_state.expiryDate}"');
     debugPrint('   - CVV: "${_state.cvv}" (length: ${_state.cvv.length})');
     debugPrint('   - ZIP Code: "${_state.zipCode}"');
@@ -107,12 +113,10 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
             final leagueModel = allLeagues
                 .where((l) => l.id == pendingLeagueId.trim())
                 .cast<LeagueModel?>()
-                .firstWhere(
-                  (l) => l != null,
-                  orElse: () => null,
-                );
+                .firstWhere((l) => l != null, orElse: () => null);
 
-            final effectiveLeague = leagueModel ??
+            final effectiveLeague =
+                leagueModel ??
                 LeagueModel(
                   id: pendingLeagueId.trim(),
                   leagueName: leagueDetail.leagueName,
@@ -181,7 +185,9 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
         debugPrint('   - Payment ID: $paymentId');
         debugPrint('   - Raw Expiry Date from state: "${_state.expiryDate}"');
         debugPrint('   - Parsed Month: $expMonth, Year: $expYear');
-        debugPrint('   - Card Number: ${_state.cardNumber.replaceAll(' ', '').replaceRange(0, 12, '*' * 12)}');
+        debugPrint(
+          '   - Card Number: ${_state.cardNumber.replaceAll(' ', '').replaceRange(0, 12, '*' * 12)}',
+        );
         debugPrint('   - CVV: ***');
         debugPrint('   - Cardholder: "${_state.cardholderName}"');
         debugPrint('   - ZIP Code: "${_state.zipCode}"');
@@ -223,6 +229,39 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
 
       if (allSuccessful) {
         debugPrint('🎉 All payments processed successfully!');
+
+        // REFRESH LEAGUE PAYMENT STATUS IN REAL-TIME
+        try {
+          final leaguePaymentProvider = Provider.of<LeaguePaymentProvider>(
+            context,
+            listen: false,
+          );
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          final captainId = authProvider.userId;
+
+          if (captainId.isNotEmpty) {
+            debugPrint(
+              '🔄 Refreshing payment status for ${leagueProvider.selectedLeagues.length} leagues...',
+            );
+            for (var league in leagueProvider.selectedLeagues) {
+              debugPrint(
+                '🔄 Refreshing payment status for league: ${league.leagueName} (${league.id})',
+              );
+              await leaguePaymentProvider.refreshPaymentStatus(
+                league.id,
+                captainId,
+              );
+              debugPrint('✅ Payment status refreshed for ${league.leagueName}');
+            }
+            debugPrint('✅ All payment statuses refreshed successfully!');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Could not refresh LeaguePaymentProvider: $e');
+        }
+
         _state = _state.copyWith(isLoading: false);
         notifyListeners();
         _clearSensitiveData();

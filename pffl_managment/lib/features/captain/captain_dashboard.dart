@@ -49,8 +49,6 @@ class CaptainDashboard extends StatelessWidget {
                           return GamesProvider(
                             userRole: auth.userRole,
                             userId: auth.userId,
-                            assignedLeague: 'Six Nations',
-                            isLeagueFeeUnpaid: true,
                           );
                         },
                         child: const GamesScreen(),

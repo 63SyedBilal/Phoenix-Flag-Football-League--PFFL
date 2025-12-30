@@ -61,8 +61,6 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Map to store profile image URLs for stat keepers (userId -> imageUrl)
   final Map<String, String?> _statKeeperProfileImages = {};
 
-  // Player profile data cache (playerId -> profile data)
-  final Map<String, Map<String, dynamic>?> _playerProfilesCache = {};
   bool _isLoadingPlayerProfile = false;
 
   // Referee invitation tracking (sent invites, not selection)
@@ -591,13 +589,12 @@ class CreateLeagueViewModel extends ChangeNotifier {
     }
 
     // Validate Logo
-    // TODO: Uncomment this validation in the future when logo upload is required
-    // if (_uploadedLogoPath.isEmpty) {
-    //   _logoError = 'Please upload a league logo';
-    //   isValid = false;
-    // } else {
-    //   _logoError = null;
-    // }
+    if (_uploadedLogoPath.isEmpty) {
+      _logoError = 'Please upload a league logo';
+      isValid = false;
+    } else {
+      _logoError = null;
+    }
 
     // For now, clear any existing logo error
     _logoError = null;

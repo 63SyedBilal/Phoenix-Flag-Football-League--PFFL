@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Team, User } from "@/modules";
 import { verifyAccessToken } from "@/lib/jwt";
+import { toObjectId } from "@/lib/db";
+import Payment from "@/modules/payment";
 
 // Helper to get token from request
 function getToken(req: NextRequest): string | null {
@@ -573,6 +575,285 @@ export async function removePlayer(req: NextRequest, { params }: { params: { id:
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
     return NextResponse.json({ error: error.message || "Failed to remove player" }, { status: 500 });
+  }
+}
+
+/**
+ * Transfer team leadership to another player
+ * PUT /api/team/:id/transfer-leadership
+ */
+export async function transferLeadership(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await connectDB();
+    const decoded = await verifyUser(req);
+
+    const teamId = params.id;
+    const { newCaptainId } = await req.json();
+
+    // Validate input
+    if (!newCaptainId) {
+      return NextResponse.json({ error: "newCaptainId is required" }, { status: 400 });
+    }
+
+    // Find the team
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Verify current user is the captain
+    if (team.captain.toString() !== decoded.userId) {
+      return NextResponse.json({ error: "Only the current captain can transfer leadership" }, { status: 403 });
+    }
+
+    // Verify new captain is a member of the team
+    if (!team.players.includes(newCaptainId)) {
+      return NextResponse.json({ error: "New captain must be a current team member" }, { status: 400 });
+    }
+
+    // Get user details for notifications
+    const currentCaptain = await User.findById(decoded.userId);
+    const newCaptain = await User.findById(newCaptainId);
+
+    if (!currentCaptain || !newCaptain) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Update team captain
+    team.captain = newCaptainId;
+    await team.save();
+
+    // Create notification for the new captain
+    await Notification.create({
+      sender: decoded.userId,
+      receiver: newCaptainId,
+      team: teamId,
+      league: team.league,
+      type: "LEADERSHIP_RECEIVED",
+      status: "pending",
+      message: `You are now the captain of ${team.teamName}. Leadership transferred from ${currentCaptain.firstName} ${currentCaptain.lastName}`,
+      data: {
+        teamName: team.teamName,
+        oldCaptainName: `${currentCaptain.firstName} ${currentCaptain.lastName}`,
+        captainName: `${newCaptain.firstName} ${newCaptain.lastName}`
+      }
+    });
+
+    // Create notification for the old captain
+    await Notification.create({
+      sender: decoded.userId,
+      receiver: decoded.userId,
+      team: teamId,
+      league: team.league,
+      type: "LEADERSHIP_TRANSFERRED",
+      status: "pending",
+      message: `Team leadership of ${team.teamName} has been transferred to ${newCaptain.firstName} ${newCaptain.lastName}`,
+      data: {
+        teamName: team.teamName,
+        captainName: `${newCaptain.firstName} ${newCaptain.lastName}`,
+        oldCaptainName: `${currentCaptain.firstName} ${currentCaptain.lastName}`
+      }
+    });
+
+    console.log(`👑 Leadership transferred from ${currentCaptain.firstName} ${currentCaptain.lastName} to ${newCaptain.firstName} ${newCaptain.lastName} for team ${team.teamName}`);
+
+    return NextResponse.json({
+      success: true,
+      message: "Leadership transferred successfully",
+      data: {
+        teamId: team._id,
+        oldCaptain: {
+          id: currentCaptain._id,
+          name: `${currentCaptain.firstName} ${currentCaptain.lastName}`
+        },
+        newCaptain: {
+          id: newCaptain._id,
+          name: `${newCaptain.firstName} ${newCaptain.lastName}`
+        }
+      }
+    });
+
+  } catch (error: any) {
+    if (error.message === "No token provided" || error.message === "Invalid token") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    return NextResponse.json({ error: error.message || "Failed to transfer leadership" }, { status: 500 });
+  }
+}
+
+/**
+ * Remove a player from team
+ * DELETE /api/team/:id/remove-player/:playerId
+ */
+export async function removePlayerFromTeam(req: NextRequest, { params }: { params: { id: string, playerId: string } }) {
+  try {
+    await connectDB();
+    const decoded = await verifyUser(req);
+
+    const { id: teamId, playerId } = params;
+
+    // Find the team
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Verify current user is the captain
+    if (team.captain.toString() !== decoded.userId) {
+      return NextResponse.json({ error: "Only the captain can remove players" }, { status: 403 });
+    }
+
+    // Cannot remove the captain
+    if (team.captain.toString() === playerId) {
+      return NextResponse.json({ error: "Cannot remove the captain from the team" }, { status: 400 });
+    }
+
+    // Check if player is in the team
+    const isPlayerInTeam = team.players.includes(playerId);
+    if (!isPlayerInTeam) {
+      return NextResponse.json({ error: "Player is not a member of this team" }, { status: 400 });
+    }
+
+    // Get player details for notification
+    const playerToRemove = await User.findById(playerId);
+    const captain = await User.findById(decoded.userId);
+
+    if (!playerToRemove || !captain) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Remove player from team
+    team.players = team.players.filter((player: any) => player.toString() !== playerId);
+    await team.save();
+
+    // Update user's role back to free agent if they were a player
+    await User.findByIdAndUpdate(playerId, { role: "freeagent" });
+
+    // Create notification for the removed player
+    await Notification.create({
+      sender: decoded.userId,
+      receiver: playerId,
+      team: teamId,
+      league: team.league,
+      type: "REMOVED_FROM_TEAM",
+      status: "pending",
+      message: `You have been removed from ${team.teamName}`,
+      data: {
+        teamName: team.teamName,
+        captainName: `${captain.firstName} ${captain.lastName}`,
+        playerName: `${playerToRemove.firstName} ${playerToRemove.lastName}`
+      }
+    });
+
+    console.log(`👤 Player ${playerToRemove.firstName} ${playerToRemove.lastName} removed from team ${team.teamName}`);
+
+    return NextResponse.json({
+      success: true,
+      message: "Player removed successfully",
+      data: {
+        teamId: team._id,
+        removedPlayer: {
+          id: playerToRemove._id,
+          name: `${playerToRemove.firstName} ${playerToRemove.lastName}`
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error("Error removing player from team:", error);
+    return NextResponse.json({ error: error.message || "Failed to remove player" }, { status: 500 });
+  }
+}
+
+/**
+ * Get player payment statuses for a captain's team
+ * GET /api/team/:teamId/player-payments
+ */
+export async function getTeamPlayerPayments(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await connectDB();
+    const decoded = await verifyUser(req);
+
+    const { id: teamId } = params;
+    console.log("Getting player payments for team:", teamId);
+
+    const teamObjectId = toObjectId(teamId);
+    console.log("Team ObjectId:", teamObjectId);
+
+    // Find the team and ensure the user is the captain
+    const team = await Team.findById(teamObjectId);
+    console.log("Found team:", team ? "yes" : "no");
+
+    if (!team) {
+      console.log("Team not found for ID:", teamId);
+      // For now, return empty payment status instead of error
+      return NextResponse.json({
+        success: true,
+        data: {
+          teamId: teamId,
+          paymentStatuses: {},
+          totalPlayers: 0,
+          paidPlayers: 0,
+        }
+      }, { status: 200 });
+    }
+
+    console.log("Team captain:", team.captain?.toString());
+    console.log("Requesting user:", decoded.userId);
+
+    if (team.captain.toString() !== decoded.userId) {
+      console.log("User is not the captain of this team");
+      return NextResponse.json({ error: "Only the team captain can view payment statuses" }, { status: 403 });
+    }
+
+    // Get all player IDs from the team
+    const playerIds = [];
+    if (team.squad5v5 && Array.isArray(team.squad5v5)) {
+      playerIds.push(...team.squad5v5);
+    }
+    if (team.squad7v7 && Array.isArray(team.squad7v7)) {
+      playerIds.push(...team.squad7v7);
+    }
+    // Add captain
+    playerIds.push(team.captain);
+
+    // Remove duplicates
+    const uniquePlayerIds = [...new Set(playerIds.map(id => id.toString()))];
+    console.log("Player IDs found:", uniquePlayerIds);
+
+    // Get payment statuses for all players in the team
+    const payments = await Payment.find({
+      userId: { $in: uniquePlayerIds },
+      status: "completed" // Only completed payments count
+    });
+
+    console.log("Found payments:", payments.length);
+
+    // Create payment status map
+    const paymentStatusMap: { [key: string]: boolean } = {};
+    for (const playerId of uniquePlayerIds) {
+      const hasPayment = payments.some(payment =>
+        payment.userId.toString() === playerId
+      );
+      paymentStatusMap[playerId] = hasPayment;
+      console.log(`Player ${playerId}: paid = ${hasPayment}`);
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        teamId: teamId,
+        paymentStatuses: paymentStatusMap,
+        totalPlayers: uniquePlayerIds.length,
+        paidPlayers: Object.values(paymentStatusMap).filter(status => status).length,
+      }
+    }, { status: 200 });
+
+  } catch (error: any) {
+    console.error("Error getting team player payments:", error);
+    console.error("Error stack:", error.stack);
+    return NextResponse.json({
+      error: error.message || "Failed to get team player payments"
+    }, { status: 500 });
   }
 }
 

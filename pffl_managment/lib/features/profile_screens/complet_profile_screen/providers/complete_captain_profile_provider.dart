@@ -5,6 +5,7 @@ import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 /// Provider for Complete Captain Profile screen state and business logic
@@ -286,16 +287,12 @@ class CompleteCaptainProfileProvider extends ChangeNotifier {
   /// Pick image from gallery or camera
   Future<void> pickImage() async {
     try {
-      // TODO: Implement image picker functionality
-      // For now, we'll simulate image selection
-      // In a real implementation, you would use image_picker package
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-      // Example implementation:
-      // final ImagePicker picker = ImagePicker();
-      // final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      // if (image != null) {
-      //   setProfileImage(image.path);
-      // }
+      if (image != null) {
+        setProfileImage(image.path);
+      }
 
       // For demonstration, we'll just show that the method exists
       FilePickerResult? result = await FilePicker.platform.pickFiles(

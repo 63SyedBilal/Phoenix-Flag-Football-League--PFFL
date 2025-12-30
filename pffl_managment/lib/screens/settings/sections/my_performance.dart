@@ -83,7 +83,10 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
                     onPressed: () => provider.loadPerformance(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -106,10 +109,7 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
             return const Center(
               child: Text(
                 'No performance data available',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                ),
+                style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
               ),
             );
           }
@@ -125,64 +125,119 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
                 const SizedBox(height: 24),
 
                 // Game Statistics
-                _buildStatsSection(
-                  'Game Statistics',
-                  [
-                    _buildStatItem('Games Played', performance.gamesPlayed.toString(), Icons.sports_soccer),
-                    _buildStatItem('Wins', performance.wins.toString(), Icons.emoji_events, color: const Color(0xFF10B981)),
-                    _buildStatItem('Losses', performance.losses.toString(), Icons.cancel, color: const Color(0xFFEF4444)),
-                    _buildStatItem('Win Rate', '${provider.winPercentage.toStringAsFixed(1)}%', Icons.trending_up),
-                  ],
-                ),
+                _buildStatsSection('Game Statistics', [
+                  _buildStatItem(
+                    'Games Played',
+                    performance.gamesPlayed.toString(),
+                    Icons.sports_soccer,
+                  ),
+                  _buildStatItem(
+                    'Wins',
+                    performance.wins.toString(),
+                    Icons.emoji_events,
+                    color: const Color(0xFF10B981),
+                  ),
+                  _buildStatItem(
+                    'Losses',
+                    performance.losses.toString(),
+                    Icons.cancel,
+                    color: const Color(0xFFEF4444),
+                  ),
+                  _buildStatItem(
+                    'Win Rate',
+                    '${provider.winPercentage.toStringAsFixed(1)}%',
+                    Icons.trending_up,
+                  ),
+                ]),
 
                 const SizedBox(height: 24),
 
                 // Offensive Statistics
-                _buildStatsSection(
-                  'Offensive Statistics',
-                  [
-                    _buildStatItem('Touchdowns', performance.touchdowns.toString(), Icons.sports_football),
-                    _buildStatItem('Catches', performance.catches.toString(), Icons.sports_handball),
-                    _buildStatItem('Rushes', performance.rushes.toString(), Icons.directions_run),
-                    _buildStatItem('Yards Gained', '${performance.yardsGained.toStringAsFixed(1)} yd', Icons.straighten),
-                    _buildStatItem('Flag Pulls', performance.flagPulls.toString(), Icons.flag),
-                  ],
-                ),
+                _buildStatsSection('Offensive Statistics', [
+                  _buildStatItem(
+                    'Touchdowns',
+                    performance.touchdowns.toString(),
+                    Icons.sports_football,
+                  ),
+                  _buildStatItem(
+                    'Catches',
+                    performance.catches.toString(),
+                    Icons.sports_handball,
+                  ),
+                  _buildStatItem(
+                    'Rushes',
+                    performance.rushes.toString(),
+                    Icons.directions_run,
+                  ),
+                  _buildStatItem(
+                    'Yards Gained',
+                    '${performance.yardsGained.toStringAsFixed(1)} yd',
+                    Icons.straighten,
+                  ),
+                  _buildStatItem(
+                    'Flag Pulls',
+                    performance.flagPulls.toString(),
+                    Icons.flag,
+                  ),
+                ]),
 
                 const SizedBox(height: 24),
 
                 // Passing Statistics
-                _buildStatsSection(
-                  'Passing Statistics',
-                  [
-                    _buildStatItem('Pass Attempts', performance.passAttempts.toString(), Icons.send),
-                    _buildStatItem('Completions', performance.completions.toString(), Icons.check_circle),
-                    _buildStatItem('Completion %', '${performance.completionPercentage.toStringAsFixed(1)}%', Icons.percent),
-                  ],
-                ),
+                _buildStatsSection('Passing Statistics', [
+                  _buildStatItem(
+                    'Pass Attempts',
+                    performance.passAttempts.toString(),
+                    Icons.send,
+                  ),
+                  _buildStatItem(
+                    'Completions',
+                    performance.completions.toString(),
+                    Icons.check_circle,
+                  ),
+                  _buildStatItem(
+                    'Completion %',
+                    '${performance.completionPercentage.toStringAsFixed(1)}%',
+                    Icons.percent,
+                  ),
+                ]),
 
                 const SizedBox(height: 24),
 
                 // Special Teams & Defense
-                _buildStatsSection(
-                  'Special Teams & Defense',
-                  [
-                    _buildStatItem('Safety', performance.safety.toString(), Icons.shield),
-                    _buildStatItem('Conversion Points', performance.conversionPoints.toString(), Icons.star),
-                    _buildStatItem('Avg Points/Game', performance.averagePointsPerGame.toStringAsFixed(1), Icons.show_chart),
-                  ],
-                ),
+                _buildStatsSection('Special Teams & Defense', [
+                  _buildStatItem(
+                    'Safety',
+                    performance.safety.toString(),
+                    Icons.shield,
+                  ),
+                  _buildStatItem(
+                    'Conversion Points',
+                    performance.conversionPoints.toString(),
+                    Icons.star,
+                  ),
+                  _buildStatItem(
+                    'Avg Points/Game',
+                    performance.averagePointsPerGame.toStringAsFixed(1),
+                    Icons.show_chart,
+                  ),
+                ]),
 
                 const SizedBox(height: 24),
 
                 // Rankings & Position
-                _buildStatsSection(
-                  'Rankings & Position',
-                  [
-                    _buildStatItem('Current Ranking', '#${performance.ranking}', Icons.leaderboard),
-                    _buildStatItem('Best Position', performance.bestPosition, Icons.person),
-                  ],
-                ),
+                _buildStatsSection('Rankings & Position', [
+                  _buildStatItem(
+                    'Current Ranking',
+                    '#${performance.ranking}',
+                    Icons.leaderboard,
+                  ),
+                  _buildStatItem(
+                    'Best Position',
+                    performance.bestPosition,
+                    Icons.person,
+                  ),
+                ]),
 
                 const SizedBox(height: 32),
               ],
@@ -205,7 +260,7 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3B82F6).withOpacity(0.3),
+            color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -230,15 +285,15 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
                   SizedBox(height: 4),
                   Text(
                     'Overall Rating',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -257,7 +312,10 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
           const SizedBox(height: 16),
           LinearProgressIndicator(
             value: provider.performance?.averagePointsPerGame != null
-                ? (provider.performance!.averagePointsPerGame / 10).clamp(0.0, 1.0)
+                ? (provider.performance!.averagePointsPerGame / 10).clamp(
+                    0.0,
+                    1.0,
+                  )
                 : 0.0,
             backgroundColor: Colors.white24,
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
@@ -265,10 +323,7 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
           const SizedBox(height: 8),
           Text(
             '${provider.performance?.averagePointsPerGame.toStringAsFixed(1) ?? '0.0'} pts/game average',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
         ],
       ),
@@ -283,7 +338,7 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -307,7 +362,12 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, {Color? color}) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon, {
+    Color? color,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -315,7 +375,7 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (color ?? const Color(0xFF3B82F6)).withOpacity(0.1),
+              color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -328,10 +388,7 @@ class _MyPerformanceScreenState extends State<MyPerformanceScreen> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
             ),
           ),
           Text(

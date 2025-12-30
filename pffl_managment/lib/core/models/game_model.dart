@@ -1,5 +1,6 @@
 class GameModel {
   final String id;
+  final String? leagueId;
   final String leagueName;
   final String team1Name;
   final String team1Logo; // Path or URL
@@ -12,6 +13,7 @@ class GameModel {
 
   GameModel({
     required this.id,
+    this.leagueId,
     required this.leagueName,
     required this.team1Name,
     required this.team1Logo,

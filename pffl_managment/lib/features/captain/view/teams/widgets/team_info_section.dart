@@ -1,10 +1,301 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/features/captain/providers/captain_team_provider.dart'; // Import CaptainTeamProvider
 import '../../../model/team_model.dart';
 import '../../../model/player_model.dart';
 
-class TeamInfoSection extends StatefulWidget {
+// Extracted dialog for Transfer Leadership to keep TeamInfoSection stateless and under line limit
+class TransferLeadershipDialog extends StatelessWidget {
+  final TeamModel team;
+  final Function(String newCaptainId) onTransferLeadership;
+
+  const TransferLeadershipDialog({
+    super.key,
+    required this.team,
+    required this.onTransferLeadership,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final nonCaptainPlayers = team.players.where((p) => !p.isCaptain).toList();
+
+    if (nonCaptainPlayers.isEmpty) {
+      // This should ideally be handled before showing the dialog,
+      // but as a fallback, we can show a message.
+      return AlertDialog(
+        title: const Text('No Players'),
+        content: const Text('No players available to transfer leadership to.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    }
+
+    // Using a temporary ChangeNotifier to hold selected player for the dialog
+    // This is a common pattern for stateless dialogs that need internal state.
+    return ChangeNotifierProvider(
+      create: (_) => _SelectedPlayerProvider(),
+      builder: (dialogContext, child) {
+        final selectedPlayerProvider = Provider.of<_SelectedPlayerProvider>(dialogContext);
+        PlayerModel? selectedPlayer = selectedPlayerProvider.selectedPlayer;
+
+        return AlertDialog(
+          title: const Text(
+            'Transfer Leadership',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select a player to transfer captain role to:',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<PlayerModel>(
+                    value: selectedPlayer,
+                    hint: const Text('Choose a player...'),
+                    isExpanded: true,
+                    items: nonCaptainPlayers.map((player) {
+                      return DropdownMenuItem<PlayerModel>(
+                        value: player,
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.grey.shade200,
+                              backgroundImage: player.imageUrl != null
+                                  ? NetworkImage(player.imageUrl!)
+                                  : null,
+                              child: player.imageUrl == null
+                                  ? const Icon(Icons.person, size: 16)
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    player.name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (player.position.isNotEmpty)
+                                    Text(
+                                      player.position,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (PlayerModel? player) {
+                      selectedPlayerProvider.setSelectedPlayer(player);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: selectedPlayer == null
+                  ? null
+                  : () {
+                      Navigator.of(dialogContext).pop();
+                      onTransferLeadership(selectedPlayer.id);
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Transfer Captainship'), // Changed button text
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// Simple ChangeNotifier to manage selected player state for the dialog
+class _SelectedPlayerProvider extends ChangeNotifier {
+  PlayerModel? _selectedPlayer;
+
+  PlayerModel? get selectedPlayer => _selectedPlayer;
+
+  void setSelectedPlayer(PlayerModel? player) {
+    _selectedPlayer = player;
+    notifyListeners();
+  }
+}
+
+// Extracted dialog for Remove Player
+class RemovePlayerDialog extends StatelessWidget {
+  final TeamModel team;
+  final Function(String playerId) onRemovePlayer;
+
+  const RemovePlayerDialog({
+    super.key,
+    required this.team,
+    required this.onRemovePlayer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final nonCaptainPlayers = team.players.where((p) => !p.isCaptain).toList();
+
+    if (nonCaptainPlayers.isEmpty) {
+      return AlertDialog(
+        title: const Text('No Players'),
+        content: const Text('No players available to remove.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    }
+
+    return AlertDialog(
+      title: const Text(
+        'Remove Player',
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Select players to remove from the team:',
+            style: TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: nonCaptainPlayers.length,
+              itemBuilder: (context, index) {
+                final player = nonCaptainPlayers[index];
+                return ListTile(
+                  leading: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: player.imageUrl != null
+                        ? NetworkImage(player.imageUrl!)
+                        : null,
+                    child: player.imageUrl == null
+                        ? const Icon(Icons.person, size: 20)
+                        : null,
+                  ),
+                  title: Text(
+                    player.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: player.position.isNotEmpty
+                      ? Text(
+                          player.position,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        )
+                      : null,
+                  trailing: IconButton(
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _confirmRemovePlayer(context, player, onRemovePlayer);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
+  }
+
+  void _confirmRemovePlayer(
+      BuildContext context, PlayerModel player, Function(String) onRemovePlayerCallback) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Removal'),
+          content: Text(
+            'Are you sure you want to remove ${player.name} from the team?\n\nThey will be notified of their removal.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                onRemovePlayerCallback(player.id);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class TeamInfoSection extends StatelessWidget {
   final TeamModel team;
   final String? selectedFormat;
   final Function(String)? onFormatChanged;
@@ -17,21 +308,11 @@ class TeamInfoSection extends StatefulWidget {
   });
 
   @override
-  State<TeamInfoSection> createState() => _TeamInfoSectionState();
-}
-
-class _TeamInfoSectionState extends State<TeamInfoSection> {
-  final GlobalKey _iconKey = GlobalKey();
-  String? _selectedMenuItem;
-
-  @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        // Check if current user is a captain
         final isCaptain = authProvider.userRole.toLowerCase() == 'captain';
 
-        // Debug logging to verify role-based logic
         print('🔍 [TEAM INFO DEBUG] User role: "${authProvider.userRole}"');
         print('🔍 [TEAM INFO DEBUG] Is captain: $isCaptain');
         print(
@@ -56,12 +337,10 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
                           style: BorderStyle.none,
                         ),
                       ),
-                      child:
-                          widget.team.logoUrl != null &&
-                              widget.team.logoUrl!.isNotEmpty
+                      child: team.logoUrl != null && team.logoUrl!.isNotEmpty
                           ? ClipOval(
                               child: Image.network(
-                                widget.team.logoUrl!,
+                                team.logoUrl!,
                                 width: 50,
                                 height: 50,
                                 fit: BoxFit.cover,
@@ -86,7 +365,7 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      widget.team.name,
+                      team.name,
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -98,7 +377,7 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
                 Row(
                   children: [
                     Text(
-                      '${widget.team.players.length}/${widget.team.maxPlayers}',
+                      '${team.players.length}/${team.maxPlayers}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -107,35 +386,36 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
                     ),
                     // Only show 3-dot icon for captains
                     if (isCaptain)
-                      IconButton(
-                        key: _iconKey,
-                        icon: const Icon(Icons.more_vert),
-                        onPressed: () => _showTeamActionsMenu(context),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
+                      // Use a Builder to get a context for the PopupMenuButton
+                      Builder(builder: (menuContext) {
+                        return IconButton(
+                          icon: const Icon(Icons.more_vert),
+                          onPressed: () => _showTeamActionsMenu(menuContext, team),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        );
+                      }),
                   ],
                 ),
               ],
             ),
             // Format selection (only show if format callbacks are provided)
-            if (widget.selectedFormat != null &&
-                widget.onFormatChanged != null) ...[
+            if (selectedFormat != null && onFormatChanged != null) ...[
               const SizedBox(height: 12),
               Row(
                 children: [
                   _buildFormatBadge(
                     context,
                     label: '5v5',
-                    isSelected: widget.selectedFormat == '5v5',
-                    onTap: () => widget.onFormatChanged!('5v5'),
+                    isSelected: selectedFormat == '5v5',
+                    onTap: () => onFormatChanged?.call('5v5'),
                   ),
                   const SizedBox(width: 8),
                   _buildFormatBadge(
                     context,
                     label: '7v7',
-                    isSelected: widget.selectedFormat == '7v7',
-                    onTap: () => widget.onFormatChanged!('7v7'),
+                    isSelected: selectedFormat == '7v7',
+                    onTap: () => onFormatChanged?.call('7v7'),
                   ),
                 ],
               ),
@@ -146,12 +426,7 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
     );
   }
 
-  void _showTeamActionsMenu(BuildContext context) {
-    final RenderBox icon =
-        _iconKey.currentContext!.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
-
+  void _showTeamActionsMenu(BuildContext context, TeamModel currentTeam) {
     showMenu(
       color: Colors.white,
       elevation: 0, // Remove elevation
@@ -163,30 +438,18 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
         ),
       ),
       context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromPoints(
-          icon.localToGlobal(const Offset(0, 30), ancestor: overlay),
-          icon.localToGlobal(
-            icon.size.bottomRight(const Offset(0, 30)),
-            ancestor: overlay,
-          ),
-        ),
-        Offset.zero & overlay.size,
-      ),
+      position: const RelativeRect.fromLTRB(1000.0, 60.0, 0.0, 0.0), // Adjust position as needed
       items: [
         PopupMenuItem<String>(
           value: 'transfer_leadership',
-          onTap: () => Future.delayed(
-            const Duration(milliseconds: 100),
-            () => _showTransferLeadershipDialog(context),
-          ),
+          onTap: () {
+            // Delay to allow menu to close before showing dialog
+            Future.delayed(
+              const Duration(milliseconds: 100),
+              () => _showTransferLeadershipDialog(context, currentTeam),
+            );
+          },
           child: Container(
-            decoration: BoxDecoration(
-              color: _selectedMenuItem == 'transfer_leadership'
-                  ? const Color(0xFFE8F4FD) // Light blue highlight
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-            ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: const Text(
               'Transfer Captainship',
@@ -201,17 +464,13 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
         ),
         PopupMenuItem<String>(
           value: 'remove_player',
-          onTap: () => Future.delayed(
-            const Duration(milliseconds: 100),
-            () => _showRemovePlayerDialog(context),
-          ),
+          onTap: () {
+            Future.delayed(
+              const Duration(milliseconds: 100),
+              () => _showRemovePlayerDialog(context, currentTeam),
+            );
+          },
           child: Container(
-            decoration: BoxDecoration(
-              color: _selectedMenuItem == 'remove_player'
-                  ? const Color(0xFFE8F4FD) // Light blue highlight
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-            ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: const Text(
               'Remove Player',
@@ -228,10 +487,8 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
     );
   }
 
-  void _showTransferLeadershipDialog(BuildContext context) {
-    final nonCaptainPlayers = widget.team.players
-        .where((p) => !p.isCaptain)
-        .toList();
+  void _showTransferLeadershipDialog(BuildContext context, TeamModel team) {
+    final nonCaptainPlayers = team.players.where((p) => !p.isCaptain).toList();
 
     if (nonCaptainPlayers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -243,126 +500,41 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
       return;
     }
 
-    PlayerModel? selectedPlayer;
-
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text(
-                'Transfer Leadership',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Select a player to transfer captain role to:',
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
+      builder: (dialogContext) {
+        return TransferLeadershipDialog(
+          team: team,
+          onTransferLeadership: (newCaptainId) async {
+            try {
+              await Provider.of<CaptainTeamProvider>(context, listen: false)
+                  .transferLeadership(context, newCaptainId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Leadership transfer initiated.'),
+                    backgroundColor: Colors.green,
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<PlayerModel>(
-                        value: selectedPlayer,
-                        hint: const Text('Choose a player...'),
-                        isExpanded: true,
-                        items: nonCaptainPlayers.map((player) {
-                          return DropdownMenuItem<PlayerModel>(
-                            value: player,
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: Colors.grey.shade200,
-                                  backgroundImage: player.imageUrl != null
-                                      ? NetworkImage(player.imageUrl!)
-                                      : null,
-                                  child: player.imageUrl == null
-                                      ? const Icon(Icons.person, size: 16)
-                                      : null,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        player.name,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      if (player.position.isNotEmpty)
-                                        Text(
-                                          player.position,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (PlayerModel? player) {
-                          setState(() {
-                            selectedPlayer = player;
-                          });
-                        },
-                      ),
-                    ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: Colors.red,
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: selectedPlayer == null
-                      ? null
-                      : () {
-                          Navigator.of(dialogContext).pop();
-                          _transferLeadership(context, selectedPlayer!);
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Send Invitation'),
-                ),
-              ],
-            );
+                );
+              }
+            }
           },
         );
       },
     );
   }
 
-  void _showRemovePlayerDialog(BuildContext context) {
-    final nonCaptainPlayers = widget.team.players
-        .where((p) => !p.isCaptain)
-        .toList();
+  void _showRemovePlayerDialog(BuildContext context, TeamModel team) {
+    final nonCaptainPlayers = team.players.where((p) => !p.isCaptain).toList();
 
     if (nonCaptainPlayers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -376,149 +548,34 @@ class _TeamInfoSectionState extends State<TeamInfoSection> {
 
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text(
-            'Remove Player',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Select players to remove from the team:',
-                style: TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                width: double.maxFinite,
-                child: ListView.builder(
-                  itemCount: nonCaptainPlayers.length,
-                  itemBuilder: (context, index) {
-                    final player = nonCaptainPlayers[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.grey.shade200,
-                        backgroundImage: player.imageUrl != null
-                            ? NetworkImage(player.imageUrl!)
-                            : null,
-                        child: player.imageUrl == null
-                            ? const Icon(Icons.person, size: 20)
-                            : null,
-                      ),
-                      title: Text(
-                        player.name,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      subtitle: player.position.isNotEmpty
-                          ? Text(
-                              player.position,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                            )
-                          : null,
-                      trailing: IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop();
-                          _confirmRemovePlayer(context, player);
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-          ],
+      builder: (dialogContext) {
+        return RemovePlayerDialog(
+          team: team,
+          onRemovePlayer: (playerId) async {
+            try {
+              await Provider.of<CaptainTeamProvider>(context, listen: false)
+                  .removePlayer(context, playerId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Player removal initiated.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
         );
       },
-    );
-  }
-
-  void _confirmRemovePlayer(BuildContext context, PlayerModel player) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Confirm Removal'),
-          content: Text(
-            'Are you sure you want to remove ${player.name} from the team?\n\nThey will be notified of their removal.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _removePlayer(context, player);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Remove'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _transferLeadership(BuildContext context, PlayerModel selectedPlayer) {
-    // TODO: Implement leadership transfer logic
-    // This should:
-    // 1. Send notification to selected player: "This captain has offered you the captain role."
-    // 2. Handle acceptance/rejection
-    // 3. Update roles if accepted
-
-    print(
-      '🎯 [TRANSFER DEBUG] Transferring leadership to: ${selectedPlayer.name}',
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Leadership transfer invitation sent to ${selectedPlayer.name}',
-        ),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _removePlayer(BuildContext context, PlayerModel player) {
-    // TODO: Implement player removal logic
-    // This should:
-    // 1. Remove player from team
-    // 2. Send notification: "You have been removed from this team."
-    // 3. Update team state
-
-    print('🎯 [REMOVE DEBUG] Removing player: ${player.name}');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${player.name} has been removed from the team'),
-        backgroundColor: Colors.orange,
-      ),
     );
   }
 

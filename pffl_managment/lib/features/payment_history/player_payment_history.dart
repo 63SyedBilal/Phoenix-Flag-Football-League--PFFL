@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
+import 'package:pffl_managment/features/payment_history/models/payment_history_item.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/core/services/pdf_service.dart';
 import 'package:provider/provider.dart';
 
 class PlayerPaymentHistory extends StatefulWidget {
@@ -188,9 +190,11 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                    border: Border.all(
+                      color: Colors.green.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -471,7 +475,7 @@ class _PlayerPaymentHistoryState extends State<PlayerPaymentHistory> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: statusColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -626,7 +630,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   const SizedBox(height: 16),
                   _buildDetailRow(
                     'Transaction ID:',
-                    widget.payment.transactionId ?? 'N/A',
+                    widget.payment.transactionId,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailRow('Date:', widget.payment.formattedDate),
@@ -967,16 +971,29 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
 
   Future<void> _downloadReceipt() async {
     // For now, just simulate download
-    // In a real implementation, you would:
-    // 1. Generate PDF using pdf package
-    // 2. Save to device storage
-    // 3. Open with system PDF viewer
+    try {
+      // Generate and download actual PDF receipt
+      await PdfService.generateAndShareReceipt(widget.payment.id);
 
-    await Future.delayed(const Duration(seconds: 2));
-
-    // TODO: Implement actual PDF generation and download
-    // This would require adding pdf and path_provider packages
-    print('📄 Receipt download simulated for payment: ${widget.payment.id}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Receipt downloaded successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error downloading receipt: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download receipt: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildBottomNav() {

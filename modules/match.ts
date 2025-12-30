@@ -225,6 +225,40 @@ const MatchSchema = new mongoose.Schema(
       default: ""
     },
 
+    // Tournament Match Classification
+    matchType: {
+      type: String,
+      enum: ["league", "semi-final-1", "semi-final-2", "final"],
+      default: "league"
+    },
+
+    tournamentRound: {
+      type: Number, // 1 for league, 2 for semi-finals, 3 for final
+      default: 1
+    },
+
+    isKnockout: {
+      type: Boolean,
+      default: false
+    },
+
+    // Winner tracking for knockout matches
+    winner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team"
+    },
+
+    // Tiebreaker information
+    tiebreakerUsed: {
+      type: Boolean,
+      default: false
+    },
+
+    tiebreakerType: {
+      type: String,
+      enum: ["extra-time", "penalties", "random"],
+    },
+
     completedAt: {
       type: Date,
       default: null

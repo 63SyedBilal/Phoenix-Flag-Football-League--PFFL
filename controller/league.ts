@@ -22,7 +22,7 @@ function getToken(req: NextRequest): string | null {
 async function verifyUser(req: NextRequest) {
   const token = getToken(req);
   if (!token) throw new Error("No token provided");
-  
+
   const decoded = verifyAccessToken(token);
   return decoded;
 }
@@ -31,10 +31,10 @@ async function verifyUser(req: NextRequest) {
 async function verifyAdmin(req: NextRequest) {
   const token = getToken(req);
   if (!token) throw new Error("No token provided");
-  
+
   const decoded = verifyAccessToken(token);
   if (decoded.role !== "superadmin") throw new Error("Unauthorized");
-  
+
   return decoded;
 }
 
@@ -46,15 +46,15 @@ export async function createLeague(req: NextRequest) {
   try {
     await connectDB();
     await verifyAdmin(req);
-    
-    const { 
-      leagueName, 
-      logo, 
-      format, 
-      startDate, 
-      endDate, 
-      minimumPlayers, 
-      entryFeeType, 
+
+    const {
+      leagueName,
+      logo,
+      format,
+      startDate,
+      endDate,
+      minimumPlayers,
+      entryFeeType,
       perPlayerLeagueFee,
       referee,
       statKeeper,
@@ -83,7 +83,7 @@ export async function createLeague(req: NextRequest) {
     // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
@@ -165,7 +165,7 @@ export async function getAllLeagues(req: NextRequest) {
     const format = searchParams.get("format");
 
     let query: any = {};
-    
+
     if (status) {
       if (!["active", "pending"].includes(status)) {
         return NextResponse.json({ error: "Invalid status filter" }, { status: 400 });
@@ -192,10 +192,10 @@ export async function getAllLeagues(req: NextRequest) {
     const leaguesWithStatus = leagues.map((league: any) => {
       const leagueObj = league.toObject();
       const startDate = new Date(leagueObj.startDate);
-      
+
       // If start date has passed, set to active, otherwise pending
       leagueObj.status = startDate <= currentDate ? "active" : "pending";
-      
+
       return leagueObj;
     });
 
@@ -239,7 +239,7 @@ export async function getLeague(req: NextRequest, { params }: { params: { id: st
     const leagueObj = (league as any).toObject();
     const currentDate = new Date();
     const startDate = new Date(leagueObj.startDate);
-    
+
     // If start date has passed, set to active, otherwise pending
     leagueObj.status = startDate <= currentDate ? "active" : "pending";
 
@@ -435,7 +435,7 @@ export async function addTeamToLeague(req: NextRequest, { params }: { params: { 
     }
 
     const teams = (league as any).teams || [];
-    
+
     // Check if team is already in the league
     if (teams.some((t: any) => t.toString() === teamId)) {
       return NextResponse.json({ error: "Team already in league" }, { status: 409 });
@@ -483,7 +483,7 @@ export async function removeTeamFromLeague(req: NextRequest, { params }: { param
     }
 
     const teams = (league as any).teams || [];
-    
+
     // Check if team is in the league
     if (!teams.some((t: any) => t.toString() === teamId)) {
       return NextResponse.json({ error: "Team not in league" }, { status: 404 });
@@ -719,7 +719,7 @@ export async function inviteStatKeeperToLeague(req: NextRequest, { params }: { p
       league: leagueId.toString(),
       type: "LEAGUE_STATKEEPER_INVITE"
     });
-    
+
     // Verify notification was saved correctly
     const savedNotification = await Notification.findById(notification._id);
     console.log("Saved notification:", {
@@ -856,6 +856,463 @@ export async function inviteTeamToLeague(req: NextRequest, { params }: { params:
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
     return NextResponse.json({ error: error.message || "Failed to invite team" }, { status: 500 });
+  }
+}
+
+/**
+ * Get available referees for a league on a specific date
+ * GET /api/league/:leagueId/available-referees?date=2024-01-01
+ */
+export async function getAvailableReferees(req: NextRequest, { params }: { params: { leagueId: string } }) {
+  try {
+    await connectDB();
+    await verifyAdmin(req);
+
+    const { leagueId } = params;
+    const { searchParams } = new URL(req.url);
+    const dateParam = searchParams.get('date');
+
+    if (!dateParam) {
+      return NextResponse.json({ error: "Date parameter is required" }, { status: 400 });
+    }
+
+    // Parse the date
+    const targetDate = new Date(dateParam);
+    if (isNaN(targetDate.getTime())) {
+      return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+    }
+
+    // Find the league
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    // Get all referees assigned to this league
+    const leagueReferees = (league as any).referees || [];
+
+    if (leagueReferees.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        message: "No referees assigned to this league"
+      });
+    }
+
+    // Get referee details and check their availability on the target date
+    const referees = await User.find({
+      _id: { $in: leagueReferees },
+      role: 'referee'
+    }).select('firstName lastName email profileImage');
+
+    // For now, assume all league referees are available
+    // In a more advanced system, you could check their schedules/calendars
+    // to see if they're already assigned to matches on this date
+    const availableReferees = referees.map(referee => ({
+      id: referee._id.toString(),
+      name: `${referee.firstName} ${referee.lastName}`,
+      email: referee.email,
+      profileImage: referee.profileImage || '',
+      isAvailable: true // All referees are considered available for now
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: availableReferees,
+      message: `Found ${availableReferees.length} available referees for ${dateParam}`
+    });
+
+  } catch (error: any) {
+    if (error.message === "No token provided" || error.message === "Invalid token" || error.message === "Unauthorized") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    return NextResponse.json({ error: error.message || "Failed to get available referees" }, { status: 500 });
+  }
+}
+
+/**
+ * Get available stat keepers for a league on a specific date
+ * GET /api/league/:leagueId/available-statkeepers?date=2024-01-01
+ */
+export async function getAvailableStatKeepers(req: NextRequest, { params }: { params: { leagueId: string } }) {
+  try {
+    await connectDB();
+    await verifyAdmin(req);
+
+    const { leagueId } = params;
+    const { searchParams } = new URL(req.url);
+    const dateParam = searchParams.get('date');
+
+    if (!dateParam) {
+      return NextResponse.json({ error: "Date parameter is required" }, { status: 400 });
+    }
+
+    // Parse the date
+    const targetDate = new Date(dateParam);
+    if (isNaN(targetDate.getTime())) {
+      return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+    }
+
+    // Find the league
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    // Get all stat keepers assigned to this league
+    const leagueStatKeepers = (league as any).statKeepers || [];
+
+    if (leagueStatKeepers.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        message: "No stat keepers assigned to this league"
+      });
+    }
+
+    // Get stat keeper details and check their availability on the target date
+    const statKeepers = await User.find({
+      _id: { $in: leagueStatKeepers },
+      role: 'stat-keeper'
+    }).select('firstName lastName email profileImage');
+
+    // For now, assume all league stat keepers are available
+    // In a more advanced system, you could check their schedules/calendars
+    // to see if they're already assigned to matches on this date
+    const availableStatKeepers = statKeepers.map(statKeeper => ({
+      id: statKeeper._id.toString(),
+      name: `${statKeeper.firstName} ${statKeeper.lastName}`,
+      email: statKeeper.email,
+      profileImage: statKeeper.profileImage || '',
+      isAvailable: true // All stat keepers are considered available for now
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: availableStatKeepers,
+      message: `Found ${availableStatKeepers.length} available stat keepers for ${dateParam}`
+    });
+
+  } catch (error: any) {
+    if (error.message === "No token provided" || error.message === "Invalid token" || error.message === "Unauthorized") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    return NextResponse.json({ error: error.message || "Failed to get available stat keepers" }, { status: 500 });
+  }
+}
+
+/**
+ * Bulk assign officials to multiple matches
+ * POST /api/league/:leagueId/assign-officials
+ * Body: {
+ *   assignments: [
+ *     {
+ *       matchId: "match_id",
+ *       refereeId: "referee_id", // optional
+ *       statKeeperId: "statkeeper_id" // optional
+ *     }
+ *   ]
+ * }
+ */
+export async function bulkAssignOfficials(req: NextRequest, { params }: { params: { leagueId: string } }) {
+  try {
+    await connectDB();
+    await verifyAdmin(req);
+
+    const { leagueId } = params;
+    const { assignments } = await req.json();
+
+    if (!assignments || !Array.isArray(assignments)) {
+      return NextResponse.json({ error: "Assignments array is required" }, { status: 400 });
+    }
+
+    // Validate league exists
+    const league = await League.findById(leagueId);
+    if (!league) {
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const assignment of assignments) {
+      try {
+        const { matchId, refereeId, statKeeperId } = assignment;
+
+        if (!matchId) {
+          errors.push({ matchId, error: "matchId is required" });
+          continue;
+        }
+
+        // Find the match
+        const match = await (await import("@/modules")).Match.findById(matchId);
+        if (!match) {
+          errors.push({ matchId, error: "Match not found" });
+          continue;
+        }
+
+        // Verify match belongs to this league
+        if (match.leagueId.toString() !== leagueId) {
+          errors.push({ matchId, error: "Match does not belong to this league" });
+          continue;
+        }
+
+        // Validate officials if provided
+        if (refereeId) {
+          const referee = await User.findById(refereeId);
+          if (!referee || referee.role !== 'referee') {
+            errors.push({ matchId, refereeId, error: "Invalid referee" });
+            continue;
+          }
+
+          // Check if referee is assigned to this league
+          const leagueReferees = (league as any).referees || [];
+          if (!leagueReferees.some((r: any) => r.toString() === refereeId)) {
+            errors.push({ matchId, refereeId, error: "Referee not assigned to this league" });
+            continue;
+          }
+        }
+
+        if (statKeeperId) {
+          const statKeeper = await User.findById(statKeeperId);
+          if (!statKeeper || statKeeper.role !== 'stat-keeper') {
+            errors.push({ matchId, statKeeperId, error: "Invalid stat keeper" });
+            continue;
+          }
+
+          // Check if stat keeper is assigned to this league
+          const leagueStatKeepers = (league as any).statKeepers || [];
+          if (!leagueStatKeepers.some((sk: any) => sk.toString() === statKeeperId)) {
+            errors.push({ matchId, statKeeperId, error: "Stat keeper not assigned to this league" });
+            continue;
+          }
+        }
+
+        // Update the match with officials
+        const updateData: any = {};
+        if (refereeId) updateData.refereeId = refereeId;
+        if (statKeeperId) updateData.statKeeperId = statKeeperId;
+
+        await (await import("@/modules")).Match.findByIdAndUpdate(matchId, updateData);
+
+        // Create notifications for assigned officials
+        if (refereeId) {
+          await Notification.create({
+            sender: (await verifyAdmin(req)).userId, // Superadmin ID
+            receiver: refereeId,
+            league: leagueId,
+            type: "MATCH_ASSIGNMENT",
+            status: "pending",
+            message: `You have been assigned as referee for a match in ${league.leagueName}. Match date: ${match.gameDate ? new Date(match.gameDate).toLocaleDateString() : 'TBD'}`
+          });
+        }
+
+        if (statKeeperId) {
+          await Notification.create({
+            sender: (await verifyAdmin(req)).userId, // Superadmin ID
+            receiver: statKeeperId,
+            league: leagueId,
+            type: "MATCH_ASSIGNMENT",
+            status: "pending",
+            message: `You have been assigned as stat keeper for a match in ${league.leagueName}. Match date: ${match.gameDate ? new Date(match.gameDate).toLocaleDateString() : 'TBD'}`
+          });
+        }
+
+        results.push({
+          matchId,
+          refereeId,
+          statKeeperId,
+          status: "assigned"
+        });
+
+      } catch (assignmentError: any) {
+        errors.push({
+          matchId: assignment.matchId,
+          error: assignmentError.message || "Assignment failed"
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        successful: results,
+        failed: errors,
+        summary: {
+          total: assignments.length,
+          successful: results.length,
+          failed: errors.length
+        }
+      },
+      message: `Bulk assignment completed: ${results.length} successful, ${errors.length} failed`
+    });
+
+  } catch (error: any) {
+    if (error.message === "No token provided" || error.message === "Invalid token" || error.message === "Unauthorized") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    return NextResponse.json({ error: error.message || "Failed to bulk assign officials" }, { status: 500 });
+  }
+}
+
+/**
+ * Check league payment status for a user (captain or player)
+ * GET /api/league/:leagueId/payment-status/:captainId
+ */
+export async function checkLeaguePaymentStatus(req: NextRequest, { params }: { params: { id: string, captainId: string } }) {
+  try {
+    await connectDB();
+    await verifyUser(req); // Ensure user is authenticated
+
+    const { id: leagueId, captainId } = params;
+    const leagueObjectId = toObjectId(leagueId);
+    const userObjectId = toObjectId(captainId); // Renamed from captainObjectId - can be any user
+
+    console.log('💳 [PAYMENT CHECK] Checking payment status for:', {
+      leagueId,
+      userId: captainId
+    });
+
+    // Find the league
+    const league = await League.findById(leagueObjectId);
+    if (!league) {
+      console.log('❌ [PAYMENT CHECK] League not found');
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    // DIRECTLY check for payments - NO team membership check needed!
+    const Payment = (await import("@/modules/payment")).default;
+
+    const payment = await Payment.findOne({
+      leagueId: leagueObjectId,
+      userId: userObjectId,
+      status: { $in: ["completed", "paid", "success", "Paid", "PAID", "SUCCESS"] }
+    }).sort({ createdAt: -1 });
+
+    const isPaid = payment !== null;
+
+    console.log(`✅ [PAYMENT CHECK] User: ${captainId}, League: ${leagueId}, Result: ${isPaid ? 'PAID' : 'UNPAID'}`);
+
+    const response = {
+      isPaid: isPaid,
+      leagueId: leagueId,
+      captainId: captainId, // Keep field name for backward compatibility
+      userId: captainId, // Also include userId for clarity
+      paymentDate: payment?.createdAt || null,
+      amount: payment?.amount || 0,
+      paymentId: payment?._id || null,
+      transactionId: payment?.stripePaymentIntentId || null
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: response
+    }, { status: 200 });
+
+  } catch (error: any) {
+    console.error("❌ [PAYMENT CHECK] Error checking league payment status:", error);
+    return NextResponse.json({
+      error: error.message || "Failed to check league payment status"
+    }, { status: 500 });
+  }
+}
+
+/**
+ * Get league summary data
+ * GET /api/league/:leagueId/summary
+ */
+export async function getLeagueSummary(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await connectDB();
+    const decoded = await verifyUser(req); // Ensure user is authenticated
+
+    const { id: leagueId } = params;
+    const leagueObjectId = toObjectId(leagueId);
+
+    // Find the league with populated teams
+    const league = await League.findById(leagueObjectId)
+      .populate({
+        path: 'teams',
+        select: 'teamName captain players squad5v5 squad7v7'
+      })
+      .populate({
+        path: 'matches',
+        select: 'date time status'
+      });
+
+    if (!league) {
+      return NextResponse.json({ error: "League not found" }, { status: 404 });
+    }
+
+    // Count total matches
+    const totalMatches = league.matches?.length ?? 0;
+
+    // Count total teams
+    const totalTeams = league.teams?.length ?? 0;
+
+    // Calculate match format (5v5, 7v7, 11v11)
+    const format = league.format || '5v5';
+
+    // Get league status
+    const now = new Date();
+    const startDate = new Date(league.startDate);
+    const endDate = new Date(league.endDate);
+
+    let status = 'upcoming';
+    if (now >= startDate && now <= endDate) {
+      status = 'in_progress';
+    } else if (now > endDate) {
+      status = 'completed';
+    }
+
+    // Get captain's team information (if user is a captain)
+    const currentUserId = decoded.userId;
+    let captainTeamInfo = null;
+
+    if (currentUserId) {
+      const captainTeam = league.teams?.find(team =>
+        team.captain?.toString() === currentUserId.toString()
+      );
+
+      if (captainTeam) {
+        // Count players in the captain's team
+        const playerCount = (captainTeam.squad5v5?.length ?? 0) +
+          (captainTeam.squad7v7?.length ?? 0) +
+          (captainTeam.players?.length ?? 0);
+
+        captainTeamInfo = {
+          teamId: captainTeam._id,
+          teamName: captainTeam.teamName,
+          playerCount: playerCount,
+          position: null, // Will be calculated if league is in progress
+        };
+      }
+    }
+
+    const summary = {
+      leagueId: league._id,
+      leagueName: league.leagueName,
+      logo: league.logo,
+      totalTeams: totalTeams,
+      totalMatches: totalMatches,
+      startDate: league.startDate,
+      endDate: league.endDate,
+      matchFormat: format,
+      leagueStatus: status,
+      perPlayerFee: league.perPlayerLeagueFee,
+      captainTeam: captainTeamInfo,
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: summary
+    }, { status: 200 });
+
+  } catch (error: any) {
+    console.error("Error getting league summary:", error);
+    return NextResponse.json({
+      error: error.message || "Failed to get league summary"
+    }, { status: 500 });
   }
 }
 

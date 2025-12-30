@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
-import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:provider/provider.dart';
 

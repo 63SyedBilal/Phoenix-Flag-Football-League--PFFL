@@ -25,6 +25,12 @@ class MatchModel {
   final String? gameNumber;
   final TeamStatModel? homeTeamStats;
   final TeamStatModel? awayTeamStats;
+
+  // Tournament fields
+  final String? matchType; // "league", "semi-final-1", "semi-final-2", "final"
+  final int? tournamentRound; // 1 for league, 2 for semi-finals, 3 for final
+  final bool? isKnockout;
+  final String? winner;
   final List<Map<String, dynamic>> actions;
   final String? tossWinnerId;
   final String? tossChoice;
@@ -61,6 +67,10 @@ class MatchModel {
     this.actions = const [],
     this.tossWinnerId,
     this.tossChoice,
+    this.matchType,
+    this.tournamentRound,
+    this.isKnockout,
+    this.winner,
   });
 
   MatchModel copyWith({
@@ -90,6 +100,10 @@ class MatchModel {
     List<Map<String, dynamic>>? actions,
     String? tossWinnerId,
     String? tossChoice,
+    String? matchType,
+    int? tournamentRound,
+    bool? isKnockout,
+    String? winner,
   }) {
     return MatchModel(
       id: id ?? this.id,
@@ -118,6 +132,10 @@ class MatchModel {
       actions: actions ?? this.actions,
       tossWinnerId: tossWinnerId ?? this.tossWinnerId,
       tossChoice: tossChoice ?? this.tossChoice,
+      matchType: matchType ?? this.matchType,
+      tournamentRound: tournamentRound ?? this.tournamentRound,
+      isKnockout: isKnockout ?? this.isKnockout,
+      winner: winner ?? this.winner,
     );
   }
 

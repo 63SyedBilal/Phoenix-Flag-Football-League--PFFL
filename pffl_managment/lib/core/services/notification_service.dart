@@ -606,4 +606,98 @@ class NotificationService {
     final allNotifications = await getAllNotifications();
     return filterNotificationsByRole(allNotifications, 'free-agent');
   }
+
+  /// Send email notification through backend
+  /// POST /api/email/send-notification
+  static Future<bool> sendEmailNotification({
+    required String type,
+    required String recipientEmail,
+    required String subject,
+    String? body,
+    Map<String, dynamic>? templateData,
+    String? leagueId,
+    String? teamId,
+    String? paymentId,
+  }) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+
+      final emailData = {
+        'type': type,
+        'recipientEmail': recipientEmail,
+        'subject': subject,
+        if (body != null) 'body': body,
+        if (templateData != null) 'templateData': templateData,
+        if (leagueId != null) 'leagueId': leagueId,
+        if (teamId != null) 'teamId': teamId,
+        if (paymentId != null) 'paymentId': paymentId,
+      };
+
+      final response = await dio.post('/email/send-notification', data: emailData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Email notification sent successfully: $type');
+        return true;
+      } else {
+        print('❌ Failed to send email notification: ${response.statusMessage}');
+        return false;
+      }
+    } on DioException catch (e) {
+      print('❌ Error sending email notification: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return false;
+    } catch (e) {
+      print('❌ General error sending email notification: $e');
+      return false;
+    }
+  }
+
+  /// Send push notification through backend
+  /// POST /api/notifications/send-push
+  static Future<bool> sendPushNotification({
+    required String userId,
+    required String title,
+    required String body,
+    String? type,
+    Map<String, dynamic>? data,
+    String? leagueId,
+    String? teamId,
+    String? matchId,
+  }) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+
+      final pushData = {
+        'userId': userId,
+        'title': title,
+        'body': body,
+        if (type != null) 'type': type,
+        if (data != null) 'data': data,
+        if (leagueId != null) 'leagueId': leagueId,
+        if (teamId != null) 'teamId': teamId,
+        if (matchId != null) 'matchId': matchId,
+      };
+
+      final response = await dio.post('/notifications/send-push', data: pushData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Push notification sent successfully');
+        return true;
+      } else {
+        print('❌ Failed to send push notification: ${response.statusMessage}');
+        return false;
+      }
+    } on DioException catch (e) {
+      print('❌ Error sending push notification: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return false;
+    } catch (e) {
+      print('❌ General error sending push notification: $e');
+      return false;
+    }
+  }
 }

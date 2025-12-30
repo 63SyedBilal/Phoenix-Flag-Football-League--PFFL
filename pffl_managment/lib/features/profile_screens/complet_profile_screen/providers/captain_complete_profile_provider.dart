@@ -24,7 +24,6 @@ class CaptainCompleteProfileProvider extends ChangeNotifier {
   String? _phone;
 
   String? _profileImagePath;
-  String? _profileImageUrl;
   bool _agreedToTerms = false;
   final List<String> _selectedPositions = [];
 

@@ -58,7 +58,7 @@ class AdminQuickActionCardWidget extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Inter',
                         )
-                      : AppTextStyles.labelSmall!.copyWith(
+                      : AppTextStyles.labelSmall.copyWith(
                           fontFamily: 'Inter',
                           fontSize: 12,
                           fontWeight: FontWeight.w500

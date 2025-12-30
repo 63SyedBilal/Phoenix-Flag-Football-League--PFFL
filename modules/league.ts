@@ -68,8 +68,52 @@ const LeagueSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["active", "pending"],
+      enum: ["active", "pending", "completed"],
       default: "pending",
+    },
+
+    // Tournament Stage Tracking
+    tournamentStage: {
+      type: String,
+      enum: ["league", "semi-finals", "final", "completed"],
+      default: "league",
+    },
+
+    // Top 4 teams qualified for knockout stages
+    topTeams: [{
+      teamId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Team",
+        required: true
+      },
+      position: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 4
+      },
+      qualifiedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+
+    // Tournament winners
+    semiFinal1Winner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team"
+    },
+    semiFinal2Winner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team"
+    },
+    champion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team"
+    },
+
+    tournamentCompletedAt: {
+      type: Date
     },
   },
   { timestamps: true }

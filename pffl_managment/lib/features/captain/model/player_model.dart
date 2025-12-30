@@ -24,4 +24,33 @@ class PlayerModel {
     this.isPaid = false,
     this.additionalPositionsCount = 0,
   });
+
+  // Add copyWith method
+  PlayerModel copyWith({
+    String? id,
+    String? name,
+    String? number,
+    String? email,
+    String? position,
+    bool? isCaptain,
+    String? imageUrl,
+    bool? isVerified,
+    bool? hasAlert,
+    bool? isPaid,
+    int? additionalPositionsCount,
+  }) {
+    return PlayerModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      number: number ?? this.number,
+      email: email ?? this.email,
+      position: position ?? this.position,
+      isCaptain: isCaptain ?? this.isCaptain,
+      imageUrl: imageUrl ?? this.imageUrl,
+      isVerified: isVerified ?? this.isVerified,
+      hasAlert: hasAlert ?? this.hasAlert,
+      isPaid: isPaid ?? this.isPaid,
+      additionalPositionsCount: additionalPositionsCount ?? this.additionalPositionsCount,
+    );
+  }
 }

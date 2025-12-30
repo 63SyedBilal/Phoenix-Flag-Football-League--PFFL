@@ -1,0 +1,34 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#1a365d"/>
+
+  <!-- Football field background -->
+  <rect x="64" y="128" width="384" height="256" rx="32" fill="#22c55e"/>
+  <rect x="64" y="224" width="384" height="64" fill="#16a34a"/>
+
+  <!-- Field lines -->
+  <rect x="64" y="250" width="384" height="4" fill="#ffffff"/>
+  <rect x="64" y="258" width="384" height="4" fill="#ffffff"/>
+
+  <!-- Center circle -->
+  <circle cx="256" cy="256" r="24" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="256" cy="256" r="3" fill="#ffffff"/>
+
+  <!-- Penalty areas -->
+  <rect x="96" y="160" width="80" height="192" rx="8" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <rect x="336" y="160" width="80" height="192" rx="8" fill="none" stroke="#ffffff" stroke-width="2"/>
+
+  <!-- Goal areas -->
+  <rect x="112" y="192" width="32" height="128" rx="4" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <rect x="368" y="192" width="32" height="128" rx="4" fill="none" stroke="#ffffff" stroke-width="2"/>
+
+  <!-- Football -->
+  <circle cx="256" cy="256" r="18" fill="#ffffff"/>
+  <path d="M238 238 L256 220 L274 238 L256 256 Z" fill="#1a365d"/>
+  <path d="M220 256 L238 238 L256 256 L238 274 Z" fill="#1a365d"/>
+  <path d="M256 220 L274 238 L292 256 L274 274 L256 292 L238 274 L220 256 Z" stroke="#1a365d" stroke-width="2" fill="none"/>
+
+  <!-- PFFL Text -->
+  <text x="256" y="380" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#ffffff">PFFL</text>
+  <text x="256" y="410" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#fbbf24">Phoenix Flag Football</text>
+</svg>

@@ -63,7 +63,7 @@ class LeaguePaymentCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.03),
+                        color: Colors.red.withValues(alpha: 0.03),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -226,15 +226,23 @@ class LeaguePaymentCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Divider(height: 0.5, endIndent: 2, indent: 2,color: Colors.black12,),
+                  Divider(
+                    height: 0.5,
+                    endIndent: 2,
+                    indent: 2,
+                    color: Colors.black12,
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           'Show more',
-                          style: TextStyle(color: Colors.black38, fontSize: 12, fontFamily: 'Lato',
-                          fontWeight: FontWeight.w500,
+                          style: TextStyle(
+                            color: Colors.black38,
+                            fontSize: 12,
+                            fontFamily: 'Lato',
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -261,12 +269,11 @@ class LeaguePaymentCard extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-            //  color: colorScheme.onSurfaceVariant,
+              //  color: colorScheme.onSurfaceVariant,
               fontSize: 10,
               fontWeight: FontWeight.w500,
               fontFamily: 'Lato',
-              color: Color(0xFF111827
-              ),
+              color: Color(0xFF111827),
             ),
           ),
         ),
@@ -275,7 +282,11 @@ class LeaguePaymentCard extends StatelessWidget {
           flex: 5,
           child: Text(
             value,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF111827),),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF111827),
+            ),
           ),
         ),
       ],
@@ -290,8 +301,9 @@ class LeaguePaymentCard extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF111827),
-
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF111827),
             ),
           ),
         ),
@@ -300,7 +312,12 @@ class LeaguePaymentCard extends StatelessWidget {
           flex: 2,
           child: Text(
             value,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Color(0xFF111827),fontFamily: 'Lato',),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF111827),
+              fontFamily: 'Lato',
+            ),
           ),
         ),
       ],

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
 import 'package:pffl_managment/core/services/league_service.dart'; // For LeagueModel if needed
+import 'package:pffl_managment/core/services/payment_service.dart';
+import 'package:pffl_managment/core/services/pdf_service.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
 class FreeAgentPaymentHistoryScreen extends StatefulWidget {
@@ -17,7 +19,7 @@ class FreeAgentPaymentHistoryScreen extends StatefulWidget {
 class _FreeAgentPaymentHistoryScreenState
     extends State<FreeAgentPaymentHistoryScreen> {
   bool _isLoading = false;
-  List<PaymentHistoryItem> _payments = [];
+  List<FreeAgentPaymentHistoryItem> _payments = [];
 
   @override
   void initState() {
@@ -65,7 +67,7 @@ class _FreeAgentPaymentHistoryScreenState
         // For MVP, we'll just new DateTime() for dates if parsing is complex.
 
         _payments.add(
-          PaymentHistoryItem(
+          FreeAgentPaymentHistoryItem(
             id: "PENDING",
             date: DateTime.now(),
             amount: amount,
@@ -84,8 +86,59 @@ class _FreeAgentPaymentHistoryScreenState
         );
       }
 
-      // TODO: Fetch real paid history from PaymentService if available
-      // For now, you can append mock paid items if you want to show history too.
+      // Fetch real paid history from PaymentService
+      try {
+        final paymentResponse = await PaymentService.fetchUserPayments();
+        if (paymentResponse['success'] == true) {
+          final paidPayments = paymentResponse['data'] as List<dynamic>? ?? [];
+          for (final paymentData in paidPayments) {
+            // Create PaymentHistoryItem from payment data
+            final paymentDataMap = paymentData as Map<String, dynamic>;
+            final payment = FreeAgentPaymentHistoryItem(
+              id: paymentDataMap['_id'] ?? paymentDataMap['id'] ?? '',
+              date:
+                  DateTime.tryParse(paymentDataMap['createdAt'] ?? '') ??
+                  DateTime.now(),
+              amount: (paymentDataMap['amount'] ?? 0).toDouble(),
+              method: paymentDataMap['paymentMethod'] ?? 'Unknown',
+              status: paymentDataMap['status'] ?? 'unknown',
+              type: PaymentType.league,
+              leagueName: paymentDataMap['leagueName'] ?? 'Unknown League',
+              leagueId: paymentDataMap['leagueId'],
+            );
+            if (payment.status.toLowerCase() == 'paid') {
+              DateTime startDate = DateTime.now();
+              DateTime endDate = DateTime.now();
+
+              // Use league dates from payment object
+              startDate = payment.leagueStartDate;
+              endDate = payment.leagueEndDate;
+
+              _payments.add(
+                FreeAgentPaymentHistoryItem(
+                  id: payment.id,
+                  date: payment.createdAt,
+                  amount: payment.amount,
+                  method: payment.paymentMethod,
+                  status: payment.status,
+                  type: PaymentType.league,
+                  leagueName: payment.leagueName,
+                  leagueId: payment.leagueId,
+                  leagueDetails: LeagueDetails(
+                    format: payment.leagueFormat,
+                    fee: payment.amount,
+                    startDate: startDate,
+                    endDate: endDate,
+                  ),
+                ),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        print('Error fetching paid payment history: $e');
+        // Continue without paid history
+      }
     } catch (e) {
       print('Error loading payment history: $e');
     } finally {
@@ -189,7 +242,7 @@ class _FreeAgentPaymentHistoryScreenState
 }
 
 class FreeAgentPaymentCard extends StatefulWidget {
-  final PaymentHistoryItem payment;
+  final FreeAgentPaymentHistoryItem payment;
 
   const FreeAgentPaymentCard({super.key, required this.payment});
 
@@ -213,7 +266,7 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
         border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -282,7 +335,13 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
                 ] else if (payment.type == PaymentType.match) ...[
                   GestureDetector(
                     onTap: () {
-                      // TODO: Navigate to match details
+                      // Navigate to match details screen (to be implemented)
+                      // Navigator.pushNamed(context, AppRoutes.matchDetails, arguments: payment.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Match details coming soon!'),
+                        ),
+                      );
                     },
                     child: Text(
                       "View Match Details",
@@ -490,7 +549,7 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: _getStatusColor(value).withOpacity(0.1),
+                color: _getStatusColor(value).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -599,7 +658,7 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
     return '$displayHour:$minute $period PKT';
   }
 
-  void _showReceipt(PaymentHistoryItem payment) {
+  void _showReceipt(FreeAgentPaymentHistoryItem payment) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -624,12 +683,24 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
             child: const Text('Close'),
           ),
           ElevatedButton(
-            onPressed: () {
-              // TODO: Download receipt
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Receipt downloaded')),
-              );
+              try {
+                await PdfService.generateAndShareReceipt(payment.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Receipt downloaded successfully!'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to download receipt: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Download'),
           ),
@@ -642,7 +713,7 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
 // Data models
 enum PaymentType { league, match }
 
-class PaymentHistoryItem {
+class FreeAgentPaymentHistoryItem {
   final String id;
   final DateTime date;
   final double amount;
@@ -654,7 +725,7 @@ class PaymentHistoryItem {
   final LeagueDetails? leagueDetails;
   final MatchDetails? matchDetails;
 
-  PaymentHistoryItem({
+  FreeAgentPaymentHistoryItem({
     required this.id,
     required this.date,
     required this.amount,
@@ -666,6 +737,13 @@ class PaymentHistoryItem {
     this.leagueDetails,
     this.matchDetails,
   });
+
+  // Getters for compatibility
+  DateTime get createdAt => date;
+  String get paymentMethod => method;
+  String get leagueFormat => leagueDetails?.format ?? 'Unknown';
+  DateTime get leagueStartDate => leagueDetails?.startDate ?? DateTime.now();
+  DateTime get leagueEndDate => leagueDetails?.endDate ?? DateTime.now();
 }
 
 class LeagueDetails {

@@ -5,25 +5,25 @@ import '../../../providers/captain_team_provider.dart';
 import '../../../../../core/providers/auth_provider.dart';
 import '../../../../../core/widgets/user_avatar_widget.dart';
 
-class PlayerListItem extends StatefulWidget {
+class PlayerListItem extends StatelessWidget {
   final PlayerModel player;
 
   const PlayerListItem({super.key, required this.player});
 
   @override
-  State<PlayerListItem> createState() => _PlayerListItemState();
-}
-
-class _PlayerListItemState extends State<PlayerListItem> {
-  @override
   Widget build(BuildContext context) {
     return Consumer2<CaptainTeamProvider, AuthProvider>(
       builder: (context, teamProvider, authProvider, child) {
         final isCaptain = authProvider.userRole.toLowerCase() == 'captain';
+        // Only allow removal if the current user is a captain and the player is not the captain
+        final canRemove = isCaptain && !player.isCaptain;
+        // Get actual payment status from provider
+        final actualPaymentStatus = teamProvider.getPlayerPaymentStatus(player.id);
+
         print('🔍 [PLAYER LIST DEBUG] User role: "${authProvider.userRole}"');
         print('🔍 [PLAYER LIST DEBUG] Is captain: $isCaptain');
         print(
-          '🔍 [PLAYER LIST DEBUG] Player: ${widget.player.name}, isCaptain: ${widget.player.isCaptain}',
+          '🔍 [PLAYER LIST DEBUG] Player: ${player.name}, isCaptain: ${player.isCaptain}',
         );
 
         return Container(
@@ -42,32 +42,32 @@ class _PlayerListItemState extends State<PlayerListItem> {
                 builder: (context) {
                   print('🖼️ [PLAYER IMAGE DEBUG] ==================');
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Player: ${widget.player.name}',
+                    '🖼️ [PLAYER IMAGE DEBUG] Player: ${player.name}',
                   );
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Player ID: ${widget.player.id}',
+                    '🖼️ [PLAYER IMAGE DEBUG] Player ID: ${player.id}',
                   );
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Image URL: "${widget.player.imageUrl}"',
+                    '🖼️ [PLAYER IMAGE DEBUG] Image URL: "${player.imageUrl}"',
                   );
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Has image: ${widget.player.imageUrl != null}',
+                    '🖼️ [PLAYER IMAGE DEBUG] Has image: ${player.imageUrl != null}',
                   );
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Image not empty: ${widget.player.imageUrl?.isNotEmpty ?? false}',
+                    '🖼️ [PLAYER IMAGE DEBUG] Image not empty: ${player.imageUrl?.isNotEmpty ?? false}',
                   );
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Image starts with http: ${widget.player.imageUrl?.startsWith('http') ?? false}',
+                    '🖼️ [PLAYER IMAGE DEBUG] Image starts with http: ${player.imageUrl?.startsWith('http') ?? false}',
                   );
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Jersey number: "${widget.player.number}"',
+                    '🖼️ [PLAYER IMAGE DEBUG] Jersey number: "${player.number}"',
                   );
                   print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Position: "${widget.player.position}"',
+                    '🖼️ [PLAYER IMAGE DEBUG] Position: "${player.position}"',
                   );
                   print('🖼️ [PLAYER IMAGE DEBUG] ==================');
                   return UserAvatarWidget(
-                    imageUrl: widget.player.imageUrl,
+                    imageUrl: player.imageUrl,
                     size: 48,
                     borderWidth: 2,
                     borderColor: const Color(0xFFF3F4F6),
@@ -87,9 +87,9 @@ class _PlayerListItemState extends State<PlayerListItem> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  widget.player.number.isNotEmpty
-                                      ? '#${widget.player.number} ${widget.player.name}'
-                                      : widget.player.name,
+                                  player.number.isNotEmpty
+                                      ? '#${player.number} ${player.name}'
+                                      : player.name,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -99,7 +99,7 @@ class _PlayerListItemState extends State<PlayerListItem> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (widget.player.isVerified) ...[
+                              if (player.isVerified) ...[
                                 const SizedBox(width: 4),
                                 const Icon(
                                   Icons.check_circle_outline,
@@ -107,7 +107,7 @@ class _PlayerListItemState extends State<PlayerListItem> {
                                   color: Colors.grey,
                                 ),
                               ],
-                              if (widget.player.hasAlert) ...[
+                              if (player.hasAlert) ...[
                                 const SizedBox(width: 4),
                                 const Icon(
                                   Icons.access_time_filled,
@@ -118,31 +118,42 @@ class _PlayerListItemState extends State<PlayerListItem> {
                             ],
                           ),
                         ),
+                        // Display status badge OR remove button
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: widget.player.isCaptain
-                                    ? const Color(0xFFFEF3C7)
-                                    : const Color(0xFFDBEAFE),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                widget.player.isCaptain ? 'Captain' : 'Player',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Lato',
-                                  color: widget.player.isCaptain
-                                      ? const Color(0xFF92400E)
-                                      : const Color(0xFF1E40AF),
+                            if (canRemove)
+                              IconButton(
+                                icon: const Icon(Icons.person_remove, color: Colors.red),
+                                onPressed: () {
+                                  // Trigger the remove player dialog/logic from CaptainTeamProvider
+                                  _confirmRemovePlayer(context, player);
+                                },
+                                tooltip: 'Remove Player',
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: player.isCaptain
+                                      ? const Color(0xFFFEF3C7)
+                                      : const Color(0xFFDBEAFE),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  player.isCaptain ? 'Captain' : 'Player',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Lato',
+                                    color: player.isCaptain
+                                        ? const Color(0xFF92400E)
+                                        : const Color(0xFF1E40AF),
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ],
@@ -156,7 +167,7 @@ class _PlayerListItemState extends State<PlayerListItem> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.player.email,
+                                player.email,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w400,
@@ -175,20 +186,20 @@ class _PlayerListItemState extends State<PlayerListItem> {
                                   children: [
                                     const TextSpan(text: 'Position: '),
                                     TextSpan(
-                                      text: widget.player.position.isNotEmpty
-                                          ? widget.player.position
+                                      text: player.position.isNotEmpty
+                                          ? player.position
                                           : 'Not set',
                                       style: TextStyle(
-                                        color: widget.player.position.isNotEmpty
+                                        color: player.position.isNotEmpty
                                             ? Colors.grey.shade600
                                             : Colors.grey.shade400,
                                       ),
                                     ),
-                                    if (widget.player.additionalPositionsCount >
+                                    if (player.additionalPositionsCount >
                                         0)
                                       TextSpan(
                                         text:
-                                            ' +${widget.player.additionalPositionsCount} more',
+                                            ' +${player.additionalPositionsCount} more',
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Color(0xFF0F173E),
@@ -208,13 +219,13 @@ class _PlayerListItemState extends State<PlayerListItem> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: widget.player.isPaid
+                            color: actualPaymentStatus
                                 ? const Color(0xFF0F172A)
                                 : Colors.grey.shade500,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            widget.player.isPaid ? 'Paid' : 'Unpaid',
+                            actualPaymentStatus ? 'Paid' : 'Unpaid',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -230,6 +241,55 @@ class _PlayerListItemState extends State<PlayerListItem> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _confirmRemovePlayer(BuildContext context, PlayerModel player) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Player Removal'),
+          content: Text('Are you sure you want to remove ${player.name} from this team?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // Close confirmation dialog
+                try {
+                  await Provider.of<CaptainTeamProvider>(context, listen: false)
+                      .removePlayer(context, player.id);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${player.name} has been removed.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to remove player: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Remove'),
+            ),
+          ],
         );
       },
     );

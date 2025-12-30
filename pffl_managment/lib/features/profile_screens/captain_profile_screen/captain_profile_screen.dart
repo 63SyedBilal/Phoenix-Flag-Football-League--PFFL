@@ -25,8 +25,6 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
       TextEditingController();
 
   String? _selectedPosition;
-  String _phoneNumber = '';
-  String _emergencyPhoneNumber = '';
 
   // Available positions for football
   static const List<String> _positions = [
@@ -226,7 +224,7 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                   const SizedBox(height: 4),
                   ImprovedPhoneField(
                     onInputChanged: (PhoneNumber number) {
-                      _phoneNumber = number.completeNumber;
+                      // Phone number captured but not stored locally
                     },
                     onInputValidated: (bool value) {
                       // Handle phone number validation
@@ -295,7 +293,7 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                   const SizedBox(height: 4),
                   ImprovedPhoneField(
                     onInputChanged: (PhoneNumber number) {
-                      _emergencyPhoneNumber = number.completeNumber;
+                      // Emergency phone number captured but not stored locally
                     },
                     onInputValidated: (bool value) {
                       // Handle emergency phone number validation

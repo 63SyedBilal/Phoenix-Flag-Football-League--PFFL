@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PFFL Brand Colors -->
+    <color name="pffl_primary">#1a365d</color>
+    <color name="pffl_secondary">#22c55e</color>
+    <color name="pffl_accent">#fbbf24</color>
+    <color name="pffl_field">#16a34a</color>
+    <color name="pffl_white">#ffffff</color>
+</resources>

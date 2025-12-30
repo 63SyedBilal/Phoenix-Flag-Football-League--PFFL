@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
-import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
+import 'package:pffl_managment/features/payment_history/models/payment_history_item.dart';
 import 'package:provider/provider.dart';
 
 class CaptainPaymentHistory extends StatefulWidget {
@@ -135,9 +135,6 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
                     ],
                   ),
                 ),
-
-
-     
               ],
             );
           },
@@ -230,7 +227,7 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: statusColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -563,34 +560,6 @@ class _CaptainPaymentHistoryState extends State<CaptainPaymentHistory> {
       ),
     );
   }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return InkWell(
-      onTap: () {},
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isActive ? const Color(0xFF3B82F6) : Colors.grey[400],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isActive ? const Color(0xFF3B82F6) : Colors.grey[400],
-                fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // Payment Receipt Detail Screen
@@ -649,7 +618,7 @@ class _PaymentReceiptScreenState extends State<PaymentReceiptScreen> {
                   const SizedBox(height: 16),
                   _buildDetailRow(
                     'Transaction ID:',
-                    widget.payment.transactionId ?? 'N/A',
+                    widget.payment.transactionId,
                   ),
                   const SizedBox(height: 12),
                   _buildDetailRow('Date:', widget.payment.formattedDate),
