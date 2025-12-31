@@ -410,4 +410,30 @@ class PaymentService {
       return {'success': false, 'message': 'An unexpected error occurred: $e'};
     }
   }
+
+  /// Get payment details by payment ID
+  /// GET /api/payments/:paymentId
+  static Future<Map<String, dynamic>?> getPaymentById(String paymentId) async {
+    try {
+      final dio = await _getAuthenticatedDio();
+      final response = await dio.get('/payments/$paymentId');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true && data['data'] != null) {
+          return data['data'] as Map<String, dynamic>;
+        }
+      }
+      return null;
+    } on DioException catch (e) {
+      print('Error fetching payment by ID: ${e.message}');
+      if (e.response != null) {
+        print('Error response: ${e.response?.data}');
+      }
+      return null;
+    } catch (e) {
+      print('General error fetching payment by ID: $e');
+      return null;
+    }
+  }
 }
