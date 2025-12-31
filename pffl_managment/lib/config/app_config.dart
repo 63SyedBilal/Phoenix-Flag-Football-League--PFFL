@@ -28,8 +28,13 @@ class AppConfig {
   // TEMPORARY: Try localhost for testing (may not work from mobile)
   // static String get baseUrl => 'http://localhost:3000/api';
 
+
+  // CURRENT: Network IP
+  static String get baseUrl => 'http://192.168.18.32:3000/api';
+
   // CURRENT: Network IP (Updated 2026-01-01)
   static String get baseUrl => 'http://192.168.18.174:3000/api';
+
 
   // ALTERNATIVE: Try 0.0.0.0 (all interfaces)
   // static String get baseUrl => 'http://0.0.0.0:3000/api';
