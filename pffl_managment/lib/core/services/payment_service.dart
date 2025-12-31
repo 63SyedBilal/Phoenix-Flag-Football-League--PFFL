@@ -30,10 +30,13 @@ class PaymentService {
         }
         return [];
       } else {
+        print('Failed to fetch payments: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
+      print('Error fetching payments: ${e.message}');
       if (e.response != null) {
+        print('Error response: ${e.response?.data}');
       }
       return [];
     }
@@ -59,10 +62,13 @@ class PaymentService {
       }
       return null;
     } on DioException catch (e) {
+      print('Error getting/creating payment: ${e.message}');
       if (e.response != null) {
+        print('Error response: ${e.response?.data}');
       }
       return null;
     } catch (e) {
+      print('General error getting/creating payment: $e');
       return null;
     }
   }
@@ -83,8 +89,10 @@ class PaymentService {
       }
       return [];
     } on DioException catch (e) {
+      print('Error fetching unpaid payments: ${e.message}');
       return [];
     } catch (e) {
+      print('General error fetching unpaid payments: $e');
       return [];
     }
   }
@@ -103,13 +111,17 @@ class PaymentService {
         }
         return [];
       } else {
+        print('Failed to fetch teams: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
+      print('Error fetching teams: ${e.message}');
       if (e.response != null) {
+        print('Error response: ${e.response?.data}');
       }
       return [];
     } catch (e) {
+      print('General error fetching teams: $e');
       return [];
     }
   }
@@ -144,7 +156,9 @@ class PaymentService {
         };
       }
     } on DioException catch (e) {
+      print('Error fetching user payments: ${e.message}');
       if (e.response != null) {
+        print('Error response: ${e.response?.data}');
         return {
           'success': false,
           'data': [],
@@ -158,6 +172,7 @@ class PaymentService {
         'message': 'Network error while fetching payments: ${e.message}',
       };
     } catch (e) {
+      print('General error fetching user payments: $e');
       return {
         'success': false,
         'data': [],
@@ -196,7 +211,9 @@ class PaymentService {
         };
       }
     } on DioException catch (e) {
+      print('Error fetching team payments: ${e.message}');
       if (e.response != null) {
+        print('Error response: ${e.response?.data}');
         return {
           'success': false,
           'data': [],
@@ -210,6 +227,7 @@ class PaymentService {
         'message': 'Network error while fetching team payments: ${e.message}',
       };
     } catch (e) {
+      print('General error fetching team payments: $e');
       return {
         'success': false,
         'data': [],
@@ -246,13 +264,17 @@ class PaymentService {
         }
         return [];
       } else {
+        print('Failed to search users: ${response.statusMessage}');
         return [];
       }
     } on DioException catch (e) {
+      print('Error searching users: ${e.message}');
       if (e.response != null) {
+        print('Error response: ${e.response?.data}');
       }
       return [];
     } catch (e) {
+      print('General error searching users: $e');
       return [];
     }
   }
@@ -313,6 +335,11 @@ class PaymentService {
 
         ...cardDetails,
       };
+
+      print('🚀 Request Payload: $data');
+      print('💳 Sending payment request to /payments/process');
+      print('   - Payment ID: $paymentId');
+      print('   - Payment Method: $paymentMethod');
       print(
         '   - Card Number: **** **** **** ${data['cardNumber']?.toString().substring(data['cardNumber'].toString().length - 4)}',
       );
@@ -321,6 +348,7 @@ class PaymentService {
       print(
         '📡 Making authenticated request to: ${dio.options.baseUrl}/payments/process',
       );
+      print('🔐 Auth headers: ${dio.options.headers}');
 
       final response = await dio.post(
         '/payments/process',
@@ -349,15 +377,15 @@ class PaymentService {
           'statusCode': status,
         };
       }
+
+     
     } on DioException catch (e) {
 
       if (e.response != null) {
 
         // Check if it's a server error (5xx)
         if (e.response!.statusCode! >= 500) {
-          print(
-            '💡 This means the backend received the request but failed to process it with Stripe',
-          );
+          
         }
 
         return {
@@ -378,31 +406,8 @@ class PaymentService {
         'message': 'Failed to connect to payment service: ${e.message}',
       };
     } catch (e) {
+      print('❌ General Payment Error: $e');
       return {'success': false, 'message': 'An unexpected error occurred: $e'};
     }
   }
-
-  /// Get payment details by payment ID
-  /// GET /api/payments/:paymentId
-  static Future<Map<String, dynamic>?> getPaymentById(String paymentId) async {
-    try {
-      final dio = await _getAuthenticatedDio();
-      final response = await dio.get('/payments/$paymentId');
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true && data['data'] != null) {
-          return data['data'] as Map<String, dynamic>;
-        }
-      }
-      return null;
-    } on DioException catch (e) {
-      if (e.response != null) {
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
 }
-
