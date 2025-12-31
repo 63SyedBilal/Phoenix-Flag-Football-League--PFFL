@@ -14,8 +14,9 @@ class AppConfig {
 
   // Network IP Configuration
   // OLD IP - Commented out on 2025-12-27: static const String networkIp = '192.168.1.3';
-  // NEW IP - Set using ipconfig on 2025-12-27
-  static const String networkIp = '192.168.1.4'; // Current system IP
+  // OLD IP - Commented out: static const String networkIp = '192.168.1.4';
+  // NEW IP - Set using ipconfig on 2026-01-01
+  static const String networkIp = '192.168.18.174'; // Current system IP
 
   static const String localhost = 'localhost';
   static const String androidEmulatorIp = '10.0.2.2';
@@ -27,8 +28,13 @@ class AppConfig {
   // TEMPORARY: Try localhost for testing (may not work from mobile)
   // static String get baseUrl => 'http://localhost:3000/api';
 
+
   // CURRENT: Network IP
   static String get baseUrl => 'http://192.168.18.32:3000/api';
+
+  // CURRENT: Network IP (Updated 2026-01-01)
+  static String get baseUrl => 'http://192.168.18.174:3000/api';
+
 
   // ALTERNATIVE: Try 0.0.0.0 (all interfaces)
   // static String get baseUrl => 'http://0.0.0.0:3000/api';

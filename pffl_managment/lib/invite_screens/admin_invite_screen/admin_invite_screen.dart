@@ -60,55 +60,47 @@ class AdminInviteScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    // Email + Role Row
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            height: 48,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.black26),
-                            ),
-                            child: TextField(
-                              onChanged: (value) =>
-                                  provider.updateManualEmail(value),
-                              decoration: const InputDecoration(
-                                hintText: "james.richardson@pffl.com",
-                                hintStyle: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                              ),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
+                    // Email + Role Row - UPDATED
+                    TextField(
+                      onChanged: (value) => provider.updateManualEmail(value),
+                      enableInteractiveSelection: false,
+                      decoration: InputDecoration(
+                        hintText: "james.richardson@pffl.com",
+                        hintStyle: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
                         ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.black26),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.black26),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.black26),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
+                        suffixIcon: GestureDetector(
                           onTap: () => _showRoleSelectionDialog(
                             context,
                             provider.manualSelectedRole,
                             (role) => provider.updateManualRole(role),
                           ),
                           child: Container(
-                            height: 48,
-                            width: 140,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.black26),
-                            ),
+                            margin: const EdgeInsets.all(4),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black26),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   provider.manualSelectedRole ?? "Select role",
@@ -119,6 +111,7 @@ class AdminInviteScreen extends StatelessWidget {
                                         : Colors.black,
                                   ),
                                 ),
+                                const SizedBox(width: 4),
                                 const Icon(
                                   Icons.arrow_drop_down,
                                   color: Colors.black,
@@ -127,7 +120,11 @@ class AdminInviteScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ],
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black,
+                      ),
                     ),
                     const SizedBox(height: 18),
                     GestureDetector(
@@ -254,40 +251,67 @@ class AdminInviteScreen extends StatelessWidget {
     );
   }
 
-  void _showRoleSelectionDialog(
-    BuildContext context,
-    String? currentRole,
-    Function(String?) onRoleSelected,
-  ) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        String? selectedRole = currentRole;
+  // ... existing code ...
+// ... existing code ...
 
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              title: const Text(
-                'Select Role',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Lato',
+void _showRoleSelectionDialog(
+  BuildContext context,
+  String? currentRole,
+  Function(String?) onRoleSelected,
+) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      String? selectedRole = currentRole;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final screenWidth = MediaQuery.of(dialogContext).size.width;
+
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: const [
+                Text(
+                  'Change Player Role',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Lato',
+                  ),
                 ),
+                SizedBox(height: 8),
+                Text(
+                  'Are you sure you want to change this player’s role?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontFamily: 'Lato',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                // Responsive: adjusts to screen size, avoids overflow
+                maxWidth: screenWidth - 32,
               ),
-              content: Container(
-                width: 300,
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        // card ko thora sa circular kiya (8 -> 12)
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: const Color(0xFFE5E7EB),
                           width: 0.67,
@@ -295,125 +319,214 @@ class AdminInviteScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          ListTile(
-                            title: const Text(
-                              'Player',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Player
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Player',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Player';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Player'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Player',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Player'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Player',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Player';
+                                });
+                              },
+                            ),
                           ),
-                          ListTile(
-                            title: const Text(
-                              'Captain',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Captain
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Captain',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Captain';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Captain'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Captain',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Captain'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Captain',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Captain';
+                                });
+                              },
+                            ),
                           ),
-                          ListTile(
-                            title: const Text(
-                              'Referee',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Referee
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Referee',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Referee';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Referee'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Referee',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Referee'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Referee',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Referee';
+                                });
+                              },
+                            ),
                           ),
-                          ListTile(
-                            title: const Text(
-                              'Stat Keeper',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Stat Keeper
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Stat Keeper',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Stat Keeper';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Stat Keeper'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Stat Keeper',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Stat Keeper'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Stat Keeper',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Stat Keeper';
+                                });
+                              },
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Responsive buttons: no overflow
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: Color(0xFF0F173E),
-                              width: 1,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 18,
-                            ),
-                          ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(
-                              color: Color(0xFF0F173E),
-                              fontSize: 16,
+                        Expanded(
+                          child: SizedBox(
+                            height: 44,
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                  color: Color(0xFF0F173E),
+                                  width: 1,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 16,
+                                ),
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: Color(0xFF0F173E),
+                                    fontSize: 14,
+                                    fontFamily: 'Lato',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: selectedRole == null
-                              ? null
-                              : () {
-                                  onRoleSelected(selectedRole);
-                                  Navigator.of(context).pop();
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F173E),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
+                        Expanded(
+                          child: SizedBox(
+                            height: 44,
+                            child: ElevatedButton(
+                              onPressed: selectedRole == null
+                                  ? null
+                                  : () {
+                                      onRoleSelected(selectedRole);
+                                      Navigator.of(context).pop();
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0F173E),
+                                disabledBackgroundColor: Colors.grey,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 16,
+                                ),
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Confirm',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontFamily: 'Lato',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 18,
-                            ),
-                          ),
-                          child: const Text(
-                            'Confirm',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
                         ),
                       ],
@@ -421,13 +534,18 @@ class AdminInviteScreen extends StatelessWidget {
                   ],
                 ),
               ),
-            );
-          },
-        );
-      },
-    );
-  }
+            ),
+          );
+        },
+      );
+    },
+  );
 }
+}
+
+// ... existing code ...
+
+// ... existing code ...
 
 class ExpandableAgentCard extends StatelessWidget {
   final FreeAgentModel agent;
@@ -590,40 +708,63 @@ class ExpandableAgentCard extends StatelessWidget {
     );
   }
 
-  void _showRoleSelectionDialog(
-    BuildContext context,
-    String? currentRole,
-    Function(String?) onRoleSelected,
-  ) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        String? selectedRole = currentRole;
+ // ... existing code ...
 
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              title: const Text(
-                'Select Role',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Lato',
-                ),
-              ),
-              content: Container(
-                width: 300,
+void _showRoleSelectionDialog(
+  BuildContext context,
+  String? currentRole,
+  Function(String?) onRoleSelected,
+) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      String? selectedRole = currentRole;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Title + subtitle
+                    const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Change Player Role',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Lato',
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Are you sure you want to change this player’s role?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                            fontFamily: 'Lato',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        // card ko thora circular kiya
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: const Color(0xFFE5E7EB),
                           width: 0.67,
@@ -631,125 +772,191 @@ class ExpandableAgentCard extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          ListTile(
-                            title: const Text(
-                              'Player',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Player
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Player',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Player';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Player'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Player',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Player'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Player',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Player';
+                                });
+                              },
+                            ),
                           ),
-                          ListTile(
-                            title: const Text(
-                              'Captain',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Captain
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Captain',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Captain';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Captain'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Captain',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Captain'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Captain',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Captain';
+                                });
+                              },
+                            ),
                           ),
-                          ListTile(
-                            title: const Text(
-                              'Referee',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Referee
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Referee',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Referee';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Referee'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Referee',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Referee'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Referee',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Referee';
+                                });
+                              },
+                            ),
                           ),
-                          ListTile(
-                            title: const Text(
-                              'Stat Keeper',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.black,
-                                fontFamily: 'Lato',
-                              ),
+                          // Stat Keeper
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            selected: selectedRole == 'Stat Keeper',
-                            onTap: () {
-                              setState(() {
-                                selectedRole = 'Stat Keeper';
-                              });
-                            },
+                            decoration: BoxDecoration(
+                              color: selectedRole == 'Stat Keeper'
+                                  ? const Color(0xFF0F173E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Stat Keeper',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: selectedRole == 'Stat Keeper'
+                                      ? Colors.white
+                                      : Colors.black,
+                                  fontFamily: 'Lato',
+                                ),
+                              ),
+                              selected: selectedRole == 'Stat Keeper',
+                              onTap: () {
+                                setState(() {
+                                  selectedRole = 'Stat Keeper';
+                                });
+                              },
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: Color(0xFF0F173E),
-                              width: 1,
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: Color(0xFF0F173E),
+                                width: 1,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 18,
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 18,
-                            ),
-                          ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(
-                              color: Color(0xFF0F173E),
-                              fontSize: 16,
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Color(0xFF0F173E),
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: selectedRole == null
-                              ? null
-                              : () {
-                                  onRoleSelected(selectedRole);
-                                  Navigator.of(context).pop();
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F173E),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: selectedRole == null
+                                ? null
+                                : () {
+                                    onRoleSelected(selectedRole);
+                                    Navigator.of(context).pop();
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F173E),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 18,
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
-                              vertical: 18,
+                            child: const Text(
+                              'Confirm',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
                             ),
-                          ),
-                          child: const Text(
-                            'Confirm',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
                         ),
                       ],
@@ -757,10 +964,13 @@ class ExpandableAgentCard extends StatelessWidget {
                   ],
                 ),
               ),
-            );
-          },
-        );
-      },
-    );
-  }
+            ),
+          );
+        },
+      );
+    },
+  );
 }
+}
+
+// ... existing code ...
