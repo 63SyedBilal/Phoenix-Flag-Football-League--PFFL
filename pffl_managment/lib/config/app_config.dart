@@ -29,8 +29,8 @@ class AppConfig {
   // static String get baseUrl => 'http://localhost:3000/api';
 
 
-  // CURRENT: Network IP
-  static String get baseUrl => 'http://192.168.18.32:3000/api';
+  // CURRENT: Staging API
+  static String get baseUrl => 'https://api-staging.phoenixflagfootballleague.com/api';
 
   // CURRENT: Network IP (Updated 2026-01-01)
 

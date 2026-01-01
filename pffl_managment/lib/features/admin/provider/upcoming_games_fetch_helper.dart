@@ -14,9 +14,9 @@ class UpcomingGamesFetchHelper {
     ]);
 
     return {
-      'teams': results[0] as List<TeamModel>,
-      'referees': results[1] as List<UserModel>,
-      'statKeepers': results[2] as List<UserModel>,
+      'teams': results[0],
+      'referees': results[1],
+      'statKeepers': results[2],
     };
   }
 
