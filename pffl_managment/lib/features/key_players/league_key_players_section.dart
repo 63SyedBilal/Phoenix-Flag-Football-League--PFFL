@@ -21,7 +21,11 @@ class LeagueKeyPlayersSection extends StatelessWidget {
             'Key Players',
             style: Theme.of(
               context,
-            ).textTheme.titleSmall?.copyWith(color: const Color(0xFF6B7280)),
+            ).textTheme.titleSmall?.copyWith(
+              fontFamily: 'Lato',
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF111827)),
           ),
           const SizedBox(height: 8),
           SizedBox(

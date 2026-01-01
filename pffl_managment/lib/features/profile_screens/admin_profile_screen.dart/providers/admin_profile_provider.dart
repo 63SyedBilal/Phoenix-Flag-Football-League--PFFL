@@ -17,9 +17,9 @@ class AdminProfileProvider extends ChangeNotifier {
   File? _selectedImageFile;
   bool _isLoading = false;
   String? _errorMessage;
-  String? _phoneError; // Phone-specific error
+  String? _phoneError; 
   String? _userId;
-  String? _userRole;
+  
 
   // Getters
   String get firstName => _firstName;
@@ -48,7 +48,7 @@ class AdminProfileProvider extends ChangeNotifier {
       // Get user ID and role from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       _userId = prefs.getString('userId');
-      _userRole = prefs.getString('userRole');
+     
 
       if (_userId == null) {
         _isLoading = false;

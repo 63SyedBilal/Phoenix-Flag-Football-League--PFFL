@@ -44,9 +44,8 @@ class PhoneFieldProvider extends ChangeNotifier {
 
   /// Handle phone number input changes (country or number)
   void handleInputChanged(PhoneNumber number) {
-    final previousCountry = _countryISOCode;
-    final newCountry = number.countryISOCode;
-    final countryChanged = previousCountry != newCountry;
+    
+    
 
     // Update current phone number
     _currentPhoneNumber = number;

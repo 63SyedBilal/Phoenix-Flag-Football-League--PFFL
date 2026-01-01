@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/user_service.dart' as user_service;
 import 'package:pffl_managment/core/widgets/user_avatar_widget.dart';
 import 'package:pffl_managment/features/admin/provider/admin_user_provider/users_provider.dart';
-import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:provider/provider.dart';
 
 class UsersView extends StatelessWidget {
@@ -87,22 +86,7 @@ class UsersView extends StatelessWidget {
                         'Current route: ${ModalRoute.of(context)?.settings.name}',
                       );
 
-                      // Navigate to invite screen using named route constant
-                      try {
-                        final result = Navigator.pushNamed(
-                          context,
-                          AppRoutes.adminInvite,
-                        );
-                      } catch (e, stackTrace) {
-                        // Print error for debugging
-                        // Show a snackbar to inform the user
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Unable to open invite screen: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
+                     
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),

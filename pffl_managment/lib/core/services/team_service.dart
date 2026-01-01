@@ -93,9 +93,7 @@ class TeamService {
 
         if (data is Map) {
 
-          // Log squad sizes for debugging
-          final squad5v5 = data['squad5v5'] as List? ?? [];
-          final squad7v7 = data['squad7v7'] as List? ?? [];
+     
 
           return data as Map<String, dynamic>;
         }
@@ -149,9 +147,7 @@ class TeamService {
 
         if (data is Map) {
 
-          // Log squad sizes for debugging
-          final squad5v5 = data['squad5v5'] as List? ?? [];
-          final squad7v7 = data['squad7v7'] as List? ?? [];
+        
 
           return data as Map<String, dynamic>;
         }

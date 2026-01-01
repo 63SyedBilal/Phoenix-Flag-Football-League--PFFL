@@ -10,7 +10,7 @@ class LeaguePlayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 165.5,
+      width: 161,
       height: 90,
       decoration: BoxDecoration(
         color: player.gradientStart,
@@ -48,7 +48,7 @@ class LeaguePlayerCard extends StatelessWidget {
               children: [
                 // Name - Single block, no space between lines
                 Text(
-                  player.name.split(' ').first,
+                  player.name.isNotEmpty ? player.name.split(' ').first : 'Unknown',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -59,7 +59,7 @@ class LeaguePlayerCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  player.name.split(' ').length > 1
+                  player.name.isNotEmpty && player.name.split(' ').length > 1
                       ? player.name.split(' ').skip(1).join(' ')
                       : '',
                   style: const TextStyle(
