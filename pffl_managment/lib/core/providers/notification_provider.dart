@@ -121,7 +121,7 @@ class NotificationProvider extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-    } catch (e, stackTrace) {
+    } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load notifications: ${e.toString()}';
       notifyListeners();

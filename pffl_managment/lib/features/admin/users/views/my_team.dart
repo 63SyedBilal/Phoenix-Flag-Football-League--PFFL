@@ -93,7 +93,7 @@ class UsersView extends StatelessWidget {
                           context,
                           AppRoutes.adminInvite,
                         );
-                      } catch (e, stackTrace) {
+                      } catch (e) {
                         // Print error for debugging
                         // Show a snackbar to inform the user
                         ScaffoldMessenger.of(context).showSnackBar(

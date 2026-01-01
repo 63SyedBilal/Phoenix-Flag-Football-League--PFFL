@@ -135,7 +135,7 @@ class ProfileService {
         return null;
       }
       return null;
-    } on DioException catch (e) {
+    } on DioException {
       return null;
     } catch (e) {
       return null;
