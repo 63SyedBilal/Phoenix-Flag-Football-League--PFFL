@@ -51,10 +51,6 @@ class CaptainTeamProvider extends ChangeNotifier {
         return;
       }
 
-      // Log squad data for debugging
-      final squad5v5Raw = teamData['squad5v5'] as List? ?? [];
-      final squad7v7Raw = teamData['squad7v7'] as List? ?? [];
-
       // Backend already populates profileImage, jerseyNumber, position
       // So we can directly use TeamModel.fromJson without additional enrichment
 

@@ -191,7 +191,6 @@ class LeagueService {
             );
             return true;
           } else {
-            final error = data['error'] ?? 'Unknown error';
             return false;
           }
         }
@@ -257,7 +256,6 @@ class LeagueService {
             );
             return true;
           } else {
-            final error = data['error'] ?? 'Unknown error';
             return false;
           }
         }

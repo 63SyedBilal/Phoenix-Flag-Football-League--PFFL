@@ -247,8 +247,7 @@ class DeviceService {
     try {
       final Map<String, dynamic> data = json.decode(payload);
 
-      final type = data['type'];
-      final id = data['id'];
+    
 
       // Store payload for app launch navigation
       _storePendingNotification(data);

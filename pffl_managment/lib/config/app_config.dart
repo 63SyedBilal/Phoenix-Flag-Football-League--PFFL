@@ -33,7 +33,6 @@ class AppConfig {
   static String get baseUrl => 'http://192.168.18.32:3000/api';
 
   // CURRENT: Network IP (Updated 2026-01-01)
-  static String get baseUrl => 'http://192.168.18.174:3000/api';
 
 
   // ALTERNATIVE: Try 0.0.0.0 (all interfaces)
