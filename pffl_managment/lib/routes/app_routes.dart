@@ -67,4 +67,7 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String help = '/help';
   static const String paymentReceipt = '/payment-receipt';
+
+  // League Routes
+  static const String leagueDetailView = '/league-detail-view';
 }

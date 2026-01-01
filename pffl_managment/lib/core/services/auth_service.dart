@@ -146,6 +146,9 @@ class AuthService {
           ),
         );
 
+        // Configure SSL certificate handling for HTTPS requests
+        _configureCertificatePinning(dio);
+
         final response = await dio.post(
           AppConfig.loginEndpoint,
           data: {'email': email.trim(), 'password': password},
@@ -266,6 +269,9 @@ class AuthService {
             maxRedirects: 5,
           ),
         );
+
+        // Configure SSL certificate handling for HTTPS requests
+        _configureCertificatePinning(dio);
 
         final response = await dio.post(
           AppConfig.registerEndpoint,
