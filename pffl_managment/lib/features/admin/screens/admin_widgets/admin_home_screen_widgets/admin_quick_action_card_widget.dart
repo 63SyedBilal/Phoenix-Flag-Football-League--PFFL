@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/models/quick_action_model.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
@@ -18,6 +19,56 @@ class AdminQuickActionCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    Widget iconWidget;
+    String lowerTitle = action.title.toLowerCase();
+    
+    if (lowerTitle.contains('create') && lowerTitle.contains('league')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/BlackplusIcon.svg',
+        width: 24,
+        height: 24,
+        color: colorScheme.onSurface,
+      );
+    } else if (lowerTitle.contains('schedule') && lowerTitle.contains('game')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/dateVectorIcon.svg',
+        width: 24,
+        height: 24,
+        color: colorScheme.onSurface,
+      );
+    } else if (lowerTitle.contains('view') && lowerTitle.contains('schedule')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/dateShadowIcon.svg',
+        width: 24,
+        height: 24,
+        color: colorScheme.onSurface,
+      );
+    } else if (lowerTitle.contains('view') && lowerTitle.contains('stat')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/StatsshadowIcon.svg',
+        width: 24,
+        height: 24,
+        color: colorScheme.onSurface,
+      );
+    } else if (lowerTitle.contains('manage') && lowerTitle.contains('stat')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/dateShadowIcon.svg', // Using the same icon as stats for manage stats
+        width: 24,
+        height: 24,
+        color: colorScheme.onSurface,
+      );
+    } else if (lowerTitle.contains('view') && lowerTitle.contains('report')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/StatsshadowIcon.svg', // Using the same icon as stats for reports
+        width: 24,
+        height: 24,
+        color: colorScheme.onSurface,
+      );
+    } else {
+      // Fallback to the original icon if title doesn't match
+      iconWidget = Icon(action.icon, size: 24, color: colorScheme.onSurface);
+    }
 
     return InkWell(
       onTap: isBlurred
@@ -47,7 +98,7 @@ class AdminQuickActionCardWidget extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(action.icon, size: 24, color: colorScheme.onSurface),
+                iconWidget,
                 const SizedBox(height: 10),
                 Text(
                   action.title,

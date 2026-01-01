@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/models/stat_card_model.dart';
 
@@ -11,6 +12,44 @@ class StatCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    Widget iconWidget;
+    if (stat.title.toLowerCase().contains('league')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/trophyIcon.svg',
+        width: 6,
+        height: 6,
+        color: stat.iconColor,
+      );
+    } else if (stat.title.toLowerCase().contains('game')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/bluehomedateIcon.svg',
+        width: 6,
+        height: 6,
+        color: stat.iconColor,
+      );
+    } else if (stat.title.toLowerCase().contains('user')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/redManIcon.svg',
+        width: 6,
+        height: 6,
+        color: stat.iconColor,
+      );
+    } else if (stat.title.toLowerCase().contains('payment')) {
+      iconWidget = SvgPicture.asset(
+        'assets/icons/home_icons/dollarIcon.svg',
+        width: 6,
+        height: 6,
+        color: stat.iconColor,
+      );
+    } else {
+      // Fallback to the original icon if title doesn't match
+      iconWidget = Icon(
+        stat.icon,
+        size: 6,
+        color: stat.iconColor,
+      );
+    }
 
     return Card(
       shadowColor: Colors.transparent,
@@ -45,17 +84,13 @@ class StatCardWidget extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          width: 32,
-                          height: 32,
+                          width: 20,
+                          height: 20,
                           decoration: BoxDecoration(
                             color: const Color(0xFFFBFBFB),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(
-                            stat.icon,
-                            size: 16,
-                            color: stat.iconColor,
-                          ),
+                          child: iconWidget,
                         ),
                       ],
                     ),
