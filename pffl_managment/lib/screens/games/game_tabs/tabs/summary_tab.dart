@@ -7,6 +7,7 @@ import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_tabs_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
+import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 
 class SummaryTab extends StatelessWidget {
   const SummaryTab({Key? key}) : super(key: key);
@@ -842,212 +843,238 @@ class SummaryTab extends StatelessWidget {
   }
 
   Widget _FilteredLeaderboardSection({required String selectedTeam}) {
-    // This is a simplified version that shows only 2 lines for the selected team
-    // In a real implementation, this would filter the actual leaderboard data
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Leaderboard',
-              style: TextStyle(fontFamily: 'Lato', fontSize: 16),
+    return Consumer2<GameTabsProvider, LeagueDetailProvider>(
+      builder: (context, gameProvider, leagueProvider, child) {
+        final match = gameProvider.match;
+        final allTeamStandings = leagueProvider.getLeaderboard();
+        
+        // Debug print to see what we're working with
+        print('🏈 Match teams: ${match.homeTeam} vs ${match.awayTeam}');
+        print('🏈 Available teams in standings: ${allTeamStandings.map((s) => s.teamName).toList()}');
+        
+        // Filter standings to show only the two teams from the current match
+        final matchTeamStandings = allTeamStandings.where((standing) {
+          final isHomeTeam = standing.teamName.toLowerCase().trim() == match.homeTeam.toLowerCase().trim();
+          final isAwayTeam = standing.teamName.toLowerCase().trim() == match.awayTeam.toLowerCase().trim();
+          print('🏈 Checking ${standing.teamName} - Home: $isHomeTeam, Away: $isAwayTeam');
+          return isHomeTeam || isAwayTeam;
+        }).toList();
+        
+        print('🏈 Found ${matchTeamStandings.length} matching teams');
+        
+        if (matchTeamStandings.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            const Spacer(),
-            Text(
-              'View Leaderboard',
+            child: const Text(
+              'No match data available',
               style: TextStyle(
+                color: Colors.grey,
                 fontFamily: 'Lato',
-                fontSize: 10,
-                color: Color(0xff0F173E),
+                fontSize: 14,
               ),
             ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 12,
-              color: Color(0xff0F173E),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Match Leaderboard',
+                  style: TextStyle(fontFamily: 'Lato', fontSize: 16),
+                ),
+                const Spacer(),
+                Text(
+                  'View Leaderboard',
+                  style: TextStyle(
+                    fontFamily: 'Lato',
+                    fontSize: 10,
+                    color: Color(0xff0F173E),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12,
+                  color: Color(0xff0F173E),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(color: Colors.white),
+              child: Scrollbar(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Column(
+                    children: [
+                      // Header row with all columns
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: Color(0xffe3ecfb),
+                          border: Border(
+                            bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 40,
+                              child: Text(
+                                'Rank',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 120,
+                              child: Text(
+                                'Team',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const SizedBox(
+                              width: 30,
+                              child: Text(
+                                'W',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const SizedBox(
+                              width: 30,
+                              child: Text(
+                                'D',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const SizedBox(
+                              width: 30,
+                              child: Text(
+                                'L',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const SizedBox(
+                              width: 30,
+                              child: Text(
+                                'OD',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const SizedBox(
+                              width: 30,
+                              child: Text(
+                                'PS',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const SizedBox(
+                              width: 30,
+                              child: Text(
+                                'PA',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const SizedBox(
+                              width: 30,
+                              child: Text(
+                                'PTA',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Lato',
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Show only the two teams from the current match
+                      ...matchTeamStandings.map((standing) => _buildLeaderboardRowFull(
+                        standing.rank.toString(),
+                        standing.teamName,
+                        standing.wins.toString(),
+                        standing.draws.toString(),
+                        standing.losses.toString(),
+                        standing.pointsDifference.toString(),
+                        standing.pointsScored.toString(),
+                        standing.pointsAgainst.toString(),
+                        standing.points.toString(),
+                      )),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(color: Colors.white),
-          child: Scrollbar(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Column(
-                children: [
-                  // Header row with all columns
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: Color(0xffe3ecfb),
-                      border: Border(
-                        bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(
-                          width: 40,
-                          child: Text(
-                            'Rank',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 120,
-                          child: Text(
-                            'Team',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const SizedBox(
-                          width: 30,
-                          child: Text(
-                            'W',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const SizedBox(
-                          width: 30,
-                          child: Text(
-                            'D',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const SizedBox(
-                          width: 30,
-                          child: Text(
-                            'L',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const SizedBox(
-                          width: 30,
-                          child: Text(
-                            'OD',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const SizedBox(
-                          width: 30,
-                          child: Text(
-                            'PS',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const SizedBox(
-                          width: 30,
-                          child: Text(
-                            'PA',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const SizedBox(
-                          width: 30,
-                          child: Text(
-                            'PTA',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Lato',
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Team rows - showing only 2 lines as requested
-                  if (selectedTeam.isEmpty || selectedTeam == 'RC')
-                    _buildLeaderboardRowFull(
-                      '01',
-                      'RC',
-                      '6',
-                      '0',
-                      '0',
-                      '0',
-                      '0',
-                      '0',
-                      '0',
-                    ),
-                  if (selectedTeam.isEmpty || selectedTeam == 'STA')
-                    _buildLeaderboardRowFull(
-                      '02',
-                      'STA',
-                      '4',
-                      '0',
-                      '2',
-                      '0',
-                      '0',
-                      '0',
-                      '0',
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 

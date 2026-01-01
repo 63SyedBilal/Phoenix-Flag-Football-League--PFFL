@@ -40,13 +40,13 @@ class LeaguePlayerCard extends StatelessWidget {
                 : _buildPersonIcon(),
           ),
 
-          // Text Content
+      
           Padding(
             padding: const EdgeInsets.only(left: 10, top: 12, right: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name - Single block, no space between lines
+              
                 Text(
                   player.name.isNotEmpty ? player.name.split(' ').first : 'Unknown',
                   style: const TextStyle(
@@ -73,8 +73,6 @@ class LeaguePlayerCard extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 22),
-
-                // Stats Row
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [

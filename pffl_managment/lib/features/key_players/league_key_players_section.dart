@@ -12,35 +12,32 @@ class LeagueKeyPlayersSection extends StatelessWidget {
     final players = provider.getKeyPlayers();
     if (players.isEmpty) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Key Players',
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(
-              fontFamily: 'Lato',
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF111827)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Key Players',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(
+            fontFamily: 'Lato',
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF111827)),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 90,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: players.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 6),
+            itemBuilder: (context, index) {
+              return LeaguePlayerCard(player: players[index], index: index);
+            },
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 90,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: players.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 6),
-              itemBuilder: (context, index) {
-                return LeaguePlayerCard(player: players[index], index: index);
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
