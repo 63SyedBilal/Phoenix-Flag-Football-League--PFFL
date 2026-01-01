@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/user_avatar_widget.dart';
 import 'package:pffl_managment/features/admin/provider/admin_user_provider/users_provider.dart';
@@ -397,7 +398,12 @@ class AdminUsersScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Row(
                       children: [
-                        Icon(Icons.circle, size: 14, color: user.status.color),
+                        SvgPicture.asset(
+                          'assets/icons/home_icons/clickCheckGreenIcon.svg',
+                          width: 14,
+                          height: 14,
+                          color: user.status.color,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           user.status.displayName,
