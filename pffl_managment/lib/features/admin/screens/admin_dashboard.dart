@@ -68,7 +68,7 @@ class AdminDashboard extends StatelessWidget {
                                 RoleBasedSettingsProvider(userRole: 'admin'),
                             child: const SettingsScreen(),
                           ),
-                          const PaymentHistory(),
+                         
                           const CalendarScreen(),
                         ],
                       ),
