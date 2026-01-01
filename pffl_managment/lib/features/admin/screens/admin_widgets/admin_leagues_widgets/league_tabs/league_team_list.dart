@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:provider/provider.dart';
@@ -145,13 +146,34 @@ class _TeamList extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    team.teamName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF000000),
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          team.teamName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SvgPicture.asset(
+                        'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
+                        width: 22,
+                        height: 22,
+                     //   color: const Color(0xFF000000),
+                     color: Colors.black26,
+                      ),
+                      const SizedBox(width: 8),
+                      SvgPicture.asset(
+                        'assets/icons/home_icons/deletewhiteIcon.svg',
+                        width: 22,
+                        height: 22,
+                        color: const Color(0xFF000000),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -175,7 +197,8 @@ class _TeamList extends StatelessWidget {
                         'View Team Overview ($currentPlayers)',
                         style: const TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Lato',
                           color: Color(0xFF111827),
                         ),
                       ),
@@ -209,7 +232,8 @@ class _TeamList extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              fontFamily: 'Lato',
+                              color: Colors.black,
                             ),
                           ),
                         ),
@@ -220,7 +244,7 @@ class _TeamList extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              color: Colors.black,
                             ),
                           ),
                         ),
@@ -232,7 +256,7 @@ class _TeamList extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF6B7280),
+                              color: Colors.black,
                             ),
                             textAlign: TextAlign.right,
                           ),
@@ -298,9 +322,10 @@ class _TeamList extends StatelessWidget {
                                       : null,
                                   child: Padding(
                                     padding: const EdgeInsets.all(4.0),
-                                    child: Icon(
-                                      Icons.access_time,
-                                      size: 18,
+                                    child: SvgPicture.asset(
+                                      'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
+                                      width: 18,
+                                      height: 18,
                                       color: isPaid
                                           ? const Color(0xFFD1D5DB)
                                           : const Color(0xFFA2A2A2),

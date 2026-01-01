@@ -86,7 +86,24 @@ class UsersView extends StatelessWidget {
                         'Current route: ${ModalRoute.of(context)?.settings.name}',
                       );
 
-                     
+
+                      // Navigate to invite screen using named route constant
+                      try {
+                        final result = Navigator.pushNamed(
+                          context,
+                          AppRoutes.adminInvite,
+                        );
+                      } catch (e) {
+                        // Print error for debugging
+                        // Show a snackbar to inform the user
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Unable to open invite screen: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
