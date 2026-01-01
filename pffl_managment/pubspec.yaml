@@ -134,6 +134,8 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/icons/home_icons/
+    - assets/icons/Media/
     - assets/images/logos/
     - assets/images/sponser/
 

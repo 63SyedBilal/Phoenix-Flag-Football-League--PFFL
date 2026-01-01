@@ -163,15 +163,14 @@ class _TeamList extends StatelessWidget {
                         'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
                         width: 22,
                         height: 22,
-                     //   color: const Color(0xFF000000),
-                     color: Colors.black26,
+                        colorFilter: ColorFilter.mode(Colors.black26, BlendMode.srcIn),
                       ),
                       const SizedBox(width: 8),
                       SvgPicture.asset(
                         'assets/icons/home_icons/deletewhiteIcon.svg',
                         width: 22,
                         height: 22,
-                        color: const Color(0xFF000000),
+                        colorFilter: ColorFilter.mode(const Color(0xFF000000), BlendMode.srcIn),
                       ),
                     ],
                   ),
@@ -326,9 +325,12 @@ class _TeamList extends StatelessWidget {
                                       'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
                                       width: 18,
                                       height: 18,
-                                      color: isPaid
-                                          ? const Color(0xFFD1D5DB)
-                                          : const Color(0xFFA2A2A2),
+                                      colorFilter: ColorFilter.mode(
+                                        isPaid
+                                            ? const Color(0xFFD1D5DB)
+                                            : const Color(0xFFA2A2A2),
+                                        BlendMode.srcIn,
+                                      ),
                                     ),
                                   ),
                                 ),
