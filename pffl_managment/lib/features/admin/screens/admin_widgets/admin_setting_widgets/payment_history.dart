@@ -98,13 +98,11 @@ class PaymentHistory extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () =>
-                                      _showTeamDropdown(context, provider),
+                                Flexible(
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 14,
+                                      horizontal: 6,
+                                      vertical: 0,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
@@ -114,27 +112,49 @@ class PaymentHistory extends StatelessWidget {
                                         width: 1.0,
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          provider.selectedTeamName ??
-                                              'Select Teams',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color:
-                                                provider.selectedTeamName !=
-                                                    null
-                                                ? Colors.black
-                                                : const Color(0xFF9CA3AF),
+                                    child: DropdownButton<String?>(
+                                      isExpanded: true,
+                                      value: provider.selectedTeamId,
+                                      hint: const Text('Select Teams'),
+                                      underline: Container(),
+                                      icon: Icon(
+                                        Icons.keyboard_arrow_down,
+                                        size: 18,
+                                        color: const Color(0xFF9CA3AF),
+                                      ),
+                                      items: [
+                                        DropdownMenuItem(
+                                          value: null,
+                                          child: Text(
+                                            'All Teams',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: provider.selectedTeamId == null
+                                                  ? Colors.black
+                                                  : const Color(0xFF9CA3AF),
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 4),
-                                        Icon(
-                                          Icons.keyboard_arrow_down,
-                                          size: 18,
-                                          color: const Color(0xFF9CA3AF),
-                                        ),
+                                        ...provider.teams.map((team) {
+                                          final teamId = team['_id']?.toString() ?? team['id']?.toString();
+                                          final teamName = team['teamName'] as String? ?? 'Unknown Team';
+                                          return DropdownMenuItem(
+                                            value: teamId,
+                                            child: Text(
+                                              teamName,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: provider.selectedTeamId == teamId
+                                                    ? Colors.black
+                                                    : const Color(0xFF9CA3AF),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
                                       ],
+                                      onChanged: (String? value) {
+                                        provider.setSelectedTeam(value);
+                                      },
                                     ),
                                   ),
                                 ),
@@ -246,45 +266,6 @@ class PaymentHistory extends StatelessWidget {
     );
   }
 
-  void _showTeamDropdown(
-    BuildContext context,
-    PaymentHistoryProvider provider,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('All Teams'),
-                onTap: () {
-                  provider.setSelectedTeam(null);
-                  Navigator.pop(context);
-                },
-              ),
-              const Divider(),
-              ...provider.teams.map((team) {
-                final teamId =
-                    team['_id']?.toString() ?? team['id']?.toString();
-                final teamName = team['teamName'] as String? ?? 'Unknown Team';
-                return ListTile(
-                  title: Text(teamName),
-                  onTap: () {
-                    provider.setSelectedTeam(teamId);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildTab(
     BuildContext context,
     PaymentHistoryProvider provider,
@@ -352,12 +333,14 @@ class PaymentHistory extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Record #${payment.recordNumber}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF101828),
+              Flexible(
+                child: Text(
+                  'Record #${payment.recordNumber}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF101828),
+                  ),
                 ),
               ),
               Container(
@@ -408,9 +391,11 @@ class PaymentHistory extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'View League Details',
-                style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
+              Flexible(
+                child: const Text(
+                  'View League Details',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
+                ),
               ),
               Icon(
                 Icons.keyboard_arrow_down,
@@ -459,12 +444,14 @@ class PaymentHistory extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Record #${payment.recordNumber}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF101828),
+              Flexible(
+                child: Text(
+                  'Record #${payment.recordNumber}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF101828),
+                  ),
                 ),
               ),
               Container(
@@ -515,9 +502,11 @@ class PaymentHistory extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'View League Details',
-                style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
+              Flexible(
+                child: const Text(
+                  'View League Details',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
+                ),
               ),
               Icon(
                 Icons.keyboard_arrow_down,
@@ -548,12 +537,14 @@ class PaymentHistory extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Record #${payment.recordNumber}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF101828),
+          Flexible(
+            child: Text(
+              'Record #${payment.recordNumber}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF101828),
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -629,21 +620,27 @@ class PaymentHistory extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6A7282),
-              height: 1.625,
+          Flexible(
+            flex: 1,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6A7282),
+                height: 1.625,
+              ),
             ),
           ),
           const SizedBox(width: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6A7282),
-              height: 1.625,
+          Flexible(
+            flex: 2,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6A7282),
+                height: 1.625,
+              ),
             ),
           ),
         ],
