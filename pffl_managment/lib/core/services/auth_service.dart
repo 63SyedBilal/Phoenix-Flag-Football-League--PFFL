@@ -225,8 +225,7 @@ class AuthService {
       if (lastError.type == DioExceptionType.connectionTimeout ||
           lastError.type == DioExceptionType.sendTimeout ||
           lastError.type == DioExceptionType.receiveTimeout) {
-        for (final url in urlsToTry) {
-        }
+      
       }
 
       // Re-throw to let AuthProvider handle the error
@@ -319,8 +318,7 @@ class AuthService {
       if (lastError.type == DioExceptionType.connectionTimeout ||
           lastError.type == DioExceptionType.sendTimeout ||
           lastError.type == DioExceptionType.receiveTimeout) {
-        for (final url in urlsToTry) {
-        }
+      
       }
 
       // Re-throw to let SignupProvider handle the error

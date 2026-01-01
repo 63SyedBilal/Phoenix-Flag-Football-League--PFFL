@@ -232,14 +232,26 @@ class LeagueDetailProvider extends ChangeNotifier {
 
   Map<String, _PlayerStatsBuilder> _aggregatePlayerStats() {
     final Map<String, _PlayerStatsBuilder> playerMap = {};
+    int completedMatchesCount = 0;
+    
     for (final m in _allMatches) {
+      // Only process completed matches
+      if (m.status != MatchStatus.completed) {
+        continue;
+      }
+      completedMatchesCount++;
+      
       if (m.homeTeamStats != null) {
+        print('🏈 Processing home team stats for match: ${m.homeTeam} vs ${m.awayTeam}');
         _updatePlayerStats(playerMap, m.homeTeamStats!.playerStats);
       }
       if (m.awayTeamStats != null) {
+        print('🏈 Processing away team stats for match: ${m.homeTeam} vs ${m.awayTeam}');
         _updatePlayerStats(playerMap, m.awayTeamStats!.playerStats);
       }
     }
+    
+    print('🏈 Processed $completedMatchesCount completed matches, found ${playerMap.length} unique players');
     return playerMap;
   }
 
@@ -248,11 +260,17 @@ class LeagueDetailProvider extends ChangeNotifier {
     List<dynamic> playerStats,
   ) {
     for (final p in playerStats) {
+      // Debug print to see what data we're getting
+      print('🏈 Player data: playerId=${p.playerId}, playerName=${p.playerName}, tds=${p.tds}');
+      
+      final playerName = p.playerName?.toString() ?? 'Unknown Player';
+      final playerImage = p.image?.toString() ?? '';
+      
       map.putIfAbsent(
         p.playerId,
-        () => _PlayerStatsBuilder(name: p.playerName, image: p.image),
+        () => _PlayerStatsBuilder(name: playerName, image: playerImage),
       );
-      map[p.playerId]!.touchdowns += (p.tds as num).toInt();
+      map[p.playerId]!.touchdowns += (p.tds as num?)?.toInt() ?? 0;
     }
   }
 

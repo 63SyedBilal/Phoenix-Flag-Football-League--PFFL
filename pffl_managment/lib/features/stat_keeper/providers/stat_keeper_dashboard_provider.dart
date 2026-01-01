@@ -64,9 +64,7 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
         }
       }
 
-      // Also log current user info for debugging
-      final userEmail = prefs.getString('userEmail') ?? '';
-      final userRole = prefs.getString('userRole') ?? '';
+   
 
       // Filter matches for StatKeeper dashboard
       final relevantMatches = allMatches.where((match) {
@@ -98,11 +96,8 @@ class StatKeeperDashboardProvider extends ChangeNotifier {
             match.status == MatchStatus.live;
       }).toList();
 
-      // Count assigned vs general matches
-      final assignedCount = relevantMatches
-          .where((m) => m.statKeeperId == currentUserId)
-          .length;
-      final generalCount = relevantMatches.length - assignedCount;
+     
+     
 
       // Sort by date (earliest first)
       relevantMatches.sort((a, b) {

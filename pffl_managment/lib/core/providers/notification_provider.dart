@@ -58,7 +58,6 @@ class NotificationProvider extends ChangeNotifier {
       // Get current user role to decide whether to fetch payments
       final prefs = await SharedPreferences.getInstance();
       final userRole = prefs.getString('userRole')?.toLowerCase() ?? '';
-      final userId = prefs.getString('userId') ?? '';
       final isAdmin = userRole == 'admin';
 
       // Fetch role-specific notifications
@@ -115,7 +114,7 @@ class NotificationProvider extends ChangeNotifier {
       print(
         '🎯 [NOTIFICATION PROVIDER DEBUG] Found ${teamInvites.length} team/invite notifications:',
       );
-      for (final invite in teamInvites) {}
+     
 
       _updateUnreadCount();
 
