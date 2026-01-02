@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
@@ -11,7 +12,6 @@ import 'package:pffl_managment/features/profile_screens/complet_profile_screen/w
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/complete_button.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/skip_button.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/error_message_display.dart';
-import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/screen_header.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/loading_overlay.dart';
 
 /// Complete Profile Screen - First screen shown to Player role users
@@ -38,44 +38,48 @@ class _CompleteProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<CompleteProfileProvider>(
       builder: (context, provider, _) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF0F0F0),
+        return Scaffold(appBar: AppBar(
+          surfaceTintColor: Colors.transparent,
+          leading: ArrowBackButton(),),
+          backgroundColor:Colors.white,
           body: Stack(
             children: [
               SafeArea(
                 child: Column(
                   children: [
                     if (provider.showSuccessSheet == false)
-                      const ScreenHeader(),
+                
                     Expanded(
                       child: ListView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         children: [
                           const Text(
-                            'Complete Your s',
+                            'Complete Your Profile',
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 32,
+                              fontFamily: 'Serotiva',
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF000000),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                       
                           Text(
                             'This helps teams find you',
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Lato',
                               color: Colors.grey[600],
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 8),
                           const ProfileImageSection(),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 22),
                           const PositionDropdown(),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 8),
                           const JerseyNumberField(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 8),
                           const EmergencyContactFields(),
                           const SizedBox(height: 24),
                           const TermsCheckbox(),
@@ -89,7 +93,7 @@ class _CompleteProfileView extends StatelessWidget {
                           const CompleteButton(),
                           const SizedBox(height: 16),
                           const SkipButton(),
-                          const SizedBox(height: 32),
+                    
                         ],
                       ),
                     ),

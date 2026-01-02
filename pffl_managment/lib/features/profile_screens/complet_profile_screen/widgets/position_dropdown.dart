@@ -32,7 +32,8 @@ class PositionDropdown extends StatelessWidget {
               'Positions',
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Lato',
                 color: Color(0xFF000000),
               ),
             ),
@@ -58,7 +59,7 @@ class PositionDropdown extends StatelessWidget {
                       child: Text(
                         provider.positionsDisplayText,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 10,
                           color: provider.selectedPositions.isNotEmpty
                               ? const Color(0xFF000000)
                               : Colors.grey[400],
@@ -120,7 +121,7 @@ class PositionDropdown extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF0F172A) : Colors.white,
+                
               ),
               child: Row(
                 children: [
@@ -130,10 +131,10 @@ class PositionDropdown extends StatelessWidget {
                     child: Checkbox(
                       value: isSelected,
                       onChanged: (_) => provider.togglePosition(position),
-                      activeColor: Colors.white,
-                      checkColor: const Color(0xFF0F172A),
+                      activeColor: Color(0xFF0F173E),
+                      checkColor: Colors.white,
                       side: BorderSide(
-                        color: isSelected ? Colors.white : Colors.grey[400]!,
+                        color: isSelected ? Colors.blue : Colors.grey[400]!,
                       ),
                     ),
                   ),
@@ -144,8 +145,7 @@ class PositionDropdown extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white : const Color(0xFF000000),
-                      ),
+                      )
                     ),
                   ),
                 ],
@@ -157,4 +157,3 @@ class PositionDropdown extends StatelessWidget {
     );
   }
 }
-

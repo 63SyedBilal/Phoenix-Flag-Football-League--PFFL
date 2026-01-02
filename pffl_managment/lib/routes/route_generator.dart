@@ -9,8 +9,6 @@ import 'package:pffl_managment/features/auth/screens/create_profile/create_accou
 import 'package:pffl_managment/features/auth/screens/get_started_screen.dart';
 import 'package:pffl_managment/features/auth/screens/change_password/change_password_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
-import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/league_selection_screen.dart';
-import 'package:pffl_managment/features/free_agent/screens/payment_option/payment_option_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/add_payment_details_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_payment_history_screen.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_profile_screen.dart';

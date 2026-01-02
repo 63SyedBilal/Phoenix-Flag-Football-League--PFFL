@@ -19,7 +19,8 @@ class JerseyNumberField extends StatelessWidget {
               'Jersey Number',
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Lato',
                 color: Color(0xFF000000),
               ),
             ),
@@ -27,9 +28,10 @@ class JerseyNumberField extends StatelessWidget {
             TextField(
               keyboardType: TextInputType.number,
               onChanged: provider.setJerseyNumber,
+              style: TextStyle(fontSize: 12), // Text size chota karne ke liye
               decoration: InputDecoration(
                 hintText: '17',
-                hintStyle: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]), // Hint text bhi chota
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -79,4 +81,3 @@ class JerseyNumberField extends StatelessWidget {
     );
   }
 }
-

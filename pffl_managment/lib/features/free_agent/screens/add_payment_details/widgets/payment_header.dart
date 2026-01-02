@@ -14,7 +14,7 @@ class PaymentHeader extends StatelessWidget {
             fontSize: 32,
             fontWeight: FontWeight.w700,
             color: Color(0xFF000000),
-            fontFamily: "Lato",
+            fontFamily: "Serotiva",
           ),
         ),
         const Text(
@@ -23,7 +23,7 @@ class PaymentHeader extends StatelessWidget {
             fontSize: 32,
             fontWeight: FontWeight.w700,
             color: Color(0xFF000000),
-            fontFamily: "Lato",
+            fontFamily: "Serotiva",
             height: 1.0,
           ),
         ),
@@ -33,7 +33,7 @@ class PaymentHeader extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF94A3B8),
+            color: Color(0xFF2E2E2E99),
             fontFamily: "Lato",
             height: 1.4,
           ),
