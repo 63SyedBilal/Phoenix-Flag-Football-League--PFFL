@@ -453,11 +453,20 @@ class MatchService {
   static MatchModel _parseMatchFromJson(Map<String, dynamic> json) {
     final id = json['_id']?.toString() ?? json['id']?.toString() ?? '';
 
-    // Parse league data
+    // Parse league data - try multiple possible field names for league name
     final leagueData = json['leagueId'];
-    final leagueName = leagueData is Map
-        ? (leagueData['leagueName'] ?? '')
-        : json['leagueName'] ?? '';
+    String leagueName = '';
+    
+    if (leagueData is Map) {
+      // Try different possible field names for league name
+      leagueName = leagueData['leagueName']?.toString() ??
+                  leagueData['name']?.toString() ??
+                  leagueData['title']?.toString() ?? '';
+    } else {
+      // Fallback to direct leagueName field or try other possible names
+      leagueName = json['leagueName']?.toString() ??
+                  json['name']?.toString() ?? '';
+    }
 
     // Extract league ID for filtering
     final leagueId = leagueData is Map

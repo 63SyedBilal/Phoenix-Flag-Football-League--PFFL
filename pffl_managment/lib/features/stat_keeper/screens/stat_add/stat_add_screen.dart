@@ -23,7 +23,7 @@ class _ActionButtons extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 12),
+          
           Row(
             children: [
               Expanded(
