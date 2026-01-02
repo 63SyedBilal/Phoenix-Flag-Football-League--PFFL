@@ -5,6 +5,7 @@ import 'package:pffl_managment/features/admin/providers/add_official_provider.da
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LeagueOfficialsList extends StatelessWidget {
   final String leagueId;
@@ -262,11 +263,17 @@ class _RefereeList extends StatelessWidget {
                     // Icon color will change automatically via Consumer rebuild
                   }
                 },
-                child: Icon(
-                  Icons.mail_outline,
-                  color: isInvited ? Colors.green : Colors.blueGrey,
-                  size: 18,
-                ),
+                child: isInvited
+                    ? SvgPicture.asset(
+                        'assets/icons/home_icons/Vector.svg',
+                        width: 18,
+                        height: 18,
+                      )
+                    : SvgPicture.asset(
+                        'assets/icons/home_icons/messageIcon.svg',
+                        width: 18,
+                        height: 18,
+                      ),
               );
             },
           ),
@@ -388,11 +395,17 @@ class _StatKeeperList extends StatelessWidget {
                     // Icon color will change automatically via Consumer rebuild
                   }
                 },
-                child: Icon(
-                  Icons.mail_outline,
-                  color: isInvited ? Colors.green : Colors.blueGrey,
-                  size: 18,
-                ),
+                child: isInvited
+                    ? SvgPicture.asset(
+                        'assets/icons/home_icons/Vector.svg',
+                        width: 18,
+                        height: 18,
+                      )
+                    : SvgPicture.asset(
+                        'assets/icons/home_icons/messageIcon.svg',
+                        width: 18,
+                        height: 18,
+                      ),
               );
             },
           ),
@@ -707,11 +720,17 @@ class _OfficialsList extends StatelessWidget {
                     // Icon color changes automatically via Consumer
                   }
                 },
-                child: Icon(
-                  Icons.mail_outline,
-                  color: isInvited ? Colors.green : Colors.blueGrey,
-                  size: 18,
-                ),
+                child: isInvited
+                    ? SvgPicture.asset(
+                        'assets/icons/home_icons/Vector.svg',
+                        width: 18,
+                        height: 18,
+                      )
+                    : SvgPicture.asset(
+                        'assets/icons/home_icons/messageIcon.svg',
+                        width: 18,
+                        height: 18,
+                      ),
               ),
             ],
           ),
