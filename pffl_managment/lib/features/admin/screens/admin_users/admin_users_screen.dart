@@ -402,7 +402,7 @@ class AdminUsersScreen extends StatelessWidget {
                           'assets/icons/home_icons/clickCheckGreenIcon.svg',
                           width: 14,
                           height: 14,
-                          color: user.status.color,
+                          colorFilter: ColorFilter.mode(user.status.color, BlendMode.srcIn),
                         ),
                         const SizedBox(width: 4),
                         Text(

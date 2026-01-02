@@ -163,15 +163,20 @@ class _TeamList extends StatelessWidget {
                         'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
                         width: 22,
                         height: 22,
-                     //   color: const Color(0xFF000000),
-                     color: Colors.black26,
+                        colorFilter: ColorFilter.mode(
+                          Colors.black26,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       SvgPicture.asset(
                         'assets/icons/home_icons/deletewhiteIcon.svg',
                         width: 22,
                         height: 22,
-                        color: const Color(0xFF000000),
+                        colorFilter: ColorFilter.mode(
+                          const Color(0xFF000000),
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ],
                   ),
@@ -324,13 +329,16 @@ class _TeamList extends StatelessWidget {
                                     padding: const EdgeInsets.all(4.0),
                                     child: SvgPicture.asset(
                                       isPaid
-                                          ? 'assets/icons/home_icons/WhiteclockAlarmIcon.svg'  // Icon when paid
-                                          : 'assets/icons/home_icons/blackalarmpicicon.svg', // Icon when unpaid
+                                          ? 'assets/icons/home_icons/WhiteclockAlarmIcon.svg'
+                                          : 'assets/icons/home_icons/blackalarmpicicon.svg',
                                       width: 24,
                                       height: 24,
-                                      color: isPaid
-                                          ? const Color(0xFFD1D5DB)
-                                          : const Color(0xFF101828),
+                                      colorFilter: ColorFilter.mode(
+                                        isPaid
+                                            ? const Color(0xFFD1D5DB)
+                                            : const Color(0xFF101828),
+                                        BlendMode.srcIn,
+                                      ),
                                     ),
                                   ),
                                 ),

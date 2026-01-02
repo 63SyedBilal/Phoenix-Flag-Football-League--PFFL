@@ -19,28 +19,28 @@ class StatCardWidget extends StatelessWidget {
         'assets/icons/home_icons/trophyIcon.svg',
         width: 6,
         height: 6,
-        color: stat.iconColor,
+        colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('game')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/bluehomedateIcon.svg',
         width: 6,
         height: 6,
-        color: stat.iconColor,
+        colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('user')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/redManIcon.svg',
         width: 6,
         height: 6,
-        color: stat.iconColor,
+        colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('payment')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/dollarIcon.svg',
         width: 6,
         height: 6,
-        color: stat.iconColor,
+        colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else {
       // Fallback to the original icon if title doesn't match

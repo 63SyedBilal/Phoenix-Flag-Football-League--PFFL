@@ -25,9 +25,6 @@ class _CaptainHomeScreenState extends State<CaptainHomeScreen> {
         context,
         listen: false,
       ).loadPendingPayment(context);
-
-      // Refresh league payment statuses when screen loads
-      // This ensures that after payment completion, the status is updated
       Provider.of<LeaguePaymentProvider>(context, listen: false).forceRefresh();
     });
   }
@@ -123,10 +120,10 @@ class _CaptainHomeScreenState extends State<CaptainHomeScreen> {
                           startDate: payment.startDate,
                           endDate: payment.endDate,
                           onPayNow: () async {
-                            // Navigate to Payment History Screen as requested
+                            // Navigate to Payment Option Screen
                             await Navigator.pushNamed(
                               context,
-                              AppRoutes.freeAgentPaymentHistory,
+                              AppRoutes.freeAgentPaymentOption,
                             );
 
                             // Refresh league payment status after returning from payment screen

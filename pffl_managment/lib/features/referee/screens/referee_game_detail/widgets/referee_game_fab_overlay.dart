@@ -27,52 +27,54 @@ class RefereeGameFabOverlay extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _RefereeFabOption(
-                  label: 'Game Complete',
-                  icon: Icons.check_circle,
-                  color: const Color(0xFF1E3A5F),
-                  isCompleted: provider.isGameComplete,
-                  onTap: () =>
-                      provider.executeAction(RefereeGameAction.gameComplete),
-                ),
-                const SizedBox(height: 8),
-                _RefereeFabOption(
-                  label: 'Over Time',
-                  icon: Icons.access_time_filled,
-                  color: const Color(0xFFEA580C),
-                  isCompleted: provider.isOverTime,
-                  onTap: () =>
-                      provider.executeAction(RefereeGameAction.overTime),
-                ),
-                const SizedBox(height: 8),
-                _RefereeFabOption(
-                  label: 'Full Time Done',
-                  icon: Icons.check,
-                  color: const Color(0xFF1E3A5F),
-                  isCompleted: provider.isFullTimeDone,
-                  onTap: () =>
-                      provider.executeAction(RefereeGameAction.fullTimeDone),
-                ),
-                const SizedBox(height: 8),
-                _RefereeFabOption(
-                  label: 'Half Time Done',
-                  icon: Icons.check,
-                  color: const Color(0xFFEA580C),
-                  isCompleted: provider.isHalfTimeDone,
-                  onTap: () =>
-                      provider.executeAction(RefereeGameAction.halfTimeDone),
-                ),
-                const SizedBox(height: 8),
-                _RefereeFabOption(
-                  label: 'Toss',
-                  icon: Icons.sports_football,
-                  color: const Color(0xFF1E3A5F),
-                  isCompleted:
-                      provider.isTossCompleted ||
-                      provider.match?.status == MatchStatus.live ||
-                      provider.match?.status == MatchStatus.completed,
-                  onTap: onTossTap,
-                ),
+                if (provider.isFullTimeDone && !provider.isGameComplete) ...[
+                  _RefereeFabOption(
+                    label: 'Game Complete',
+                    icon: Icons.check_circle,
+                    color: const Color(0xFF1E3A5F),
+                    isCompleted: provider.isGameComplete,
+                    onTap: () =>
+                        provider.executeAction(RefereeGameAction.gameComplete),
+                  ),
+                  const SizedBox(height: 8),
+                  _RefereeFabOption(
+                    label: 'Over Time',
+                    icon: Icons.access_time_filled,
+                    color: const Color(0xFFEA580C),
+                    isCompleted: provider.isOverTime,
+                    onTap: () =>
+                        provider.executeAction(RefereeGameAction.overTime),
+                  ),
+                ],
+                if (provider.isHalfTimeDone && !provider.isFullTimeDone)
+                  _RefereeFabOption(
+                    label: 'Full Time Done',
+                    icon: Icons.check,
+                    color: const Color(0xFF1E3A5F),
+                    isCompleted: provider.isFullTimeDone,
+                    onTap: () =>
+                        provider.executeAction(RefereeGameAction.fullTimeDone),
+                  ),
+                if (provider.isTossCompleted && !provider.isHalfTimeDone)
+                  _RefereeFabOption(
+                    label: 'Half Time Done',
+                    icon: Icons.check,
+                    color: const Color(0xFFEA580C),
+                    isCompleted: provider.isHalfTimeDone,
+                    onTap: () =>
+                        provider.executeAction(RefereeGameAction.halfTimeDone),
+                  ),
+                if (!provider.isTossCompleted)
+                  _RefereeFabOption(
+                    label: 'Toss',
+                    icon: Icons.sports_football,
+                    color: const Color(0xFF1E3A5F),
+                    isCompleted:
+                        provider.isTossCompleted ||
+                        provider.match?.status == MatchStatus.live ||
+                        provider.match?.status == MatchStatus.completed,
+                    onTap: onTossTap,
+                  ),
               ],
             ),
           ),

@@ -116,10 +116,10 @@ class _PlayerHomeState extends State<PlayerHome> {
                           startDate: payment.startDate,
                           endDate: payment.endDate,
                           onPayNow: () {
-                            // Navigate to Payment History Screen as requested
+                            // Navigate to Payment Option Screen
                             Navigator.pushNamed(
                               context,
-                              AppRoutes.freeAgentPaymentHistory,
+                              AppRoutes.freeAgentPaymentOption,
                             );
                           },
                         ),

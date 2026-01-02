@@ -174,6 +174,16 @@ class _RefereeGameDetailView extends StatelessWidget {
       return;
     }
 
+    if (!provider.isTossCompleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete the Toss before adding game actions'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     // Prepare selected players data for the dialog
     // Convert PlayerModel list to Map format expected by dialog
     final selectedPlayersByTeam = <String, List<Map<String, dynamic>>>{};

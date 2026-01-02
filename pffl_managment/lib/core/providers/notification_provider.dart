@@ -55,21 +55,22 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Get current user role to decide whether to fetch payments
+      // Get current user role and email to decide whether to fetch payments
       final prefs = await SharedPreferences.getInstance();
       final userRole = prefs.getString('userRole')?.toLowerCase() ?? '';
+      final userEmail = prefs.getString('userEmail') ?? 'Unknown';
       final isAdmin = userRole == 'admin';
 
       // Fetch role-specific notifications
       print(
-        '🔄 [NOTIFICATION PROVIDER DEBUG] Fetching role-specific notifications for: $userRole',
+        '🔄 [NOTIFICATION PROVIDER] Fetching notifications for user: $userEmail (Role: $userRole)',
       );
 
       List<NotificationModel> roleSpecificNotifications =
           await NotificationService.getNotificationsByRole(userRole);
 
       print(
-        '✅ [NOTIFICATION PROVIDER DEBUG] Fetched ${roleSpecificNotifications.length} role-specific notifications',
+        '✅ [NOTIFICATION PROVIDER] Fetched ${roleSpecificNotifications.length} role-specific notifications for $userEmail',
       );
 
       // Log role-specific notifications for debugging
@@ -101,7 +102,7 @@ class NotificationProvider extends ChangeNotifier {
 
       _notifications = [...roleSpecificNotifications, ...paymentNotifications];
       print(
-        '✅ [NOTIFICATION PROVIDER DEBUG] Total notifications: ${_notifications.length} (${roleSpecificNotifications.length} role-specific + ${paymentNotifications.length} payment)',
+        '✅ [NOTIFICATION PROVIDER] Total notifications for $userEmail: ${_notifications.length} (${roleSpecificNotifications.length} role-specific + ${paymentNotifications.length} payment)',
       );
 
       // Sort by date descending
@@ -117,12 +118,14 @@ class NotificationProvider extends ChangeNotifier {
      
 
       _updateUnreadCount();
+      print('✅ [NOTIFICATION PROVIDER] Unread count: $_unreadCount');
 
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load notifications: ${e.toString()}';
+      print('❌ [NOTIFICATION PROVIDER] Error loading notifications: $e');
       notifyListeners();
     }
   }
