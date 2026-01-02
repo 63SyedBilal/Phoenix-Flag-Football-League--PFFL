@@ -331,6 +331,16 @@ class _TeamList extends StatelessWidget {
                                             : const Color(0xFFA2A2A2),
                                         BlendMode.srcIn,
                                       ),
+
+                                      isPaid
+                                          ? 'assets/icons/home_icons/WhiteclockAlarmIcon.svg'  // Icon when paid
+                                          : 'assets/icons/home_icons/blackalarmpicicon.svg', // Icon when unpaid
+                                      width: 24,
+                                      height: 24,
+                                      color: isPaid
+                                          ? const Color(0xFFD1D5DB)
+                                          : const Color(0xFF101828),
+>>>>>>> 8dfcdf30d7ebf1a7ad8a10622a1892aa69738169
                                     ),
                                   ),
                                 ),

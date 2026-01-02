@@ -138,6 +138,7 @@ flutter:
     - assets/icons/Media/
     - assets/images/logos/
     - assets/images/sponser/
+    - assets/icons/home_icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

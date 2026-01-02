@@ -7,6 +7,7 @@ import 'package:pffl_managment/features/admin/models/leagues_models/league_creat
 import 'package:pffl_managment/core/services/league_service.dart'
     show TeamModel;
 import 'package:pffl_managment/core/services/user_service.dart' show UserModel;
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CreateUpcomingGamesScreen extends StatelessWidget {
   final LeagueCreationModel league;
@@ -106,10 +107,11 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                 );
               }
 
-              return Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
+              return SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Column(
+                  children: [
+                    Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,13 +202,16 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 32),
-                          _buildCreateButton(context, provider),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 32),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildCreateButton(context, provider),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -249,10 +254,17 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                 hint,
                 style: TextStyle(fontSize: 14, color: Colors.grey[400]),
               ),
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.grey[400],
-                size: 20,
+              icon: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: SvgPicture.asset(
+                  'assets/icons/home_icons/arrowDounIcon.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey[400]!,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
               isExpanded: true,
               items: items.map((String item) {
@@ -344,10 +356,17 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                         : Colors.grey[400],
                   ),
                 ),
-                Icon(
-                  Icons.calendar_today_outlined,
-                  color: Colors.grey[400],
-                  size: 18,
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: SvgPicture.asset(
+                    'assets/icons/home_icons/dateVectorIcon.svg',
+                    width: 18,
+                    height: 18,
+                    colorFilter: ColorFilter.mode(
+                      Colors.grey[400]!,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -419,10 +438,17 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                         : Colors.grey[400],
                   ),
                 ),
-                Icon(
-                  Icons.access_time_outlined,
-                  color: Colors.grey[400],
-                  size: 18,
+                 Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: SvgPicture.asset(
+                    'assets/icons/home_icons/clockwhiteIcon.svg',
+                    width: 18,
+                    height: 18,
+                    colorFilter: ColorFilter.mode(
+                      Colors.grey[400]!,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -469,10 +495,17 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                 teams.isEmpty ? 'Loading teams...' : hint,
                 style: TextStyle(fontSize: 14, color: Colors.grey[400]),
               ),
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.grey[400],
-                size: 20,
+              icon: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: SvgPicture.asset(
+                  'assets/icons/home_icons/arrowDounIcon.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey[400]!,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
               isExpanded: true,
               items: teams.isEmpty
@@ -547,10 +580,17 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                       : Colors.grey[400],
                 ),
               ),
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.grey[400],
-                size: 20,
+              icon: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: SvgPicture.asset(
+                  'assets/icons/home_icons/arrowDounIcon.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey[400]!,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
               isExpanded: true,
               items: [
@@ -642,10 +682,17 @@ class CreateUpcomingGamesScreen extends StatelessWidget {
                       : Colors.grey[400],
                 ),
               ),
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.grey[400],
-                size: 20,
+              icon: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: SvgPicture.asset(
+                  'assets/icons/home_icons/arrowDounIcon.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(
+                    Colors.grey[400]!,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
               isExpanded: true,
               items: [
