@@ -323,12 +323,14 @@ class _TeamList extends StatelessWidget {
                                   child: Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: SvgPicture.asset(
-                                      'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
-                                      width: 18,
-                                      height: 18,
+                                      isPaid
+                                          ? 'assets/icons/home_icons/WhiteclockAlarmIcon.svg'  // Icon when paid
+                                          : 'assets/icons/home_icons/blackalarmpicicon.svg', // Icon when unpaid
+                                      width: 24,
+                                      height: 24,
                                       color: isPaid
                                           ? const Color(0xFFD1D5DB)
-                                          : const Color(0xFFA2A2A2),
+                                          : const Color(0xFF101828),
                                     ),
                                   ),
                                 ),

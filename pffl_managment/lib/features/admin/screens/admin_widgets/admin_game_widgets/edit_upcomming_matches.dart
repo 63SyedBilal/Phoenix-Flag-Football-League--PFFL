@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:pffl_managment/core/services/match_service.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
@@ -51,9 +52,7 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
       final d = widget.match.matchDateTime!;
       dateController.text = "${d.day}/${d.month}/${d.year}";
     } else {
-      dateController.text = widget
-          .match
-          .date; // Fallback to string if needed but likely incomplete
+      dateController.text = widget.match.date;
     }
 
     timeController.text = widget.match.time;
@@ -79,10 +78,12 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
           setState(() {
             teams = league.teams.map((t) => t.teamName).toList();
             // Ensure proper lookup
-            if (selectedTeamA != null && !teams.contains(selectedTeamA))
+            if (selectedTeamA != null && !teams.contains(selectedTeamA)) {
               teams.add(selectedTeamA!);
-            if (selectedTeamB != null && !teams.contains(selectedTeamB))
+            }
+            if (selectedTeamB != null && !teams.contains(selectedTeamB)) {
               teams.add(selectedTeamB!);
+            }
           });
         }
       } catch (e) {
@@ -137,9 +138,9 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error updating match: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error updating match: $e")),
+        );
       }
     } finally {
       if (mounted) setState(() => isSaving = false);
@@ -191,7 +192,6 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
               ),
             ),
           ),
-
           const SizedBox(height: 24),
 
           if (isLoadingTeams) const LinearProgressIndicator(),
@@ -265,9 +265,9 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             "Game Date",
             style: TextStyle(
               fontSize: 14,
-           fontWeight: FontWeight.w500,
-          fontFamily: 'Lato',
-         color: Color(0xFF111827),
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Lato',
+              color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 4),
@@ -275,7 +275,19 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             controller: dateController,
             hintText: "Select Date",
             readOnly: true,
-            suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+            // CHANGE: remove FittedBox, give real size to svg
+            suffixIcon: SizedBox(
+              width: 18, // <-- yahan size control karo
+              height: 18,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/home_icons/dateVectorIcon.svg',
+                  width: 18,
+                  height: 18,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
             onTap: () async {
               final initial = widget.match.matchDateTime ?? DateTime.now();
               final DateTime? picked = await showDatePicker(
@@ -300,9 +312,9 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             "Game Time",
             style: TextStyle(
               fontSize: 14,
-               fontWeight: FontWeight.w500,
-                fontFamily: 'Lato',
-                   color: Color(0xFF111827),
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Lato',
+              color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 4),
@@ -310,7 +322,19 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             controller: timeController,
             hintText: "Select Time",
             readOnly: true,
-            suffixIcon: const Icon(Icons.access_time, size: 20),
+            // CHANGE: remove FittedBox, give real size to svg
+            suffixIcon: SizedBox(
+              width: 18, // <-- yahan size control karo
+              height: 18,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/home_icons/clockwhiteIcon.svg',
+                  width: 18,
+                  height: 18,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
             onTap: () async {
               final TimeOfDay? picked = await showTimePicker(
                 context: context,
@@ -332,7 +356,7 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
               fontSize: 14,
               fontWeight: FontWeight.w500,
               fontFamily: 'Lato',
-                   color: Color(0xFF111827),
+              color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 8),
@@ -355,7 +379,6 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
               Expanded(
                 child: CustomButton.secondary(
                   text: "Cancel",
-                  
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -375,4 +398,3 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
     );
   }
 }
-

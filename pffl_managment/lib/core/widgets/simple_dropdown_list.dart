@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 
@@ -204,10 +205,11 @@ class _SimpleDropdownListState extends State<SimpleDropdownList> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(
-                _isOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                color: AppColors.textPrimary,
-                size: 20,
+              SvgPicture.asset(
+                'assets/icons/home_icons/arrowDounIcon.svg',
+                width: 18,
+                height: 18,
+              //  color: AppColors.textPrimary,
               ),
             ],
           ),
