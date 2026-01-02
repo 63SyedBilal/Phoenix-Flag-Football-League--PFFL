@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/providers/payment_history_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class PaymentHistory extends StatelessWidget {
   const PaymentHistory({Key? key}) : super(key: key);
@@ -15,10 +17,7 @@ class PaymentHistory extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
+          leading:ArrowBackButton()
         ),
         body: SafeArea(
           child: Consumer<PaymentHistoryProvider>(
@@ -77,10 +76,14 @@ class PaymentHistory extends StatelessWidget {
                                       width: 1.0,
                                     ),
                                   ),
-                                  child: Icon(
-                                    Icons.download_outlined,
-                                    size: 20,
-                                    color: Colors.black,
+                                  child: SvgPicture.asset(
+                                    'assets/icons/home_icons/Group 2.svg',
+                                    width: 20,
+                                    height: 20,
+                                    colorFilter: const ColorFilter.mode(
+                                      Colors.black,
+                                      BlendMode.srcIn,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -90,7 +93,21 @@ class PaymentHistory extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: CustomTextField(
-                                    prefixIcon: Icon(Icons.search),
+                                    prefixIcon: Container(
+                                      width: 20,
+                                      height: 20,
+                                      alignment: Alignment.center,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/home_icons/searchrightIcon.svg',
+                                        width: 20,
+                                        height: 20,
+                                        fit: BoxFit.contain,
+                                        colorFilter: const ColorFilter.mode(
+                                          Colors.grey,
+                                          BlendMode.srcIn,
+                                        ),
+                                      ),
+                                    ),
                                     hintText: 'Search payments...',
                                     onChanged: (value) {
                                       provider.updateSearchQuery(value);
@@ -117,10 +134,14 @@ class PaymentHistory extends StatelessWidget {
                                       value: provider.selectedTeamId,
                                       hint: const Text('Select Teams'),
                                       underline: Container(),
-                                      icon: Icon(
-                                        Icons.keyboard_arrow_down,
-                                        size: 18,
-                                        color: const Color(0xFF9CA3AF),
+                                      icon: SvgPicture.asset(
+                                        'assets/icons/home_icons/arrowDounIcon.svg',
+                                        width: 14,
+                                        height: 14,
+                                        colorFilter: const ColorFilter.mode(
+                                          Color(0xFF9CA3AF),
+                                          BlendMode.srcIn,
+                                        ),
                                       ),
                                       items: [
                                         DropdownMenuItem(
@@ -397,10 +418,14 @@ class PaymentHistory extends StatelessWidget {
                   style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
                 ),
               ),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 20,
-                color: const Color(0xFF6A7282),
+              SvgPicture.asset(
+                'assets/icons/home_icons/arrowDounIcon.svg',
+                width: 20,
+                height: 20,
+                colorFilter: const ColorFilter.mode(
+                  Color(0xFF6A7282),
+                  BlendMode.srcIn,
+                ),
               ),
             ],
           ),
@@ -508,10 +533,14 @@ class PaymentHistory extends StatelessWidget {
                   style: TextStyle(fontSize: 12, color: Color(0xFF6A7282)),
                 ),
               ),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 20,
-                color: const Color(0xFF6A7282),
+              SvgPicture.asset(
+                'assets/icons/home_icons/arrowDounIcon.svg',
+                width: 20,
+                height: 20,
+                colorFilter: const ColorFilter.mode(
+                  Color(0xFF6A7282),
+                  BlendMode.srcIn,
+                ),
               ),
             ],
           ),

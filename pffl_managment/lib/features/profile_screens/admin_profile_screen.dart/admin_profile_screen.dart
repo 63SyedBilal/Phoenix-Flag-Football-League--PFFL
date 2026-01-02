@@ -11,6 +11,7 @@ import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/features/profile_screens/admin_profile_screen.dart/providers/admin_profile_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AdminProfileScreen extends StatelessWidget {
   const AdminProfileScreen({super.key});
@@ -167,14 +168,18 @@ class _AdminProfileScreenContentState
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(
-                                    Icons.upload,
-                                    size: 12,
-                                    color: Colors.white,
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icons/home_icons/uploadsettingIcon.svg',
+                                    width: 12,
+                                    height: 12,
+                                    colorFilter: const ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
                                   ),
-                                  SizedBox(width: 6),
-                                  Text(
+                                  const SizedBox(width: 6),
+                                  const Text(
                                     'Upload',
                                     style: TextStyle(
                                       color: Colors.white,
