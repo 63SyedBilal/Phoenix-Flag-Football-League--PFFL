@@ -361,7 +361,7 @@ class RoleBasedGameCard extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushNamed(
                       context,
-                      AppRoutes.freeAgentPaymentHistory,
+                      AppRoutes.freeAgentPaymentOption,
                     );
                   },
                   style: ElevatedButton.styleFrom(

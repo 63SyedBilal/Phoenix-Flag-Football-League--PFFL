@@ -163,14 +163,20 @@ class _TeamList extends StatelessWidget {
                         'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
                         width: 22,
                         height: 22,
-                        colorFilter: ColorFilter.mode(Colors.black26, BlendMode.srcIn),
+                        colorFilter: ColorFilter.mode(
+                          Colors.black26,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       SvgPicture.asset(
                         'assets/icons/home_icons/deletewhiteIcon.svg',
                         width: 22,
                         height: 22,
-                        colorFilter: ColorFilter.mode(const Color(0xFF000000), BlendMode.srcIn),
+                        colorFilter: ColorFilter.mode(
+                          const Color(0xFF000000),
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ],
                   ),
@@ -322,25 +328,17 @@ class _TeamList extends StatelessWidget {
                                   child: Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: SvgPicture.asset(
-                                      'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
-                                      width: 18,
-                                      height: 18,
+                                      isPaid
+                                          ? 'assets/icons/home_icons/WhiteclockAlarmIcon.svg'
+                                          : 'assets/icons/home_icons/blackalarmpicicon.svg',
+                                      width: 24,
+                                      height: 24,
                                       colorFilter: ColorFilter.mode(
                                         isPaid
                                             ? const Color(0xFFD1D5DB)
-                                            : const Color(0xFFA2A2A2),
+                                            : const Color(0xFF101828),
                                         BlendMode.srcIn,
                                       ),
-
-                                      isPaid
-                                          ? 'assets/icons/home_icons/WhiteclockAlarmIcon.svg'  // Icon when paid
-                                          : 'assets/icons/home_icons/blackalarmpicicon.svg', // Icon when unpaid
-                                      width: 24,
-                                      height: 24,
-                                      color: isPaid
-                                          ? const Color(0xFFD1D5DB)
-                                          : const Color(0xFF101828),
->>>>>>> 8dfcdf30d7ebf1a7ad8a10622a1892aa69738169
                                     ),
                                   ),
                                 ),

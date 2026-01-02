@@ -87,13 +87,9 @@ class UsersView extends StatelessWidget {
                         'Current route: ${ModalRoute.of(context)?.settings.name}',
                       );
 
-
                       // Navigate to invite screen using named route constant
                       try {
-                        final result = Navigator.pushNamed(
-                          context,
-                          AppRoutes.adminInvite,
-                        );
+                        Navigator.pushNamed(context, AppRoutes.adminInvite);
                       } catch (e) {
                         // Print error for debugging
                         // Show a snackbar to inform the user
@@ -104,7 +100,6 @@ class UsersView extends StatelessWidget {
                           ),
                         );
                       }
-
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
@@ -634,4 +629,3 @@ String _getRoleDisplayName(String role) {
           .join(' ');
   }
 }
-

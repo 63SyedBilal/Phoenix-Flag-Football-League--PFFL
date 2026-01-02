@@ -34,7 +34,18 @@ class RefereeGameActionsTab extends StatelessWidget {
             children: [
               Center(
                 child: GestureDetector(
-                  onTap: onAddActionTap,
+                  onTap: provider.isTossCompleted
+                      ? onAddActionTap
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please complete the Toss before adding game actions',
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        },
                   child: Container(
                     width: 40,
                     height: 40,
@@ -43,9 +54,11 @@ class RefereeGameActionsTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.add,
-                      color: Colors.black54,
+                      color: provider.isTossCompleted
+                          ? Colors.black54
+                          : Colors.grey[300],
                       size: 20,
                     ),
                   ),
@@ -57,8 +70,11 @@ class RefereeGameActionsTab extends StatelessWidget {
                   padding: const EdgeInsets.all(32.0),
                   child: Column(
                     children: [
-                      Icon(Icons.sports_score_outlined,
-                          size: 48, color: Colors.grey[300]),
+                      Icon(
+                        Icons.sports_score_outlined,
+                        size: 48,
+                        color: Colors.grey[300],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         'No actions recorded yet',
