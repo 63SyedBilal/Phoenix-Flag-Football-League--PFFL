@@ -407,7 +407,7 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
 
                             Navigator.pushNamed(
                               context,
-                              AppRoutes.freeAgentAddPaymentDetails,
+                              AppRoutes.freeAgentPaymentOption,
                             );
                           }
                         } catch (e) {
