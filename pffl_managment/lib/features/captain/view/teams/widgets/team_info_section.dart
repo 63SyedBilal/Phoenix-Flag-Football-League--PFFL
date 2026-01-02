@@ -322,54 +322,59 @@ class TeamInfoSection extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          style: BorderStyle.none,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            style: BorderStyle.none,
+                          ),
+                        ),
+                        child: team.logoUrl != null && team.logoUrl!.isNotEmpty
+                            ? ClipOval(
+                                child: Image.network(
+                                  team.logoUrl!,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      child: const Icon(
+                                        Icons.shield,
+                                        color: Colors.black,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
+                            : CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: const Icon(
+                                  Icons.shield,
+                                  color: Colors.black,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          team.name,
+                          style: const TextStyle(
+                            overflow: TextOverflow.ellipsis,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
-                      child: team.logoUrl != null && team.logoUrl!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                team.logoUrl!,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    child: const Icon(
-                                      Icons.shield,
-                                      color: Colors.black,
-                                    ),
-                                  );
-                                },
-                              ),
-                            )
-                          : CircleAvatar(
-                              backgroundColor: Colors.white,
-                              child: const Icon(
-                                Icons.shield,
-                                color: Colors.black,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      team.name,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 Row(
                   children: [

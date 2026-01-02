@@ -156,10 +156,10 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const FreeAgentDashboard());
 
       case AppRoutes.freeAgentActiveLeagues:
-        return MaterialPageRoute(builder: (_) => const LeagueSelectionScreen());
+        return MaterialPageRoute(builder: (_) =>  AddPaymentDetailsScreen());
 
       case AppRoutes.freeAgentPaymentOption:
-        return MaterialPageRoute(builder: (_) => const PaymentOptionScreen());
+        return MaterialPageRoute(builder: (_) =>  AddPaymentDetailsScreen());
 
       case AppRoutes.freeAgentAddPaymentDetails:
         return MaterialPageRoute(builder: (_) => AddPaymentDetailsScreen());

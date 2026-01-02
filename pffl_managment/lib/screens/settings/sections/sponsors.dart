@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 
 /// Sponsors section screen (Admin only)
 class SponsorsScreen extends StatelessWidget {
@@ -11,10 +12,7 @@ class SponsorsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A1A)),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const ArrowBackButton(),
         title: const Text(
           'Sponsors',
           style: TextStyle(
