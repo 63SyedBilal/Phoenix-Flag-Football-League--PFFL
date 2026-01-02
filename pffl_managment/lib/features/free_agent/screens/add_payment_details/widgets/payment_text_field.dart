@@ -32,7 +32,7 @@ class PaymentTextField extends StatelessWidget {
           label,
           style: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
             color: Color(0xFF1F2937),
             fontFamily: "Lato",
           ),

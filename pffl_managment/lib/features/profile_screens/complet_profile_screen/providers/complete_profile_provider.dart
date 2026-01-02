@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
-import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/config/app_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -267,53 +266,15 @@ class CompleteProfileProvider extends ChangeNotifier {
     return _selectedPositions.contains(position);
   }
 
-  /// Set jersey number and validate
+  /// Set jersey number
   void setJerseyNumber(String? number) {
     _jerseyNumber = number;
     _clearFieldError('jerseyNumber');
-
-    // Validate if provided
-    if (number != null && number.isNotEmpty) {
-      final jerseyNum = int.tryParse(number);
-      if (jerseyNum == null || jerseyNum < 1 || jerseyNum > 99) {
-        _setFieldError(
-          'jerseyNumber',
-          'Jersey number must be between 1 and 99',
-        );
-      } else {
-        // Check if jersey number is unique (debounced)
-        _checkJerseyNumberUniqueness(jerseyNum);
-      }
-    }
-
     notifyListeners();
   }
 
   Timer? _jerseyCheckTimer;
 
-  /// Check jersey number uniqueness with debouncing
-  void _checkJerseyNumberUniqueness(int jerseyNumber) {
-    // Cancel previous timer
-    _jerseyCheckTimer?.cancel();
-
-    // Set new timer to debounce the API call
-    _jerseyCheckTimer = Timer(const Duration(milliseconds: 800), () async {
-      try {
-        final userId = _userPrefs.userId;
-        final result = await UserService.checkJerseyNumber(
-          jerseyNumber,
-          excludeUserId: userId,
-        );
-
-        if (!result['available']) {
-          _setFieldError('jerseyNumber', result['message']);
-          notifyListeners();
-        }
-      } catch (e) {
-        // Don't show error to user for API failures
-      }
-    });
-  }
 
   /// Set emergency contact name and validate
   void setEmergencyContactName(String? name) {

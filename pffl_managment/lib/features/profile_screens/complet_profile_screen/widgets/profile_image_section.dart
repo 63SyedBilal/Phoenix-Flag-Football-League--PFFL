@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
@@ -24,8 +25,8 @@ class ProfileImageSection extends StatelessWidget {
                   strokeWidth: 1,
                 ),
                 child: Container(
-                  width: 100,
-                  height: 100,
+                  width: 132,
+                  height: 132,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.grey[100],
@@ -63,7 +64,7 @@ class ProfileImageSection extends StatelessWidget {
               ),
               Positioned(
                 bottom: -9,
-                left: 30,
+                left: 28,
                 child: GestureDetector(
                   onTap: () => _pickImage(context, provider),
                   child: Container(
@@ -79,8 +80,13 @@ class ProfileImageSection extends StatelessWidget {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.upload, size: 12, color: Colors.white),
+                      children:  [
+                        SvgPicture.asset(
+                          'assets/icons/home_icons/uploadsettingIcon.svg',
+                          width: 12,
+                          height: 12,
+                          colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        ),
                         SizedBox(width: 6),
                         Text(
                           'Upload',

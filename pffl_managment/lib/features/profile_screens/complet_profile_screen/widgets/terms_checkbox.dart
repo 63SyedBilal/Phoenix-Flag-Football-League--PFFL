@@ -38,6 +38,7 @@ class TermsCheckbox extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
+                    fontFamily: 'Lato',
                     color: Color(0xFF000000),
                   ),
                 ),

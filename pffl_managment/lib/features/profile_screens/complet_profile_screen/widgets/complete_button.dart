@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 
 /// Complete profile submission button widget
 class CompleteButton extends StatelessWidget {
@@ -28,8 +30,41 @@ class CompleteButton extends StatelessWidget {
               onTap: isEnabled
                   ? () async {
                       final success = await provider.submitProfile();
-                      if (!success && context.mounted) {
-                        // Error is already shown via errorMessage
+                      if (success && context.mounted) {
+                        // Get user role and redirect to appropriate dashboard
+                        final prefs = await SharedPreferences.getInstance();
+                        final userRole = prefs.getString('userRole') ?? 'player';
+                        
+                        // Determine route based on user role
+                        String route;
+                        switch (userRole.toLowerCase()) {
+                          case 'admin':
+                            route = AppRoutes.adminDashboard;
+                            break;
+                          case 'captain':
+                            route = AppRoutes.captainDashboard;
+                            break;
+                          case 'player':
+                            route = AppRoutes.playerDashboard;
+                            break;
+                          case 'referee':
+                            route = AppRoutes.refereeDashboard;
+                            break;
+                          case 'stat_keeper':
+                            route = AppRoutes.statKeeperDashboard;
+                            break;
+                          case 'free_agent':
+                            route = AppRoutes.freeAgentDashboard;
+                            break;
+                          default:
+                            route = AppRoutes.playerDashboard;
+                        }
+
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          route,
+                          (route) => false,
+                        );
                       }
                     }
                   : null,
