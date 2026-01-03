@@ -3,8 +3,9 @@ import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'package:pffl_managment/core/widgets/custom_button.dart';
+import 'package:pffl_managment/core/widgets/custom_flushbar.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/providers/payment_history_provider.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_history/providers/payment_history_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class PaymentHistory extends StatelessWidget {
@@ -16,9 +17,7 @@ class PaymentHistory extends StatelessWidget {
       create: (_) => PaymentHistoryProvider()..initialize(),
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          leading:ArrowBackButton()
-        ),
+        appBar: AppBar(leading: ArrowBackButton()),
         body: SafeArea(
           child: Consumer<PaymentHistoryProvider>(
             builder: (context, provider, _) {
@@ -150,22 +149,30 @@ class PaymentHistory extends StatelessWidget {
                                             'All Teams',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: provider.selectedTeamId == null
+                                              color:
+                                                  provider.selectedTeamId ==
+                                                      null
                                                   ? Colors.black
                                                   : const Color(0xFF9CA3AF),
                                             ),
                                           ),
                                         ),
                                         ...provider.teams.map((team) {
-                                          final teamId = team['_id']?.toString() ?? team['id']?.toString();
-                                          final teamName = team['teamName'] as String? ?? 'Unknown Team';
+                                          final teamId =
+                                              team['_id']?.toString() ??
+                                              team['id']?.toString();
+                                          final teamName =
+                                              team['teamName'] as String? ??
+                                              'Unknown Team';
                                           return DropdownMenuItem(
                                             value: teamId,
                                             child: Text(
                                               teamName,
                                               style: TextStyle(
                                                 fontSize: 14,
-                                                color: provider.selectedTeamId == teamId
+                                                color:
+                                                    provider.selectedTeamId ==
+                                                        teamId
                                                     ? Colors.black
                                                     : const Color(0xFF9CA3AF),
                                               ),
@@ -548,7 +555,19 @@ class PaymentHistory extends StatelessWidget {
           CustomButton(
             width: double.infinity,
             text: 'Send Reminder',
-            onPressed: () {},
+            onPressed: () async {
+              final provider = Provider.of<PaymentHistoryProvider>(
+                context,
+                listen: false,
+              );
+              final success = await provider.sendPaymentReminder(payment);
+              if (success && context.mounted) {
+                CustomFlushbar.showTopSuccess(
+                  context,
+                  message: 'Payment reminder sent successfully',
+                );
+              }
+            },
           ),
         ],
       ),

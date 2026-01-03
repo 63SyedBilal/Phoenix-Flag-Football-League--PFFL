@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 
-class RefundReasonProvider with ChangeNotifier {
-  List<String> _refundReasons = [
-    'Duplicate payment',
-    'Player withdrawal',
-    'Administrative error',
-    'Other'
-  ];
+// class RefundReasonProvider with ChangeNotifier {
+//   List<String> _refundReasons = [
+//     'Duplicate payment',
+//     'Player withdrawal',
+//     'Administrative error',
+//     'Other'
+//   ];
   
-  String _selectedReason = 'Other';
+//   String _selectedReason = 'Other';
   
-  List<String> get refundReasons => _refundReasons;
-  String get selectedReason => _selectedReason;
+//   List<String> get refundReasons => _refundReasons;
+//   String get selectedReason => _selectedReason;
   
-  void setSelectedReason(String reason) {
-    _selectedReason = reason;
-    notifyListeners();
-  }
-}
+//   void setSelectedReason(String reason) {
+//     _selectedReason = reason;
+//     notifyListeners();
+//   }
+// }

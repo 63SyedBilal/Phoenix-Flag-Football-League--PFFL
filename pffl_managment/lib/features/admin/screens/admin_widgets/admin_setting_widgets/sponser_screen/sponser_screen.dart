@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
-import 'package:pffl_managment/features/admin/shared/providers/sponsor_screen_provider.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/sponser_screen/provider/sponsor_screen_provider.dart';
 import 'package:pffl_managment/features/sponsors/providers/sponsor_banner_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';

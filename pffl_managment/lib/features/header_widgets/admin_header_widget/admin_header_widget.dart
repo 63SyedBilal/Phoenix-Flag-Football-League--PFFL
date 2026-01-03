@@ -3,7 +3,7 @@ import 'package:pffl_managment/core/providers/bottom_nevigation_provider/admin_n
 import 'package:pffl_managment/features/admin/provider/dashboard_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
-import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/admin_notification_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
 class AdminHeaderWidget extends StatelessWidget {
@@ -15,6 +15,18 @@ class AdminHeaderWidget extends StatelessWidget {
     final navigationProvider = Provider.of<AdminNavigationProvider>(context);
     final textTheme = Theme.of(context).textTheme;
     final brightness = Theme.of(context).brightness;
+
+    // Trigger notification fetch if needed
+    final notificationProvider = Provider.of<AdminNotificationProvider>(
+      context,
+      listen: false,
+    );
+    if (notificationProvider.notifications.isEmpty &&
+        !notificationProvider.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notificationProvider.fetchNotifications();
+      });
+    }
 
     String title, subtitle;
     bool showInviteButton = false;
@@ -74,7 +86,7 @@ class AdminHeaderWidget extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  NotificationButton(),
+                  const NotificationButton(),
                   if (showInviteButton) ...[
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
@@ -87,7 +99,7 @@ class AdminHeaderWidget extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
                         ),
@@ -123,7 +135,9 @@ class NotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notificationProvider = Provider.of<NotificationProvider>(context);
+    final notificationProvider = Provider.of<AdminNotificationProvider>(
+      context,
+    );
     final brightness = Theme.of(context).brightness;
     final scaffoldBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
 
@@ -154,7 +168,9 @@ class NotificationButton extends StatelessWidget {
                     : AppColors.textPrimary,
               ),
             ),
-            if (notificationProvider.hasNotifications)
+            if (notificationProvider.notifications.any(
+              (n) => n.status.toLowerCase() == 'pending',
+            ))
               Positioned(
                 top: 12,
                 right: 12,

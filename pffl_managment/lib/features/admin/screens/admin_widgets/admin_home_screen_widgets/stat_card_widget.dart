@@ -17,38 +17,34 @@ class StatCardWidget extends StatelessWidget {
     if (stat.title.toLowerCase().contains('league')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/trophyIcon.svg',
-        width: 6,
-        height: 6,
+        width: 16,
+        height: 16,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('game')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/bluehomedateIcon.svg',
-        width: 6,
-        height: 6,
+        width: 16,
+        height: 16,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('user')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/redManIcon.svg',
-        width: 6,
-        height: 6,
+        width: 16,
+        height: 16,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('payment')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/dollarIcon.svg',
-        width: 6,
-        height: 6,
+        width: 16,
+        height: 16,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else {
       // Fallback to the original icon if title doesn't match
-      iconWidget = Icon(
-        stat.icon,
-        size: 6,
-        color: stat.iconColor,
-      );
+      iconWidget = Icon(stat.icon, size: 16, color: stat.iconColor);
     }
 
     return Card(

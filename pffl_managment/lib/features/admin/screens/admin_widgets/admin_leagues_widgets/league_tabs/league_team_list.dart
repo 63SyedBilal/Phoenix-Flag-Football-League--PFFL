@@ -163,7 +163,7 @@ class _TeamList extends StatelessWidget {
                         'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
                         width: 22,
                         height: 22,
-                        colorFilter: ColorFilter.mode(
+                        colorFilter: const ColorFilter.mode(
                           Colors.black26,
                           BlendMode.srcIn,
                         ),
@@ -173,8 +173,8 @@ class _TeamList extends StatelessWidget {
                         'assets/icons/home_icons/deletewhiteIcon.svg',
                         width: 22,
                         height: 22,
-                        colorFilter: ColorFilter.mode(
-                          const Color(0xFF000000),
+                        colorFilter: const ColorFilter.mode(
+                          Color(0xFF000000),
                           BlendMode.srcIn,
                         ),
                       ),
@@ -328,15 +328,13 @@ class _TeamList extends StatelessWidget {
                                   child: Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: SvgPicture.asset(
-                                      isPaid
-                                          ? 'assets/icons/home_icons/WhiteclockAlarmIcon.svg'
-                                          : 'assets/icons/home_icons/blackalarmpicicon.svg',
-                                      width: 24,
-                                      height: 24,
+                                      'assets/icons/home_icons/WhiteclockAlarmIcon.svg',
+                                      width: 18,
+                                      height: 18,
                                       colorFilter: ColorFilter.mode(
                                         isPaid
                                             ? const Color(0xFFD1D5DB)
-                                            : const Color(0xFF101828),
+                                            : const Color(0xFFA2A2A2),
                                         BlendMode.srcIn,
                                       ),
                                     ),

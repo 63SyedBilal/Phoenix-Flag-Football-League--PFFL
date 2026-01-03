@@ -1,9 +1,9 @@
 import 'package:pffl_managment/features/profile_screens/admin_profile_screen.dart/admin_profile_screen.dart';
+import 'package:pffl_managment/screens/notification/player_notification/player_notification.dart';
 import 'package:pffl_managment/screens/settings/common/settings_section_model.dart';
 import 'package:pffl_managment/screens/settings/sections/my_performance.dart';
 import 'package:pffl_managment/features/payment_history/player_payment_history.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/notification_screen.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/change_passowrd.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/shared_change_password/shared_change_passowrd.dart';
 
 /// Player role settings configuration
 /// Sections: Player Information, My Performance, Payment History, Notifications, Change Password
@@ -17,14 +17,17 @@ List<SettingsSectionModel> getPlayerSettings() {
       title: 'My performance',
       screen: const MyPerformanceScreen(),
     ),
-    SettingsSectionModel(title: 'Payment history', screen: PlayerPaymentHistory()),
+    SettingsSectionModel(
+      title: 'Payment history',
+      screen: PlayerPaymentHistory(),
+    ),
     SettingsSectionModel(
       title: 'Notifications',
-      screen: const NotificationsScreen(),
+      screen: const PlayerNotification(),
     ),
     SettingsSectionModel(
       title: 'Change Password',
-      screen: const ChangePassowrd(),
+      screen: const SharedChangePassowrd(),
     ),
   ];
 }

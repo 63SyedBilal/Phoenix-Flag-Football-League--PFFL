@@ -9,9 +9,13 @@ class UnifiedGamesProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  bool _isInitialized = false;
+
   UnifiedGamesProvider() {
-    _initializeData();
+    // Initialization will be triggered by UI or manual call
   }
+
+  bool get isInitialized => _isInitialized;
 
   // Getters
   List<MatchModel> get allGames => List.unmodifiable(_allGames);
@@ -203,10 +207,7 @@ class UnifiedGamesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Initialize data by fetching real upcoming games from backend
-  Future<void> _initializeData() async {
-    await fetchAllMatches();
-  }
+  // Admin-only: Delete game
 
   /// Fetch all matches from backend API
   /// Filters to show only future matches
@@ -223,9 +224,9 @@ class UnifiedGamesProvider extends ChangeNotifier {
       _allGames = allMatches;
       _sortGames();
       _errorMessage = null;
-
-      // Log error (consider using a logger or crash analytics in production)
+      _isInitialized = true;
     } catch (e) {
+      // ...
       if (e is DioException) {
         _errorMessage =
             'Failed to load matches: ${e.response?.data?['error'] ?? e.message ?? 'Unknown error'}';

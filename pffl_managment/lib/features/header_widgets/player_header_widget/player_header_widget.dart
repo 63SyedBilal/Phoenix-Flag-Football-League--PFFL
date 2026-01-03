@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/player_navigation_provider.dart';
-import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/player_notification_provider.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
@@ -86,7 +86,7 @@ class PlayerHeaderWidget extends StatelessWidget {
                 ),
               ),
               // Enhanced notification icon with badge
-              PlayerNotificationButton(),
+              const PlayerNotificationButton(),
             ],
           ),
         ],
@@ -100,7 +100,10 @@ class PlayerNotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notificationProvider = Provider.of<NotificationProvider>(context);
+    // Note: Provider.of is used instead of Consumer as requested
+    final notificationProvider = Provider.of<PlayerNotificationProvider>(
+      context,
+    );
     final brightness = Theme.of(context).brightness;
     final scaffoldBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
 
@@ -131,7 +134,9 @@ class PlayerNotificationButton extends StatelessWidget {
                     : AppColors.textPrimary,
               ),
             ),
-            if (notificationProvider.hasNotifications)
+            if (notificationProvider.notifications.any(
+              (n) => n.status.toLowerCase() == 'pending',
+            ))
               Positioned(
                 top: 12,
                 right: 12,

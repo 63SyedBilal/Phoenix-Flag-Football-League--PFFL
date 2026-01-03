@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:pffl_managment/config/app_config.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
@@ -83,7 +84,6 @@ class LeagueService {
       }
     } on DioException catch (e) {
       if (e.response != null) {
-
         // Provide specific error message based on status code
         if (e.response?.statusCode == 500) {
           throw Exception(
@@ -120,8 +120,7 @@ class LeagueService {
         return null;
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       rethrow;
     } catch (e) {
       rethrow;
@@ -148,8 +147,7 @@ class LeagueService {
       }
       return false;
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       return false;
     } catch (e) {
       return false;
@@ -358,8 +356,7 @@ class LeagueService {
         return [];
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       return [];
     } catch (e) {
       return [];
@@ -382,27 +379,13 @@ class LeagueService {
 
           if (leagueData['teams'] != null) {
             final teamsArray = leagueData['teams'];
-            print(
-              '   - Teams array length: ${teamsArray is List ? teamsArray.length : 'N/A'}',
-            );
-            if (teamsArray is List && teamsArray.isNotEmpty) {
-            } else if (teamsArray is List && teamsArray.isEmpty) {
-              print(
-                '   - ⚠️ Teams array is EMPTY - no teams assigned to this league',
-              );
+            if (teamsArray is List && teamsArray.isEmpty) {
+              // Only keep critical warnings
+              debugPrint('⚠️ Teams array is EMPTY for league $leagueId');
             }
-          } else {
           }
 
           final league = LeagueDetailModel.fromJson(leagueData);
-          print(
-            '✅ League parsed successfully. Teams count: ${league.teams.length}',
-          );
-          if (league.teams.isEmpty) {
-            print(
-              '   - ⚠️ WARNING: No teams found in league! Teams should be assigned when invited in Step 4.',
-            );
-          }
           return league;
         }
         return null;
@@ -410,8 +393,7 @@ class LeagueService {
         return null;
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       return null;
     } catch (e) {
       return null;
@@ -427,11 +409,6 @@ class LeagueService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final responseStr = data.toString();
-        print(
-          '✅ API Response received: ${responseStr.length > 200 ? '${responseStr.substring(0, 200)}...' : responseStr}',
-        );
-
         if (data['data'] != null) {
           final teamsList = data['data'] as List;
 
@@ -457,8 +434,7 @@ class LeagueService {
         return [];
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       rethrow;
     } catch (e) {
       rethrow;
@@ -494,8 +470,7 @@ class LeagueService {
         };
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       return {
         'success': false,
         'message':
@@ -527,8 +502,7 @@ class LeagueService {
         };
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       return {
         'success': false,
         'message':
@@ -799,18 +773,10 @@ class LeagueDetailModel {
       final teamsList = json['teams'] as List;
 
       if (teamsList.isEmpty) {
-        print(
-          '   - ⚠️ Teams array is EMPTY - no teams assigned to this league',
-        );
-        print(
-          '   - Teams should be assigned when invited in Step 4 of league creation',
-        );
+        // Log once if empty
       } else {
         teams = teamsList.map((teamJson) {
           try {
-            print(
-              '   - Parsing team: ${teamJson['teamName'] ?? teamJson['_id'] ?? 'Unknown'}',
-            );
             return TeamModel.fromJson(teamJson);
           } catch (e) {
             rethrow;
@@ -821,8 +787,7 @@ class LeagueDetailModel {
       print(
         '⚠️ Teams field is null or not a List. Type: ${json['teams']?.runtimeType}',
       );
-      if (json['teams'] != null) {
-      }
+      if (json['teams'] != null) {}
     }
 
     // Parse referees array
@@ -832,12 +797,7 @@ class LeagueDetailModel {
       final refereesList = json['referees'] as List;
 
       if (refereesList.isEmpty) {
-        print(
-          '   - ℹ️ Referees array is EMPTY - no referees assigned to this league yet',
-        );
-        print(
-          '   - Referees should be assigned when they accept invitation in Step 2 of league creation',
-        );
+        // ...
       } else {
         referees = refereesList.map((refereeJson) {
           try {
@@ -871,12 +831,7 @@ class LeagueDetailModel {
       final statKeepersList = json['statKeepers'] as List;
 
       if (statKeepersList.isEmpty) {
-        print(
-          '   - ℹ️ Stat keepers array is EMPTY - no stat keepers assigned to this league yet',
-        );
-        print(
-          '   - Stat keepers should be assigned when they accept invitation in Step 3 of league creation',
-        );
+        // ...
       } else {
         statKeepers = statKeepersList.map((statKeeperJson) {
           try {
@@ -916,4 +871,3 @@ class LeagueDetailModel {
     );
   }
 }
-

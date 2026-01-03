@@ -11,16 +11,33 @@ class CustomFlushbar {
     Flushbar(
       title: title,
       message: message,
-      icon: const Icon(
-        Icons.check_circle,
-        color: Colors.green,
-      ),
+      icon: const Icon(Icons.check_circle, color: Colors.green),
       backgroundColor: Colors.green.shade100,
       duration: duration,
       margin: const EdgeInsets.all(8),
       borderRadius: BorderRadius.circular(8),
       borderColor: Colors.green,
       borderWidth: 1,
+    ).show(context);
+  }
+
+  static void showTopSuccess(
+    BuildContext context, {
+    required String message,
+    String? title,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    Flushbar(
+      title: title,
+      message: message,
+      icon: const Icon(Icons.check_circle, color: Colors.white),
+      backgroundColor: Colors.black,
+      flushbarPosition: FlushbarPosition.TOP,
+      duration: duration,
+      margin: const EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(12),
+      titleColor: Colors.white,
+      messageColor: Colors.white,
     ).show(context);
   }
 
@@ -33,10 +50,7 @@ class CustomFlushbar {
     Flushbar(
       title: title,
       message: message,
-      icon: const Icon(
-        Icons.error,
-        color: Colors.red,
-      ),
+      icon: const Icon(Icons.error, color: Colors.red),
       backgroundColor: Colors.red.shade100,
       duration: duration,
       margin: const EdgeInsets.all(8),
@@ -55,10 +69,7 @@ class CustomFlushbar {
     Flushbar(
       title: title,
       message: message,
-      icon: const Icon(
-        Icons.info,
-        color: Colors.blue,
-      ),
+      icon: const Icon(Icons.info, color: Colors.blue),
       backgroundColor: Colors.blue.shade100,
       duration: duration,
       margin: const EdgeInsets.all(8),
@@ -77,10 +88,7 @@ class CustomFlushbar {
     Flushbar(
       title: title,
       message: message,
-      icon: const Icon(
-        Icons.warning,
-        color: Colors.orange,
-      ),
+      icon: const Icon(Icons.warning, color: Colors.orange),
       backgroundColor: Colors.orange.shade100,
       duration: duration,
       margin: const EdgeInsets.all(8),

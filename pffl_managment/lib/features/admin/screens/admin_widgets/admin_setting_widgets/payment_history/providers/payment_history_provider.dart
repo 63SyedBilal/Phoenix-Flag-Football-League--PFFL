@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/services/payment_service.dart';
+import 'package:pffl_managment/core/services/notification_local_service.dart';
+import 'package:flutter/material.dart';
 
 /// Model for payment display
 class PaymentModel {
@@ -15,6 +16,8 @@ class PaymentModel {
   final String? refundDate;
   final String? transactionId;
   final String? refundReason;
+  final String? playerId;
+  final String? leagueId;
 
   PaymentModel({
     required this.id,
@@ -29,6 +32,8 @@ class PaymentModel {
     this.refundDate,
     this.transactionId,
     this.refundReason,
+    this.playerId,
+    this.leagueId,
   });
 }
 
@@ -78,6 +83,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
   /// Initialize and fetch data
   Future<void> initialize() async {
     if (_isLoading || _disposed) return;
+    await NotificationLocalService.init();
     await Future.wait([fetchTeams(), fetchPayments()]);
   }
 
@@ -92,8 +98,7 @@ class PaymentHistoryProvider extends ChangeNotifier {
 
       _teams = teamsList;
       _safeNotifyListeners();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   /// Fetch payments from backend
@@ -219,6 +224,12 @@ class PaymentHistoryProvider extends ChangeNotifier {
           payment['stripePaymentIntentId'] as String?,
       refundDate: displayStatus == 'refunded' ? _formatDate(createdAt) : null,
       refundReason: displayStatus == 'refunded' ? 'Others' : null,
+      playerId: userId is Map
+          ? (userId['_id']?.toString() ?? userId['id']?.toString())
+          : userId?.toString(),
+      leagueId: leagueId is Map
+          ? (leagueId['_id']?.toString() ?? leagueId['id']?.toString())
+          : leagueId?.toString(),
     );
   }
 
@@ -313,9 +324,30 @@ class PaymentHistoryProvider extends ChangeNotifier {
     _filteredPayments = filtered;
   }
 
+  /// Send payment reminder to a player
+  Future<bool> sendPaymentReminder(PaymentModel payment) async {
+    if (payment.playerId == null) return false;
+
+    try {
+      // Logic for local notification as requested
+      final body =
+          'You have not paid for ${payment.league}, please pay your league fee of ${payment.amount}';
+
+      await NotificationLocalService.showNotification(
+        id: payment.id.hashCode,
+        title: 'Payment Reminder: ${payment.player}',
+        body: body,
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('Error sending payment reminder: $e');
+      return false;
+    }
+  }
+
   /// Refresh payments
   Future<void> refresh() async {
     await fetchPayments();
   }
 }
-

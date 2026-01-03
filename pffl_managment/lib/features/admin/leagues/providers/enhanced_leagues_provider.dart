@@ -6,6 +6,7 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
   // Store leagues from backend
   List<LeagueCreationModel> _allLeagues = [];
   bool _isLoadingLeagues = false;
+  bool _isInitialized = false;
   String? _errorMessage;
 
   // Selected league for detail view
@@ -20,11 +21,13 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
   bool get hasNotifications => _hasNotifications;
   int get leaguesCount => _allLeagues.length;
   bool get isLoadingLeagues => _isLoadingLeagues;
+  bool get isInitialized => _isInitialized;
   String? get errorMessage => _errorMessage;
 
   /// Fetch all leagues from backend
-  Future<void> fetchAllLeagues() async {
+  Future<void> fetchAllLeagues({bool force = false}) async {
     if (_isLoadingLeagues) return;
+    if (_isInitialized && !force) return;
 
     _isLoadingLeagues = true;
     _errorMessage = null;
@@ -39,6 +42,7 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
       // Sort: Newest created leagues first
       _allLeagues.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
+      _isInitialized = true;
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Failed to load leagues: ${e.toString()}';
@@ -94,4 +98,3 @@ class EnhancedLeaguesProvider extends ChangeNotifier {
     // Add logic to load more matches
   }
 }
-

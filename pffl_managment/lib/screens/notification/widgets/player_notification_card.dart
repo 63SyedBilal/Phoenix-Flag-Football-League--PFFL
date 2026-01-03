@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/models/notification_model.dart';
+import 'package:pffl_managment/screens/notification/models/notification_model.dart';
 import 'package:intl/intl.dart';
 
 /// Widget for displaying a single notification card in player notification screen

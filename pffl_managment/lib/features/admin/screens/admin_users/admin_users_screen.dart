@@ -240,7 +240,7 @@ class AdminUsersScreen extends StatelessWidget {
                       ),
                     ),
                   )
-                else if (viewModel.filteredUsers.isEmpty)
+                else if (viewModel.displayUsers.isEmpty)
                   Expanded(
                     child: Center(
                       child: Text(
@@ -259,13 +259,13 @@ class AdminUsersScreen extends StatelessWidget {
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: viewModel.filteredUsers.length,
+                      itemCount: viewModel.displayUsers.length,
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         return _buildUserCard(
                           context,
-                          viewModel.filteredUsers[index],
+                          viewModel.displayUsers[index],
                           viewModel,
                         );
                       },
@@ -402,7 +402,10 @@ class AdminUsersScreen extends StatelessWidget {
                           'assets/icons/home_icons/clickCheckGreenIcon.svg',
                           width: 14,
                           height: 14,
-                          colorFilter: ColorFilter.mode(user.status.color, BlendMode.srcIn),
+                          colorFilter: ColorFilter.mode(
+                            user.status.color,
+                            BlendMode.srcIn,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Text(

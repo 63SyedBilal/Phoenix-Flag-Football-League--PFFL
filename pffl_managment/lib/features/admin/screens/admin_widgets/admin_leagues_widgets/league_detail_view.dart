@@ -13,7 +13,6 @@ import 'package:pffl_managment/features/key_players/league_key_players_section.d
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
-import 'package:pffl_managment/features/admin/shared/providers/animated_fab_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/admin_league_games_section.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
@@ -58,18 +57,6 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
         debugPrint(
           '  shouldShowFAB: ${provider.selectedTabIndex == 1 && isAdmin}',
         );
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (context.mounted) {
-            final fabProvider = Provider.of<AnimatedFABProvider>(
-              context,
-              listen: false,
-            );
-            if (provider.selectedTabIndex != 1) {
-              fabProvider.reset();
-            }
-          }
-        });
 
         final shouldShowFAB = provider.selectedTabIndex == 1 && isAdmin;
 

@@ -38,13 +38,25 @@ class UserModel {
   }
 }
 
-enum UserRole { player, captain, referee, statKeeper }
+enum UserRole {
+  superadmin,
+  admin,
+  player,
+  captain,
+  referee,
+  statKeeper,
+  freeAgent,
+}
 
 enum UserStatus { active, invited, pending }
 
 extension UserRoleExtension on UserRole {
   String get displayName {
     switch (this) {
+      case UserRole.superadmin:
+        return 'Super Admin';
+      case UserRole.admin:
+        return 'Admin';
       case UserRole.player:
         return 'Player';
       case UserRole.captain:
@@ -53,11 +65,20 @@ extension UserRoleExtension on UserRole {
         return 'Referee';
       case UserRole.statKeeper:
         return 'Stat Keeper';
+      case UserRole.freeAgent:
+        return 'Free Agent';
     }
   }
 
   UserRoleColors get colors {
     switch (this) {
+      case UserRole.superadmin:
+      case UserRole.admin:
+        return UserRoleColors(
+          background: const Color(0xFFFEE2E2), // red-100
+          border: const Color(0xFFFECACA), // red-200
+          text: const Color(0xFF991B1B), // red-800
+        );
       case UserRole.player:
         return UserRoleColors(
           background: const Color(0xFFDBEAFE), // blue-100
@@ -81,6 +102,12 @@ extension UserRoleExtension on UserRole {
           background: const Color(0xFFD1FAE5), // emerald-100
           border: const Color(0xFFA7F3D0), // emerald-200
           text: const Color(0xFF064E3B), // emerald-900
+        );
+      case UserRole.freeAgent:
+        return UserRoleColors(
+          background: const Color(0xFFF3F4F6), // gray-100
+          border: const Color(0xFFE5E7EB), // gray-200
+          text: const Color(0xFF374151), // gray-700
         );
     }
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/admin_notification_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_card.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
 
@@ -9,13 +9,8 @@ class AdminNotification extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access the global NotificationProvider
-    final provider = Provider.of<NotificationProvider>(context);
-
-    // Mark all as read when opening the screen
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      provider.markAllAsRead();
-    });
+    // Using global provider from app_providers.dart
+    final provider = Provider.of<AdminNotificationProvider>(context);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -24,7 +19,9 @@ class AdminNotification extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: provider.isLoading ? null : () => provider.refresh(),
+            onPressed: provider.isLoading
+                ? null
+                : () => provider.fetchNotifications(),
           ),
         ],
       ),
@@ -32,7 +29,7 @@ class AdminNotification extends StatelessWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, NotificationProvider provider) {
+  Widget _buildBody(BuildContext context, AdminNotificationProvider provider) {
     if (provider.isLoading && provider.notifications.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -53,7 +50,7 @@ class AdminNotification extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => provider.refresh(),
+                onPressed: () => provider.fetchNotifications(),
                 child: const Text('Retry'),
               ),
             ],
@@ -67,13 +64,16 @@ class AdminNotification extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () => provider.refresh(),
+      onRefresh: () => provider.fetchNotifications(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: provider.notifications.length,
         itemBuilder: (context, index) {
           final notification = provider.notifications[index];
-          return NotificationCard(notification: notification);
+          return NotificationCard(
+            notification: notification,
+            onApproveStats: (id) => provider.approveStats(id),
+          );
         },
       ),
     );

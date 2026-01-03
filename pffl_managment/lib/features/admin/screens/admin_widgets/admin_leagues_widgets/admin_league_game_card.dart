@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_game_widgets/edit_upcomming_matches.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
-import 'package:pffl_managment/core/providers/unified_games_provider.dart';
-import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
-import 'package:pffl_managment/features/admin/providers/league_games_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class AdminLeagueGameCard extends StatelessWidget {
@@ -132,72 +128,6 @@ class AdminLeagueGameCard extends StatelessWidget {
             score: match.awayScore,
             isHomeTeam: false,
           ),
-          if (isAdmin) ...[
-            const SizedBox(height: 16),
-            Container(
-              height: 1,
-              color: const Color(0xFFE0E0E0),
-            ),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  final updated = await showDialog<bool>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return Dialog(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: EditUpcommingMatches(match: match),
-                      );
-                    },
-                  );
-                  if (updated == true && context.mounted) {
-                    try {
-                      Provider.of<UnifiedGamesProvider>(
-                        context,
-                        listen: false,
-                      ).fetchAllMatches();
-                      Provider.of<LeagueDetailProvider>(
-                        context,
-                        listen: false,
-                      ).refresh();
-                      Provider.of<LeagueGamesProvider>(
-                        context,
-                        listen: false,
-                      ).refresh();
-                    } catch (_) {}
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 13,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Edit Game',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xff0F173E),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Color(0xff0F173E),
-                        size: 6,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
