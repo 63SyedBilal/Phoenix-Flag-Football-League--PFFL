@@ -17,7 +17,7 @@ class _ActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.borderLight, width: 1)),
       ),
@@ -43,7 +43,7 @@ class _ActionButtons extends StatelessWidget {
                   height: 48,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: CustomButton.primary(
                   text: provider.isReadOnly ? 'Read Only' : 'Update Now',
@@ -98,7 +98,7 @@ class StatAddScreen extends StatelessWidget {
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 800),
           child: ChangeNotifierProvider(
             create: (_) {
               final provider = StatAddProvider();
@@ -123,18 +123,12 @@ class _StatAddScreenContent extends StatelessWidget {
     final provider = context.watch<StatAddProvider>();
 
     final content = Container(
-      constraints: const BoxConstraints(maxWidth: 400),
+      constraints: const BoxConstraints(maxWidth: 800),
       margin: isDialog ? EdgeInsets.zero : const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -146,7 +140,7 @@ class _StatAddScreenContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   if (provider.isReadOnly)
                     Container(
@@ -180,10 +174,16 @@ class _StatAddScreenContent extends StatelessWidget {
 
                   _buildLabel('Select Game'),
                   const SizedBox(height: 8),
+                
                   if (provider.isLoadingMatches)
                     const Center(child: CircularProgressIndicator())
                   else
-                    SimpleDropdownList(
+                    SimpleDropdownList(hintStyle: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    )
+                    ,
                       selectedValue: provider.selectedMatchId != null
                           ? provider.assignedMatches
                                 .where((m) => m.id == provider.selectedMatchId)
@@ -207,7 +207,12 @@ class _StatAddScreenContent extends StatelessWidget {
                   if (provider.isLoadingTeams)
                     const Center(child: CircularProgressIndicator())
                   else
-                    SimpleDropdownList(
+                    SimpleDropdownList( 
+                      hintStyle: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
                       selectedValue: provider.selectedTeam,
                       items: provider.teams,
                       onSelected: (String val) {
@@ -223,6 +228,11 @@ class _StatAddScreenContent extends StatelessWidget {
                     const Center(child: CircularProgressIndicator())
                   else
                     SimpleDropdownList(
+                      hintStyle: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
                       selectedValue: provider.selectedPlayer,
                       items: provider.players,
                       onSelected: (String val) {
@@ -317,7 +327,9 @@ class _StatAddScreenContent extends StatelessWidget {
       text,
       style: AppTextStyles.labelLarge.copyWith(
         color: AppColors.textPrimary,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
+        fontSize: 14,
+        fontFamily: 'La',
       ),
     );
   }
@@ -373,7 +385,7 @@ class _HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.borderLight, width: 1),
@@ -382,19 +394,22 @@ class _HeaderSection extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Add Game Stats',
+            'Edit Game Stats',
             style: AppTextStyles.headlineSmall.copyWith(
-              color: AppColors.textPrimary,
+              color: Colors.black,
               fontSize: 22,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Serotiva',
             ),
           ),
-          const SizedBox(height: 8),
           Text(
             'Stats helps you to analyze game in smooth\nor better way',
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: Colors.black,
               fontSize: 14,
+              fontFamily: 'Lato',
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],

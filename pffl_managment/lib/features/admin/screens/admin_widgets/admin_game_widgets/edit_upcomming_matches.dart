@@ -214,7 +214,7 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      SimpleDropdownList(
+                      SimpleDropdownList(hintStyle: TextStyle(color: Colors.black),
                         hintText: "Select Team",
                         selectedValue: selectedTeamA,
                         items: teams,
@@ -242,7 +242,7 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      SimpleDropdownList(
+                      SimpleDropdownList(hintStyle: TextStyle(color: Colors.black),
                         hintText: "Select Team",
                         selectedValue: selectedTeamB,
                         items: teams,
@@ -360,7 +360,7 @@ class _EditMatchViewState extends State<EditUpcommingMatches> {
             ),
           ),
           const SizedBox(height: 8),
-          SimpleDropdownList(
+          SimpleDropdownList(hintStyle: TextStyle(color: Colors.black),
             hintText: "Select Venue",
             selectedValue: selectedVenue,
             items: venues,
