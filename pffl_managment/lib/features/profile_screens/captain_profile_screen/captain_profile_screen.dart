@@ -255,7 +255,7 @@ class _CaptainProfileScreenState extends State<CaptainProfileScreen> {
                 color: Color(0xFF111827),
               )),
               const SizedBox(height: 4),
-              SimpleDropdownList(
+              SimpleDropdownList(hintStyle: TextStyle(),
                 selectedValue: _selectedPosition,
                 items: _positions,
                 hintText: 'Select Position',

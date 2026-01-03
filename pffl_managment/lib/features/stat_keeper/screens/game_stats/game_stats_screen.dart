@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/game_stats_provider.dart';
@@ -32,7 +33,7 @@ class _GameStatsScreenContent extends StatelessWidget {
 
     if (provider.errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Game Stats')),
+        appBar: AppBar(leading: ArrowBackButton(),),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -67,28 +68,30 @@ class _GameStatsScreenContent extends StatelessWidget {
 
     if (stats == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Game Stats')),
+        appBar: AppBar(leading: ArrowBackButton(),),
         body: const Center(child: Text('No stats available')),
       );
     }
 
     return Scaffold(
+      appBar: AppBar(leading: ArrowBackButton(),),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+        
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   _buildLeagueHeader(stats.leagueName),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildScoreCards(context, provider, stats),
                   const SizedBox(height: 32),
                   _buildTeamStats(context, provider, stats),
                   const SizedBox(height: 24),
                   _buildDetailsButton(context, provider, stats),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -98,68 +101,65 @@ class _GameStatsScreenContent extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back, size: 24, color: Colors.black),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildLeagueHeader(String leagueName) {
-    return Row(
+    return Column(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 2,
-              style: BorderStyle.solid,
-            ),
-          ),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/league_logo.png', // Placeholder or use network image if available
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.shield, size: 24, color: Colors.grey),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                leagueName.isNotEmpty ? leagueName : 'League Name',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF000000),
+        Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFE5E7EB),
+                  width: 2,
+                  style: BorderStyle.solid,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'View all Stats game summary of this league assigned game.',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[600],
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/league_logo.png', // Placeholder or use network image if available
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.shield, size: 24, color: Colors.grey),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    leagueName.isNotEmpty ? leagueName : 'League Name',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontFamily: 'Serotiva',
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF000000),
+                    ),
+                  ),
+               
+                 
+                ],
+              ),
+            ),
+          ],
         ),
+         Padding(
+           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+           child: Text(
+                  'View all Stats game summary of this league assigned game.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Lato',
+                    color: Colors.grey[600],
+                  ),
+                ),
+         ),
       ],
     );
   }
@@ -211,7 +211,7 @@ class _GameStatsScreenContent extends StatelessWidget {
     required bool isWinner,
     required bool isSelected,
   }) {
-    final bgColor = isSelected ? const Color(0xFF0F172A) : Colors.white;
+    final bgColor = isSelected ? const Color(0xFF0C1232) : Colors.white;
     final textColor = isSelected ? Colors.white : Colors.black;
     final subTextColor = isSelected ? Colors.grey[400] : Colors.grey[600];
     final borderColor = isSelected

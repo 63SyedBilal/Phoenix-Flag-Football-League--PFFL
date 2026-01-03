@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
 
@@ -52,13 +53,14 @@ class _TeamStatsDetailView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(leading: ArrowBackButton(),),
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+           
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
                   _buildTeamHeader(),
                   const SizedBox(height: 24),
@@ -76,19 +78,6 @@ class _TeamStatsDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back, size: 24, color: Colors.black),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTeamHeader() {
     return Row(
@@ -147,12 +136,12 @@ class _TeamStatsDetailView extends StatelessWidget {
         Text(
           'View all Stats game summary of this league assigned game.',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w400,
             color: Colors.grey[600],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Consumer<TeamStatsProvider>(
           builder: (context, provider, _) {
             return Row(

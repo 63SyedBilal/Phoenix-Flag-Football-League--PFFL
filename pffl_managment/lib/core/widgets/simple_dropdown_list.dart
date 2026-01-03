@@ -24,7 +24,7 @@ class SimpleDropdownList extends StatefulWidget {
     this.borderColor,
     this.borderRadius = 6.0,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.maxHeight = 150.0,
+    this.maxHeight = 150.0, required TextStyle hintStyle,
   });
 
   @override
