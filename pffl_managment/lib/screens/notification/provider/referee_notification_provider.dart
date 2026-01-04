@@ -17,7 +17,9 @@ class RefereeNotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await NotificationService.getUserNotifications();
+      _notifications = await NotificationService.getUserNotifications(
+        role: 'referee',
+      );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';
     } finally {

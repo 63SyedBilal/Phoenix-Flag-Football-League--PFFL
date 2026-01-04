@@ -1,5 +1,5 @@
 import 'package:pffl_managment/features/payment_history/captain_payment_history.dart';
-import 'package:pffl_managment/features/profile_screens/captain_profile_screen/captain_profile_screen.dart';
+import 'package:pffl_managment/screens/profile_screen/captain_profile_screen.dart';
 import 'package:pffl_managment/screens/notification/captain_notification/captain_notification.dart';
 import 'package:pffl_managment/screens/settings/common/settings_section_model.dart';
 import 'package:pffl_managment/features/captain/view/teams/team_management_screen.dart';

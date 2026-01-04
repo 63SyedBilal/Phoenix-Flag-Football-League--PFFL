@@ -63,10 +63,10 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
         if (shouldShowFAB) {
         } else {
           if (!isAdmin)
-          if (provider.selectedTabIndex != 1)
-            debugPrint(
-              '   - Not on Games tab (current tab: ${provider.selectedTabIndex})',
-            );
+            if (provider.selectedTabIndex != 1)
+              debugPrint(
+                '   - Not on Games tab (current tab: ${provider.selectedTabIndex})',
+              );
         }
 
         return Scaffold(
@@ -118,6 +118,12 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
                           SizedBox(height: 12),
                           const LeagueKeyPlayersSection(),
                           const LeagueTeamStatsSection(),
+                          const SizedBox(height: 16),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: SponsorBannerScreen(),
+                          ),
+                          const SizedBox(height: 16),
                         ] else if (provider.selectedTabIndex == 1) ...[
                           AdminLeagueGamesSection(league: widget.league),
                         ] else if (provider.selectedTabIndex == 2) ...[
@@ -144,4 +150,3 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
     );
   }
 }
-

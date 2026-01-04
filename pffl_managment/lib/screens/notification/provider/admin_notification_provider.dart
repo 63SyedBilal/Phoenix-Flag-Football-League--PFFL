@@ -18,7 +18,9 @@ class AdminNotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await NotificationService.getUserNotifications();
+      _notifications = await NotificationService.getUserNotifications(
+        role: 'admin',
+      );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';
     } finally {

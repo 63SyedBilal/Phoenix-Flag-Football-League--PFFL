@@ -21,17 +21,14 @@ class ReusableDropdown extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD1D5DB)), // Light gray border
+        border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : null,
           hint: Text(
             hint,
-            style: const TextStyle(
-              color: Color(0xFF9CA3AF), // Placeholder gray
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
           ),
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF9CA3AF)),
@@ -40,10 +37,7 @@ class ReusableDropdown extends StatelessWidget {
               value: item,
               child: Text(
                 item,
-                style: const TextStyle(
-                  color: Color(0xFF374151), // Dark gray text
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Color(0xFF374151), fontSize: 14),
               ),
             );
           }).toList(),

@@ -1,14 +1,20 @@
 import 'package:pffl_managment/core/services/auth_service.dart';
+import 'package:pffl_managment/config/app_config.dart';
 import '../models/notification_model.dart';
 
 class NotificationService {
   /// Fetch all notifications for the current user
-  static Future<List<NotificationModel>> getUserNotifications() async {
+  static Future<List<NotificationModel>> getUserNotifications({
+    String? role,
+  }) async {
     try {
       final dio = await AuthService.getWorkingDio();
-      // Assuming endpoint is /notifications/user or similar based on role
-      // For now using /notifications as a generic endpoint
-      final response = await dio.get('/notifications');
+      // Use AppConfig endpoint
+      final endpoint = role != null
+          ? '${AppConfig.notificationAllEndpoint}?role=$role'
+          : AppConfig.notificationAllEndpoint;
+
+      final response = await dio.get(endpoint);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
@@ -16,9 +22,6 @@ class NotificationService {
       }
       return [];
     } catch (e) {
-      // Fallback to empty list or throw depending on requirements
-      // For development, we might want to return some dummy data if API fails
-      // return _getDummyNotifications();
       print('Error fetching notifications: $e');
       // Return dummy data for testing purposes if API fails
       return _getDummyNotifications();
@@ -29,7 +32,7 @@ class NotificationService {
   static Future<bool> markAsRead(String notificationId) async {
     try {
       final dio = await AuthService.getWorkingDio();
-      final response = await dio.put('/notifications/$notificationId/read');
+      final response = await dio.put('/notification/$notificationId/read');
       return response.statusCode == 200;
     } catch (e) {
       print('Error marking notification as read: $e');
@@ -41,7 +44,7 @@ class NotificationService {
   static Future<bool> deleteNotification(String notificationId) async {
     try {
       final dio = await AuthService.getWorkingDio();
-      final response = await dio.delete('/notifications/$notificationId');
+      final response = await dio.delete('/notification/$notificationId');
       return response.statusCode == 200;
     } catch (e) {
       print('Error deleting notification: $e');
@@ -56,22 +59,25 @@ class NotificationService {
   ) async {
     try {
       final dio = await AuthService.getWorkingDio();
-      final response = await dio.post(
-        '/notifications/$notificationId/respond',
-        data: {'accept': accept},
-      );
+      // Backend expects PUT /notification/accept/:id or /notification/reject/:id
+      final action = accept ? 'accept' : 'reject';
+      final endpoint = '/notification/$action/$notificationId';
+
+      final response = await dio.put(endpoint);
 
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'roleChanged': response.data['roleChanged'],
+          'roleChanged': response.data['roleChanged'] ?? false,
           'newRole': response.data['newRole'],
         };
       }
-      return {'success': false, 'error': 'Failed to respond'};
+      return {
+        'success': false,
+        'error': response.data?['error'] ?? 'Failed to respond',
+      };
     } catch (e) {
-      // Mock success for testing if API fails
-      // return {'success': true, 'roleChanged': false};
+      print('Error responding to invitation: $e');
       return {'success': false, 'error': e.toString()};
     }
   }

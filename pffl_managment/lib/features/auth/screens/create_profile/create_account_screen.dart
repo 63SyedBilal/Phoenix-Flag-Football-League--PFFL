@@ -33,9 +33,7 @@ class CreateAccountScreen extends StatelessWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
           surfaceTintColor: Colors.transparent,
-          leading: ArrowBackButton(
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+          leading: ArrowBackButton(),
           backgroundColor: Colors.white,
         ),
         body: SafeArea(

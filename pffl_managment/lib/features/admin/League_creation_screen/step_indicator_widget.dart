@@ -9,6 +9,8 @@ class StepIndicatorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<CreateLeagueViewModel>(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -18,29 +20,11 @@ class StepIndicatorWidget extends StatelessWidget {
           Row(
             children: [
               _buildStepCircle(context, viewModel, 1, 'Create League'),
-              Container(
-                width: 56,
-                height: 2,
-                color: viewModel.currentStep > 0
-                    ? AppColors.stepActive
-                    : AppColors.stepInactive,
-              ),
+              _buildConnectorLine(viewModel, 0),
               _buildStepCircle(context, viewModel, 2, 'Referees'),
-              Container(
-                width: 56,
-                height: 2,
-                color: viewModel.currentStep > 1
-                    ? AppColors.stepActive
-                    : AppColors.stepInactive,
-              ),
+              _buildConnectorLine(viewModel, 1),
               _buildStepCircle(context, viewModel, 3, 'Stat Keeper'),
-              Container(
-                width: 56,
-                height: 2,
-                color: viewModel.currentStep > 2
-                    ? AppColors.stepActive
-                    : AppColors.stepInactive,
-              ),
+              _buildConnectorLine(viewModel, 2),
               _buildStepCircle(context, viewModel, 4, 'Invite Teams'),
             ],
           ),
@@ -48,13 +32,24 @@ class StepIndicatorWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStepLabel('Create League'),
-              _buildStepLabel('Referees'),
-              _buildStepLabel('Stat Keeper'),
-              _buildStepLabel('Invite Teams'),
+              _buildStepLabel('Create League', screenWidth),
+              _buildStepLabel('Referees', screenWidth),
+              _buildStepLabel('Stat Keeper', screenWidth),
+              _buildStepLabel('Invite Teams', screenWidth),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildConnectorLine(CreateLeagueViewModel viewModel, int stepIndex) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        color: viewModel.currentStep > stepIndex
+            ? AppColors.stepActive
+            : AppColors.stepInactive,
       ),
     );
   }
@@ -105,13 +100,20 @@ class StepIndicatorWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStepLabel(String label) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.bold,
-        color: AppColors.stepActive,
+  Widget _buildStepLabel(String label, double screenWidth) {
+    final fontSize = screenWidth < 360 ? 9.0 : 10.0;
+
+    return Flexible(
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          color: AppColors.stepActive,
+        ),
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

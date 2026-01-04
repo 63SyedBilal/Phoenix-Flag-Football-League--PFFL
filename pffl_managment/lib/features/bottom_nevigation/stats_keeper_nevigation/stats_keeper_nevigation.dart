@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/svg_icons.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/stat_keeper_navigation_provider.dart';
+import 'package:pffl_managment/features/stat_keeper/screens/stat_add/stat_add_screen.dart';
 
 class StatsKeeperNevigation extends StatelessWidget {
   const StatsKeeperNevigation({super.key});
@@ -47,7 +48,37 @@ class StatsKeeperNevigation extends StatelessWidget {
                     svgIconSelected: SvgIcons.addFilled(size: 20),
                     label: 'Add',
                     isActive: viewModel.selectedIndex == 2,
-                    onTap: () => viewModel.setIndex(2),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (context) => Dialog(
+                          backgroundColor: Colors.transparent,
+                          insetPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 10,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                            ),
+                            child: const ClipRRect(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(16),
+                              ),
+                              child: Material(child: StatAddScreen()),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   NavItem(
                     svgIcon: SvgIcons.leagues(size: 20),

@@ -8,25 +8,19 @@ import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/tabs/draf
 import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/tabs/approved_stats_tab.dart';
 import 'package:pffl_managment/features/stat_keeper/screens/stat_stats/widgets/stats_search_bar.dart';
 
-class StatStatsScreen extends StatefulWidget {
+class StatStatsScreen extends StatelessWidget {
   const StatStatsScreen({super.key});
-
-  @override
-  State<StatStatsScreen> createState() => _StatStatsScreenState();
-}
-
-class _StatStatsScreenState extends State<StatStatsScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StatStatsProvider>().fetchAssignedMatches();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<StatStatsProvider>();
+
+    // Initial fetch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (provider.assignedMatches.isEmpty && !provider.isLoading) {
+        provider.fetchAssignedMatches();
+      }
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -54,7 +48,7 @@ class _StatStatsScreenState extends State<StatStatsScreen> {
                         return DropdownMenuItem<String>(
                           value: match.id,
                           child: Text(
-                            '${match.homeTeam} vs ${match.awayTeam} (${match.date})',
+                            '${match.homeTeam} vs ${match.awayTeam}',
                             style: AppTextStyles.bodyMedium,
                           ),
                         );

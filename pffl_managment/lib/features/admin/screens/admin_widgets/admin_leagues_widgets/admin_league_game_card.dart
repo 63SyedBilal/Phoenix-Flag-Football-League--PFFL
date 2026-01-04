@@ -9,7 +9,7 @@ class AdminLeagueGameCard extends StatelessWidget {
   final MatchModel match;
   final LeagueCreationModel league;
   final int totalGames;
-  final int? sequenceNumber; // Position in the sorted list (1-based)
+  final int? sequenceNumber;
 
   const AdminLeagueGameCard({
     super.key,

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
+import 'package:pffl_managment/core/utils/team_utils.dart';
 
 class RefereeGameTeamHeader extends StatelessWidget {
-  const RefereeGameTeamHeader({
-    super.key,
-    required this.match,
-  });
+  const RefereeGameTeamHeader({super.key, required this.match});
 
   final MatchModel? match;
 
@@ -39,10 +37,7 @@ class RefereeGameTeamHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildTeamInfo({
-    required String logoPath,
-    required String teamName,
-  }) {
+  Widget _buildTeamInfo({required String logoPath, required String teamName}) {
     return Column(
       children: [
         Container(
@@ -64,9 +59,7 @@ class RefereeGameTeamHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          teamName.length > 3
-              ? teamName.substring(0, 3).toUpperCase()
-              : teamName.toUpperCase(),
+          getTeamAbbreviation(teamName),
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,

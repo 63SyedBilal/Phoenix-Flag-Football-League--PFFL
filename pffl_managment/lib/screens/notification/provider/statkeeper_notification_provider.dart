@@ -17,7 +17,9 @@ class StatKeeperNotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await NotificationService.getUserNotifications();
+      _notifications = await NotificationService.getUserNotifications(
+        role: 'statkeeper',
+      );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';
     } finally {

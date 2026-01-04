@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
+import 'package:pffl_managment/core/widgets/dotted_border_widget.dart'; // Import DottedBorderWidget
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
 
@@ -44,24 +46,18 @@ class _TeamStatsDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<TeamStatsProvider>(context);
 
-    // Filter players who have any stats (optional, but cleaner)
-    // For now show all players in the list even if stats are 0
-    // But since valid stats list comes from backend, it might only contain those with stats?
-    // The parsing logic in StatKeeperRepository might include all players if backend sends them.
-    // Let's rely on what's in teamStats.playerStats.
-
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(leading: ArrowBackButton()),
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   _buildTeamHeader(),
-                  const SizedBox(height: 24),
+
                   _buildTabs(),
                   const SizedBox(height: 24),
                   provider.selectedTab == 'Team Stats'
@@ -76,43 +72,50 @@ class _TeamStatsDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back, size: 24, color: Colors.black),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTeamHeader() {
     return Row(
       children: [
-        Container(
+        SizedBox(
           width: 48,
           height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 2,
-              style: BorderStyle.solid,
+          child: DottedBorderWidget(
+            shape: DottedBorderShape.circle,
+            strokeWidth: 1,
+            dashWidth: 2,
+            dashSpace: 2,
+            color: const Color(0xFF000000).withValues(alpha: 0.5),
+            child: Padding(
+              padding: const EdgeInsets.all(3),
+              child: ClipOval(
+                child: teamStats.teamLogo.isNotEmpty
+                    ? Image.network(
+                        teamStats.teamLogo,
+                        width: 42,
+                        height: 42,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: const Color(0xFFE5E7EB),
+                          child: const Center(
+                            child: Icon(
+                              Icons.shield,
+                              size: 20,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        color: const Color(0xFFE5E7EB),
+                        child: const Center(
+                          child: Icon(
+                            Icons.shield,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+              ),
             ),
-          ),
-          child: ClipOval(
-            child: teamStats.teamLogo.isNotEmpty
-                ? Image.network(
-                    teamStats.teamLogo,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.shield, size: 24, color: Colors.grey),
-                  )
-                : const Icon(Icons.shield, size: 24, color: Colors.grey),
           ),
         ),
         const SizedBox(width: 12),
@@ -141,30 +144,34 @@ class _TeamStatsDetailView extends StatelessWidget {
   }
 
   Widget _buildTabs() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'View all Stats game summary of this league assigned game.',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            color: Colors.grey[600],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'View all Stats game summary of this league assigned game.',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              fontFamily: "Lato",
+              color: Colors.grey[600],
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Consumer<TeamStatsProvider>(
-          builder: (context, provider, _) {
-            return Row(
-              children: [
-                _buildTabButton('Team Stats', provider),
-                const SizedBox(width: 12),
-                _buildTabButton('Players Stats', provider),
-              ],
-            );
-          },
-        ),
-      ],
+          const SizedBox(height: 16),
+          Consumer<TeamStatsProvider>(
+            builder: (context, provider, _) {
+              return Row(
+                children: [
+                  _buildTabButton('Team Stats', provider),
+                  const SizedBox(width: 12),
+                  _buildTabButton('Players Stats', provider),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -176,7 +183,7 @@ class _TeamStatsDetailView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF3B82F6) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF3B82F6)
@@ -236,25 +243,18 @@ class _TeamStatsDetailView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Column(
-            children: statList.asMap().entries.map((entry) {
-              final index = entry.key;
-              final stat = entry.value;
-              final isLast = index == statList.length - 1;
-              return _buildStatRow(
-                stat['label']!,
-                stat['value']!,
-                isLast: isLast,
-              );
-            }).toList(),
-          ),
+        const SizedBox(height: 8),
+        Column(
+          children: statList.asMap().entries.map((entry) {
+            final index = entry.key;
+            final stat = entry.value;
+            final isLast = index == statList.length - 1;
+            return _buildStatRow(
+              stat['label']!,
+              stat['value']!,
+              isLast: isLast,
+            );
+          }).toList(),
         ),
       ],
     );
@@ -291,10 +291,8 @@ class _TeamStatsDetailView extends StatelessWidget {
             .map(
               (player) => _buildPlayerCard(
                 player.playerName,
-                'Player', // Position not in PlayerStatModel currently, but PlayerModel has it.
-                // We might need to update PlayerStatModel to include position or fetch it.
-                // For now, default to 'Player' or empty.
-                showStats: true, // Always show stats if requested
+                'Player',
+                showStats: true,
                 stats: [
                   {'label': 'Catches', 'value': player.catches.toString()},
                   {
@@ -355,7 +353,7 @@ class _TeamStatsDetailView extends StatelessWidget {
                 vertical: 8,
               ),
               childrenPadding: EdgeInsets.zero,
-              shape: const Border(), // Remove expansion border
+              shape: const Border(),
               title: Row(
                 children: [
                   Container(
@@ -451,12 +449,10 @@ class _TeamStatsDetailView extends StatelessWidget {
   }
 
   Widget _buildStatRow(String label, String value, {bool isLast = false}) {
-    // Helper to format values if needed (currently strings)
-    // Could add formatting logic here if needed.
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -481,12 +477,12 @@ class _TeamStatsDetailView extends StatelessWidget {
         ),
         if (!isLast)
           const Divider(
-            height: 1,
-            color: Color(0xFFE5E7EB),
-            indent: 16,
-            endIndent: 16,
+            height: 2,
+            color: Color.fromARGB(255, 110, 113, 118),
+            indent: 8,
+            endIndent: 8,
           ),
       ],
     );
   }
-} // End class
+}

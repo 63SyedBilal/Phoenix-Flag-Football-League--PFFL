@@ -12,7 +12,6 @@ class PlayerNotification extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Using global provider from app_providers.dart
     final provider = Provider.of<PlayerNotificationProvider>(context);
 
     return Scaffold(
@@ -20,7 +19,6 @@ class PlayerNotification extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Custom AppBar with back button
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Row(
@@ -75,7 +73,6 @@ class PlayerNotification extends StatelessWidget {
                 ],
               ),
             ),
-            // Notifications list
             Expanded(child: _buildBody(context, provider)),
           ],
         ),

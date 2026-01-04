@@ -17,7 +17,9 @@ class FreeAgentNotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await NotificationService.getUserNotifications();
+      _notifications = await NotificationService.getUserNotifications(
+        role: 'freeagent',
+      );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';
     } finally {

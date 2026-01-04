@@ -23,7 +23,6 @@ class _ActionButtons extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -43,7 +42,7 @@ class _ActionButtons extends StatelessWidget {
                   height: 48,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               Expanded(
                 child: CustomButton.primary(
                   text: provider.isReadOnly ? 'Read Only' : 'Update Now',
@@ -122,187 +121,152 @@ class _StatAddScreenContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<StatAddProvider>();
 
-    final content = Container(
-      constraints: const BoxConstraints(maxWidth: 400),
-      margin: isDialog ? EdgeInsets.zero : const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const _HeaderSection(),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-
-                  if (provider.isReadOnly)
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.amber.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.lock,
-                            color: Colors.amber.shade800,
-                            size: 16,
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const _HeaderSection(),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (provider.isReadOnly)
+                  Row(
+                    children: [
+                      Icon(Icons.lock, color: Colors.amber.shade800, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'This match is completed and stats are locked.',
+                          style: TextStyle(
+                            color: Colors.amber.shade900,
+                            fontSize: 12,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'This match is completed and stats are locked.',
-                              style: TextStyle(
-                                color: Colors.amber.shade900,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-
-                  _buildLabel('Select Game'),
-                  const SizedBox(height: 8),
-                  if (provider.isLoadingMatches)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    SimpleDropdownList(
-                      selectedValue: provider.selectedMatchId != null
-                          ? provider.assignedMatches
-                                .where((m) => m.id == provider.selectedMatchId)
-                                .map(
-                                  (m) =>
-                                      '${m.homeTeam} vs ${m.awayTeam} (${m.date})',
-                                )
-                                .firstOrNull
-                          : null,
-                      items: provider.matchOptions,
-                      onSelected: (String val) {
-                        if (!provider.isReadOnly)
-                          provider.setSelectedMatch(val);
-                      },
-                      hintText: 'Select Game',
-                    ),
-                  const SizedBox(height: 20),
-
-                  _buildLabel('Select Team'),
-                  const SizedBox(height: 8),
-                  if (provider.isLoadingTeams)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    SimpleDropdownList(
-                      selectedValue: provider.selectedTeam,
-                      items: provider.teams,
-                      onSelected: (String val) {
-                        if (!provider.isReadOnly) provider.setSelectedTeam(val);
-                      },
-                      hintText: 'Select Team',
-                    ),
-                  const SizedBox(height: 20),
-
-                  _buildLabel('Select Player'),
-                  const SizedBox(height: 8),
-                  if (provider.isLoadingPlayers)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    SimpleDropdownList(
-                      selectedValue: provider.selectedPlayer,
-                      items: provider.players,
-                      onSelected: (String val) {
-                        if (!provider.isReadOnly)
-                          provider.setSelectedPlayer(val);
-                      },
-                      hintText: 'Select Player',
-                    ),
-                  const SizedBox(height: 24),
-
-                  _buildStatRow(
-                    'Catches',
-                    'Catches Yards',
-                    provider.catchesController,
-                    provider.catchesYardsController,
-                    provider.isReadOnly,
+                    ],
                   ),
-                  const SizedBox(height: 16),
 
-                  _buildStatRow(
-                    'Rushes',
-                    'Rushes Yards',
-                    provider.rushesController,
-                    provider.rushesYardsController,
-                    provider.isReadOnly,
+                _buildLabel('Select Game'),
+                const SizedBox(height: 6),
+                if (provider.isLoadingMatches)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  SimpleDropdownList(
+                    selectedValue: provider.selectedMatchId != null
+                        ? provider.assignedMatches
+                              .where((m) => m.id == provider.selectedMatchId)
+                              .map((m) => '${m.homeTeam} vs ${m.awayTeam}')
+                              .firstOrNull
+                        : null,
+                    items: provider.matchOptions,
+                    onSelected: (String val) {
+                      if (!provider.isReadOnly) provider.setSelectedMatch(val);
+                    },
+                    hintText: 'Select Game',
                   ),
-                  const SizedBox(height: 16),
+                const SizedBox(height: 6),
 
-                  _buildStatRow(
-                    'Pass Attempts',
-                    'Pass Yards',
-                    provider.passAttemptsController,
-                    provider.passYardsController,
-                    provider.isReadOnly,
+                _buildLabel('Select Team'),
+                const SizedBox(height: 6),
+                if (provider.isLoadingTeams)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  SimpleDropdownList(
+                    selectedValue: provider.selectedTeam,
+                    items: provider.teams,
+                    onSelected: (String val) {
+                      if (!provider.isReadOnly) provider.setSelectedTeam(val);
+                    },
+                    hintText: 'Select Team',
                   ),
-                  const SizedBox(height: 16),
+                const SizedBox(height: 6),
 
-                  _buildStatRow(
-                    'Completions',
-                    'TD\'s',
-                    provider.completionsController,
-                    provider.tdsController,
-                    provider.isReadOnly,
+                _buildLabel('Select Player'),
+                const SizedBox(height: 6),
+                if (provider.isLoadingPlayers)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  SimpleDropdownList(
+                    selectedValue: provider.selectedPlayer,
+                    items: provider.players,
+                    onSelected: (String val) {
+                      if (!provider.isReadOnly) provider.setSelectedPlayer(val);
+                    },
+                    hintText: 'Select Player',
                   ),
-                  const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
-                  _buildStatRow(
-                    'Flag Pull',
-                    'Sack',
-                    provider.flagPullController,
-                    provider.sackController,
-                    provider.isReadOnly,
-                  ),
-                  const SizedBox(height: 16),
+                _buildStatRow(
+                  'Catches',
+                  'Catches Yards',
+                  provider.catchesController,
+                  provider.catchesYardsController,
+                  provider.isReadOnly,
+                ),
+                const SizedBox(height: 16),
 
-                  _buildStatRow(
-                    'INT',
-                    'Safety',
-                    provider.intController,
-                    provider.safetyController,
-                    provider.isReadOnly,
-                  ),
-                  const SizedBox(height: 16),
+                _buildStatRow(
+                  'Rushes',
+                  'Rushes Yards',
+                  provider.rushesController,
+                  provider.rushesYardsController,
+                  provider.isReadOnly,
+                ),
+                const SizedBox(height: 16),
 
-                  _buildLabel('Conversion Points'),
-                  const SizedBox(height: 8),
-                  CustomTextField(
-                    controller: provider.conversionPointsController,
-                    hintText: 'Enter here',
-                    keyboardType: TextInputType.number,
-                    enabled: !provider.isReadOnly,
-                  ),
-                  const SizedBox(height: 32),
-                ],
-              ),
+                _buildStatRow(
+                  'Pass Attempts',
+                  'Pass Yards',
+                  provider.passAttemptsController,
+                  provider.passYardsController,
+                  provider.isReadOnly,
+                ),
+                const SizedBox(height: 16),
+
+                _buildStatRow(
+                  'Completions',
+                  'TD\'s',
+                  provider.completionsController,
+                  provider.tdsController,
+                  provider.isReadOnly,
+                ),
+                const SizedBox(height: 16),
+
+                _buildStatRow(
+                  'Flag Pull',
+                  'Sack',
+                  provider.flagPullController,
+                  provider.sackController,
+                  provider.isReadOnly,
+                ),
+                const SizedBox(height: 16),
+
+                _buildStatRow(
+                  'INT',
+                  'Safety',
+                  provider.intController,
+                  provider.safetyController,
+                  provider.isReadOnly,
+                ),
+                const SizedBox(height: 16),
+
+                _buildLabel('Conversion Points'),
+                const SizedBox(height: 8),
+                CustomTextField(
+                  controller: provider.conversionPointsController,
+                  hintText: 'Enter here',
+                  keyboardType: TextInputType.number,
+                  enabled: !provider.isReadOnly,
+                ),
+                const SizedBox(height: 32),
+              ],
             ),
           ),
-          _ActionButtons(provider: provider, isDialog: isDialog),
-        ],
-      ),
+        ),
+        _ActionButtons(provider: provider, isDialog: isDialog),
+      ],
     );
 
     if (isDialog) return content;
@@ -316,8 +280,10 @@ class _StatAddScreenContent extends StatelessWidget {
     return Text(
       text,
       style: AppTextStyles.labelLarge.copyWith(
+        fontSize: 14,
+        fontFamily: "Lato",
         color: AppColors.textPrimary,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
       ),
     );
   }
@@ -336,7 +302,7 @@ class _StatAddScreenContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildLabel(label1),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               CustomTextField(
                 controller: controller1,
                 hintText: 'Enter here',
@@ -352,7 +318,7 @@ class _StatAddScreenContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildLabel(label2),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               CustomTextField(
                 controller: controller2,
                 hintText: 'Enter here',
@@ -373,7 +339,7 @@ class _HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.borderLight, width: 1),
@@ -386,15 +352,19 @@ class _HeaderSection extends StatelessWidget {
             style: AppTextStyles.headlineSmall.copyWith(
               color: AppColors.textPrimary,
               fontSize: 22,
+              fontFamily: "Serotiva",
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             'Stats helps you to analyze game in smooth\nor better way',
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.iconEmailInactive,
               fontSize: 14,
+              fontFamily: "Lato",
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],

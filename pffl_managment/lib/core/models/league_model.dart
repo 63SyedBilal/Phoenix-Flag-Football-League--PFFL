@@ -1,3 +1,5 @@
+import 'package:pffl_managment/core/utils/team_utils.dart';
+
 class LeagueModel {
   final String id;
   final String name;
@@ -20,15 +22,18 @@ class LeagueMatchModel {
 }
 
 class TeamModel {
-  final String name;
+  final String _name;
   final String flagUrl;
   final int score;
   final bool isWinner;
 
+  String get name => getTeamAbbreviation(_name);
+  String get fullName => _name;
+
   TeamModel({
-    required this.name,
+    required String name,
     required this.flagUrl,
     required this.score,
     required this.isWinner,
-  });
+  }) : _name = name;
 }

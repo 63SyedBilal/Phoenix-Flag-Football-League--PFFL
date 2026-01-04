@@ -17,7 +17,9 @@ class CaptainNotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await NotificationService.getUserNotifications();
+      _notifications = await NotificationService.getUserNotifications(
+        role: 'captain',
+      );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';
     } finally {

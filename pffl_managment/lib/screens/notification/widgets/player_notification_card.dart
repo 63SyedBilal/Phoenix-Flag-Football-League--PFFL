@@ -143,6 +143,20 @@ class PlayerNotificationCard extends StatelessWidget {
                       ),
               ),
             )
+          else if (notification.isAccepted)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  'Accepted',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF10B981), // Success green
+                  ),
+                ),
+              ),
+            )
           else if (notification.isPending &&
               (onAccept != null || onDecline != null))
             Row(

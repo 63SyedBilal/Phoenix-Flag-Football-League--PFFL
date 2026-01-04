@@ -1,17 +1,21 @@
+import 'package:pffl_managment/core/utils/team_utils.dart';
 import 'player_model.dart';
 
 class StatKeeperTeamModel {
   final String id;
-  final String name;
+  final String _name;
   final String? logoUrl;
   final List<StatKeeperPlayerModel> players;
 
+  String get name => getTeamAbbreviation(_name);
+  String get fullName => _name;
+
   StatKeeperTeamModel({
     required this.id,
-    required this.name,
+    required String name,
     this.logoUrl,
     required this.players,
-  });
+  }) : _name = name;
 
   factory StatKeeperTeamModel.fromJson(Map<String, dynamic> json) {
     final teamId = json['_id']?.toString() ?? json['id']?.toString() ?? '';
@@ -31,52 +35,62 @@ class StatKeeperTeamModel {
 
     // Add captain first if exists
     if (captain != null) {
-      final captainId = captain['_id']?.toString() ?? captain['id']?.toString() ?? '';
+      final captainId =
+          captain['_id']?.toString() ?? captain['id']?.toString() ?? '';
       final captainFirstName = captain['firstName'] ?? '';
       final captainLastName = captain['lastName'] ?? '';
       final captainEmail = captain['email'] ?? '';
 
-      players.add(StatKeeperPlayerModel(
-        id: captainId,
-        name: '$captainFirstName $captainLastName'.trim(),
-        number: '',
-        email: captainEmail,
-        position: '',
-        isCaptain: true,
-      ));
+      players.add(
+        StatKeeperPlayerModel(
+          id: captainId,
+          name: '$captainFirstName $captainLastName'.trim(),
+          number: '',
+          email: captainEmail,
+          position: '',
+          isCaptain: true,
+        ),
+      );
     }
 
     // Add squad players
     for (var playerData in allSquadPlayers) {
       if (playerData is Map<String, dynamic>) {
-        final playerId = playerData['_id']?.toString() ??
-                         playerData['id']?.toString() ??
-                         playerData.toString();
+        final playerId =
+            playerData['_id']?.toString() ??
+            playerData['id']?.toString() ??
+            playerData.toString();
         final firstName = playerData['firstName'] ?? '';
         final lastName = playerData['lastName'] ?? '';
         final email = playerData['email'] ?? '';
 
         if (playerId.isNotEmpty && playerId != 'null') {
-          players.add(StatKeeperPlayerModel(
-            id: playerId,
-            name: '$firstName $lastName'.trim().isEmpty ? 'Player $playerId' : '$firstName $lastName'.trim(),
-            number: '',
-            email: email,
-            position: '',
-            isCaptain: false,
-          ));
+          players.add(
+            StatKeeperPlayerModel(
+              id: playerId,
+              name: '$firstName $lastName'.trim().isEmpty
+                  ? 'Player $playerId'
+                  : '$firstName $lastName'.trim(),
+              number: '',
+              email: email,
+              position: '',
+              isCaptain: false,
+            ),
+          );
         }
       } else if (playerData != null) {
         final playerId = playerData.toString();
         if (playerId.isNotEmpty && playerId != 'null') {
-          players.add(StatKeeperPlayerModel(
-            id: playerId,
-            name: 'Player $playerId',
-            number: '',
-            email: '',
-            position: '',
-            isCaptain: false,
-          ));
+          players.add(
+            StatKeeperPlayerModel(
+              id: playerId,
+              name: 'Player $playerId',
+              number: '',
+              email: '',
+              position: '',
+              isCaptain: false,
+            ),
+          );
         }
       }
     }
@@ -98,7 +112,7 @@ class StatKeeperTeamModel {
   }) {
     return StatKeeperTeamModel(
       id: id ?? this.id,
-      name: name ?? this.name,
+      name: name ?? _name,
       logoUrl: logoUrl ?? this.logoUrl,
       players: players ?? this.players,
     );

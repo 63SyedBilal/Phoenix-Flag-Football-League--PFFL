@@ -1,5 +1,5 @@
-import 'package:pffl_managment/features/profile_screens/admin_profile_screen.dart/admin_profile_screen.dart';
 import 'package:pffl_managment/screens/notification/player_notification/player_notification.dart';
+import 'package:pffl_managment/screens/profile_screen/player_profile_screen.dart';
 import 'package:pffl_managment/screens/settings/common/settings_section_model.dart';
 import 'package:pffl_managment/screens/settings/sections/my_performance.dart';
 import 'package:pffl_managment/features/payment_history/player_payment_history.dart';
@@ -11,7 +11,7 @@ List<SettingsSectionModel> getPlayerSettings() {
   return [
     SettingsSectionModel(
       title: 'Player information',
-      screen: const AdminProfileScreen(),
+      screen: const PlayerProfileScreen(),
     ),
     SettingsSectionModel(
       title: 'My performance',
