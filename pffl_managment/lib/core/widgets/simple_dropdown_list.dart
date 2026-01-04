@@ -13,6 +13,7 @@ class SimpleDropdownList extends StatefulWidget {
   final double borderRadius;
   final EdgeInsetsGeometry padding;
   final double maxHeight;
+  final TextStyle? hintStyle;
 
   const SimpleDropdownList({
     super.key,
@@ -24,7 +25,8 @@ class SimpleDropdownList extends StatefulWidget {
     this.borderColor,
     this.borderRadius = 6.0,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.maxHeight = 150.0, required TextStyle hintStyle,
+    this.maxHeight = 150.0,
+    this.hintStyle,
   });
 
   @override
@@ -77,7 +79,8 @@ class _SimpleDropdownListState extends State<SimpleDropdownList> {
 
     // Calculate if dropdown should appear above or below
     final screenHeight = MediaQuery.of(context).size.height;
-    final shouldAppearAbove = offset.dy + size.height + widget.maxHeight > screenHeight;
+    final shouldAppearAbove =
+        offset.dy + size.height + widget.maxHeight > screenHeight;
 
     return OverlayEntry(
       builder: (context) => Stack(
@@ -93,8 +96,8 @@ class _SimpleDropdownListState extends State<SimpleDropdownList> {
           Positioned(
             left: offset.dx,
             width: size.width,
-            top: shouldAppearAbove 
-                ? offset.dy - widget.maxHeight - 5 
+            top: shouldAppearAbove
+                ? offset.dy - widget.maxHeight - 5
                 : offset.dy + size.height + 5,
             child: Material(
               color: Colors.transparent,
@@ -137,7 +140,9 @@ class _SimpleDropdownListState extends State<SimpleDropdownList> {
                                   : Colors.transparent,
                               border: Border(
                                 bottom: BorderSide(
-                                  color: AppColors.borderDefault.withValues(alpha: 0.5),
+                                  color: AppColors.borderDefault.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   width: 0.5,
                                 ),
                               ),
@@ -198,9 +203,10 @@ class _SimpleDropdownListState extends State<SimpleDropdownList> {
                       ? AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textPrimary,
                         )
-                      : AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textDisabled,
-                        ),
+                      : (widget.hintStyle ??
+                            AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textDisabled,
+                            )),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -209,7 +215,6 @@ class _SimpleDropdownListState extends State<SimpleDropdownList> {
                 'assets/icons/home_icons/arrowDounIcon.svg',
                 width: 18,
                 height: 18,
-              //  color: AppColors.textPrimary,
               ),
             ],
           ),
