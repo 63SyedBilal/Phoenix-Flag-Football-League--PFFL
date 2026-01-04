@@ -135,12 +135,7 @@ class _GameDetailsContent extends StatelessWidget {
   }
 
   Widget _buildTeamHeader(String name, String logo, bool isHome) {
-    // Shorten name if needed or just logo for the score header part?
-    // Image shows Logo + Name acronym (e.g. BS, STA)
-    // I'll assume valid short names or just use truncated
-    String shortName = name.length > 3
-        ? name.substring(0, 3).toUpperCase()
-        : name.toUpperCase();
+    String shortName = name;
     if (shortName == "HOME TEAM") shortName = "BS"; // Match image stub
     if (shortName == "AWAY TEAM") shortName = "STA";
 
@@ -160,8 +155,8 @@ class _GameDetailsContent extends StatelessWidget {
               ),
             ]
           : [
-        const SizedBox(width: 8),
-        _buildLogo(logo),
+              const SizedBox(width: 8),
+              _buildLogo(logo),
               Text(
                 shortName,
                 style: const TextStyle(
@@ -170,7 +165,6 @@ class _GameDetailsContent extends StatelessWidget {
                   fontFamily: 'Lato',
                 ),
               ),
-
             ],
     );
   }

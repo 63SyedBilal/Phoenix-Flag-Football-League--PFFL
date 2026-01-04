@@ -6,7 +6,6 @@ import 'package:pffl_managment/core/services/device_service.dart';
 import 'package:pffl_managment/core/services/error_reporting_service.dart';
 import 'package:pffl_managment/routes/route_generator.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
-
 import 'package:pffl_managment/core/services/preference_service.dart';
 
 void main() async {
@@ -35,7 +34,6 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Phoenix Flag Football League',
         theme: app_theme.AppTheme.lightTheme,
-        themeMode: ThemeMode.system,
         initialRoute: AppRoutes.getStarted,
         onGenerateRoute: RouteGenerator.generateRoute,
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
+import 'package:pffl_managment/core/widgets/dotted_border_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/stat_keeper/models/game_stat_model.dart';
 import 'package:pffl_managment/features/stat_keeper/providers/game_stats_provider.dart';
@@ -33,7 +34,7 @@ class _GameStatsScreenContent extends StatelessWidget {
 
     if (provider.errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(leading: ArrowBackButton(),),
+        appBar: AppBar(leading: ArrowBackButton()),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -68,30 +69,29 @@ class _GameStatsScreenContent extends StatelessWidget {
 
     if (stats == null) {
       return Scaffold(
-        appBar: AppBar(leading: ArrowBackButton(),),
+        appBar: AppBar(leading: ArrowBackButton()),
         body: const Center(child: Text('No stats available')),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(leading: ArrowBackButton(),),
+      appBar: AppBar(leading: ArrowBackButton()),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-        
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   _buildLeagueHeader(stats.leagueName),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _buildScoreCards(context, provider, stats),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                   _buildTeamStats(context, provider, stats),
                   const SizedBox(height: 24),
                   _buildDetailsButton(context, provider, stats),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 16),
                 ],
               ),
             ),
@@ -101,29 +101,40 @@ class _GameStatsScreenContent extends StatelessWidget {
     );
   }
 
-
   Widget _buildLeagueHeader(String leagueName) {
     return Column(
       children: [
         Row(
           children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 2,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/league_logo.png', // Placeholder or use network image if available
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.shield, size: 24, color: Colors.grey),
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: DottedBorderWidget(
+                shape: DottedBorderShape.circle,
+                strokeWidth: 1,
+                dashWidth: 2,
+                dashSpace: 2,
+                color: const Color(0xFF000000).withValues(alpha: 0.5),
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/league_logo.png',
+                      width: 42,
+                      height: 42,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFFE5E7EB),
+                        child: const Center(
+                          child: Icon(
+                            Icons.shield,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -135,31 +146,28 @@ class _GameStatsScreenContent extends StatelessWidget {
                   Text(
                     leagueName.isNotEmpty ? leagueName : 'League Name',
                     style: const TextStyle(
-                      fontSize: 32,
-                      fontFamily: 'Serotiva',
+                      fontSize: 24,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF000000),
                     ),
                   ),
-               
-                 
                 ],
               ),
             ),
           ],
         ),
-         Padding(
-           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-           child: Text(
-                  'View all Stats game summary of this league assigned game.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Lato',
-                    color: Colors.grey[600],
-                  ),
-                ),
-         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          child: Text(
+            'View all Stats game summary of this league assigned game.',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              fontFamily: "Lato",
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -169,9 +177,6 @@ class _GameStatsScreenContent extends StatelessWidget {
     GameStatsProvider provider,
     GameStatModel stats,
   ) {
-    // Determine winner based on score if available (not in current model, using parsed stats?)
-    // GameStatModel has team1Stats and team2Stats. Let's start with TDS count as proxy or just visual selection.
-
     return Row(
       children: [
         Expanded(
@@ -267,24 +272,29 @@ class _GameStatsScreenContent extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  score,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'TDs', // Label for the score
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: subTextColor,
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(
+                      score,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: "Lato",
+                        color: textColor,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'TDs', // Label for the score
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: subTextColor,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

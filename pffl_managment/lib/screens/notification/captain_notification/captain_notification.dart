@@ -1,200 +1,239 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/core/providers/notification_provider.dart';
-import 'package:pffl_managment/core/models/notification_model.dart';
+import 'package:pffl_managment/screens/notification/provider/captain_notification_provider.dart';
+import 'package:pffl_managment/screens/notification/models/notification_model.dart';
 import 'package:pffl_managment/features/captain/providers/captain_team_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
+import 'package:pffl_managment/core/widgets/custom_flushbar.dart';
 
-class CaptainNotification extends StatefulWidget {
+class CaptainNotification extends StatelessWidget {
   const CaptainNotification({super.key});
 
   @override
-  State<CaptainNotification> createState() => _CaptainNotificationState();
-}
-
-class _CaptainNotificationState extends State<CaptainNotification> {
-  String? _processingNotificationId;
-
-  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => NotificationProvider(),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Custom AppBar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.black,
-                          size: 20,
-                        ),
+    // Using global provider from app_providers.dart
+    final provider = Provider.of<CaptainNotificationProvider>(context);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom AppBar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.black,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Notifications',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF000000),
-                            ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Notifications',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF000000),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Manage your team and league invitations',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF666666),
-                            ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Manage your team and league invitations',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF666666),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Consumer<NotificationProvider>(
-                      builder: (context, provider, _) {
-                        return IconButton(
-                          icon: const Icon(Icons.refresh),
-                          onPressed: provider.isLoading
-                              ? null
-                              : () => provider.refresh(),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: provider.isLoading
+                        ? null
+                        : () => provider.refresh(),
+                  ),
+                ],
               ),
-              // Notifications list
-              Expanded(
-                child: Consumer<NotificationProvider>(
-                  builder: (context, provider, _) {
-                    if (provider.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (provider.errorMessage != null) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                size: 48,
-                                color: Colors.grey[400],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                provider.errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () => provider.refresh(),
-                                child: const Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (provider.notifications.isEmpty) {
-                      return const NotificationEmptyState();
-                    }
-
-                    return RefreshIndicator(
-                      onRefresh: () => provider.refresh(),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: provider.notifications.length,
-                        itemBuilder: (context, index) {
-                          final notification = provider.notifications[index];
-                          final isProcessing =
-                              _processingNotificationId == notification.id;
-
-                          // Show buttons for LEAGUE_TEAM_INVITE and TEAM_INVITE when pending
-                          // TEAM_INVITE_ACCEPTED is informational only (no buttons needed)
-                          final isPending = notification.isPending;
-                          final isInviteType =
-                              notification.type == 'LEAGUE_TEAM_INVITE' ||
-                              notification.type == 'TEAM_INVITE';
-                          final shouldShowButtons = isPending && isInviteType;
-
-                          // If TEAM_INVITE_ACCEPTED, refresh team data when notification is viewed
-                          if (notification.type == 'TEAM_INVITE_ACCEPTED' &&
-                              !isProcessing) {
-                            // Refresh team data in background when notification is displayed
-                            WidgetsBinding.instance.addPostFrameCallback((
-                              _,
-                            ) async {
-                              try {
-                                final captainTeamProvider =
-                                    Provider.of<CaptainTeamProvider>(
-                                      context,
-                                      listen: false,
-                                    );
-                                await captainTeamProvider.refresh();
-                                print(
-                                  '✅ Team data refreshed after viewing TEAM_INVITE_ACCEPTED',
-                                );
-                              } catch (e) {
-                              }
-                            });
-                          }
-
-                          return _buildNotificationCard(
-                            notification: notification,
-                            isProcessing: isProcessing,
-                            showButtons: shouldShowButtons,
-                            onAccept: shouldShowButtons
-                                ? () => _handleAccept(context, notification.id)
-                                : null,
-                            onReject: shouldShowButtons
-                                ? () => _handleReject(context, notification.id)
-                                : null,
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+            // Notifications list
+            Expanded(child: _buildBody(context, provider)),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNotificationCard({
-    required NotificationModel notification,
-    required bool isProcessing,
-    required bool showButtons,
-    VoidCallback? onAccept,
-    VoidCallback? onReject,
-  }) {
+  Widget _buildBody(
+    BuildContext context,
+    CaptainNotificationProvider provider,
+  ) {
+    if (provider.isLoading && provider.notifications.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.errorMessage != null && provider.notifications.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                provider.errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => provider.refresh(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (provider.notifications.isEmpty) {
+      return const NotificationEmptyState();
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.refresh(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: provider.notifications.length,
+        itemBuilder: (context, index) {
+          final notification = provider.notifications[index];
+          final isPending = notification.isPending;
+          final isInviteType =
+              notification.type == 'LEAGUE_TEAM_INVITE' ||
+              notification.type == 'TEAM_INVITE';
+          final shouldShowButtons = isPending && isInviteType;
+
+          return _NotificationCard(
+            notification: notification,
+            isProcessing: provider.isLoading,
+            showButtons: shouldShowButtons,
+            onAccept: shouldShowButtons
+                ? () => _handleAccept(context, notification.id, provider)
+                : null,
+            onReject: shouldShowButtons
+                ? () => _handleReject(context, notification.id, provider)
+                : null,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _handleAccept(
+    BuildContext context,
+    String notificationId,
+    CaptainNotificationProvider provider,
+  ) async {
+    try {
+      final result = await provider.acceptNotification(notificationId);
+      final success = result['success'] == true;
+
+      if (success && context.mounted) {
+        await provider.refresh();
+
+        try {
+          final captainTeamProvider = Provider.of<CaptainTeamProvider>(
+            context,
+            listen: false,
+          );
+          await captainTeamProvider.refresh();
+        } catch (e) {}
+
+        if (context.mounted) {
+          CustomFlushbar.showTopSuccess(
+            context,
+            message: 'Invitation accepted successfully!',
+          );
+        }
+      } else if (context.mounted) {
+        CustomFlushbar.showError(
+          context,
+          message: provider.errorMessage ?? 'Failed to accept invitation',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        CustomFlushbar.showError(
+          context,
+          message: 'Error: ${e.toString().replaceAll('Exception: ', '')}',
+        );
+      }
+    }
+  }
+
+  Future<void> _handleReject(
+    BuildContext context,
+    String notificationId,
+    CaptainNotificationProvider provider,
+  ) async {
+    try {
+      final success = await provider.rejectNotification(notificationId);
+
+      if (success && context.mounted) {
+        CustomFlushbar.showWarning(context, message: 'Invitation rejected.');
+      } else if (context.mounted) {
+        CustomFlushbar.showError(
+          context,
+          message: provider.errorMessage ?? 'Failed to reject invitation',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        CustomFlushbar.showError(
+          context,
+          message: 'Error: ${e.toString().replaceAll('Exception: ', '')}',
+        );
+      }
+    }
+  }
+}
+
+class _NotificationCard extends StatelessWidget {
+  final NotificationModel notification;
+  final bool isProcessing;
+  final bool showButtons;
+  final VoidCallback? onAccept;
+  final VoidCallback? onReject;
+
+  const _NotificationCard({
+    required this.notification,
+    required this.isProcessing,
+    required this.showButtons,
+    this.onAccept,
+    this.onReject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -211,7 +250,7 @@ class _CaptainNotificationState extends State<CaptainNotification> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -223,7 +262,6 @@ class _CaptainNotificationState extends State<CaptainNotification> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Team/League image or default icon
               Container(
                 width: 56,
                 height: 56,
@@ -310,7 +348,6 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                   ],
                 ),
               ),
-              // Status badge
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -339,12 +376,10 @@ class _CaptainNotificationState extends State<CaptainNotification> {
               ),
             ],
           ),
-          // Action buttons for pending notifications - show when callbacks are provided
           if (onAccept != null || onReject != null) ...[
             const SizedBox(height: 16),
             Row(
               children: [
-                // Cancel/Reject button
                 if (onReject != null)
                   Expanded(
                     child: OutlinedButton(
@@ -369,10 +404,8 @@ class _CaptainNotificationState extends State<CaptainNotification> {
                       ),
                     ),
                   ),
-                // Spacing between buttons
                 if (onAccept != null && onReject != null)
                   const SizedBox(width: 12),
-                // Accept button
                 if (onAccept != null)
                   Expanded(
                     child: ElevatedButton(
@@ -430,138 +463,4 @@ class _CaptainNotificationState extends State<CaptainNotification> {
       return 'Just now';
     }
   }
-
-  Future<void> _handleAccept(
-    BuildContext context,
-    String notificationId,
-  ) async {
-    setState(() {
-      _processingNotificationId = notificationId;
-    });
-
-    try {
-      final provider = Provider.of<NotificationProvider>(
-        context,
-        listen: false,
-      );
-      final result = await provider.acceptNotification(notificationId);
-      final success = result['success'] == true;
-
-      if (success && context.mounted) {
-        // Refresh notifications to update status
-        await provider.refresh();
-
-        // If this is a TEAM_INVITE_ACCEPTED notification, refresh team data
-        final notification = provider.notifications.firstWhere(
-          (n) => n.id == notificationId,
-          orElse: () => provider.notifications.first,
-        );
-
-        if (notification.type == 'TEAM_INVITE_ACCEPTED') {
-          // Refresh captain team data to show new player
-          try {
-            final captainTeamProvider = Provider.of<CaptainTeamProvider>(
-              context,
-              listen: false,
-            );
-            await captainTeamProvider.refresh();
-          } catch (e) {
-            // Provider not available in context, that's okay
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invitation accepted successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } else if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              provider.errorMessage ?? 'Failed to accept invitation',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error: ${e.toString().replaceAll('Exception: ', '')}',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _processingNotificationId = null;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleReject(
-    BuildContext context,
-    String notificationId,
-  ) async {
-    setState(() {
-      _processingNotificationId = notificationId;
-    });
-
-    try {
-      final provider = Provider.of<NotificationProvider>(
-        context,
-        listen: false,
-      );
-      final success = await provider.rejectNotification(notificationId);
-
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invitation rejected successfully!'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } else if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              provider.errorMessage ?? 'Failed to reject invitation',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error: ${e.toString().replaceAll('Exception: ', '')}',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _processingNotificationId = null;
-        });
-      }
-    }
-  }
 }
-

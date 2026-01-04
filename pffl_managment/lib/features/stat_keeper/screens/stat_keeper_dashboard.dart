@@ -27,10 +27,7 @@ class StatKeeperDashboard extends StatelessWidget {
     return BackButtonWrapper(
       isRoot: true,
       child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => StatStatsProvider()),
-          // Add other global stats providers here if needed
-        ],
+        providers: [ChangeNotifierProvider(create: (_) => StatStatsProvider())],
         child: Scaffold(
           body: SafeArea(
             child: Column(

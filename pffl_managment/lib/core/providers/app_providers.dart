@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/screens/notification/provider/admin_notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/player_notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/captain_notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/referee_notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/statkeeper_notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/freeagent_notification_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/core/providers/unified_games_provider.dart';
 import 'package:pffl_managment/features/admin/provider/create_league_viewmodel.dart';
@@ -7,7 +13,7 @@ import 'package:pffl_managment/features/admin/provider/upcoming_games_provider.d
 import 'package:pffl_managment/features/admin/shared/providers/animated_fab_provider.dart';
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
 import 'package:pffl_managment/features/admin/provider/leagues_provider.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/refund_reason_provider.dart';
+// import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/refund_reason_provider.dart';
 import 'package:pffl_managment/features/captain/providers/captain_team_provider.dart';
 import 'package:pffl_managment/features/free_agent/providers/free_agent_onboarding_provider.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +24,7 @@ import 'package:pffl_managment/features/admin/provider/admin_user_provider/users
 import 'package:pffl_managment/features/sponsors/providers/sponsor_banner_provider.dart';
 import 'package:pffl_managment/core/providers/admin_setting_provider/settings_provider.dart';
 import 'package:pffl_managment/features/admin/provider/edit_match_provider.dart';
-import 'package:pffl_managment/features/admin/shared/providers/sponsor_screen_provider.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/sponser_screen/provider/sponsor_screen_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/captain_navigation_provider.dart';
 import 'package:pffl_managment/features/captain/providers/captain_match_provider.dart';
 import 'package:pffl_managment/core/captain_provider/home_screen_provider/captain_dashboard_provider.dart';
@@ -35,7 +41,6 @@ import 'package:pffl_managment/features/profile_screens/complet_profile_screen/p
 import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
 import 'package:pffl_managment/invite_screens/captain_invite_screen/providers/captain_invite_provider.dart';
 import 'package:pffl_managment/features/player/providers/player_team_provider.dart';
-import 'package:pffl_managment/core/providers/notification_provider.dart';
 import 'package:pffl_managment/core/providers/back_button_provider.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/core/services/preference_service.dart';
@@ -50,6 +55,9 @@ import 'package:pffl_managment/core/providers/performance_provider.dart';
 import 'package:pffl_managment/features/payment_history/providers/player_payment_history_provider.dart';
 import 'package:pffl_managment/features/payment_history/providers/captain_payment_history_provider.dart';
 import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
+import 'package:pffl_managment/screens/settings/common/settings_provider.dart'
+    show RoleBasedSettingsProvider;
+import 'package:pffl_managment/core/utils/role_utils.dart';
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -114,7 +122,7 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LeagueDetailProvider()),
         ChangeNotifierProvider(create: (_) => EditMatchProvider()),
         ChangeNotifierProvider(create: (_) => EnhancedLeaguesProvider()),
-        ChangeNotifierProvider(create: (_) => RefundReasonProvider()),
+        // ChangeNotifierProvider(create: (_) => RefundReasonProvider()),
         ChangeNotifierProvider(create: (_) => SponsorScreenProvider()),
         ChangeNotifierProvider(create: (_) => AnimatedFABProvider()),
         ChangeNotifierProxyProvider<AuthProvider, PlayerDashboardProvider>(
@@ -163,7 +171,24 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LeagueSelectionProvider()),
         ChangeNotifierProvider(create: (_) => PaymentOptionProvider()),
         ChangeNotifierProvider(create: (_) => AddPaymentDetailsProvider()),
-        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AdminNotificationProvider()..fetchNotifications(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PlayerNotificationProvider()..fetchNotifications(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CaptainNotificationProvider()..fetchNotifications(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => RefereeNotificationProvider()..fetchNotifications(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => StatKeeperNotificationProvider()..fetchNotifications(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FreeAgentNotificationProvider()..fetchNotifications(),
+        ),
         ChangeNotifierProvider(create: (_) => BackButtonProvider()),
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
         ChangeNotifierProvider(create: (_) => PendingPaymentProvider()),
@@ -188,6 +213,25 @@ class AppProviders extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (_) => LeaguePaymentProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, RoleBasedSettingsProvider>(
+          create: (context) => RoleBasedSettingsProvider(
+            userRole: Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            ).userRole,
+          ),
+          update: (context, auth, previous) {
+            final normalizedNew = UserRoleUtils.normalizeRole(auth.userRole);
+            final normalizedOld = previous != null
+                ? UserRoleUtils.normalizeRole(previous.userRole)
+                : '';
+
+            if (previous != null && normalizedOld == normalizedNew) {
+              return previous; // Same role category, keep instances
+            }
+            return RoleBasedSettingsProvider(userRole: auth.userRole);
+          },
+        ),
         // TournamentProvider is created dynamically with leagueId parameter
       ],
       child: child,

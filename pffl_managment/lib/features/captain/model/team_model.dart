@@ -1,8 +1,9 @@
+import 'package:pffl_managment/core/utils/team_utils.dart';
 import 'player_model.dart';
 
 class TeamModel {
   final String id;
-  final String name;
+  final String _name;
   final String? logoUrl; // Can be null if no image uploaded
   final String format; // '5v5' or '7v7'
   final List<PlayerModel> players;
@@ -10,16 +11,19 @@ class TeamModel {
   final String? captainId; // New field for easier access
   final String? captainName; // New field for easier access
 
+  String get name => getTeamAbbreviation(_name);
+  String get fullName => _name;
+
   TeamModel({
     required this.id,
-    required this.name,
+    required String name,
     this.logoUrl,
     required this.format,
     required this.players,
     required this.maxPlayers,
     this.captainId, // Include in constructor
     this.captainName, // Include in constructor
-  });
+  }) : _name = name;
 
   // Add a copyWith method for immutability
   TeamModel copyWith({
@@ -34,7 +38,7 @@ class TeamModel {
   }) {
     return TeamModel(
       id: id ?? this.id,
-      name: name ?? this.name,
+      name: name ?? _name,
       logoUrl: logoUrl ?? this.logoUrl,
       format: format ?? this.format,
       players: players ?? this.players,
@@ -86,8 +90,9 @@ class TeamModel {
         }
       }
       final primaryPosition = positionList.isNotEmpty ? positionList[0] : '';
-      final additionalPositionsCount =
-          positionList.length > 1 ? positionList.length - 1 : 0;
+      final additionalPositionsCount = positionList.length > 1
+          ? positionList.length - 1
+          : 0;
 
       players.add(
         PlayerModel(
@@ -99,8 +104,7 @@ class TeamModel {
           email: captainEmail,
           position: primaryPosition,
           isCaptain: true,
-          imageUrl:
-              captainProfileImage.isNotEmpty ? captainProfileImage : null,
+          imageUrl: captainProfileImage.isNotEmpty ? captainProfileImage : null,
           additionalPositionsCount: additionalPositionsCount,
           isPaid: false, // Payment status not available in team data
           isVerified: false, // Verification status not available in team data
@@ -141,8 +145,9 @@ class TeamModel {
           }
         }
         final primaryPosition = positionList.isNotEmpty ? positionList[0] : '';
-        final additionalPositionsCount =
-            positionList.length > 1 ? positionList.length - 1 : 0;
+        final additionalPositionsCount = positionList.length > 1
+            ? positionList.length - 1
+            : 0;
 
         // Only add if we have a valid player ID
         if (playerId.isNotEmpty && playerId != 'null') {

@@ -5,8 +5,6 @@ import 'package:pffl_managment/screens/settings/common/settings_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
-/// Main settings screen that dynamically loads sections based on user role
-/// Uses exact Admin Settings UI structure with logout button
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
@@ -132,22 +130,16 @@ class SettingsScreen extends StatelessWidget {
                             );
 
                             if (context.mounted) {
-                              // Close loading dialog
                               Navigator.of(context).pop();
 
-                              // Navigate to login screen
                               Navigator.of(context).pushNamedAndRemoveUntil(
                                 AppRoutes.login,
                                 (route) => false,
                               );
                             }
                           } catch (e) {
-
                             if (context.mounted) {
-                              // Close loading dialog
                               Navigator.of(context).pop();
-
-                              // Show error message
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
@@ -157,7 +149,6 @@ class SettingsScreen extends StatelessWidget {
                                 ),
                               );
 
-                              // Still navigate to login as a fallback
                               Navigator.of(context).pushNamedAndRemoveUntil(
                                 AppRoutes.login,
                                 (route) => false,
@@ -225,4 +216,3 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
-

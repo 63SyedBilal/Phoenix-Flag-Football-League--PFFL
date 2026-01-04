@@ -1,14 +1,20 @@
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
+import 'package:pffl_managment/core/utils/team_utils.dart';
 
 enum MatchStatus { upcoming, live, completed, cancelled }
 
 class MatchModel {
   final String? id;
   final String leagueName;
-  final String homeTeam;
+  final String _homeTeam;
   final String homeTeamLogo;
-  final String awayTeam;
+  final String _awayTeam;
   final String awayTeamLogo;
+
+  String get homeTeam => getTeamAbbreviation(_homeTeam);
+  String get awayTeam => getTeamAbbreviation(_awayTeam);
+  String get fullHomeTeam => _homeTeam;
+  String get fullAwayTeam => _awayTeam;
   final String date;
   final String time;
   final MatchStatus? status;
@@ -43,9 +49,9 @@ class MatchModel {
   MatchModel({
     this.id,
     required this.leagueName,
-    required this.homeTeam,
+    required String homeTeam,
     required this.homeTeamLogo,
-    required this.awayTeam,
+    required String awayTeam,
     required this.awayTeamLogo,
     required this.date,
     required this.time,
@@ -71,7 +77,8 @@ class MatchModel {
     this.tournamentRound,
     this.isKnockout,
     this.winner,
-  });
+  }) : _homeTeam = homeTeam,
+       _awayTeam = awayTeam;
 
   MatchModel copyWith({
     String? id,
@@ -108,9 +115,9 @@ class MatchModel {
     return MatchModel(
       id: id ?? this.id,
       leagueName: leagueName ?? this.leagueName,
-      homeTeam: homeTeam ?? this.homeTeam,
+      homeTeam: homeTeam ?? _homeTeam,
       homeTeamLogo: homeTeamLogo ?? this.homeTeamLogo,
-      awayTeam: awayTeam ?? this.awayTeam,
+      awayTeam: awayTeam ?? _awayTeam,
       awayTeamLogo: awayTeamLogo ?? this.awayTeamLogo,
       date: date ?? this.date,
       time: time ?? this.time,

@@ -14,7 +14,13 @@ class UsersProvider extends ChangeNotifier {
 
   // State management
   List<UserModel> _allUsers = [];
+  List<UserModel> _cachedMappedUsers = []; // Cache for processed UI models
+  List<user_service.UserModel> _backendUsers = [];
+  List<Map<String, dynamic>> _profiles = [];
+  List<TeamModel> _teams = [];
+  List<LeagueModel> _leagues = [];
   bool _isLoading = false;
+  bool _isInitialized = false;
 
   String? _errorMessage;
 
@@ -28,17 +34,13 @@ class UsersProvider extends ChangeNotifier {
     }
   }
 
-  // Cached data for mapping
-  List<Map<String, dynamic>> _profiles = [];
-  List<TeamModel> _teams = [];
-  List<LeagueModel> _leagues = [];
-
   String get selectedFilter => _selectedFilter;
   String get searchQuery => _searchQuery;
   bool get hasNotifications => _hasNotifications;
   bool get isLoading => _isLoading;
 
   String? get errorMessage => _errorMessage;
+  bool get isInitialized => _isInitialized;
 
   // Filter options
   List<UserFilterModel> get filters => [
@@ -52,8 +54,6 @@ class UsersProvider extends ChangeNotifier {
   // All users data - fetched from backend
   List<UserModel> get allUsers => List.unmodifiable(_allUsers);
 
-  // Backend users data - direct access to user_service.UserModel
-  List<user_service.UserModel> _backendUsers = [];
   List<user_service.UserModel> get backendUsers =>
       List.unmodifiable(_backendUsers);
 
@@ -117,13 +117,23 @@ class UsersProvider extends ChangeNotifier {
     return users;
   }
 
+  /// Get users for display, using cache if available
+  List<UserModel> get displayUsers {
+    if (_cachedMappedUsers.isNotEmpty) return _cachedMappedUsers;
+    return filteredUsers;
+  }
+
   void selectFilter(String filterId) {
+    if (_selectedFilter == filterId) return;
     _selectedFilter = filterId;
+    _cachedMappedUsers = []; // Invalidate cache
     _safeNotifyListeners();
   }
 
   void updateSearchQuery(String query) {
+    if (_searchQuery == query) return;
     _searchQuery = query;
+    _cachedMappedUsers = []; // Invalidate cache
 
     // Cancel the previous timer if it exists
     _searchDebounceTimer?.cancel();
@@ -188,9 +198,6 @@ class UsersProvider extends ChangeNotifier {
       // Only use valid http URLs
       if (img.startsWith('http')) {
         imageUrl = img;
-        debugPrint(
-          '✅ Found profile image for ${backendUser.email}: $img (from user data)',
-        );
       }
     }
 
@@ -211,23 +218,10 @@ class UsersProvider extends ChangeNotifier {
           // Only use valid http URLs
           if (img.startsWith('http')) {
             imageUrl = img;
-            debugPrint(
-              '✅ Found profile image for ${backendUser.email}: $img (field: $fieldName from profile data)',
-            );
             break;
           }
         }
       }
-
-      if (imageUrl == null) {
-        debugPrint(
-          '⚠️ No valid profile image found for ${backendUser.email}. Profile data keys: ${profile.keys.toList()}',
-        );
-      }
-    } else if (imageUrl == null) {
-      debugPrint(
-        '⚠️ No profile image found for ${backendUser.email} (no user profileImage and no profile data)',
-      );
     }
 
     // Determine team name
@@ -306,7 +300,6 @@ class UsersProvider extends ChangeNotifier {
   /// Fetch all users, profiles, teams, and leagues from backend
   Future<void> fetchAllUsers() async {
     try {
-
       // Fetch all data in parallel
       final results = await Future.wait([
         user_service.UserService.getAllUsers(),
@@ -344,7 +337,9 @@ class UsersProvider extends ChangeNotifier {
         final profile = profileMap[backendUser.id];
         return _mapBackendToUIModel(backendUser, profile, _teams, _leagues);
       }).toList();
+      _cachedMappedUsers = []; // Trigger re-filter
       _errorMessage = null;
+      _isInitialized = true;
     } catch (e) {
       _errorMessage = 'Failed to load users: ${e.toString()}';
       _allUsers = [];
@@ -352,8 +347,9 @@ class UsersProvider extends ChangeNotifier {
   }
 
   /// Initialize provider by fetching all data
-  Future<void> initialize() async {
+  Future<void> initialize({bool force = false}) async {
     if (_isLoading) return; // Prevent multiple simultaneous initializations
+    if (_isInitialized && !force) return;
 
     _isLoading = true;
     _errorMessage = null;
@@ -380,4 +376,3 @@ class UsersProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

@@ -7,14 +7,13 @@ import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_league
 import 'package:pffl_managment/features/auth/screens/login_screen.dart';
 import 'package:pffl_managment/features/auth/screens/create_profile/create_account_screen.dart';
 import 'package:pffl_managment/features/auth/screens/get_started_screen.dart';
-import 'package:pffl_managment/features/auth/screens/change_password/change_password_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/add_payment_details_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_payment_history_screen.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_profile_screen.dart';
 import 'package:pffl_managment/features/admin/users/views/my_team.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_receipt_screen.dart';
+// import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_receipt_screen.dart';
 import 'package:pffl_managment/features/captain/captain_dashboard.dart';
 import 'package:pffl_managment/features/captain/view/captain_create_team/captain_create_team.dart';
 import 'package:pffl_managment/features/captain/view/leagues/league_detail/captain_league_detail_screen.dart';
@@ -55,9 +54,6 @@ class RouteGenerator {
 
       case AppRoutes.completeCaptainProfile:
         return MaterialPageRoute(builder: (_) => const CompleteProfileScreen());
-
-      case AppRoutes.changePassword:
-        return MaterialPageRoute(builder: (_) => const ChangePasswordScreen());
 
       case AppRoutes.playerDashboard:
         return MaterialPageRoute(builder: (_) => const PlayerDashboard());
@@ -120,11 +116,11 @@ class RouteGenerator {
       case AppRoutes.adminInvite:
         return MaterialPageRoute(builder: (_) => const AdminInviteScreen());
 
-      case AppRoutes.paymentReceipt:
-        final paymentData = settings.arguments as Map<String, dynamic>;
-        return MaterialPageRoute(
-          builder: (_) => PaymentReceiptScreen(paymentData: paymentData),
-        );
+      // case AppRoutes.paymentReceipt:
+      //   final paymentData = settings.arguments as Map<String, dynamic>;
+      //   return MaterialPageRoute(
+      //     builder: (_) => PaymentReceiptScreen(paymentData: paymentData),
+      //   );
 
       // Added missing route cases
       case AppRoutes.home:
@@ -205,4 +201,3 @@ class RouteGenerator {
     );
   }
 }
-

@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:pffl_managment/core/utils/team_utils.dart';
 
 class LeagueGameModel {
   final String id;
-  final String team1Name;
+  final String _team1Name;
   final String team1Logo;
-  final String team2Name;
+  final String _team2Name;
   final String team2Logo;
   final DateTime gameDateTime;
 
+  String get team1Name => getTeamAbbreviation(_team1Name);
+  String get team2Name => getTeamAbbreviation(_team2Name);
+  String get fullTeam1Name => _team1Name;
+  String get fullTeam2Name => _team2Name;
+
   LeagueGameModel({
     required this.id,
-    required this.team1Name,
+    required String team1Name,
     required this.team1Logo,
-    required this.team2Name,
+    required String team2Name,
     required this.team2Logo,
     required this.gameDateTime,
-  });
+  }) : _team1Name = team1Name,
+       _team2Name = team2Name;
 
   String get formattedDate {
     final months = [
@@ -47,7 +54,7 @@ class LeagueGameModel {
 
 class LeagueTeamStandingModel {
   final int rank;
-  final String teamName;
+  final String _teamName;
   final String teamLogo;
   final int matchesPlayed;
   final int wins;
@@ -56,9 +63,12 @@ class LeagueTeamStandingModel {
   final int pointsScored;
   final int pointsAgainst;
 
+  String get teamName => getTeamAbbreviation(_teamName);
+  String get fullTeamName => _teamName;
+
   LeagueTeamStandingModel({
     required this.rank,
-    required this.teamName,
+    required String teamName,
     required this.teamLogo,
     required this.matchesPlayed,
     required this.wins,
@@ -66,7 +76,7 @@ class LeagueTeamStandingModel {
     required this.losses,
     required this.pointsScored,
     required this.pointsAgainst,
-  });
+  }) : _teamName = teamName;
 
   int get pointsDifference => pointsScored - pointsAgainst;
   int get points => (wins * 3) + draws;
@@ -95,17 +105,20 @@ class LeagueKeyPlayerModel {
 
 /// Model for team statistics
 class LeagueTeamStatModel {
-  final String teamName;
+  final String _teamName;
   final String teamLogo;
   final String statValue;
   final String statLabel;
   final Color backgroundColor;
 
+  String get teamName => getTeamAbbreviation(_teamName);
+  String get fullTeamName => _teamName;
+
   LeagueTeamStatModel({
-    required this.teamName,
+    required String teamName,
     required this.teamLogo,
     required this.statValue,
     required this.statLabel,
     this.backgroundColor = const Color(0xFF1E293B),
-  });
+  }) : _teamName = teamName;
 }

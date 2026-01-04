@@ -14,7 +14,6 @@ class StatKeeperHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final dashboardProvider = Provider.of<StatKeeperDashboardProvider>(context);
     final games = dashboardProvider.upcomingGames;
-    // Filter to show only games assigned to this stat keeper
     final assignedGames = games.where((game) => game.isMyGame).toList();
 
     return Scaffold(
@@ -22,10 +21,7 @@ class StatKeeperHomeScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 2.0,
-            ),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 4.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -63,11 +59,6 @@ class StatKeeperHomeScreen extends StatelessWidget {
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: 12,
-                              color:Color(0xFF0F173E),
-                            ),
                           ],
                         ),
                       )
@@ -82,11 +73,6 @@ class StatKeeperHomeScreen extends StatelessWidget {
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12,
-                            color: Color(0xFF0F173E),
-                          ),
                         ],
                       ),
                   ],
@@ -94,7 +80,7 @@ class StatKeeperHomeScreen extends StatelessWidget {
                 if (assignedGames.isNotEmpty)
                   SharedUpcomingMatches(
                     games: assignedGames,
-                    maxVisibleGames: 1, // Show only 1 assigned game
+                    maxVisibleGames: 1,
                     title: '',
                     onViewMore: null,
                     onGameTap: (game) {
@@ -112,12 +98,11 @@ class StatKeeperHomeScreen extends StatelessWidget {
 
                 SharedUpcomingMatches(
                   games: games,
-                  maxVisibleGames: 3, // Show only 3 games in main view
+                  maxVisibleGames: 3,
                   title: 'Upcoming Games',
                   onGameTap: (game) =>
                       GameNavigationHelper.navigateToGameDetail(context, game),
                   onViewMore: () {
-                    // Navigate to full matches list
                     Navigator.push(
                       context,
                       MaterialPageRoute(

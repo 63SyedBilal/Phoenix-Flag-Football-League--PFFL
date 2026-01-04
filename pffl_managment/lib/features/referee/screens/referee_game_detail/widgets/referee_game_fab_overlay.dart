@@ -15,6 +15,34 @@ class RefereeGameFabOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine sequential flow states
+    final isTossDone =
+        provider.isTossCompleted ||
+        provider.match?.status == MatchStatus.live ||
+        provider.match?.status == MatchStatus.completed;
+
+    // Toss: Enabled if NOT done
+    final isTossEnabled = !isTossDone;
+
+    // Half Time: Enabled if Toss done AND Half Time NOT done
+    final isHalfTimeEnabled = isTossDone && !provider.isHalfTimeDone;
+
+    // Full Time: Enabled if Half Time done AND Full Time NOT done
+    final isFullTimeEnabled =
+        provider.isHalfTimeDone && !provider.isFullTimeDone;
+
+    // Over Time: Enabled if Full Time done AND Over Time NOT done AND Game NOT complete
+    final isOverTimeEnabled =
+        provider.isFullTimeDone &&
+        !provider.isOverTime &&
+        !provider.isGameComplete;
+
+    // Game Complete: Enabled if Full Time done AND Game NOT complete
+    final isGameCompleteEnabled =
+        provider.isFullTimeDone && !provider.isGameComplete;
+
+    const double buttonWidth = 200.0;
+
     return GestureDetector(
       onTap: provider.closeFab,
       child: Container(
@@ -27,54 +55,59 @@ class RefereeGameFabOverlay extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (provider.isFullTimeDone && !provider.isGameComplete) ...[
-                  _RefereeFabOption(
-                    label: 'Game Complete',
-                    icon: Icons.check_circle,
-                    color: const Color(0xFF1E3A5F),
-                    isCompleted: provider.isGameComplete,
-                    onTap: () =>
-                        provider.executeAction(RefereeGameAction.gameComplete),
-                  ),
-                  const SizedBox(height: 8),
-                  _RefereeFabOption(
-                    label: 'Over Time',
-                    icon: Icons.access_time_filled,
-                    color: const Color(0xFFEA580C),
-                    isCompleted: provider.isOverTime,
-                    onTap: () =>
-                        provider.executeAction(RefereeGameAction.overTime),
-                  ),
-                ],
-                if (provider.isHalfTimeDone && !provider.isFullTimeDone)
-                  _RefereeFabOption(
-                    label: 'Full Time Done',
-                    icon: Icons.check,
-                    color: const Color(0xFF1E3A5F),
-                    isCompleted: provider.isFullTimeDone,
-                    onTap: () =>
-                        provider.executeAction(RefereeGameAction.fullTimeDone),
-                  ),
-                if (provider.isTossCompleted && !provider.isHalfTimeDone)
-                  _RefereeFabOption(
-                    label: 'Half Time Done',
-                    icon: Icons.check,
-                    color: const Color(0xFFEA580C),
-                    isCompleted: provider.isHalfTimeDone,
-                    onTap: () =>
-                        provider.executeAction(RefereeGameAction.halfTimeDone),
-                  ),
-                if (!provider.isTossCompleted)
-                  _RefereeFabOption(
-                    label: 'Toss',
-                    icon: Icons.sports_football,
-                    color: const Color(0xFF1E3A5F),
-                    isCompleted:
-                        provider.isTossCompleted ||
-                        provider.match?.status == MatchStatus.live ||
-                        provider.match?.status == MatchStatus.completed,
-                    onTap: onTossTap,
-                  ),
+                _RefereeFabOption(
+                  label: 'Game Complete',
+                  icon: Icons.check_circle,
+                  color: const Color(0xFF1E3A5F),
+                  isCompleted: provider.isGameComplete,
+                  isEnabled: isGameCompleteEnabled,
+                  width: buttonWidth,
+                  onTap: () =>
+                      provider.executeAction(RefereeGameAction.gameComplete),
+                ),
+                const SizedBox(height: 8),
+                _RefereeFabOption(
+                  label: 'Over Time',
+                  icon: Icons.access_time_filled,
+                  color: const Color(0xFFEA580C),
+                  isCompleted: provider.isOverTime,
+                  isEnabled: isOverTimeEnabled,
+                  width: buttonWidth,
+                  onTap: () =>
+                      provider.executeAction(RefereeGameAction.overTime),
+                ),
+                const SizedBox(height: 8),
+                _RefereeFabOption(
+                  label: 'Full Time Done',
+                  icon: Icons.check,
+                  color: const Color(0xFF1E3A5F),
+                  isCompleted: provider.isFullTimeDone,
+                  isEnabled: isFullTimeEnabled,
+                  width: buttonWidth,
+                  onTap: () =>
+                      provider.executeAction(RefereeGameAction.fullTimeDone),
+                ),
+                const SizedBox(height: 8),
+                _RefereeFabOption(
+                  label: 'Half Time Done',
+                  icon: Icons.check,
+                  color: const Color(0xFFEA580C),
+                  isCompleted: provider.isHalfTimeDone,
+                  isEnabled: isHalfTimeEnabled,
+                  width: buttonWidth,
+                  onTap: () =>
+                      provider.executeAction(RefereeGameAction.halfTimeDone),
+                ),
+                const SizedBox(height: 8),
+                _RefereeFabOption(
+                  label: 'Toss',
+                  icon: Icons.sports_football,
+                  color: const Color(0xFF1E3A5F),
+                  isCompleted: isTossDone,
+                  isEnabled: isTossEnabled,
+                  width: buttonWidth,
+                  onTap: onTossTap,
+                ),
               ],
             ),
           ),
@@ -90,6 +123,8 @@ class _RefereeFabOption extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.isCompleted,
+    required this.isEnabled,
+    required this.width,
     required this.onTap,
   });
 
@@ -97,20 +132,34 @@ class _RefereeFabOption extends StatelessWidget {
   final IconData icon;
   final Color color;
   final bool isCompleted;
+  final bool isEnabled;
+  final double width;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    // Determine background color based on state
+    final Color backgroundColor;
+    if (isCompleted) {
+      backgroundColor = color.withValues(alpha: 0.7);
+    } else if (isEnabled) {
+      backgroundColor = color;
+    } else {
+      backgroundColor = Colors.grey;
+    }
+
     return GestureDetector(
-      onTap: isCompleted ? null : onTap,
+      onTap: isEnabled ? onTap : null,
       child: Container(
+        width: width,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isCompleted ? color.withValues(alpha: 0.7) : color,
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               isCompleted ? Icons.check : icon,

@@ -17,38 +17,34 @@ class StatCardWidget extends StatelessWidget {
     if (stat.title.toLowerCase().contains('league')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/trophyIcon.svg',
-        width: 6,
-        height: 6,
+        width: 14,
+        height: 14,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('game')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/bluehomedateIcon.svg',
-        width: 6,
-        height: 6,
+        width: 14,
+        height: 14,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('user')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/redManIcon.svg',
-        width: 6,
-        height: 6,
+        width: 14,
+        height: 14,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else if (stat.title.toLowerCase().contains('payment')) {
       iconWidget = SvgPicture.asset(
         'assets/icons/home_icons/dollarIcon.svg',
-        width: 6,
-        height: 6,
+        width: 14,
+        height: 14,
         colorFilter: ColorFilter.mode(stat.iconColor, BlendMode.srcIn),
       );
     } else {
       // Fallback to the original icon if title doesn't match
-      iconWidget = Icon(
-        stat.icon,
-        size: 6,
-        color: stat.iconColor,
-      );
+      iconWidget = Icon(stat.icon, size: 16, color: stat.iconColor);
     }
 
     return Card(
@@ -84,13 +80,13 @@ class StatCardWidget extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          width: 20,
-                          height: 20,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFBFBFB),
-                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0xFFF5F5F5),
+                            shape: BoxShape.circle,
                           ),
-                          child: iconWidget,
+                          child: Center(child: iconWidget),
                         ),
                       ],
                     ),
@@ -112,7 +108,6 @@ class StatCardWidget extends StatelessWidget {
                         fontWeight: FontWeight.w400,
                         fontFamily: 'Lato',
                       ),
-
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],

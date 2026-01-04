@@ -25,7 +25,7 @@ class SharedGameCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -50,17 +50,11 @@ class SharedGameCard extends StatelessWidget {
                         color: Color(0xFF111827),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 9,
-                      color: Colors.grey,
-                    ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -94,7 +88,7 @@ class SharedGameCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        DateFormat('MM/dd').format(game.date),
+                        DateFormat('M/d').format(game.date),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 12,

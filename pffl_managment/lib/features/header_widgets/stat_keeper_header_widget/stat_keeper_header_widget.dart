@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/stat_keeper_navigation_provider.dart';
-import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/screens/notification/provider/statkeeper_notification_provider.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
@@ -60,7 +60,7 @@ class StatKeeperHeaderWidget extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -92,7 +92,7 @@ class StatKeeperHeaderWidget extends StatelessWidget {
                 ),
               ),
               // Enhanced notification icon with badge
-              StatKeeperNotificationButton(),
+              const StatKeeperNotificationButton(),
             ],
           ),
         ],
@@ -106,7 +106,10 @@ class StatKeeperNotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notificationProvider = Provider.of<NotificationProvider>(context);
+    // Note: Provider.of is used instead of Consumer as requested
+    final notificationProvider = Provider.of<StatKeeperNotificationProvider>(
+      context,
+    );
     final brightness = Theme.of(context).brightness;
     final scaffoldBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
 
@@ -137,7 +140,9 @@ class StatKeeperNotificationButton extends StatelessWidget {
                     : AppColors.textPrimary,
               ),
             ),
-            if (notificationProvider.hasNotifications)
+            if (notificationProvider.notifications.any(
+              (n) => n.status.toLowerCase() == 'pending',
+            ))
               Positioned(
                 top: 12,
                 right: 12,

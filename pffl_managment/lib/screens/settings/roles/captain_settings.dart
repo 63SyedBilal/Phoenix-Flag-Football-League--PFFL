@@ -1,9 +1,9 @@
 import 'package:pffl_managment/features/payment_history/captain_payment_history.dart';
-import 'package:pffl_managment/features/profile_screens/captain_profile_screen/captain_profile_screen.dart';
+import 'package:pffl_managment/screens/profile_screen/captain_profile_screen.dart';
+import 'package:pffl_managment/screens/notification/captain_notification/captain_notification.dart';
 import 'package:pffl_managment/screens/settings/common/settings_section_model.dart';
 import 'package:pffl_managment/features/captain/view/teams/team_management_screen.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/notification_screen.dart';
-import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/change_passowrd.dart';
+import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/shared_change_password/shared_change_passowrd.dart';
 
 /// Captain role settings configuration
 /// Sections: Profile Information, Team, Payment History, Notifications, Change Password
@@ -20,11 +20,11 @@ List<SettingsSectionModel> getCaptainSettings() {
     ),
     SettingsSectionModel(
       title: 'Notifications',
-      screen: const NotificationsScreen(),
+      screen: const CaptainNotification(),
     ),
     SettingsSectionModel(
       title: 'Change Password',
-      screen: const ChangePassowrd(),
+      screen: const SharedChangePassowrd(),
     ),
   ];
 }

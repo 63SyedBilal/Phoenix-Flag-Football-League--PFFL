@@ -13,7 +13,6 @@ import 'package:pffl_managment/features/key_players/league_key_players_section.d
 import 'package:pffl_managment/features/sponsors/screens/sponsor_banner_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/admin/provider/league_detail_provider.dart';
-import 'package:pffl_managment/features/admin/shared/providers/animated_fab_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_leagues_widgets/league_tabs/admin_league_games_section.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
@@ -59,27 +58,15 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
           '  shouldShowFAB: ${provider.selectedTabIndex == 1 && isAdmin}',
         );
 
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (context.mounted) {
-            final fabProvider = Provider.of<AnimatedFABProvider>(
-              context,
-              listen: false,
-            );
-            if (provider.selectedTabIndex != 1) {
-              fabProvider.reset();
-            }
-          }
-        });
-
         final shouldShowFAB = provider.selectedTabIndex == 1 && isAdmin;
 
         if (shouldShowFAB) {
         } else {
           if (!isAdmin)
-          if (provider.selectedTabIndex != 1)
-            debugPrint(
-              '   - Not on Games tab (current tab: ${provider.selectedTabIndex})',
-            );
+            if (provider.selectedTabIndex != 1)
+              debugPrint(
+                '   - Not on Games tab (current tab: ${provider.selectedTabIndex})',
+              );
         }
 
         return Scaffold(
@@ -131,6 +118,12 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
                           SizedBox(height: 12),
                           const LeagueKeyPlayersSection(),
                           const LeagueTeamStatsSection(),
+                          const SizedBox(height: 16),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: SponsorBannerScreen(),
+                          ),
+                          const SizedBox(height: 16),
                         ] else if (provider.selectedTabIndex == 1) ...[
                           AdminLeagueGamesSection(league: widget.league),
                         ] else if (provider.selectedTabIndex == 2) ...[
@@ -157,4 +150,3 @@ class _LeagueDetailViewState extends State<LeagueDetailView> {
     );
   }
 }
-

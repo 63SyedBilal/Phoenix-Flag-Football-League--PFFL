@@ -296,7 +296,7 @@ class UpcommingGames extends StatelessWidget {
         // Always trigger data fetch on first build to ensure fresh data
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (leagueId == null &&
-              gamesProvider.allGames.isEmpty &&
+              !gamesProvider.isInitialized &&
               !gamesProvider.isLoading) {
             gamesProvider.fetchAllMatches();
           }

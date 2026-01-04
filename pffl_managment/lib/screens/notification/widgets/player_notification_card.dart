@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pffl_managment/core/models/notification_model.dart';
+import 'package:pffl_managment/screens/notification/models/notification_model.dart';
 import 'package:intl/intl.dart';
 
 /// Widget for displaying a single notification card in player notification screen
@@ -141,6 +141,20 @@ class PlayerNotificationCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+              ),
+            )
+          else if (notification.isAccepted)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  'Accepted',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF10B981), // Success green
+                  ),
+                ),
               ),
             )
           else if (notification.isPending &&

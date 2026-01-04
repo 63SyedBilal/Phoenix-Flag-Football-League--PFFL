@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
-import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
 
@@ -157,102 +157,43 @@ class MatchService {
               .toList();
 
           // Identify unique league IDs that need resolution
-          final leagueIds = parsed
-              .map((m) => m.leagueId)
-              .where((lid) => lid != null && lid.isNotEmpty)
-              .toSet()
-              .cast<String>();
-
-          // Build a cache of league teams to resolve team names in parallel
-          final Map<String, Map<String, String>> leagueTeamNameCache = {};
-          if (leagueIds.isNotEmpty) {
-            final leagueFutures = leagueIds.map(
-              (lid) => LeagueService.getLeagueById(lid),
-            );
-            final leagues = await Future.wait(leagueFutures);
-
-            for (int i = 0; i < leagueIds.length; i++) {
-              final lid = leagueIds.elementAt(i);
-              final league = leagues[i];
-              final Map<String, String> teamMap = {};
-              if (league != null) {
-                for (final t in league.teams) {
-                  if (t.id.isNotEmpty) {
-                    teamMap[t.id] = t.teamName;
-                  }
-                }
-              }
-              leagueTeamNameCache[lid] = teamMap;
+          // OPTIMIZATION: Instead of calling getLeagueById for EVERY league,
+          // fetch ALL teams once and use that for mapping.
+          final Map<String, String> globalTeamMap = {};
+          try {
+            final allTeams = await LeagueService.getAllTeams();
+            for (final t in allTeams) {
+              globalTeamMap[t.id] = t.teamName;
             }
+          } catch (e) {
+            debugPrint(
+              '⚠️ Failed to fetch teams for mapping in getAllMatches: $e',
+            );
           }
 
-          // Fill names from cache if missing
+          // Fill names from map if missing
           List<MatchModel> fixed = parsed.map((m) {
-            final lid = m.leagueId;
-            if (lid != null && leagueTeamNameCache.containsKey(lid)) {
-              return _fillTeamNamesFromLeague(m, leagueTeamNameCache[lid]!);
-            }
-            return m;
-          }).toList();
-
-          // Build a set of team IDs that need resolution
-          final Set<String> teamIdsToResolve = {};
-          for (final m in fixed) {
-            bool needHome =
-                (m.homeTeam.isEmpty || m.homeTeam == 'Unknown Team') &&
-                (m.homeTeamId != null && m.homeTeamId!.isNotEmpty);
-            bool needAway =
-                (m.awayTeam.isEmpty || m.awayTeam == 'Unknown Team') &&
-                (m.awayTeamId != null && m.awayTeamId!.isNotEmpty);
-
-            if (needHome) teamIdsToResolve.add(m.homeTeamId!);
-            if (needAway) teamIdsToResolve.add(m.awayTeamId!);
-          }
-
-          // Fetch team names in parallel
-          final Map<String, String> teamNameCache = {};
-          if (teamIdsToResolve.isNotEmpty) {
-            final teamFutures = teamIdsToResolve.map(
-              (tid) => TeamService.getTeamById(tid),
-            );
-            final teams = await Future.wait(teamFutures);
-
-            for (int i = 0; i < teamIdsToResolve.length; i++) {
-              final tid = teamIdsToResolve.elementAt(i);
-              final teamData = teams[i];
-              final String? name =
-                  (teamData?['teamName']?.toString() ??
-                  teamData?['enterCode']?.toString());
-              if (name != null) {
-                teamNameCache[tid] = name;
-              }
-            }
-          }
-
-          // Apply team names from cache
-          for (int i = 0; i < fixed.length; i++) {
-            final m = fixed[i];
             String resolvedHome = m.homeTeam;
             String resolvedAway = m.awayTeam;
 
             if ((resolvedHome.isEmpty || resolvedHome == 'Unknown Team') &&
                 m.homeTeamId != null &&
-                teamNameCache.containsKey(m.homeTeamId)) {
-              resolvedHome = teamNameCache[m.homeTeamId]!;
+                globalTeamMap.containsKey(m.homeTeamId)) {
+              resolvedHome = globalTeamMap[m.homeTeamId!]!;
             }
             if ((resolvedAway.isEmpty || resolvedAway == 'Unknown Team') &&
                 m.awayTeamId != null &&
-                teamNameCache.containsKey(m.awayTeamId)) {
-              resolvedAway = teamNameCache[m.awayTeamId]!;
+                globalTeamMap.containsKey(m.awayTeamId)) {
+              resolvedAway = globalTeamMap[m.awayTeamId!]!;
             }
 
             if (resolvedHome != m.homeTeam || resolvedAway != m.awayTeam) {
-              fixed[i] = m.copyWith(
-                homeTeam: resolvedHome,
-                awayTeam: resolvedAway,
-              );
+              return m.copyWith(homeTeam: resolvedHome, awayTeam: resolvedAway);
             }
-          }
+            return m;
+          }).toList();
+
+          // Build a set of team IDs that still need resolution (if any)
 
           return fixed;
         }
@@ -303,8 +244,7 @@ class MatchService {
         return [];
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       rethrow;
     } catch (e) {
       rethrow;
@@ -1002,4 +942,3 @@ class MatchService {
     }
   }
 }
-

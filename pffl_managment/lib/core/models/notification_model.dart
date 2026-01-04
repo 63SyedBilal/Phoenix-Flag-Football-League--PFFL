@@ -1,3 +1,5 @@
+import 'package:pffl_managment/core/utils/team_utils.dart';
+
 class NotificationModel {
   final String id;
   final UserModel? sender;
@@ -111,10 +113,14 @@ class UserModel {
 
 class TeamModel {
   final String id;
-  final String teamName;
+  final String _teamName;
   final String? image;
 
-  TeamModel({required this.id, required this.teamName, this.image});
+  String get teamName => getTeamAbbreviation(_teamName);
+  String get fullTeamName => _teamName;
+
+  TeamModel({required this.id, required String teamName, this.image})
+    : _teamName = teamName;
 
   factory TeamModel.fromJson(Map<String, dynamic> json) {
     return TeamModel(

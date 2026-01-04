@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/models/game_model.dart';
+import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:pffl_managment/core/widgets/upcomingmatches/shared_game_card.dart';
 import 'package:pffl_managment/core/utils/game_navigation_helper.dart';
 
@@ -16,20 +17,7 @@ class AllMatchesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: AppBar(leading: ArrowBackButton()),
       body: matches.isEmpty
           ? const Center(
               child: Text(

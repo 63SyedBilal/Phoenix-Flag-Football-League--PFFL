@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
+import 'package:pffl_managment/core/widgets/dotted_border_widget.dart'; // Import your DottedBorderWidget
 
 class LeagueCardWidget extends StatelessWidget {
   final LeagueCreationModel league;
@@ -34,59 +35,81 @@ class LeagueCardWidget extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        Container(
+                        SizedBox(
                           width: 30,
                           height: 30,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: ClipOval(
-                            child: league.teamLogo.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: league.teamLogo,
-                                    width: 30,
-                                    height: 30,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: const Color(0xFFE5E7EB),
-                                      child: const Center(
-                                        child: SizedBox(
-                                          width: 12,
-                                          height: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 1.5,
-                                          ),
-                                        ),
+                          child: league.teamLogo.isNotEmpty
+                              ? DottedBorderWidget(
+                                  shape: DottedBorderShape.circle,
+                                  strokeWidth: 1,
+                                  dashWidth: 2,
+                                  dashSpace: 2,
+                                  color: const Color(
+                                    0xFF000000,
+                                  ).withValues(alpha: 0.5),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(2),
+                                    child: ClipOval(
+                                      child: CachedNetworkImage(
+                                        imageUrl: league.teamLogo,
+                                        width: 26,
+                                        height: 26,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            Container(
+                                              color: const Color(0xFFE5E7EB),
+                                              child: const Center(
+                                                child: SizedBox(
+                                                  width: 12,
+                                                  height: 12,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 1.5,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                              color: const Color(0xFFE5E7EB),
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.sports,
+                                                  size: 14,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ),
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) =>
-                                        CustomPaint(
-                                          size: const Size(30, 30),
-                                          painter: DottedBorderPainter(),
-                                          child: const Center(
-                                            child: Icon(
-                                              Icons.sports,
-                                              size: 18,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                  )
-                                : CustomPaint(
-                                    size: const Size(30, 30),
-                                    painter: DottedBorderPainter(),
+                                  ),
+                                )
+                              : DottedBorderWidget(
+                                  shape: DottedBorderShape.circle,
+                                  strokeWidth: 1,
+                                  dashWidth: 2,
+                                  dashSpace: 2,
+                                  color: const Color(
+                                    0xFF000000,
+                                  ).withValues(alpha: 0.5),
+                                  child: Container(
+                                    width: 30,
+                                    height: 30,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFE5E7EB),
+                                      shape: BoxShape.circle,
+                                    ),
                                     child: const Center(
                                       child: Icon(
                                         Icons.sports,
-                                        size: 18,
+                                        size: 14,
                                         color: Colors.black,
                                       ),
                                     ),
                                   ),
-                          ),
+                                ),
                         ),
                         const SizedBox(width: 4),
-
                         Expanded(
                           child: Text(
                             league.leagueName,
@@ -103,9 +126,7 @@ class LeagueCardWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(width: 8),
-
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -345,45 +366,4 @@ class LeagueCardWidget extends StatelessWidget {
     ];
     return months[month - 1];
   }
-}
-
-class DottedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF000000).withValues(alpha: 0.5)
-      ..strokeWidth = 0.5
-      ..style = PaintingStyle.stroke;
-
-    const double dashWidth = 2;
-    const double dashSpace = 2;
-    final double radius = size.width / 2;
-
-    final double circumference = 2 * 3.141592653589793 * radius;
-    final int dashCount = (circumference / (dashWidth + dashSpace))
-        .floor()
-        .clamp(1, 1000000);
-
-    final double angleIncrement = (2 * 3.141592653589793) / dashCount;
-
-    for (int i = 0; i < dashCount; i++) {
-      final double startAngle = i * angleIncrement;
-      final double endAngle =
-          startAngle + (dashWidth / circumference) * 2 * 3.141592653589793;
-
-      canvas.drawArc(
-        Rect.fromCircle(
-          center: Offset(size.width / 2, size.height / 2),
-          radius: radius,
-        ),
-        startAngle,
-        endAngle - startAngle,
-        false,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

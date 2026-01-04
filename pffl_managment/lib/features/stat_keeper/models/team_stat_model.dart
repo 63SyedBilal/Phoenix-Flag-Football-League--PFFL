@@ -1,3 +1,5 @@
+import 'package:pffl_managment/core/utils/team_utils.dart';
+
 enum StatStatus { draft, approved, all }
 
 class PlayerStatModel {
@@ -138,7 +140,7 @@ class PlayerStatModel {
 }
 
 class TeamStatModel {
-  final String teamName;
+  final String _teamName;
   final String teamLogo;
   final int catches;
   final int catchesYards;
@@ -156,7 +158,7 @@ class TeamStatModel {
   final List<PlayerStatModel> playerStats;
 
   TeamStatModel({
-    required this.teamName,
+    required String teamName,
     required this.teamLogo,
     this.catches = 0,
     this.catchesYards = 0,
@@ -172,7 +174,10 @@ class TeamStatModel {
     this.safety = 0,
     this.conversionPoints = 0,
     this.playerStats = const [],
-  });
+  }) : _teamName = teamName;
+
+  String get teamName => getTeamAbbreviation(_teamName);
+  String get fullTeamName => _teamName;
 
   TeamStatModel copyWith({
     String? teamName,
@@ -193,7 +198,7 @@ class TeamStatModel {
     List<PlayerStatModel>? playerStats,
   }) {
     return TeamStatModel(
-      teamName: teamName ?? this.teamName,
+      teamName: teamName ?? _teamName,
       teamLogo: teamLogo ?? this.teamLogo,
       catches: catches ?? this.catches,
       catchesYards: catchesYards ?? this.catchesYards,
@@ -272,7 +277,7 @@ class TeamStatModel {
     );
 
     return TeamStatModel(
-      teamName: teamName,
+      teamName: _teamName,
       teamLogo: teamLogo,
       catches: totalCatches,
       catchesYards: totalCatchesYards,

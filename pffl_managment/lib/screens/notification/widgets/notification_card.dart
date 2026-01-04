@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:pffl_managment/core/models/notification_model.dart';
-import 'package:pffl_managment/core/providers/notification_provider.dart';
+import 'package:pffl_managment/screens/notification/models/notification_model.dart';
 
 /// Widget for displaying a single notification card
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
+  final Future<bool> Function(String)? onApproveStats;
   final bool isLoading;
 
   const NotificationCard({
@@ -15,6 +14,7 @@ class NotificationCard extends StatelessWidget {
     required this.notification,
     this.onAccept,
     this.onReject,
+    this.onApproveStats,
     this.isLoading = false,
   });
 
@@ -22,7 +22,6 @@ class NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
-    final provider = context.read<NotificationProvider>();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -163,10 +162,10 @@ class NotificationCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: isLoading
+                  onPressed: isLoading || onApproveStats == null
                       ? null
                       : () async {
-                          final success = await provider.approveStats(
+                          final success = await onApproveStats!(
                             notification.id,
                           );
                           if (success && context.mounted) {
