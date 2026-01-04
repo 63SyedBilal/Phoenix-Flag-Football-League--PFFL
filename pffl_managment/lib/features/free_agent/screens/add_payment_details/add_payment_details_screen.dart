@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
@@ -21,9 +22,12 @@ class AddPaymentDetailsScreen extends StatelessWidget {
   AddPaymentDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context) {
     return Scaffold(
-      appBar: AppBar(leading: ArrowBackButton()),
+      appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
+        leading: ArrowBackButton()),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -57,11 +61,11 @@ class AddPaymentDetailsScreen extends StatelessWidget {
                                 onChanged: provider.setCardNumber,
                                 error: state.cardNumberError,
                                 keyboardType: TextInputType.number,
-                                suffixIcon: Image.network(
-                                  'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg',
+                                suffixIcon: SvgPicture.asset(
+                                  'assets/icons/home_icons/card.svg',
                                   width: 24,
                                   height: 24,
-                                  errorBuilder: (_, __, ___) => const Icon(
+                                  placeholderBuilder: (context) => const Icon(
                                     Icons.credit_card,
                                     size: 24,
                                     color: Colors.blue,
@@ -72,26 +76,32 @@ class AddPaymentDetailsScreen extends StatelessWidget {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: PaymentTextField(
-                                      controller: _expiryDateController,
-                                      label: 'Expiry Date',
-                                      hint: 'MM/YY',
-                                      onChanged: provider.setExpiryDate,
-                                      error: state.expiryDateError,
-                                      keyboardType: TextInputType.datetime,
-                                      suffixIcon: const Icon(
-                                        Icons.calendar_today_outlined,
-                                        size: 18,
-                                        color: Color(0xFF9CA3AF),
-                                      ),
-                                    ),
-                                  ),
+                                 Expanded(
+  child: PaymentTextField(
+    controller: _expiryDateController,
+    label: 'Expiry Date',
+    hint: 'MM/YY',
+    onChanged: provider.setExpiryDate,
+    error: state.expiryDateError,
+    keyboardType: TextInputType.datetime,
+    suffixIcon: SvgPicture.asset(
+      'assets/icons/home_icons/dateVectorIcon.svg',
+      width: 18,
+      height: 18,
+      placeholderBuilder: (context) => const Icon(
+        Icons.calendar_today_outlined,
+        size: 18,
+        color: Color(0xFF9CA3AF),
+      ),
+    ),
+  ),
+),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: PaymentTextField(
                                       controller: _cvvController,
                                       label: 'CVV',
+                                      
                                       hint: '3-digit code',
                                       onChanged: provider.setCvv,
                                       error: state.cvvError,
@@ -149,6 +159,8 @@ class AddPaymentDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -195,4 +207,3 @@ class AddPaymentDetailsScreen extends StatelessWidget {
     }
   }
 }
-

@@ -5,6 +5,7 @@ import 'package:pffl_managment/features/sponsors/providers/sponsor_banner_provid
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/widgets/custom_text_field.dart';
 import 'dart:io';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SponserScreen extends StatelessWidget {
   const SponserScreen({Key? key}) : super(key: key);
@@ -327,29 +328,34 @@ class ThumbnailUploadWidget extends StatelessWidget {
               child: Center(
                 child: ElevatedButton.icon(
                   onPressed: onUpload,
-                  icon: const Icon(
-                    Icons.upload_outlined,
-                    size: 12,
-                    color: Colors.white,
+                  icon: SvgPicture.asset(
+                    'assets/icons/home_icons/uploadsettingIcon.svg',
+                    width: 12,
+                    height: 12,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   label: const Text(
                     'Upload',
                     style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 7.93,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Satoshi Variable',
                       color: Colors.white,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF010101),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 20,
+                      vertical: 0,
                     ),
-                    elevation: 0,
+                  
                   ),
                 ),
               ),

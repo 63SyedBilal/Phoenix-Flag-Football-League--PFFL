@@ -343,7 +343,7 @@ class _Step1TeamInfoWidgetState extends State<Step1TeamInfoWidget> {
               style: AppTextStyles.labelLarge,
             ),
             const SizedBox(height: 4),
-            SimpleDropdownList(
+            SimpleDropdownList(hintStyle: TextStyle(color: Colors.black),
               selectedValue: viewModel.minPlayers > 0
                   ? viewModel.minPlayers.toString()
                   : null,

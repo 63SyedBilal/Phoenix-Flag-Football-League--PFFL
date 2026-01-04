@@ -8,8 +8,6 @@ import 'package:pffl_managment/features/auth/screens/login_screen.dart';
 import 'package:pffl_managment/features/auth/screens/create_profile/create_account_screen.dart';
 import 'package:pffl_managment/features/auth/screens/get_started_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
-import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/league_selection_screen.dart';
-import 'package:pffl_managment/features/free_agent/screens/payment_option/payment_option_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/add_payment_details_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_payment_history_screen.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_profile_screen.dart';
@@ -152,10 +150,10 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const FreeAgentDashboard());
 
       case AppRoutes.freeAgentActiveLeagues:
-        return MaterialPageRoute(builder: (_) => const LeagueSelectionScreen());
+        return MaterialPageRoute(builder: (_) =>  AddPaymentDetailsScreen());
 
       case AppRoutes.freeAgentPaymentOption:
-        return MaterialPageRoute(builder: (_) => const PaymentOptionScreen());
+        return MaterialPageRoute(builder: (_) =>  AddPaymentDetailsScreen());
 
       case AppRoutes.freeAgentAddPaymentDetails:
         return MaterialPageRoute(builder: (_) => AddPaymentDetailsScreen());

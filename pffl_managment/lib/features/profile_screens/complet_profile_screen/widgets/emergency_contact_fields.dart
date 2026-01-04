@@ -11,7 +11,6 @@ class EmergencyContactFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     
     return Consumer<CompleteProfileProvider>(
       builder: (context, provider, _) {
@@ -22,7 +21,12 @@ class EmergencyContactFields extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Contact Name Field - same styling as Create Account
-            Text('Emergency Contact Name', style: theme.textTheme.bodyMedium),
+            Text('Emergency Contact Name', style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Lato',
+              color: Color(0xFF000000),
+            )),
             const SizedBox(height: 8),
             TextField(
               onChanged: provider.setEmergencyContactName,
@@ -79,7 +83,12 @@ class EmergencyContactFields extends StatelessWidget {
             const SizedBox(height: 16),
             
             // Phone Field - EXACT same as Create Account screen
-            Text('Emergency Phone Number', style: theme.textTheme.bodyMedium),
+            Text('Emergency Phone Number', style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Lato',
+              color: Color(0xFF000000),
+            )),
             const SizedBox(height: 8),
             ImprovedPhoneField(
               onInputChanged: (PhoneNumber number) {

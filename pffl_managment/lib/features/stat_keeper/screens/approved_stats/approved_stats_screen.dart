@@ -123,6 +123,8 @@ class _ApprovedStatsContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     SimpleDropdownList(
+hintStyle: TextStyle(),
+                      
                       selectedValue: provider.selectedFilter,
                       items: provider.availableLeagues,
                       onSelected: provider.setLeagueFilter,
