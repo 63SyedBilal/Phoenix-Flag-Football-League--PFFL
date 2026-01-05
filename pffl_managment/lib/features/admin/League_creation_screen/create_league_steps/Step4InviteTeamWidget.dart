@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/core/utils/app_icons.dart';
@@ -36,9 +37,20 @@ class Step4InvuteTeamWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: AppColors.borderDefault),
             ),
-            child: CustomTextField(
-              hintText: 'Search by team name',
-              suffixIcon: const Icon(Icons.search),
+            child:CustomTextField(
+  hintText: 'Search by team name',
+  suffixIcon: Padding(
+    padding: const EdgeInsets.all(12.0),
+    child: SvgPicture.asset(
+      'assets/icons/home_icons/searchrightIcon.svg',
+      width: 20,
+      height: 20,
+      colorFilter: const ColorFilter.mode(
+        AppColors.textDisabled,
+        BlendMode.srcIn,
+      ),
+    ),
+  ),
               onChanged: (query) {
                 viewModel.setTeamSearchQuery(query);
               },

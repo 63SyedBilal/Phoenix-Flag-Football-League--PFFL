@@ -213,6 +213,11 @@ class _CaptainProfileContent extends StatelessWidget {
               Text("Position", style: theme.textTheme.labelLarge),
               const SizedBox(height: 4),
               SimpleDropdownList(
+                hintStyle: TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
                 selectedValue: provider.positionController.text.isEmpty
                     ? null
                     : provider.positionController.text,

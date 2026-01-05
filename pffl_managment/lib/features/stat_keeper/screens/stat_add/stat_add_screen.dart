@@ -154,6 +154,11 @@ class _StatAddScreenContent extends StatelessWidget {
                   const Center(child: CircularProgressIndicator())
                 else
                   SimpleDropdownList(
+                    hintStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
                     selectedValue: provider.selectedMatchId != null
                         ? provider.assignedMatches
                               .where((m) => m.id == provider.selectedMatchId)
@@ -174,6 +179,11 @@ class _StatAddScreenContent extends StatelessWidget {
                   const Center(child: CircularProgressIndicator())
                 else
                   SimpleDropdownList(
+                    hintStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
                     selectedValue: provider.selectedTeam,
                     items: provider.teams,
                     onSelected: (String val) {
@@ -189,6 +199,11 @@ class _StatAddScreenContent extends StatelessWidget {
                   const Center(child: CircularProgressIndicator())
                 else
                   SimpleDropdownList(
+                    hintStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
                     selectedValue: provider.selectedPlayer,
                     items: provider.players,
                     onSelected: (String val) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
 import 'package:pffl_managment/core/utils/app_icons.dart';
@@ -54,11 +55,19 @@ class Step3SelectStatKeeperWidget extends StatelessWidget {
                   ],
                 ),
                 child: CustomTextField(
-                  hintText: 'Search by Stat keeper name or email',
-                  prefixIcon: const Icon(
-                    AppIcons.search,
-                    color: AppColors.textDisabled,
-                  ),
+  hintText: 'Search by Stat keeper name',
+  suffixIcon: Padding(
+    padding: const EdgeInsets.all(12.0),
+    child: SvgPicture.asset(
+      'assets/icons/home_icons/searchrightIcon.svg',
+      width: 20,
+      height: 20,
+      colorFilter: const ColorFilter.mode(
+        AppColors.textDisabled,
+        BlendMode.srcIn,
+      ),
+    ),
+  ),
                   onChanged: (query) {
                     viewModel.setStatKeeperSearchQuery(query);
                   },

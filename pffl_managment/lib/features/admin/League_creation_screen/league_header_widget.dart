@@ -53,8 +53,9 @@ class LeagueHeaderWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Icon(
-                      Icons.arrow_forward_ios,
-                      size: 12,
+                      Icons.arrow_forward_sharp,
+                      size: 14,
+                      fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
                   ],

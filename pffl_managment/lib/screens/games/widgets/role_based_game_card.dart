@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/screens/games/game_tabs/game_details_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -589,10 +590,10 @@ class RoleBasedGameCard extends StatelessWidget {
                           if (picked != null)
                             setState(() => selectedDate = picked);
                         },
-                        child: _buildDisplayField(
+                        child: _buildDisplayFieldWithSvg(
                           text:
                               '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                          icon: Icons.calendar_today_outlined,
+                          svgPath: 'assets/icons/home_icons/dateVectorIcon.svg',
                         ),
                       ),
                     ),
@@ -608,9 +609,9 @@ class RoleBasedGameCard extends StatelessWidget {
                           if (picked != null)
                             setState(() => selectedTime = picked);
                         },
-                        child: _buildDisplayField(
+                        child: _buildDisplayFieldWithSvg(
                           text: selectedTime.format(context),
-                          icon: Icons.access_time_outlined,
+                          svgPath: 'assets/icons/home_icons/clockwhiteIcon.svg',
                         ),
                       ),
                     ),
@@ -760,10 +761,19 @@ class RoleBasedGameCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(Icons.keyboard_arrow_down, color: Colors.grey[400], size: 20),
+           SvgPicture.asset(
+        'assets/icons/home_icons/arrowDounIcon.svg',
+        width: 18,
+        height: 18,
+        colorFilter: const ColorFilter.mode(
+          Colors.grey,
+          BlendMode.srcIn,
+        ),
+           ),
           ],
         ),
       ),
+      
     );
   }
 
@@ -799,6 +809,40 @@ class RoleBasedGameCard extends StatelessWidget {
           text: placeholder,
           icon: Icons.location_on_outlined,
         ),
+      ),
+    );
+  }
+
+  Widget _buildDisplayFieldWithSvg({required String text, required String svgPath}) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+              fontFamily: 'Lato',
+            ),
+          ),
+          SvgPicture.asset(
+            svgPath,
+            width: 18,
+            height: 18,
+            colorFilter: const ColorFilter.mode(
+              Colors.grey,
+              BlendMode.srcIn,
+            ),
+          ),
+        ],
       ),
     );
   }

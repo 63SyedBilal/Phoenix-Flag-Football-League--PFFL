@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'dart:io';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
 import 'package:pffl_managment/core/utils/app_colors.dart';
@@ -215,11 +216,18 @@ class _Step1TeamInfoWidgetState extends State<Step1TeamInfoWidget> {
                               ),
                               hintText: 'Select Date',
                               readOnly: true,
-                              suffixIcon: const Icon(
-                                AppIcons.calendar,
-                                size: 20,
-                                color: AppColors.textPrimary,
-                              ),
+                             suffixIcon: Padding(
+  padding: const EdgeInsets.all(14.0),
+  child: SvgPicture.asset(
+    'assets/icons/home_icons/dateVectorIcon.svg',
+    width: 20,
+    height: 20,
+    colorFilter: const ColorFilter.mode(
+       Color(0xFF9CA3AF),
+      BlendMode.srcIn,
+    ),
+  ),
+),
                             ),
                           ),
                         ),
@@ -301,11 +309,18 @@ class _Step1TeamInfoWidgetState extends State<Step1TeamInfoWidget> {
                               ),
                               hintText: 'Select Date',
                               readOnly: true,
-                              suffixIcon: const Icon(
-                                AppIcons.calendar,
-                                size: 20,
-                                color: AppColors.textPrimary,
-                              ),
+                             suffixIcon: Padding(
+  padding: const EdgeInsets.all(14.0),
+  child: SvgPicture.asset(
+    'assets/icons/home_icons/dateVectorIcon.svg',
+    width: 20,
+    height: 20,
+    colorFilter: const ColorFilter.mode(
+       Color(0xFF9CA3AF),
+      BlendMode.srcIn,
+    ),
+  ),
+),
                             ),
                           ),
                         ),
@@ -519,16 +534,20 @@ class _Step1TeamInfoWidgetState extends State<Step1TeamInfoWidget> {
                         borderRadius: BorderRadius.circular(14.87),
                       ),
                       child: Container(
-                        width: 60,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.upload,
-                              size: 16,
-                              color: AppColors.buttonText,
-                            ),
-                            SizedBox(width: 8),
+    width: 60,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SvgPicture.asset(
+          'assets/icons/home_icons/uploadsettingIcon.svg',
+          width: 14,
+          height: 14,
+          colorFilter: const ColorFilter.mode(
+            AppColors.buttonText,
+            BlendMode.srcIn,
+          ),
+        ),
+                            SizedBox(width: 4),
                             const Text(
                               'Upload',
                               style: TextStyle(

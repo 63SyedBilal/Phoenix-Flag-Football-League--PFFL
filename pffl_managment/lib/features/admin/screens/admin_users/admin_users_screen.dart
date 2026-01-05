@@ -41,6 +41,19 @@ class AdminUsersScreen extends StatelessWidget {
                           onChanged: (value) {
                             viewModel.updateSearchQuery(value);
                           },
+                        prefixIcon: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: SvgPicture.asset(
+              'assets/icons/home_icons/searchrightIcon.svg',
+              width: 18,
+              height: 18,
+              colorFilter: const ColorFilter.mode(
+                Color(0xFF9CA3AF),
+                BlendMode.srcIn,
+              ),
+            )
+                          )
+    
                         ),
                       ),
                     ],
