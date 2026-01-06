@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
 
 /// Team color input field widget with color picker (optional, not sent to API)
 class TeamColorField extends StatelessWidget {

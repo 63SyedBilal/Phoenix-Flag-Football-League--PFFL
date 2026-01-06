@@ -19,8 +19,9 @@ class ProfileService {
     try {
       final dio = await _getAuthenticatedDio();
 
-      final response = await dio.post(
-        AppConfig.profileEndpoint,
+      // Use PUT as create/complete profile is idempotent update
+      final response = await dio.put(
+        AppConfig.completeProfileEndpoint,
         data: profileData,
       );
 
@@ -59,82 +60,45 @@ class ProfileService {
       // First try to get user data which contains profileImage, jerseyNumber, position
       try {
         final userResponse = await dio.get(
-          '/api/user/$userId',
+          '/user/$userId',
           options: Options(validateStatus: (_) => true),
         );
 
         if (userResponse.statusCode == 200) {
           final userData = userResponse.data;
 
-          if (userData is Map && userData['data'] is Map) {
-            final user = (userData['data'] as Map).cast<String, dynamic>();
-            print(
-              '📡 ✅ Got user data with profileImage: ${user['profileImage']}',
-            );
+          if (userData is Map) {
+            final user = ((userData['data'] ?? userData) as Map)
+                .cast<String, dynamic>();
 
-            // Return user data which includes profileImage, jerseyNumber, position
+            final profileImg = user['profileImage']?.toString();
+            final jersey = user['jerseyNumber']?.toString();
+            final pos = user['position']?.toString();
+
+            // Return user data as profile data
+            // Even if profile fields are missing, return what we have
             return {
-              'profileImage': user['profileImage'] ?? '',
-              'image':
-                  user['profileImage'] ??
-                  '', // Also set as 'image' for compatibility
-              'jerseyNumber': user['jerseyNumber'] ?? '',
-              'position': user['position'] ?? '',
+              'profileImage': profileImg ?? '',
+              'image': profileImg ?? '',
+              'jerseyNumber': jersey ?? '',
+              'position': pos ?? '',
               'firstName': user['firstName'] ?? '',
               'lastName': user['lastName'] ?? '',
               'email': user['email'] ?? '',
               'phone': user['phone'] ?? '',
               'role': user['role'] ?? '',
+              'emergencyContactName': user['emergencyContactName'] ?? '',
+              'emergencyPhone': user['emergencyPhone'] ?? '',
+              'profileCompleted': user['profileCompleted'] ?? false,
             };
           }
         }
+
+        // If 404, user truly doesn't exist
+        return null;
       } catch (e) {
-      }
-
-      // Fallback to profile collection
-      final response = await dio.get(
-        '${AppConfig.profileEndpoint}/$userId',
-        options: Options(validateStatus: (_) => true),
-      );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is Map && data['data'] is Map) {
-          final profileData = (data['data'] as Map).cast<String, dynamic>();
-          return profileData;
-        }
-        if (data is Map && data['user'] is Map) {
-          return (data['user'] as Map).cast<String, dynamic>();
-        }
-        if (data is Map) {
-          return data.cast<String, dynamic>();
-        }
         return null;
       }
-
-      if (response.statusCode == 404 || response.statusCode == 405) {
-        final fallback = await dio.get(
-          AppConfig.profileEndpoint,
-          queryParameters: {'userId': userId},
-          options: Options(validateStatus: (_) => true),
-        );
-
-        if (fallback.statusCode == 200) {
-          final body = fallback.data;
-          if (body is Map) {
-            final d = body['data'] ?? body['user'] ?? body;
-            if (d is Map) return d.cast<String, dynamic>();
-            if (d is List && d.isNotEmpty) {
-              final first = d.first;
-              if (first is Map) return first.cast<String, dynamic>();
-            }
-          }
-        }
-
-        // Profile not available for this user.
-        return null;
-      }
-      return null;
     } on DioException {
       return null;
     } catch (e) {
@@ -142,4 +106,3 @@ class ProfileService {
     }
   }
 }
-

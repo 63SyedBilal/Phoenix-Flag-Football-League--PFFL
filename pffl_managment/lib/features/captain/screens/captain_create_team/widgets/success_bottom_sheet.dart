@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 
 /// Success bottom sheet widget

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:pffl_managment/core/services/url_launcher_service.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/referee/providers/complete_referee_profile_provider.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:pffl_managment/core/widgets/improved_phone_field.dart';
 import 'package:intl_phone_field/phone_number.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/loading_overlay.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/loading_overlay.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -154,18 +156,7 @@ class _CompleteRefereeProfileView extends StatelessWidget {
                 decoration: const BoxDecoration(shape: BoxShape.circle),
                 child: ClipOval(
                   child: Center(
-                    child: provider.profileImagePath != null
-                        ? Image.file(
-                            File(provider.profileImagePath!),
-                            fit: BoxFit.cover,
-                            width: 120,
-                            height: 120,
-                          )
-                        : Icon(
-                            Icons.person_outline,
-                            size: 60,
-                            color: Colors.grey[300],
-                          ),
+                    child: _buildProfileImage(provider.profileImagePath),
                   ),
                 ),
               ),
@@ -240,6 +231,31 @@ class _CompleteRefereeProfileView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProfileImage(String? imagePath) {
+    if (imagePath == null) {
+      return Icon(Icons.person_outline, size: 60, color: Colors.grey[300]);
+    }
+
+    if (imagePath.startsWith('http')) {
+      return Image.network(
+        imagePath,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person_outline, size: 60, color: Colors.grey[300]);
+        },
+      );
+    }
+
+    return Image.file(
+      File(imagePath),
+      fit: BoxFit.cover,
+      width: 120,
+      height: 120,
     );
   }
 
@@ -360,13 +376,26 @@ class _CompleteRefereeProfileView extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        const Expanded(
-          child: Text(
-            'I agree to Terms & Privacy',
-            style: TextStyle(
-              fontFamily: 'Lato',
-              fontSize: 14,
-              color: Color(0xFF9CA3AF),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              text: 'I agree to ',
+              style: const TextStyle(
+                fontFamily: 'Lato',
+                fontSize: 14,
+                color: Color(0xFF9CA3AF),
+              ),
+              children: [
+                TextSpan(
+                  text: 'Terms & Privacy',
+                  style: const TextStyle(
+                    decoration: TextDecoration.underline,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () => UrlLauncherService.launchPrivacyPolicy(),
+                ),
+              ],
             ),
           ),
         ),

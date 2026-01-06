@@ -38,12 +38,21 @@ class UserAvatarWidget extends StatelessWidget {
   });
 
   /// Check if the image URL is valid
-  bool get _hasValidImage =>
-      imageUrl != null && imageUrl!.isNotEmpty && imageUrl!.startsWith('http');
+  bool get _hasValidImage {
+    if (imageUrl == null || imageUrl!.isEmpty) return false;
+    return imageUrl!.startsWith('http') || imageUrl!.contains('cloudinary.com');
+  }
+
+  /// Get final URL with scheme
+  String get _finalUrl {
+    if (imageUrl == null) return '';
+    if (imageUrl!.startsWith('http')) return imageUrl!;
+    // Cloudinary URLs may be stored without scheme
+    return 'https://${imageUrl!}';
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
       width: size,
       height: size,
@@ -55,7 +64,7 @@ class UserAvatarWidget extends StatelessWidget {
       child: ClipOval(
         child: _hasValidImage
             ? CachedNetworkImage(
-                imageUrl: imageUrl!,
+                imageUrl: _finalUrl,
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
@@ -140,8 +149,17 @@ class UserAvatarWithInitials extends StatelessWidget {
   });
 
   /// Check if the image URL is valid
-  bool get _hasValidImage =>
-      imageUrl != null && imageUrl!.isNotEmpty && imageUrl!.startsWith('http');
+  bool get _hasValidImage {
+    if (imageUrl == null || imageUrl!.isEmpty) return false;
+    return imageUrl!.startsWith('http') || imageUrl!.contains('cloudinary.com');
+  }
+
+  /// Get final URL with scheme
+  String get _finalUrl {
+    if (imageUrl == null) return '';
+    if (imageUrl!.startsWith('http')) return imageUrl!;
+    return 'https://${imageUrl!}';
+  }
 
   /// Extract initials from user name (max 2 characters)
   String get _initials {
@@ -166,7 +184,7 @@ class UserAvatarWithInitials extends StatelessWidget {
       child: ClipOval(
         child: _hasValidImage
             ? CachedNetworkImage(
-                imageUrl: imageUrl!,
+                imageUrl: _finalUrl,
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
@@ -196,4 +214,3 @@ class UserAvatarWithInitials extends StatelessWidget {
     );
   }
 }
-

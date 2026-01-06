@@ -9,13 +9,14 @@ import 'package:pffl_managment/features/auth/screens/create_profile/create_accou
 import 'package:pffl_managment/features/auth/screens/get_started_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_dashboard.dart';
 import 'package:pffl_managment/features/free_agent/screens/add_payment_details/add_payment_details_screen.dart';
+import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/league_selection_screen.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_payment_history_screen.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/complete_profile_screen.dart';
 import 'package:pffl_managment/features/admin/users/views/my_team.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
 // import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/payment_receipt_screen.dart';
 import 'package:pffl_managment/features/captain/captain_dashboard.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/captain_create_team.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/captain_create_team.dart';
 import 'package:pffl_managment/features/captain/view/leagues/league_detail/captain_league_detail_screen.dart';
 import 'package:pffl_managment/features/captain/view/payments/captain_payment_history_view.dart';
 import 'package:pffl_managment/invite_screens/admin_invite_screen/admin_invite_screen.dart';
@@ -33,6 +34,7 @@ import 'package:pffl_managment/screens/notification/admin_notification/admin_not
 import 'package:pffl_managment/screens/notification/referee_notification/referee_notification.dart';
 import 'package:pffl_managment/screens/notification/statkeeper_notification/statkeeper_notification.dart';
 import 'package:pffl_managment/screens/notification/freeagent_notification/freeagent_notification.dart';
+import 'package:pffl_managment/features/admin/screens/admin_stats_approval_screen.dart';
 import 'package:pffl_managment/features/referee/screens/complete_profile/complete_referee_profile_screen.dart';
 
 import 'app_routes.dart';
@@ -40,6 +42,14 @@ import 'app_routes.dart';
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case AppRoutes.adminStatsApproval:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => AdminStatsApprovalScreen(
+            matchId: args['matchId'],
+            notificationId: args['notificationId'],
+          ),
+        );
       case AppRoutes.getStarted:
         return MaterialPageRoute(builder: (_) => GetStartedScreen());
 
@@ -149,11 +159,14 @@ class RouteGenerator {
       case AppRoutes.freeAgentDashboard:
         return MaterialPageRoute(builder: (_) => const FreeAgentDashboard());
 
+      case AppRoutes.freeAgentLeagueSelection:
+        return MaterialPageRoute(builder: (_) => const LeagueSelectionScreen());
+
       case AppRoutes.freeAgentActiveLeagues:
-        return MaterialPageRoute(builder: (_) =>  AddPaymentDetailsScreen());
+        return MaterialPageRoute(builder: (_) => AddPaymentDetailsScreen());
 
       case AppRoutes.freeAgentPaymentOption:
-        return MaterialPageRoute(builder: (_) =>  AddPaymentDetailsScreen());
+        return MaterialPageRoute(builder: (_) => AddPaymentDetailsScreen());
 
       case AppRoutes.freeAgentAddPaymentDetails:
         return MaterialPageRoute(builder: (_) => AddPaymentDetailsScreen());

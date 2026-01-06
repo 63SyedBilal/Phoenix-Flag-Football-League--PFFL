@@ -6,6 +6,7 @@ import 'package:pffl_managment/features/auth/repositories/signup_repository.dart
 
 class SignupProvider extends ChangeNotifier {
   SignupState _state = const SignupState();
+  bool _disposed = false;
 
   String get firstName => _state.firstName;
   String get lastName => _state.lastName;
@@ -274,5 +275,17 @@ class SignupProvider extends ChangeNotifier {
     _state = _state.reset();
     notifyListeners();
   }
-}
 
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
+  }
+}

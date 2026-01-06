@@ -59,15 +59,16 @@ class NotificationProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final userRole = prefs.getString('userRole')?.toLowerCase() ?? '';
       final userEmail = prefs.getString('userEmail') ?? 'Unknown';
+      final userId = prefs.getString('userId') ?? '';
       final isAdmin = userRole == 'admin';
 
       // Fetch role-specific notifications
       print(
-        '🔄 [NOTIFICATION PROVIDER] Fetching notifications for user: $userEmail (Role: $userRole)',
+        '🔄 [NOTIFICATION PROVIDER] Fetching notifications for user: $userEmail (Role: $userRole, ID: $userId)',
       );
 
       List<NotificationModel> roleSpecificNotifications =
-          await NotificationService.getNotificationsByRole(userRole);
+          await NotificationService.getNotificationsByRole(userRole, userId);
 
       print(
         '✅ [NOTIFICATION PROVIDER] Fetched ${roleSpecificNotifications.length} role-specific notifications for $userEmail',
@@ -115,7 +116,6 @@ class NotificationProvider extends ChangeNotifier {
       print(
         '🎯 [NOTIFICATION PROVIDER DEBUG] Found ${teamInvites.length} team/invite notifications:',
       );
-     
 
       _updateUnreadCount();
       print('✅ [NOTIFICATION PROVIDER] Unread count: $_unreadCount');

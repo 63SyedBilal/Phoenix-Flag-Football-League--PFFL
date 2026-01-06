@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
+import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
 
 class AddPaymentDetailsProvider extends ChangeNotifier {
   PaymentState _state = const PaymentState();
@@ -79,9 +80,6 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
     BuildContext context,
   ) async {
     // Debug output for form state before validation
-    debugPrint(
-      '   - Card Number: "${_state.cardNumber}" (length: ${_state.cardNumber.length})',
-    );
 
     if (!validateForm()) {
       return false;
@@ -91,10 +89,19 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
     notifyListeners();
 
     if (leagueProvider.selectedLeagues.isEmpty) {
-      // Fallback for Pending Payment card flow: persist a leagueId and recover it here.
       try {
-        final prefs = await SharedPreferences.getInstance();
-        final pendingLeagueId = prefs.getString('pendingLeagueId');
+        // Check PendingPaymentProvider first
+        final pendingProvider = Provider.of<PendingPaymentProvider>(
+          context,
+          listen: false,
+        );
+        String? pendingLeagueId = pendingProvider.pendingLeagueId;
+
+        // Fallback to SharedPreferences if not in provider
+        if (pendingLeagueId == null) {
+          final prefs = await SharedPreferences.getInstance();
+          pendingLeagueId = prefs.getString('pendingLeagueId');
+        }
 
         if (pendingLeagueId != null && pendingLeagueId.trim().isNotEmpty) {
           final leagueDetail = await LeagueService.getLeagueById(
@@ -104,7 +111,7 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
           if (leagueDetail != null) {
             final allLeagues = await LeagueService.getAllLeagues();
             final leagueModel = allLeagues
-                .where((l) => l.id == pendingLeagueId.trim())
+                .where((l) => l.id == pendingLeagueId!.trim())
                 .cast<LeagueModel?>()
                 .firstWhere((l) => l != null, orElse: () => null);
 
@@ -173,9 +180,6 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
         };
 
         // Debug output for card details
-        debugPrint(
-          '   - Card Number: ${_state.cardNumber.replaceAll(' ', '').replaceRange(0, 12, '*' * 12)}',
-        );
 
         final response = await PaymentService.processPayment(
           paymentId: paymentId,
@@ -246,13 +250,7 @@ class AddPaymentDetailsProvider extends ChangeNotifier {
           final captainId = authProvider.userId;
 
           if (captainId.isNotEmpty) {
-            debugPrint(
-              '🔄 Refreshing payment status for ${leagueProvider.selectedLeagues.length} leagues...',
-            );
             for (var league in leagueProvider.selectedLeagues) {
-              debugPrint(
-                '🔄 Refreshing payment status for league: ${league.leagueName} (${league.id})',
-              );
               await leaguePaymentProvider.refreshPaymentStatus(
                 league.id,
                 captainId,

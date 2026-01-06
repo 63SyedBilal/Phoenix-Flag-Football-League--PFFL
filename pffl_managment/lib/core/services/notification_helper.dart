@@ -6,10 +6,19 @@ class NotificationHelper {
   static List<NotificationModel> filterNotificationsByRole(
     List<NotificationModel> allNotifications,
     String userRole,
+    String currentUserId,
   ) {
     final normalizedRole = userRole.toLowerCase().replaceAll('-', '');
 
     return allNotifications.where((notification) {
+      // 1. Check if notification is targeted and if it matches current user
+      // If it has a receiver and the receiver ID doesn't match current user, filter it out
+      if (notification.receiver != null &&
+          notification.receiver!.id.isNotEmpty &&
+          notification.receiver!.id != currentUserId) {
+        return false;
+      }
+
       final type = notification.type.toLowerCase();
       final message = (notification.message ?? '').toLowerCase();
 

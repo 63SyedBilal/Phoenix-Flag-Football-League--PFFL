@@ -1,74 +1,38 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:pffl_managment/features/admin/models/leagues_models/league_creation_model.dart';
+import 'package:pffl_managment/core/services/league_service.dart';
 
 /// Provider for managing leagues with role-based access control
 class LeagueProvider extends ChangeNotifier {
   final String userRole;
-
-  // Hardcoded existing leagues (simulating database)
-  final List<LeagueCreationModel> _existingLeagues = [
-    LeagueCreationModel(
-      id: '1',
-      leagueName: 'Phoenix Winter 2025',
-      teamLogo: '',
-      selectedPlayerIds: [],
-      captainId: '',
-      registrationFee: 250,
-      createdAt: DateTime.now(),
-      status: 'Active',
-      format: '5v5',
-      startDate: DateTime(2025, 12, 10),
-      endDate: DateTime(2026, 2, 25),
-    ),
-    LeagueCreationModel(
-      id: '2',
-      leagueName: 'Champions Cup 2025',
-      teamLogo: '',
-      selectedPlayerIds: [],
-      captainId: '',
-      registrationFee: 250,
-      createdAt: DateTime.now(),
-      status: 'Active',
-      format: '5v5',
-      startDate: DateTime(2025, 12, 10),
-      endDate: DateTime(2026, 2, 25),
-    ),
-    LeagueCreationModel(
-      id: '3',
-      leagueName: 'Summer League 2025',
-      teamLogo: '',
-      selectedPlayerIds: [],
-      captainId: '',
-      registrationFee: 250,
-      createdAt: DateTime.now(),
-      status: 'Active',
-      format: '5v5',
-      startDate: DateTime(2025, 12, 10),
-      endDate: DateTime(2026, 2, 25),
-    ),
-    LeagueCreationModel(
-      id: '4',
-      leagueName: 'Spring Tournament 2026',
-      teamLogo: '',
-      selectedPlayerIds: [],
-      captainId: '',
-      registrationFee: 250,
-      createdAt: DateTime.now(),
-      status: 'Pending',
-      format: '5v5',
-      startDate: DateTime(2026, 2, 1),
-      endDate: DateTime(2026, 2, 25),
-    ),
-  ];
+  List<LeagueModel> _allLeagues = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
   // Leagues created by Admin during runtime
   final List<LeagueCreationModel> _createdLeagues = [];
 
-  LeagueProvider({required this.userRole});
+  LeagueProvider({required this.userRole}) {
+    fetchLeagues();
+  }
 
-  /// Get all leagues (existing + created)
-  List<LeagueCreationModel> get allLeagues {
-    return [..._existingLeagues, ..._createdLeagues];
+  List<LeagueModel> get allLeagues => _allLeagues;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  Future<void> fetchLeagues() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _allLeagues = await LeagueService.getAllLeagues();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Check if user can create/edit leagues
@@ -107,26 +71,26 @@ class LeagueProvider extends ChangeNotifier {
   }
 
   /// Get league by ID
-  LeagueCreationModel? getLeagueById(String id) {
+  LeagueModel? getLeagueById(String id) {
     try {
-      return allLeagues.firstWhere((league) => league.id == id);
+      return _allLeagues.firstWhere((league) => league.id == id);
     } catch (e) {
       return null;
     }
   }
 
   /// Filter leagues by status
-  List<LeagueCreationModel> getLeaguesByStatus(String status) {
-    return allLeagues.where((league) => league.status == status).toList();
+  List<LeagueModel> getLeaguesByStatus(String status) {
+    return _allLeagues.where((league) => league.status == status).toList();
   }
 
   /// Get active leagues
-  List<LeagueCreationModel> get activeLeagues {
-    return getLeaguesByStatus('Active');
+  List<LeagueModel> get activeLeagues {
+    return getLeaguesByStatus('active');
   }
 
   /// Get pending leagues
-  List<LeagueCreationModel> get pendingLeagues {
-    return getLeaguesByStatus('Pending');
+  List<LeagueModel> get pendingLeagues {
+    return getLeaguesByStatus('pending');
   }
 }

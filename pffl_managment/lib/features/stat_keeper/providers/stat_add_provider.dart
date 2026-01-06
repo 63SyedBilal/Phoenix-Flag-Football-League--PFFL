@@ -114,8 +114,7 @@ class StatAddProvider extends ChangeNotifier {
       _players = [];
       loadTeams();
       notifyListeners();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> loadTeams() async {
@@ -264,9 +263,9 @@ class StatAddProvider extends ChangeNotifier {
   }
 
   void clearForm() {
-    // Retain selectedTeamId to allow sequential entry for multiple players (Req #1)
+    // Retain selectedTeamId AND _players to allow sequential entry for multiple players (Req #1)
     _selectedPlayerId = null;
-    _players = [];
+    // Do NOT clear _players here, as we are keeping the same team
     catchesController.text = '0';
     catchesYardsController.text = '0';
     rushesController.text = '0';
@@ -308,4 +307,3 @@ class StatAddProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

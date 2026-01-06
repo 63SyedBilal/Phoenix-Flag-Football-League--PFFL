@@ -6,10 +6,26 @@ class StatKeeperNotificationProvider extends ChangeNotifier {
   List<NotificationModel> _notifications = [];
   bool _isLoading = false;
   String? _errorMessage;
+  final Set<String> _expandedIds = {};
+
+  final String? userId; // Added for targeted filtering
+
+  StatKeeperNotificationProvider({this.userId}); // Constructor with userId
 
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  bool isExpanded(String id) => _expandedIds.contains(id);
+
+  void toggleExpansion(String id) {
+    if (_expandedIds.contains(id)) {
+      _expandedIds.remove(id);
+    } else {
+      _expandedIds.add(id);
+    }
+    notifyListeners();
+  }
 
   Future<void> fetchNotifications() async {
     _isLoading = true;
@@ -19,6 +35,7 @@ class StatKeeperNotificationProvider extends ChangeNotifier {
     try {
       _notifications = await NotificationService.getUserNotifications(
         role: 'statkeeper',
+        userId: userId, // Pass userId for filtering
       );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';

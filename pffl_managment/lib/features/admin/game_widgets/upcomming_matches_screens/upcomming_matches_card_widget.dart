@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/constants/app_text_styles.dart';
-import 'package:pffl_managment/core/utils/svg_icons.dart';
 // Assuming AppAdminIcons is here or exported
 import 'package:pffl_managment/features/admin/models/match_model.dart';
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_game_widgets/edit_upcomming_matches.dart';
@@ -51,7 +50,11 @@ class UpcommingMatchesCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              SvgIcons.icon1(size: 12, color: colorScheme.onSurface),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 8,
+                color: Color(0xFF111827),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -115,26 +118,25 @@ class UpcommingMatchesCardWidget extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: match.status == MatchStatus.live
-                            ? Colors.red
-                            : Colors.grey[700],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        match.status == MatchStatus.live ? 'LIVE' : 'FINAL',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                    if (match.status == MatchStatus.completed)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[700],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'FINAL',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ],
               ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/api_service.dart';
-import '../../../features/captain/model/game_model.dart';
+import '../model/game_model.dart';
 
 class CaptainDashboardProvider extends ChangeNotifier {
   // User information
@@ -53,25 +53,30 @@ class CaptainDashboardProvider extends ChangeNotifier {
     try {
       // Fetch data from fake API
       final apiService = ApiService();
-      _upcomingGames = await apiService.getUpcomingMatches('captain_1', 'captain');
-      
+      _upcomingGames = await apiService.getUpcomingMatches(
+        'captain_1',
+        'captain',
+      );
+
       // Set next game (first game where isMyGame is true)
       _nextGame = _upcomingGames.firstWhere(
-        (game) => game.isMyGame, 
-        orElse: () => _upcomingGames.isNotEmpty ? _upcomingGames.first : GameModel(
-          id: '',
-          leagueName: '',
-          team1Name: '',
-          team1Logo: '',
-          team2Name: '',
-          team2Logo: '',
-          date: DateTime.now(),
-          time: '',
-          isFeePaid: false,
-          isMyGame: false,
-        ),
+        (game) => game.isMyGame,
+        orElse: () => _upcomingGames.isNotEmpty
+            ? _upcomingGames.first
+            : GameModel(
+                id: '',
+                leagueName: '',
+                team1Name: '',
+                team1Logo: '',
+                team2Name: '',
+                team2Logo: '',
+                date: DateTime.now(),
+                time: '',
+                isFeePaid: false,
+                isMyGame: false,
+              ),
       );
-      
+
       // If we got a default empty GameModel, set nextGame to null
       if (_nextGame != null && _nextGame!.id.isEmpty) {
         _nextGame = null;
@@ -145,24 +150,26 @@ class CaptainDashboardProvider extends ChangeNotifier {
     try {
       final apiService = ApiService();
       _upcomingGames = await apiService.refreshMatches('captain_1', 'captain');
-      
+
       // Set next game (first game where isMyGame is true)
       _nextGame = _upcomingGames.firstWhere(
-        (game) => game.isMyGame, 
-        orElse: () => _upcomingGames.isNotEmpty ? _upcomingGames.first : GameModel(
-          id: '',
-          leagueName: '',
-          team1Name: '',
-          team1Logo: '',
-          team2Name: '',
-          team2Logo: '',
-          date: DateTime.now(),
-          time: '',
-          isFeePaid: false,
-          isMyGame: false,
-        ),
+        (game) => game.isMyGame,
+        orElse: () => _upcomingGames.isNotEmpty
+            ? _upcomingGames.first
+            : GameModel(
+                id: '',
+                leagueName: '',
+                team1Name: '',
+                team1Logo: '',
+                team2Name: '',
+                team2Logo: '',
+                date: DateTime.now(),
+                time: '',
+                isFeePaid: false,
+                isMyGame: false,
+              ),
       );
-      
+
       // If we got a default empty GameModel, set nextGame to null
       if (_nextGame != null && _nextGame!.id.isEmpty) {
         _nextGame = null;

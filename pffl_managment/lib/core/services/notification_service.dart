@@ -17,26 +17,33 @@ class NotificationService {
       NotificationApiService.rejectNotification(id);
 
   // --- Role Specific Getters ---
-  static Future<List<NotificationModel>> getPlayerNotifications() =>
-      NotificationApiService.getNotificationsByRole('player');
+  static Future<List<NotificationModel>> getPlayerNotifications(
+    String userId,
+  ) => NotificationApiService.getNotificationsByRole('player', userId);
 
-  static Future<List<NotificationModel>> getCaptainNotifications() =>
-      NotificationApiService.getNotificationsByRole('captain');
+  static Future<List<NotificationModel>> getCaptainNotifications(
+    String userId,
+  ) => NotificationApiService.getNotificationsByRole('captain', userId);
 
-  static Future<List<NotificationModel>> getAdminNotifications() =>
-      NotificationApiService.getNotificationsByRole('admin');
+  static Future<List<NotificationModel>> getAdminNotifications(String userId) =>
+      NotificationApiService.getNotificationsByRole('admin', userId);
 
-  static Future<List<NotificationModel>> getRefereeNotifications() =>
-      NotificationApiService.getNotificationsByRole('referee');
+  static Future<List<NotificationModel>> getRefereeNotifications(
+    String userId,
+  ) => NotificationApiService.getNotificationsByRole('referee', userId);
 
-  static Future<List<NotificationModel>> getStatKeeperNotifications() =>
-      NotificationApiService.getNotificationsByRole('statkeeper');
+  static Future<List<NotificationModel>> getStatKeeperNotifications(
+    String userId,
+  ) => NotificationApiService.getNotificationsByRole('statkeeper', userId);
 
-  static Future<List<NotificationModel>> getFreeAgentNotifications() =>
-      NotificationApiService.getNotificationsByRole('freeagent');
+  static Future<List<NotificationModel>> getFreeAgentNotifications(
+    String userId,
+  ) => NotificationApiService.getNotificationsByRole('freeagent', userId);
 
-  static Future<List<NotificationModel>> getNotificationsByRole(String role) =>
-      NotificationApiService.getNotificationsByRole(role);
+  static Future<List<NotificationModel>> getNotificationsByRole(
+    String role,
+    String userId,
+  ) => NotificationApiService.getNotificationsByRole(role, userId);
 
   // --- Sending ---
   static Future<bool> sendPaymentReminder({
@@ -73,9 +80,30 @@ class NotificationService {
   static Future<bool> sendAdminNotification({required String message}) =>
       NotificationSenderService.sendAdminNotification(message: message);
 
+  static Future<bool> sendEmailNotification({
+    required String type,
+    required String recipientEmail,
+    required String subject,
+    String? body,
+    Map<String, dynamic>? templateData,
+    String? leagueId,
+    String? teamId,
+    String? paymentId,
+  }) => NotificationSenderService.sendEmailNotification(
+    type: type,
+    recipientEmail: recipientEmail,
+    subject: subject,
+    body: body,
+    templateData: templateData,
+    leagueId: leagueId,
+    teamId: teamId,
+    paymentId: paymentId,
+  );
+
   // --- Filtering ---
   static List<NotificationModel> filterNotificationsByRole(
     List<NotificationModel> all,
     String role,
-  ) => NotificationHelper.filterNotificationsByRole(all, role);
+    String userId,
+  ) => NotificationHelper.filterNotificationsByRole(all, role, userId);
 }

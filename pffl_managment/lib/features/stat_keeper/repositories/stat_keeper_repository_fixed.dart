@@ -414,9 +414,22 @@ class StatKeeperRepositoryFixed {
       teamName = teamData['teamName'];
     } else if (teamData['enterCode'] != null) {
       teamName = teamData['enterCode'];
+    } else if (teamData['teamId'] is Map) {
+      final teamIdObj = teamData['teamId'] as Map;
+      teamName =
+          teamIdObj['teamName']?.toString() ??
+          teamIdObj['enterCode']?.toString() ??
+          defaultName;
     }
 
-    if (teamData['image'] != null) teamLogo = teamData['image'];
+    if (teamData['image'] != null) {
+      teamLogo = teamData['image'];
+    } else if (teamData['teamId'] is Map) {
+      final teamIdObj = teamData['teamId'] as Map;
+      if (teamIdObj['image'] != null) {
+        teamLogo = teamIdObj['image'].toString();
+      }
+    }
 
     return TeamStatModel(
       teamName: teamName,
@@ -453,4 +466,3 @@ class StatKeeperRepositoryFixed {
     return StatStatus.draft;
   }
 }
-

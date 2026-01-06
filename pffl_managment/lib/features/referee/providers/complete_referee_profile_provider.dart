@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/admin_service.dart';
@@ -111,8 +112,7 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
           notifyListeners();
         }
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<bool> submitProfile() async {
@@ -146,13 +146,46 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
       };
 
       final dio = await AuthService.getWorkingDio();
-      // Assuming a generic endpoint for profile updates or a dedicated one for referees
-      final response = await dio.put(
-        AppConfig.profileEndpoint,
-        data: profileData,
-      );
+      final userId = _userPrefs.userId;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (userId == null || userId.isEmpty) {
+        _errorMessage = 'User ID not found. Please login again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Explicitly use PUT /api/user/:id
+      // This is the correct endpoint for updating user profiles.
+      // We do NOT use /api/profile for updates as it only supports POST/GET.
+      Response? response;
+      try {
+        response = await dio.put(
+          '${AppConfig.userEndpoint}/$userId',
+          data: profileData,
+          options: Options(validateStatus: (s) => s != null && s < 500),
+        );
+      } catch (e) {
+        _errorMessage = 'Network error: $e';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // If user endpoint fails, try complete-profile as backup (for legacy support)
+      if (response == null ||
+          (response.statusCode != 200 && response.statusCode != 201)) {
+        try {
+          response = await dio.put(
+            AppConfig.completeProfileEndpoint,
+            data: profileData,
+            options: Options(validateStatus: (s) => s != null && s < 500),
+          );
+        } catch (_) {}
+      }
+
+      if (response != null &&
+          (response.statusCode == 200 || response.statusCode == 201)) {
         // 3. Update local cache
         await _userPrefs.setExperience(_experience);
         await _userPrefs.setEmergencyContactName(_emergencyContactName);
@@ -164,7 +197,7 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = response.data['message'] ?? 'Failed to save profile.';
+        _errorMessage = response?.data['message'] ?? 'Failed to save profile.';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -182,4 +215,3 @@ class CompleteRefereeProfileProvider extends ChangeNotifier {
     await _userPrefs.setRefereeProfileComplete(false);
   }
 }
-

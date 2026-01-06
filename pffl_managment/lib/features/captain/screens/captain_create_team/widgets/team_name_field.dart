@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
 
 /// Team name input field widget
 class TeamNameField extends StatelessWidget {
@@ -11,7 +11,7 @@ class TeamNameField extends StatelessWidget {
     return Consumer<CreateTeamProvider>(
       builder: (context, provider, _) {
         final hasError = provider.fieldErrors['teamName'] != null;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -28,10 +28,7 @@ class TeamNameField extends StatelessWidget {
               onChanged: provider.setTeamName,
               decoration: InputDecoration(
                 hintText: 'e.g Star Eleven',
-                hintStyle: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[400],
-                ),
+                hintStyle: TextStyle(fontSize: 14, color: Colors.grey[400]),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -81,4 +78,3 @@ class TeamNameField extends StatelessWidget {
     );
   }
 }
-

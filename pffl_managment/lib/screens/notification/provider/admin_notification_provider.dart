@@ -7,6 +7,10 @@ class AdminNotificationProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  final String? userId; // Added for targeted filtering
+
+  AdminNotificationProvider({this.userId}); // Constructor with userId
+
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -20,6 +24,7 @@ class AdminNotificationProvider extends ChangeNotifier {
     try {
       _notifications = await NotificationService.getUserNotifications(
         role: 'admin',
+        userId: userId, // Pass userId for filtering
       );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';
@@ -65,9 +70,41 @@ class AdminNotificationProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> approveStats(String notificationId) async {
-    // TODO: Implement approve stats logic in service
-    await Future.delayed(const Duration(seconds: 1)); // Mock
-    return true;
+  Future<bool> approveStats(String notificationId, {String? matchId}) async {
+    try {
+      final success = await NotificationService.approveStats(
+        notificationId,
+        matchId: matchId,
+      );
+      if (success) {
+        // Update local status if needed or refresh
+        await fetchNotifications();
+      }
+      return success;
+    } catch (e) {
+      debugPrint('Error approving stats: $e');
+      return false;
+    }
+  }
+
+  Future<bool> rejectStats(
+    String notificationId, {
+    String? reason,
+    String? matchId,
+  }) async {
+    try {
+      final success = await NotificationService.rejectStats(
+        notificationId,
+        reason: reason,
+        matchId: matchId,
+      );
+      if (success) {
+        await fetchNotifications();
+      }
+      return success;
+    } catch (e) {
+      debugPrint('Error rejecting stats: $e');
+      return false;
+    }
   }
 }

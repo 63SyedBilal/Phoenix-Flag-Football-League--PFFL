@@ -13,7 +13,6 @@ import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/free_agent/providers/free_agent_dashboard_provider.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
-
 import 'package:pffl_managment/core/widgets/back_button_wrapper.dart';
 
 class FreeAgentDashboard extends StatelessWidget {
@@ -52,13 +51,9 @@ class FreeAgentDashboard extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context, int selectedIndex) {
-    // Check user role - if not free-agent, redirect to appropriate dashboard
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
         final userRole = authProvider.userRole.toLowerCase();
-
-        // If user is no longer a free-agent, redirect to appropriate dashboard
-        // Note: checking normalized 'freeagent' as well just in case
         if (userRole != 'free-agent' &&
             userRole != 'freeagent' &&
             userRole != 'free agent') {

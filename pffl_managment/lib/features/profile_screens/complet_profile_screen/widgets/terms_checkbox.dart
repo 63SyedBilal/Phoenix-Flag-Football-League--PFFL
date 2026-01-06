@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
+import 'package:pffl_managment/core/services/url_launcher_service.dart';
 
 /// Terms and Privacy agreement checkbox widget
 class TermsCheckbox extends StatelessWidget {
@@ -33,13 +35,29 @@ class TermsCheckbox extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'I agree to Terms & Privacy',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Lato',
-                    color: Color(0xFF000000),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'I agree to ',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Lato',
+                        color: Color(0xFF000000),
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Terms & Privacy',
+                          style: const TextStyle(
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () =>
+                                UrlLauncherService.launchPrivacyPolicy(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -64,4 +82,3 @@ class TermsCheckbox extends StatelessWidget {
     );
   }
 }
-

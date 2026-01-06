@@ -27,7 +27,7 @@ import 'package:pffl_managment/features/admin/provider/edit_match_provider.dart'
 import 'package:pffl_managment/features/admin/screens/admin_widgets/admin_setting_widgets/sponser_screen/provider/sponsor_screen_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/captain_navigation_provider.dart';
 import 'package:pffl_managment/features/captain/providers/captain_match_provider.dart';
-import 'package:pffl_managment/core/captain_provider/home_screen_provider/captain_dashboard_provider.dart';
+import 'package:pffl_managment/features/captain/providers/captain_dashboard_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/player_navigation_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/referee_navigation_provider.dart';
 import 'package:pffl_managment/core/providers/bottom_nevigation_provider/stat_keeper_navigation_provider.dart';
@@ -38,7 +38,7 @@ import 'package:pffl_managment/features/stat_keeper/providers/stat_keeper_dashbo
 import 'package:pffl_managment/features/free_agent/providers/free_agent_dashboard_provider.dart';
 import 'package:pffl_managment/features/admin/leagues/providers/enhanced_leagues_provider.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
 import 'package:pffl_managment/invite_screens/captain_invite_screen/providers/captain_invite_provider.dart';
 import 'package:pffl_managment/features/player/providers/player_team_provider.dart';
 import 'package:pffl_managment/core/providers/back_button_provider.dart';
@@ -57,6 +57,7 @@ import 'package:pffl_managment/features/payment_history/providers/captain_paymen
 import 'package:pffl_managment/features/captain/providers/league_payment_provider.dart';
 import 'package:pffl_managment/screens/settings/common/settings_provider.dart'
     show RoleBasedSettingsProvider;
+import 'package:pffl_managment/screens/leagues/common/league_provider.dart';
 import 'package:pffl_managment/core/utils/role_utils.dart';
 
 class AppProviders extends StatelessWidget {
@@ -171,23 +172,77 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LeagueSelectionProvider()),
         ChangeNotifierProvider(create: (_) => PaymentOptionProvider()),
         ChangeNotifierProvider(create: (_) => AddPaymentDetailsProvider()),
-        ChangeNotifierProvider(
-          create: (_) => AdminNotificationProvider()..fetchNotifications(),
+        ChangeNotifierProxyProvider<AuthProvider, AdminNotificationProvider>(
+          create: (context) => AdminNotificationProvider(
+            userId: Provider.of<AuthProvider>(context, listen: false).userId,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userId == auth.userId)
+              return previous;
+            return AdminNotificationProvider(userId: auth.userId)
+              ..fetchNotifications();
+          },
         ),
-        ChangeNotifierProvider(
-          create: (_) => PlayerNotificationProvider()..fetchNotifications(),
+        ChangeNotifierProxyProvider<AuthProvider, PlayerNotificationProvider>(
+          create: (context) => PlayerNotificationProvider(
+            userId: Provider.of<AuthProvider>(context, listen: false).userId,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userId == auth.userId)
+              return previous;
+            return PlayerNotificationProvider(userId: auth.userId)
+              ..fetchNotifications();
+          },
         ),
-        ChangeNotifierProvider(
-          create: (_) => CaptainNotificationProvider()..fetchNotifications(),
+        ChangeNotifierProxyProvider<AuthProvider, CaptainNotificationProvider>(
+          create: (context) => CaptainNotificationProvider(
+            userId: Provider.of<AuthProvider>(context, listen: false).userId,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userId == auth.userId)
+              return previous;
+            return CaptainNotificationProvider(userId: auth.userId)
+              ..fetchNotifications();
+          },
         ),
-        ChangeNotifierProvider(
-          create: (_) => RefereeNotificationProvider()..fetchNotifications(),
+        ChangeNotifierProxyProvider<AuthProvider, RefereeNotificationProvider>(
+          create: (context) => RefereeNotificationProvider(
+            userId: Provider.of<AuthProvider>(context, listen: false).userId,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userId == auth.userId)
+              return previous;
+            return RefereeNotificationProvider(userId: auth.userId)
+              ..fetchNotifications();
+          },
         ),
-        ChangeNotifierProvider(
-          create: (_) => StatKeeperNotificationProvider()..fetchNotifications(),
+        ChangeNotifierProxyProvider<
+          AuthProvider,
+          StatKeeperNotificationProvider
+        >(
+          create: (context) => StatKeeperNotificationProvider(
+            userId: Provider.of<AuthProvider>(context, listen: false).userId,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userId == auth.userId)
+              return previous;
+            return StatKeeperNotificationProvider(userId: auth.userId)
+              ..fetchNotifications();
+          },
         ),
-        ChangeNotifierProvider(
-          create: (_) => FreeAgentNotificationProvider()..fetchNotifications(),
+        ChangeNotifierProxyProvider<
+          AuthProvider,
+          FreeAgentNotificationProvider
+        >(
+          create: (context) => FreeAgentNotificationProvider(
+            userId: Provider.of<AuthProvider>(context, listen: false).userId,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userId == auth.userId)
+              return previous;
+            return FreeAgentNotificationProvider(userId: auth.userId)
+              ..fetchNotifications();
+          },
         ),
         ChangeNotifierProvider(create: (_) => BackButtonProvider()),
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
@@ -230,6 +285,20 @@ class AppProviders extends StatelessWidget {
               return previous; // Same role category, keep instances
             }
             return RoleBasedSettingsProvider(userRole: auth.userRole);
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, LeagueProvider>(
+          create: (context) => LeagueProvider(
+            userRole: Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            ).userRole,
+          ),
+          update: (context, auth, previous) {
+            if (previous != null && previous.userRole == auth.userRole) {
+              return previous;
+            }
+            return LeagueProvider(userRole: auth.userRole);
           },
         ),
         // TournamentProvider is created dynamically with leagueId parameter

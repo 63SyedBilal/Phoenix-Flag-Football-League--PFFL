@@ -324,12 +324,10 @@ class PaymentHistoryProvider extends ChangeNotifier {
     _filteredPayments = filtered;
   }
 
-  /// Send payment reminder to a player
   Future<bool> sendPaymentReminder(PaymentModel payment) async {
     if (payment.playerId == null) return false;
 
     try {
-      // Logic for local notification as requested
       final body =
           'You have not paid for ${payment.league}, please pay your league fee of ${payment.amount}';
 

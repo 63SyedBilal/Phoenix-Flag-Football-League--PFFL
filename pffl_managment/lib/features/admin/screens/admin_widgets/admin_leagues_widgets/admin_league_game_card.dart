@@ -19,6 +19,12 @@ class AdminLeagueGameCard extends StatelessWidget {
     this.sequenceNumber,
   });
 
+  String _fixUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) return url;
+    return 'https://$url';
+  }
+
   @override
   Widget build(BuildContext context) {
     final userRole = Provider.of<AuthProvider>(
@@ -77,27 +83,6 @@ class AdminLeagueGameCard extends StatelessWidget {
                         fontFamily: 'Lato',
                       ),
                     ),
-                    if (match.status == MatchStatus.live) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'LIVE',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -159,7 +144,7 @@ class AdminLeagueGameCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(1.6),
             child: flagUrl.isNotEmpty
                 ? CachedNetworkImage(
-                    imageUrl: flagUrl,
+                    imageUrl: _fixUrl(flagUrl),
                     fit: BoxFit.cover,
                     placeholder: (context, url) =>
                         Container(color: const Color(0xFFF3F4F6)),

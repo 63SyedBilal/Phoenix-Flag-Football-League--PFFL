@@ -122,14 +122,6 @@ class AuthService {
     // Try each URL until one works
     for (final url in urlsToTry) {
       try {
-        print(
-          'Platform: ${Platform.isAndroid
-              ? "Android"
-              : Platform.isIOS
-              ? "iOS"
-              : "Other"}',
-        );
-
         // Create a fresh Dio instance for this attempt
         final dio = Dio(
           BaseOptions(
@@ -190,9 +182,6 @@ class AuthService {
 
           return authResponse;
         } else {
-          print(
-            'Login failed with status: ${response.statusCode}, message: ${response.statusMessage}',
-          );
           return null;
         }
       } on DioException catch (e) {
@@ -223,13 +212,10 @@ class AuthService {
 
     // Final error handling
     if (lastError != null) {
-
       // Handle different error types
       if (lastError.type == DioExceptionType.connectionTimeout ||
           lastError.type == DioExceptionType.sendTimeout ||
-          lastError.type == DioExceptionType.receiveTimeout) {
-      
-      }
+          lastError.type == DioExceptionType.receiveTimeout) {}
 
       // Re-throw to let AuthProvider handle the error
       throw lastError;
@@ -248,14 +234,6 @@ class AuthService {
     // Try each URL until one works
     for (final url in urlsToTry) {
       try {
-        print(
-          'Platform: ${Platform.isAndroid
-              ? "Android"
-              : Platform.isIOS
-              ? "iOS"
-              : "Other"}',
-        );
-
         // Create a fresh Dio instance for this attempt
         // Use adequate timeout for reliable connections
         final dio = Dio(
@@ -319,13 +297,10 @@ class AuthService {
 
     // Final error handling
     if (lastError != null) {
-
       // Handle different error types
       if (lastError.type == DioExceptionType.connectionTimeout ||
           lastError.type == DioExceptionType.sendTimeout ||
-          lastError.type == DioExceptionType.receiveTimeout) {
-      
-      }
+          lastError.type == DioExceptionType.receiveTimeout) {}
 
       // Re-throw to let SignupProvider handle the error
       throw lastError;
@@ -367,13 +342,6 @@ class AuthService {
     _dio.options.connectTimeout = AppConfig.connectTimeout;
     _dio.options.receiveTimeout = AppConfig.receiveTimeout;
     _dio.options.sendTimeout = AppConfig.sendTimeout;
-    print(
-      'Platform: ${Platform.isAndroid
-          ? "Android"
-          : Platform.isIOS
-          ? "iOS"
-          : "Other"}',
-    );
 
     // Add interceptor to automatically attach token to requests
     _dio.interceptors.add(
@@ -424,19 +392,11 @@ class AuthService {
     String newPassword,
   ) async {
     try {
-      print(
-        '🔐 [AUTH SERVICE] Current password length: ${currentPassword.length}',
-      );
-
       // Check if token exists
       final token = await getToken();
-      if (token != null) {
-      }
+      if (token != null) {}
 
       final dio = await getWorkingDio();
-      print(
-        '🔐 [AUTH SERVICE] Making request to: ${dio.options.baseUrl}/user/change-password',
-      );
 
       final response = await dio.put(
         '/user/change-password',
@@ -450,7 +410,6 @@ class AuthService {
         throw Exception(error);
       }
     } on DioException catch (e) {
-
       if (e.response != null) {
         final errorData = e.response?.data;
         final error = errorData is Map
@@ -543,4 +502,3 @@ class UserData {
     };
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/screens/notification/provider/admin_notification_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_card.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
@@ -72,7 +73,21 @@ class AdminNotification extends StatelessWidget {
           final notification = provider.notifications[index];
           return NotificationCard(
             notification: notification,
-            onApproveStats: (id) => provider.approveStats(id),
+            onApproveStats: (id, {matchId}) =>
+                provider.approveStats(id, matchId: matchId),
+            onTap: () {
+              if (notification.type == 'STATS_SUBMITTED' ||
+                  notification.type == 'STATS_APPROVAL_REQUEST') {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.adminStatsApproval,
+                  arguments: {
+                    'matchId': notification.matchId,
+                    'notificationId': notification.id,
+                  },
+                );
+              }
+            },
           );
         },
       ),

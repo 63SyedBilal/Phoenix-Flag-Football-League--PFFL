@@ -18,9 +18,8 @@ class PlayerListItem extends StatelessWidget {
         // Only allow removal if the current user is a captain and the player is not the captain
         final canRemove = isCaptain && !player.isCaptain;
         // Get actual payment status from provider
-        final actualPaymentStatus = teamProvider.getPlayerPaymentStatus(player.id);
-        print(
-          '🔍 [PLAYER LIST DEBUG] Player: ${player.name}, isCaptain: ${player.isCaptain}',
+        final actualPaymentStatus = teamProvider.getPlayerPaymentStatus(
+          player.id,
         );
 
         return Container(
@@ -34,40 +33,11 @@ class PlayerListItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Debug logging for image URL
-              Builder(
-                builder: (context) {
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Player: ${player.name}',
-                  );
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Player ID: ${player.id}',
-                  );
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Image URL: "${player.imageUrl}"',
-                  );
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Has image: ${player.imageUrl != null}',
-                  );
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Image not empty: ${player.imageUrl?.isNotEmpty ?? false}',
-                  );
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Image starts with http: ${player.imageUrl?.startsWith('http') ?? false}',
-                  );
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Jersey number: "${player.number}"',
-                  );
-                  print(
-                    '🖼️ [PLAYER IMAGE DEBUG] Position: "${player.position}"',
-                  );
-                  return UserAvatarWidget(
-                    imageUrl: player.imageUrl,
-                    size: 48,
-                    borderWidth: 2,
-                    borderColor: const Color(0xFFF3F4F6),
-                  );
-                },
+              UserAvatarWidget(
+                imageUrl: player.imageUrl,
+                size: 48,
+                borderWidth: 2,
+                borderColor: const Color(0xFFF3F4F6),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -118,7 +88,10 @@ class PlayerListItem extends StatelessWidget {
                           children: [
                             if (canRemove)
                               IconButton(
-                                icon: const Icon(Icons.person_remove, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.person_remove,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () {
                                   // Trigger the remove player dialog/logic from CaptainTeamProvider
                                   _confirmRemovePlayer(context, player);
@@ -181,27 +154,13 @@ class PlayerListItem extends StatelessWidget {
                                   children: [
                                     const TextSpan(text: 'Position: '),
                                     TextSpan(
-                                      text: player.position.isNotEmpty
-                                          ? player.position
-                                          : 'Not set',
+                                      text: player.displayPosition,
                                       style: TextStyle(
                                         color: player.position.isNotEmpty
                                             ? Colors.grey.shade600
                                             : Colors.grey.shade400,
                                       ),
                                     ),
-                                    if (player.additionalPositionsCount >
-                                        0)
-                                      TextSpan(
-                                        text:
-                                            ' +${player.additionalPositionsCount} more',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF0F173E),
-                                          fontWeight: FontWeight.w500,
-                                          fontFamily: 'Lato',
-                                        ),
-                                      ),
                                   ],
                                 ),
                               ),
@@ -247,7 +206,9 @@ class PlayerListItem extends StatelessWidget {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Confirm Player Removal'),
-          content: Text('Are you sure you want to remove ${player.name} from this team?'),
+          content: Text(
+            'Are you sure you want to remove ${player.name} from this team?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -257,8 +218,10 @@ class PlayerListItem extends StatelessWidget {
               onPressed: () async {
                 Navigator.of(dialogContext).pop(); // Close confirmation dialog
                 try {
-                  await Provider.of<CaptainTeamProvider>(context, listen: false)
-                      .removePlayer(context, player.id);
+                  await Provider.of<CaptainTeamProvider>(
+                    context,
+                    listen: false,
+                  ).removePlayer(context, player.id);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -271,7 +234,9 @@ class PlayerListItem extends StatelessWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Failed to remove player: ${e.toString()}'),
+                        content: Text(
+                          'Failed to remove player: ${e.toString()}',
+                        ),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -290,4 +255,3 @@ class PlayerListItem extends StatelessWidget {
     );
   }
 }
-

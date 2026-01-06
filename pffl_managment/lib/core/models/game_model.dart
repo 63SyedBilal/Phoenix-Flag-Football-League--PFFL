@@ -1,5 +1,3 @@
-import 'package:pffl_managment/core/utils/team_utils.dart';
-
 class GameModel {
   final String id;
   final String? leagueId;
@@ -13,8 +11,8 @@ class GameModel {
   final bool isFeePaid;
   final bool isMyGame;
 
-  String get team1Name => getTeamAbbreviation(_team1Name);
-  String get team2Name => getTeamAbbreviation(_team2Name);
+  String get team1Name => _team1Name;
+  String get team2Name => _team2Name;
   String get fullTeam1Name => _team1Name;
   String get fullTeam2Name => _team2Name;
 

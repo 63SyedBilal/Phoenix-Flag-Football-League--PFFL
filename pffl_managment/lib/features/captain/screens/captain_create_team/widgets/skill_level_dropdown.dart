@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
 
 /// Skill level dropdown widget
 class SkillLevelDropdown extends StatelessWidget {
@@ -11,7 +11,7 @@ class SkillLevelDropdown extends StatelessWidget {
     return Consumer<CreateTeamProvider>(
       builder: (context, provider, _) {
         final hasError = provider.fieldErrors['skillLevel'] != null;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -27,14 +27,15 @@ class SkillLevelDropdown extends StatelessWidget {
             GestureDetector(
               onTap: provider.toggleSkillDropdown,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: hasError
-                        ? Colors.red
-                        : const Color(0xFFE5E7EB),
+                    color: hasError ? Colors.red : const Color(0xFFE5E7EB),
                     width: hasError ? 1.5 : 1,
                   ),
                 ),
@@ -105,12 +106,12 @@ class SkillLevelDropdown extends StatelessWidget {
                         topRight: Radius.circular(8),
                       )
                     : CreateTeamProvider.skillLevels.indexOf(skill) ==
-                            CreateTeamProvider.skillLevels.length - 1
-                        ? const BorderRadius.only(
-                            bottomLeft: Radius.circular(8),
-                            bottomRight: Radius.circular(8),
-                          )
-                        : BorderRadius.zero,
+                          CreateTeamProvider.skillLevels.length - 1
+                    ? const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      )
+                    : BorderRadius.zero,
               ),
               child: Text(
                 skill,
@@ -127,4 +128,3 @@ class SkillLevelDropdown extends StatelessWidget {
     );
   }
 }
-

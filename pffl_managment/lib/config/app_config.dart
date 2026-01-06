@@ -16,7 +16,7 @@ class AppConfig {
   // OLD IP - Commented out on 2025-12-27: static const String networkIp = '192.168.1.3';
   // OLD IP - Commented out: static const String networkIp = '192.168.1.4';
   // NEW IP - Set using ipconfig on 2026-01-01
-  static const String networkIp = '192.168.18.174'; // Current system IP
+  static const String networkIp = '192.168.1.3'; // Current system IP
 
   static const String localhost = 'localhost';
   static const String androidEmulatorIp = '10.0.2.2';
@@ -28,23 +28,15 @@ class AppConfig {
   // TEMPORARY: Try localhost for testing (may not work from mobile)
   // static String get baseUrl => 'http://localhost:3000/api';
 
-
   // CURRENT: Staging API
-  static String get baseUrl => 'https://api-staging.phoenixflagfootballleague.com/api';
+  static String get baseUrl =>
+      'https://api-staging.phoenixflagfootballleague.com/api';
 
-  // CURRENT: Network IP (Updated 2026-01-01)
-
-
-  // ALTERNATIVE: Try 0.0.0.0 (all interfaces)
-  // static String get baseUrl => 'http://0.0.0.0:3000/api';
-
-  // NEW IP CONFIGURATION - Set using ipconfig on 2025-12-27
-  // Current system IP: 192.168.1.3 (obtained via ipconfig command)
-  // For local development and testing on physical devices, uncomment:
-  // static String get baseUrl => 'http://192.168.1.3:3000/api';
+  // CURRENT: Using local project (pfflbackendbilal)
+  // static String get baseUrl => networkBaseUrl;
 
   // Alternative: Use network IP for physical devices
-  static String get networkBaseUrl => 'http://$networkIp:$serverPort$apiPath';
+  // static String get networkBaseUrl => 'http://$networkIp:$serverPort$apiPath';
 
   // Emulator/Simulator URLs
   static String get androidEmulatorUrl =>
@@ -52,7 +44,7 @@ class AppConfig {
   static String get iosSimulatorUrl => 'http://$localhost:$serverPort$apiPath';
 
   // Full server URLs (without /api)
-  static String get serverBaseUrl => 'http://$networkIp:$serverPort';
+  // static String get serverBaseUrl => 'http://$networkIp:$serverPort';
   static String get localhostServerUrl => 'http://$localhost:$serverPort';
 
   // API Endpoints - Authentication
@@ -120,4 +112,8 @@ class AppConfig {
   static const Duration connectTimeout = Duration(seconds: 300);
   static const Duration receiveTimeout = Duration(seconds: 300);
   static const Duration sendTimeout = Duration(seconds: 300);
+
+  // URLs
+  static const String privacyPolicyUrl =
+      'https://transcendwithphoenix.com/privacy-policy-2/';
 }

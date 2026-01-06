@@ -12,11 +12,9 @@ class AllStatsTab extends StatelessWidget {
     return Consumer<StatStatsProvider>(
       builder: (context, provider, child) {
         final stats = provider.allStats;
-
         if (stats.isEmpty) {
           return const Center(child: Text('No stats available'));
         }
-
         return ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 16),
           itemCount: stats.length,
@@ -25,7 +23,6 @@ class AllStatsTab extends StatelessWidget {
             return StatCard(
               gameStat: stat,
               onTap: () {
-                // Navigate to Add Stat screen (Index 2)
                 Provider.of<StatKeeperNavigationProvider>(
                   context,
                   listen: false,

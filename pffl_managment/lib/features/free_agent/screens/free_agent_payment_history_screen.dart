@@ -3,7 +3,6 @@ import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/core/providers/pending_payment_provider.dart';
 import 'package:pffl_managment/features/free_agent/screens/free_agent_league_selection/providers/league_selection_provider.dart';
-import 'package:pffl_managment/core/services/league_service.dart'; // For LeagueModel if needed
 import 'package:pffl_managment/core/services/payment_service.dart';
 import 'package:pffl_managment/core/services/pdf_service.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
@@ -355,68 +354,19 @@ class _FreeAgentPaymentCardState extends State<FreeAgentPaymentCard> {
 
                 if (isPending)
                   ElevatedButton(
-                    onPressed: () async {
-                      // Handle Pay Now
-                      if (payment.leagueId != null) {
-                        // We need to set the selected league in LeagueSelectionProvider
-                        // But LeagueSelectionProvider expects LeagueModel.
-                        // We might need to fetch it or create a minimal one.
-                        // Let's fetch it to be safe and correct.
-                        try {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
+                    onPressed: () {
+                      final leagueProvider =
+                          Provider.of<LeagueSelectionProvider>(
+                            context,
+                            listen: false,
                           );
+                      leagueProvider.clearAllSelections();
 
-                          final league = await LeagueService.getLeagueById(
-                            payment.leagueId!,
-                          );
-                          Navigator.pop(context); // Close loader
-
-                          if (league != null) {
-                            // Map LeagueDetailModel to LeagueModel (simplified for provider)
-                            // Or adjust provider to accept Detail.
-                            // LeagueSelectionProvider list uses LeagueModel.
-                            // Let's assume we can cast or convert.
-                            // Actually LeagueDetailModel fields overlap with LeagueModel.
-
-                            final leagueModel = LeagueModel(
-                              id: league.id,
-                              leagueName: league.leagueName,
-                              format: league.format,
-                              startDate: league.startDate,
-                              endDate: league.endDate,
-                              minimumPlayers: 0, // Not needed for payment
-                              perPlayerLeagueFee: league.perPlayerLeagueFee,
-                              status: 'open',
-                              logo: null,
-                            );
-
-                            final leagueProvider =
-                                Provider.of<LeagueSelectionProvider>(
-                                  context,
-                                  listen: false,
-                                );
-                            leagueProvider.clearAllSelections();
-                            leagueProvider.selectLeague(
-                              leagueModel,
-                            ); // Select this league
-
-                            Navigator.pushNamed(
-                              context,
-                              AppRoutes.freeAgentPaymentOption,
-                            );
-                          }
-                        } catch (e) {
-                          Navigator.pop(context); // Close loader
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error loading league: $e')),
-                          );
-                        }
-                      }
+                      // Navigate to Add Payment Details directly
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.freeAgentAddPaymentDetails,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue.shade700,

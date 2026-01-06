@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:pffl_managment/core/services/url_launcher_service.dart';
 import 'package:pffl_managment/core/widgets/arrow_back_button.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/team_color_field.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/team_color_field.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/team_logo_section.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/team_name_field.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/location_field.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/skill_level_dropdown.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/create_button.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/success_bottom_sheet.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/error_message_display.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/widgets/loading_overlay.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/team_logo_section.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/team_name_field.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/location_field.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/skill_level_dropdown.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/create_button.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/success_bottom_sheet.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/error_message_display.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/widgets/loading_overlay.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 
@@ -64,7 +66,7 @@ class CaptainCreateTeam extends StatelessWidget {
                         ),
                       ),
                     ),
-                 
+
                     const SizedBox(height: 16),
                     const TeamLogoSection(),
                     const SizedBox(height: 16),
@@ -123,12 +125,29 @@ class CaptainCreateTeam extends StatelessWidget {
                                     },
                                     activeColor: const Color(0xFF0F172A),
                                   ),
-                                  Text(
-                                    'I agree to Terms & Privacy',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                      color: Colors.grey[700],
+                                  Expanded(
+                                    child: RichText(
+                                      text: TextSpan(
+                                        text: 'I agree to ',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.grey[700],
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: 'Terms & Privacy',
+                                            style: const TextStyle(
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            recognizer: TapGestureRecognizer()
+                                              ..onTap = () =>
+                                                  UrlLauncherService.launchPrivacyPolicy(),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -139,7 +158,10 @@ class CaptainCreateTeam extends StatelessWidget {
                             builder: (context, provider, _) {
                               if (provider.fieldErrors['terms'] != null) {
                                 return Padding(
-                                  padding: const EdgeInsets.only(left: 12.0, top: 4.0),
+                                  padding: const EdgeInsets.only(
+                                    left: 12.0,
+                                    top: 4.0,
+                                  ),
                                   child: Text(
                                     provider.fieldErrors['terms']!,
                                     style: const TextStyle(

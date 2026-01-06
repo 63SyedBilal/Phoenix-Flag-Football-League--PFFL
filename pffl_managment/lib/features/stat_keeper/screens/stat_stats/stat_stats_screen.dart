@@ -14,8 +14,6 @@ class StatStatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<StatStatsProvider>();
-
-    // Initial fetch
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (provider.assignedMatches.isEmpty && !provider.isLoading) {
         provider.fetchAssignedMatches();

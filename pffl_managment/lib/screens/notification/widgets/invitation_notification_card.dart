@@ -1,40 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/screens/notification/models/notification_model.dart';
-import 'package:pffl_managment/screens/notification/provider/player_notification_provider.dart';
 import 'package:pffl_managment/screens/leagues/common/league_provider.dart';
 import 'package:intl/intl.dart';
 
-/// Widget for displaying a single notification card in player notification screen
-/// Matches the design from the image
-class PlayerNotificationCard extends StatelessWidget {
+/// Generic premium invitation widget for all roles (Referee, Stat Keeper, Team Captain)
+class InvitationNotificationCard extends StatelessWidget {
   final NotificationModel notification;
   final VoidCallback? onAccept;
-  final VoidCallback? onDecline;
-  final VoidCallback? onPayNow;
+  final VoidCallback? onReject;
+  final bool isExpanded;
+  final VoidCallback onToggleExpansion;
   final bool isLoading;
 
-  const PlayerNotificationCard({
+  const InvitationNotificationCard({
     super.key,
     required this.notification,
     this.onAccept,
-    this.onDecline,
-    this.onPayNow,
+    this.onReject,
+    required this.isExpanded,
+    required this.onToggleExpansion,
     this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final notificationProvider = Provider.of<PlayerNotificationProvider>(
-      context,
-    );
-    final isExpanded = notificationProvider.isExpanded(notification.id);
-
-    final isPaymentNotification =
-        notification.type.contains('PAYMENT') ||
-        notification.displayMessage.toLowerCase().contains('payment') ||
-        notification.displayMessage.toLowerCase().contains('fee');
-
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -108,54 +98,44 @@ class PlayerNotificationCard extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // League Details Toggle
-                if (notification.type.contains('INVITE') ||
-                    notification.type == 'TEAM_INVITATION')
-                  Column(
-                    children: [
-                      const Divider(height: 1),
-                      InkWell(
-                        onTap: () => notificationProvider.toggleExpansion(
-                          notification.id,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'View League Details',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF475569), // slate 600
-                                  fontFamily: 'Lato',
-                                ),
+                Column(
+                  children: [
+                    const Divider(height: 1),
+                    InkWell(
+                      onTap: onToggleExpansion,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'View League Details',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF475569), // slate 600
+                                fontFamily: 'Lato',
                               ),
-                              Icon(
-                                isExpanded
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                color: const Color(0xFF94A3B8), // slate 400
-                                size: 24,
-                              ),
-                            ],
-                          ),
+                            ),
+                            Icon(
+                              isExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: const Color(0xFF94A3B8), // slate 400
+                              size: 24,
+                            ),
+                          ],
                         ),
                       ),
-                      if (isExpanded) _buildLeagueDetails(context),
-                    ],
-                  ),
+                    ),
+                    if (isExpanded) _buildLeagueDetails(context),
+                  ],
+                ),
 
                 const SizedBox(height: 8),
 
                 // Action buttons
-                if (isPaymentNotification && onPayNow != null)
-                  _buildButton(
-                    onPressed: onPayNow,
-                    label: 'Pay Now',
-                    isPrimary: true,
-                  )
-                else if (notification.isAccepted)
+                if (notification.isAccepted)
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -180,20 +160,45 @@ class PlayerNotificationCard extends StatelessWidget {
                       ),
                     ),
                   )
+                else if (notification.status.toLowerCase() == 'rejected')
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.cancel,
+                            color: Color(0xFFEF4444),
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Rejected',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFEF4444),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 else if (notification.isPending &&
-                    (onAccept != null || onDecline != null))
+                    (onAccept != null || onReject != null))
                   Row(
                     children: [
-                      if (onDecline != null)
+                      if (onReject != null)
                         Expanded(
                           child: _buildButton(
-                            onPressed: onDecline,
-                            label: 'Decline',
+                            onPressed: onReject,
+                            label: 'Reject',
                             isPrimary: false,
                           ),
                         ),
                       if (onAccept != null) ...[
-                        if (onDecline != null) const SizedBox(width: 12),
+                        if (onReject != null) const SizedBox(width: 12),
                         Expanded(
                           child: _buildButton(
                             onPressed: onAccept,
@@ -213,7 +218,6 @@ class PlayerNotificationCard extends StatelessWidget {
   }
 
   Widget _buildLeagueDetails(BuildContext context) {
-    // Try to find league info from LeagueProvider if possible
     final leagueProvider = Provider.of<LeagueProvider>(context, listen: false);
 
     if (leagueProvider.isLoading) {
@@ -416,11 +420,7 @@ class PlayerNotificationCard extends StatelessWidget {
       case 'LEAGUE_TEAM_INVITE':
         return 'League Team Invitation';
       default:
-        if (notification.displayMessage.toLowerCase().contains('payment') ||
-            notification.displayMessage.toLowerCase().contains('fee')) {
-          return 'Payment Required';
-        }
-        return 'Notification';
+        return 'Invitation Received';
     }
   }
 

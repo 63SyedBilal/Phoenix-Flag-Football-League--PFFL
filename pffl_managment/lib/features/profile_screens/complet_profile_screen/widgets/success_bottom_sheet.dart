@@ -22,7 +22,7 @@ class SuccessBottomSheet extends StatelessWidget {
           child: GestureDetector(
             onTap: () {}, // Prevent dismissing on background tap
             child: Container(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withOpacity(0.5),
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
@@ -95,6 +95,7 @@ class SuccessBottomSheet extends StatelessWidget {
                               final prefs =
                                   await SharedPreferences.getInstance();
                               final role =
+                                  prefs.getString('userRole') ??
                                   prefs.getString('role') ??
                                   authProvider.userRole;
 
@@ -125,12 +126,14 @@ class SuccessBottomSheet extends StatelessWidget {
                                   route = AppRoutes.playerDashboard;
                                   break;
                                 case 'freeagent':
+                                case 'free-agent':
                                   route = AppRoutes.freeAgentDashboard;
                                   break;
                                 case 'referee':
                                   route = AppRoutes.refereeDashboard;
                                   break;
                                 case 'statkeeper':
+                                case 'stat-keeper':
                                   route = AppRoutes.statKeeperDashboard;
                                   break;
                                 default:

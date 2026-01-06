@@ -4,6 +4,7 @@ import 'package:pffl_managment/features/admin/models/leagues_models/league_creat
 import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:pffl_managment/core/services/profile_service.dart';
+import 'package:pffl_managment/core/services/notification_sender_service.dart';
 import 'package:pffl_managment/features/admin/leagues/providers/enhanced_leagues_provider.dart';
 import 'dart:io';
 
@@ -1112,8 +1113,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
 
     try {
       _freeAgents = await UserService.getFreeAgents();
-      if (_freeAgents.isEmpty) {
-      }
+      if (_freeAgents.isEmpty) {}
     } catch (e) {
       _freeAgents = [];
     } finally {
@@ -1191,8 +1191,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
         );
       }
     } catch (e) {
-      if (e is Error) {
-      }
+      if (e is Error) {}
       _teams = [];
     } finally {
       _isLoadingTeams = false;
@@ -1223,9 +1222,13 @@ class CreateLeagueViewModel extends ChangeNotifier {
   // Send invitation to team
   // Teams are automatically assigned to the league when invited (Step 4 of league creation)
   // No loading state - immediate response, background processing
-  Future<bool> sendInvitationToTeam(String leagueId, String teamId) async {
+  Future<bool> sendInvitationToTeam(
+    String leagueId,
+    String teamId,
+    String captainId,
+  ) async {
     debugPrint(
-      '📧 [sendInvitationToTeam] Called with leagueId="$leagueId", teamId="$teamId"',
+      '📧 [sendInvitationToTeam] Called with leagueId="$leagueId", teamId="$teamId", captainId="$captainId"',
     );
 
     // Prevent duplicate invitations
@@ -1263,47 +1266,42 @@ class CreateLeagueViewModel extends ChangeNotifier {
     // Immediately update UI - change color instantly (optimistic update)
     _teamEmailSent[teamId] = true;
     notifyListeners();
-    // Send invitation in background (fire-and-forget) - no loading state
+
+    // Send invitation via backend and also send a direct notification to the captain
     LeagueService.inviteTeamToLeague(effectiveLeagueId, teamId)
         .then((success) {
           if (success) {
-            debugPrint(
-              '✅ Team invitation sent successfully. Team will be assigned when captain accepts.',
-            );
-            // Keep icon color changed (success)
+            debugPrint('✅ Team assigned to league via backend');
+
+            // Send a targeted notification to the specific captain
+            if (captainId.isNotEmpty) {
+              NotificationSenderService.sendNotification(
+                receiverId: captainId,
+                type: 'LEAGUE_TEAM_INVITE',
+                message:
+                    'Your team has been invited to join the league: $_leagueName',
+                leagueId: effectiveLeagueId,
+                teamId: teamId,
+              ).then((notifSuccess) {
+                if (notifSuccess) {
+                  debugPrint(
+                    '✅ Targeted notification sent to captain: $captainId',
+                  );
+                } else {
+                  debugPrint(
+                    '❌ Failed to send targeted notification to captain',
+                  );
+                }
+              });
+            }
           } else {
-            // Revert UI state on failure - icon color goes back to original
+            // Revert UI state on failure
             _teamEmailSent[teamId] = false;
             notifyListeners();
           }
         })
         .catchError((e) {
-          // Revert UI state on error - icon color goes back to original
-          _teamEmailSent[teamId] = false;
-          notifyListeners();
-        });
-    debugPrint(
-      '📤 [sendInvitationToTeam] Calling LeagueService.inviteTeamToLeague...',
-    );
-    LeagueService.inviteTeamToLeague(leagueId, teamId)
-        .then((success) {
-          debugPrint(
-            '📥 [sendInvitationToTeam] Response received: success=$success',
-          );
-          if (success) {
-            debugPrint(
-              '✅ [sendInvitationToTeam] Team invitation sent successfully. Team will be assigned when captain accepts.',
-            );
-          } else {
-            debugPrint(
-              '❌ [sendInvitationToTeam] Team invitation failed: success=false',
-            );
-          }
-        })
-        .catchError((e) {
-          if (e is Error) {
-          }
-          // Revert UI state on error - icon color goes back to original
+          debugPrint('❌ Error sending team invitation: $e');
           _teamEmailSent[teamId] = false;
           notifyListeners();
         });
@@ -1350,8 +1348,7 @@ class CreateLeagueViewModel extends ChangeNotifier {
       // Only include logo if we have one
       if (logoUrl != null && logoUrl.isNotEmpty) {
         leagueData['logo'] = logoUrl;
-      } else {
-      }
+      } else {}
 
       final leagueResponse = await LeagueService.createLeague(leagueData);
 
@@ -1625,4 +1622,3 @@ class CreateLeagueViewModel extends ChangeNotifier {
       .where((p) => p.status == PaymentStatus.paid)
       .fold(0.0, (sum, p) => sum + p.amount);
 }
-

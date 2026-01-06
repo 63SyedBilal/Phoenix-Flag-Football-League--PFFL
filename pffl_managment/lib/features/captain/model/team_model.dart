@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/utils/team_utils.dart';
 import 'player_model.dart';
 
@@ -50,8 +51,16 @@ class TeamModel {
 
   factory TeamModel.fromJson(Map<String, dynamic> json, String format) {
     final teamId = json['_id']?.toString() ?? json['id']?.toString() ?? '';
-    final teamName = json['teamName'] ?? json['name'] ?? '';
-    final image = json['image'] as String?;
+    final rawTeamName =
+        json['teamName']?.toString() ?? json['name']?.toString() ?? '';
+    final teamName = (rawTeamName == 'null' || rawTeamName.isEmpty)
+        ? ''
+        : rawTeamName;
+    final rawTeamImg = json['image']?.toString();
+    final image =
+        (rawTeamImg == null || rawTeamImg == 'null' || rawTeamImg.isEmpty)
+        ? null
+        : rawTeamImg;
 
     // Get squad based on format
     final squadField = format == '5v5' ? 'squad5v5' : 'squad7v7';
@@ -70,29 +79,89 @@ class TeamModel {
     if (captain != null) {
       parsedCaptainId =
           captain['_id']?.toString() ?? captain['id']?.toString() ?? '';
-      final captainFirstName = captain['firstName'] ?? '';
-      final captainLastName = captain['lastName'] ?? '';
-      parsedCaptainName = '$captainFirstName $captainLastName'.trim();
-      final captainEmail = captain['email'] ?? '';
-      final captainProfileImage = captain['profileImage'] ?? '';
-      final captainJerseyNumber = captain['jerseyNumber']?.toString() ?? '';
-      final captainPosition = captain['position'] ?? '';
 
-      // Parse position string (can be comma-separated)
+      final fName = captain['firstName']?.toString() ?? '';
+      final lName = captain['lastName']?.toString() ?? '';
+      final captainFirstName = (fName == 'null') ? '' : fName;
+      final captainLastName = (lName == 'null') ? '' : lName;
+
+      parsedCaptainName = '$captainFirstName $captainLastName'.trim();
+      final captainEmail = captain['email']?.toString() ?? '';
+      debugPrint('📦 [TEAM MODEL] Raw Captain Data: $captain');
+
+      Map<String, dynamic>? profile =
+          captain['profile'] as Map<String, dynamic>?;
+      Map<String, dynamic>? userNested =
+          captain['user'] as Map<String, dynamic>?;
+
+      debugPrint(
+        '🔍 [TEAM MODEL] Parsing captain: ${captain["_id"] ?? captain["id"]}',
+      );
+      debugPrint('🔍 [TEAM MODEL] Captain keys: ${captain.keys}');
+
+      // Multi-key check for image
+      String? rawImg =
+          captain['profileImage']?.toString() ??
+          captain['avatar']?.toString() ??
+          captain['image']?.toString() ??
+          captain['userImage']?.toString() ??
+          captain['profile_image']?.toString() ??
+          profile?['profileImage']?.toString() ??
+          profile?['avatar']?.toString() ??
+          profile?['image']?.toString() ??
+          userNested?['profileImage']?.toString() ??
+          userNested?['image']?.toString();
+
+      final captainProfileImage =
+          (rawImg == null || rawImg == 'null' || rawImg.isEmpty)
+          ? null
+          : rawImg;
+
+      // Multi-key check for jersey number
+      final captainJerseyNumber =
+          captain['jerseyNumber']?.toString() ??
+          captain['jersey_number']?.toString() ??
+          captain['number']?.toString() ??
+          captain['jersey_num']?.toString() ??
+          profile?['jerseyNumber']?.toString() ??
+          profile?['jersey_number']?.toString() ??
+          profile?['number']?.toString() ??
+          userNested?['jerseyNumber']?.toString() ??
+          '';
+
+      // IMPROVED: Handle position as List or String
       final positionList = <String>[];
-      if (captainPosition.isNotEmpty) {
-        final splitPositions = captainPosition.split(',');
-        for (final pos in splitPositions) {
-          final trimmedPos = pos.trim();
-          if (trimmedPos.isNotEmpty) {
-            positionList.add(trimmedPos);
+      final rawPosition =
+          captain['position'] ??
+          profile?['position'] ??
+          userNested?['position'];
+
+      if (rawPosition is List) {
+        for (var pos in rawPosition) {
+          final p = pos?.toString().trim() ?? '';
+          if (p.isNotEmpty && p != 'null') positionList.add(p);
+        }
+      } else if (rawPosition != null) {
+        final posStr = rawPosition.toString();
+        if (posStr.isNotEmpty && posStr != 'null') {
+          final splitPositions = posStr.split(',');
+          for (final pos in splitPositions) {
+            final trimmedPos = pos.trim();
+            if (trimmedPos.isNotEmpty && trimmedPos != 'null') {
+              positionList.add(trimmedPos);
+            }
           }
         }
       }
-      final primaryPosition = positionList.isNotEmpty ? positionList[0] : '';
-      final additionalPositionsCount = positionList.length > 1
+
+      final fullPosition = positionList.join(', ');
+      final additionalCount = positionList.length > 1
           ? positionList.length - 1
           : 0;
+
+      debugPrint(
+        '🎨 [TEAM MODEL] Resolved Captain: name=$parsedCaptainName, image=$captainProfileImage, jersey=$captainJerseyNumber, pos=$fullPosition',
+      );
 
       players.add(
         PlayerModel(
@@ -100,21 +169,20 @@ class TeamModel {
           name: parsedCaptainName.isEmpty
               ? 'Captain $parsedCaptainId'
               : parsedCaptainName,
-          number: captainJerseyNumber,
-          email: captainEmail,
-          position: primaryPosition,
+          number: captainJerseyNumber == 'null' ? '' : captainJerseyNumber,
+          email: captainEmail == 'null' ? '' : captainEmail,
+          position: fullPosition,
           isCaptain: true,
-          imageUrl: captainProfileImage.isNotEmpty ? captainProfileImage : null,
-          additionalPositionsCount: additionalPositionsCount,
-          isPaid: false, // Payment status not available in team data
-          isVerified: false, // Verification status not available in team data
-          hasAlert: false, // Alert status not available in team data
+          imageUrl: captainProfileImage,
+          additionalPositionsCount: additionalCount,
+          isPaid: false,
+          isVerified: false,
+          hasAlert: false,
         ),
       );
     }
 
     // Add squad players
-    // Handle both populated objects and ObjectId strings
     for (var playerData in squad) {
       if (playerData is Map<String, dynamic>) {
         final playerId =
@@ -126,30 +194,81 @@ class TeamModel {
           continue;
         }
 
-        final firstName = playerData['firstName'] ?? '';
-        final lastName = playerData['lastName'] ?? '';
-        final email = playerData['email'] ?? '';
-        final profileImage = playerData['profileImage'] ?? '';
-        final jerseyNumber = playerData['jerseyNumber']?.toString() ?? '';
-        final position = playerData['position'] ?? '';
+        final fName = playerData['firstName']?.toString() ?? '';
+        final lName = playerData['lastName']?.toString() ?? '';
+        final firstName = (fName == 'null') ? '' : fName;
+        final lastName = (lName == 'null') ? '' : lName;
 
-        // Parse position string (can be comma-separated)
+        final email = playerData['email']?.toString() ?? '';
+
+        Map<String, dynamic>? profile =
+            playerData['profile'] as Map<String, dynamic>?;
+        Map<String, dynamic>? userNested =
+            playerData['user'] as Map<String, dynamic>?;
+
+        debugPrint('🔍 [TEAM MODEL] Parsing squad player: $playerId');
+        debugPrint('📦 [TEAM MODEL] Raw Player Data: $playerData');
+
+        // Multi-key check for image
+        String? rawImg =
+            playerData['profileImage']?.toString() ??
+            playerData['avatar']?.toString() ??
+            playerData['image']?.toString() ??
+            playerData['userImage']?.toString() ??
+            playerData['profile_image']?.toString() ??
+            profile?['profileImage']?.toString() ??
+            profile?['avatar']?.toString() ??
+            profile?['image']?.toString() ??
+            userNested?['profileImage']?.toString() ??
+            userNested?['image']?.toString();
+
+        final profileImage =
+            (rawImg == null || rawImg == 'null' || rawImg.isEmpty)
+            ? null
+            : rawImg;
+
+        // Multi-key check for jersey number
+        final jerseyNumber =
+            playerData['jerseyNumber']?.toString() ??
+            playerData['jersey_number']?.toString() ??
+            playerData['number']?.toString() ??
+            playerData['jersey_num']?.toString() ??
+            profile?['jerseyNumber']?.toString() ??
+            profile?['jersey_number']?.toString() ??
+            profile?['number']?.toString() ??
+            userNested?['jerseyNumber']?.toString() ??
+            '';
+
+        // IMPROVED: Handle position as List or String
         final positionList = <String>[];
-        if (position.isNotEmpty) {
-          final splitPositions = position.split(',');
-          for (final pos in splitPositions) {
-            final trimmedPos = pos.trim();
-            if (trimmedPos.isNotEmpty) {
-              positionList.add(trimmedPos);
+        final rawPos =
+            playerData['position'] ??
+            profile?['position'] ??
+            userNested?['position'];
+
+        if (rawPos is List) {
+          for (var pos in rawPos) {
+            final p = pos?.toString().trim() ?? '';
+            if (p.isNotEmpty && p != 'null') positionList.add(p);
+          }
+        } else if (rawPos != null) {
+          final posStr = rawPos.toString();
+          if (posStr.isNotEmpty && posStr != 'null') {
+            final splitPositions = posStr.split(',');
+            for (final pos in splitPositions) {
+              final trimmedPos = pos.trim();
+              if (trimmedPos.isNotEmpty && trimmedPos != 'null') {
+                positionList.add(trimmedPos);
+              }
             }
           }
         }
-        final primaryPosition = positionList.isNotEmpty ? positionList[0] : '';
-        final additionalPositionsCount = positionList.length > 1
+
+        final fullPosition = positionList.join(', ');
+        final additionalCount = positionList.length > 1
             ? positionList.length - 1
             : 0;
 
-        // Only add if we have a valid player ID
         if (playerId.isNotEmpty && playerId != 'null') {
           players.add(
             PlayerModel(
@@ -157,23 +276,20 @@ class TeamModel {
               name: '$firstName $lastName'.trim().isEmpty
                   ? 'Player $playerId'
                   : '$firstName $lastName'.trim(),
-              number: jerseyNumber,
-              email: email,
-              position: primaryPosition,
+              number: jerseyNumber == 'null' ? '' : jerseyNumber,
+              email: email == 'null' ? '' : email,
+              position: fullPosition,
               isCaptain: false,
-              imageUrl: profileImage.isNotEmpty ? profileImage : null,
-              additionalPositionsCount: additionalPositionsCount,
-              isPaid: false, // Payment status not available in team data
-              isVerified:
-                  false, // Verification status not available in team data
-              hasAlert: false, // Alert status not available in team data
+              imageUrl: profileImage,
+              additionalPositionsCount: additionalCount,
+              isPaid: false,
+              isVerified: false,
+              hasAlert: false,
             ),
           );
         }
       } else if (playerData != null) {
-        // Handle case where playerData is an ObjectId string
         final playerId = playerData.toString();
-        // Exclude captain if already added
         if (parsedCaptainId != null && playerId == parsedCaptainId) {
           continue;
         }
@@ -181,16 +297,14 @@ class TeamModel {
           players.add(
             PlayerModel(
               id: playerId,
-              name:
-                  'Player $playerId', // Temporary name, will be enriched from profile
+              name: 'Player $playerId',
               number: '',
               email: '',
               position: '',
               isCaptain: false,
-              isPaid: false, // Payment status not available in team data
-              isVerified:
-                  false, // Verification status not available in team data
-              hasAlert: false, // Alert status not available in team data
+              isPaid: false,
+              isVerified: false,
+              hasAlert: false,
             ),
           );
         }
@@ -206,8 +320,8 @@ class TeamModel {
       format: format,
       players: players,
       maxPlayers: maxPlayers,
-      captainId: parsedCaptainId, // Assign parsed captain ID
-      captainName: parsedCaptainName, // Assign parsed captain name
+      captainId: parsedCaptainId,
+      captainName: parsedCaptainName,
     );
   }
 }

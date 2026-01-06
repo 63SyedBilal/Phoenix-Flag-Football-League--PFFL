@@ -267,7 +267,8 @@ class SummaryTab extends StatelessWidget {
   }
 
   Widget _buildActionsTimeline(MatchModel match) {
-    final actions = match.actions;
+    // Reverse the list to show newest first, matching the referee timeline behavior
+    final actions = match.actions?.reversed.toList() ?? [];
 
     if (actions.isEmpty) {
       return Container(
@@ -318,17 +319,30 @@ class SummaryTab extends StatelessWidget {
               case 'touchdown':
               case 'td':
                 label = 'Touchdown';
-                icon = Icons.sports_football;
+                icon = Icons.sports_score;
+                color = Colors.green;
                 break;
               case 'extrapoint':
               case 'conversion':
-                label = 'Conversion';
+              case 'extra point from 5-yard line':
+                label = '5-yard Point';
+                icon = Icons.add_circle;
+                color = Colors.blue;
+                break;
+              case 'extra point from 12-yard line':
+                label = '12-yard Point';
                 icon = Icons.add_circle_outline;
+                color = Colors.orange;
+                break;
+              case 'extra point from 20-yard line':
+                label = '20-yard Point';
+                icon = Icons.stars;
+                color = Colors.amber;
                 break;
               case 'safety':
                 label = 'Safety';
                 icon = Icons.warning_amber_rounded;
-                color = Colors.amber;
+                color = Colors.red;
                 break;
               case 'interception':
               case 'int':
@@ -354,8 +368,10 @@ class SummaryTab extends StatelessWidget {
                     ),
                     child: const Text(
                       'Half Time',
-                      style: TextStyle(fontSize: 12, fontFamily: 'Lato'
-                      ,fontWeight: FontWeight.w700,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Lato',
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -374,8 +390,33 @@ class SummaryTab extends StatelessWidget {
                     ),
                     child: const Text(
                       'Full Time',
-                      style: TextStyle(fontSize: 12, fontFamily: 'Lato',
-                      fontWeight: FontWeight.w700,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Lato',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                );
+              case 'gamecomplete':
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[900],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Game Complete',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Lato',
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -419,6 +460,11 @@ class SummaryTab extends StatelessWidget {
               playerName = action['playerName'];
             }
 
+            // Update role if position is available in action
+            if (action['position'] != null) {
+              role = action['position'];
+            }
+
             return _buildActionItem(
               playerName,
               role,
@@ -457,8 +503,7 @@ class SummaryTab extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Lato',
-                          color: Color(0xFF000000
-                          ),
+                          color: Color(0xFF000000),
                         ),
                       ),
                       Text(
@@ -847,21 +892,29 @@ class SummaryTab extends StatelessWidget {
       builder: (context, gameProvider, leagueProvider, child) {
         final match = gameProvider.match;
         final allTeamStandings = leagueProvider.getLeaderboard();
-        
+
         // Debug print to see what we're working with
         print('🏈 Match teams: ${match.homeTeam} vs ${match.awayTeam}');
-        print('🏈 Available teams in standings: ${allTeamStandings.map((s) => s.teamName).toList()}');
-        
+        print(
+          '🏈 Available teams in standings: ${allTeamStandings.map((s) => s.teamName).toList()}',
+        );
+
         // Filter standings to show only the two teams from the current match
         final matchTeamStandings = allTeamStandings.where((standing) {
-          final isHomeTeam = standing.teamName.toLowerCase().trim() == match.homeTeam.toLowerCase().trim();
-          final isAwayTeam = standing.teamName.toLowerCase().trim() == match.awayTeam.toLowerCase().trim();
-          print('🏈 Checking ${standing.teamName} - Home: $isHomeTeam, Away: $isAwayTeam');
+          final isHomeTeam =
+              standing.teamName.toLowerCase().trim() ==
+              match.homeTeam.toLowerCase().trim();
+          final isAwayTeam =
+              standing.teamName.toLowerCase().trim() ==
+              match.awayTeam.toLowerCase().trim();
+          print(
+            '🏈 Checking ${standing.teamName} - Home: $isHomeTeam, Away: $isAwayTeam',
+          );
           return isHomeTeam || isAwayTeam;
         }).toList();
-        
+
         print('🏈 Found ${matchTeamStandings.length} matching teams');
-        
+
         if (matchTeamStandings.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(20),
@@ -925,7 +978,10 @@ class SummaryTab extends StatelessWidget {
                         decoration: const BoxDecoration(
                           color: Color(0xffe3ecfb),
                           border: Border(
-                            bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                            bottom: BorderSide(
+                              color: Color(0xFFE5E7EB),
+                              width: 1,
+                            ),
                           ),
                         ),
                         child: Row(
@@ -1056,17 +1112,19 @@ class SummaryTab extends StatelessWidget {
                         ),
                       ),
                       // Show only the two teams from the current match
-                      ...matchTeamStandings.map((standing) => _buildLeaderboardRowFull(
-                        standing.rank.toString(),
-                        standing.teamName,
-                        standing.wins.toString(),
-                        standing.draws.toString(),
-                        standing.losses.toString(),
-                        standing.pointsDifference.toString(),
-                        standing.pointsScored.toString(),
-                        standing.pointsAgainst.toString(),
-                        standing.points.toString(),
-                      )),
+                      ...matchTeamStandings.map(
+                        (standing) => _buildLeaderboardRowFull(
+                          standing.rank.toString(),
+                          standing.teamName,
+                          standing.wins.toString(),
+                          standing.draws.toString(),
+                          standing.losses.toString(),
+                          standing.pointsDifference.toString(),
+                          standing.pointsScored.toString(),
+                          standing.pointsAgainst.toString(),
+                          standing.points.toString(),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1148,7 +1206,7 @@ class SummaryTab extends StatelessWidget {
             child: Text(
               wins,
               style: const TextStyle(
-                 fontSize: 16,
+                fontSize: 16,
                 fontWeight: FontWeight.w400,
                 fontFamily: 'Lato',
                 color: Color(0xFF000000),

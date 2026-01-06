@@ -50,6 +50,12 @@ class SharedGameCard extends StatelessWidget {
                         color: Color(0xFF111827),
                       ),
                     ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Color(0xFF111827),
+                      size: 8,
+                    ),
                   ],
                 ),
               ],
@@ -66,7 +72,7 @@ class SharedGameCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          game.team1Name,
+                          game.fullTeam1Name,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -122,7 +128,7 @@ class SharedGameCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          game.team2Name,
+                          game.fullTeam2Name,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,

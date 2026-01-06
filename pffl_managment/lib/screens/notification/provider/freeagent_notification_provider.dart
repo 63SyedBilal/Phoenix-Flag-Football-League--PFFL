@@ -7,6 +7,10 @@ class FreeAgentNotificationProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  final String? userId; // Added for targeted filtering
+
+  FreeAgentNotificationProvider({this.userId}); // Constructor with userId
+
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -19,6 +23,7 @@ class FreeAgentNotificationProvider extends ChangeNotifier {
     try {
       _notifications = await NotificationService.getUserNotifications(
         role: 'freeagent',
+        userId: userId, // Pass userId for filtering
       );
     } catch (e) {
       _errorMessage = 'Failed to load notifications';

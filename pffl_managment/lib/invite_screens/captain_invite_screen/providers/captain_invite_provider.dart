@@ -5,6 +5,7 @@ import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/core/services/user_service.dart';
 import 'package:pffl_managment/core/services/player_freeagent_trigger_service.dart';
 import 'package:pffl_managment/core/services/notification_trigger_service.dart';
+import 'package:pffl_managment/core/services/league_service.dart';
 import '../models/inviteable_user_model.dart';
 
 /// Provider for managing captain invite screen state and logic
@@ -155,6 +156,36 @@ class CaptainInviteProvider extends ChangeNotifier {
 
       // Enrich with profile data
       inviteableUsers = await _enrichUsersWithProfiles(inviteableUsers);
+
+      // FILTER: Exclude users who are already in ANY team
+      try {
+        final allTeams = await LeagueService.getAllTeams();
+        final takenPlayerIds = <String>{};
+        for (var team in allTeams) {
+          final squad5v5 = team.squad5v5 ?? [];
+          final squad7v7 = team.squad7v7 ?? [];
+
+          for (var p in squad5v5) {
+            final id = (p is Map)
+                ? p['_id']?.toString() ?? p['id']?.toString()
+                : p.toString();
+            if (id != null) takenPlayerIds.add(id);
+          }
+          for (var p in squad7v7) {
+            final id = (p is Map)
+                ? p['_id']?.toString() ?? p['id']?.toString()
+                : p.toString();
+            if (id != null) takenPlayerIds.add(id);
+          }
+        }
+
+        // Remove users that are in any team
+        inviteableUsers.removeWhere((user) => takenPlayerIds.contains(user.id));
+      } catch (e) {
+        debugPrint(
+          '⚠️ [CAPTAIN INVITE PROVIDER] Failed to filter users by team membership: $e',
+        );
+      }
 
       // Check invited status if team data is available
       if (teamData != null) {
