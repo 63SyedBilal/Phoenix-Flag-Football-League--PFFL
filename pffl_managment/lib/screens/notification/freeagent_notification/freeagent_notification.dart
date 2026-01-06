@@ -14,6 +14,15 @@ class FreeAgentNotification extends StatelessWidget {
     // Using global provider from app_providers.dart
     final provider = Provider.of<FreeAgentNotificationProvider>(context);
 
+    // Fetch notifications on load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (provider.notifications.isEmpty &&
+          !provider.isLoading &&
+          provider.errorMessage == null) {
+        provider.fetchNotifications();
+      }
+    });
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -79,12 +88,14 @@ class FreeAgentNotification extends StatelessWidget {
             onAccept:
                 notification.isPending &&
                     (notification.type == 'LEAGUE_REFEREE_INVITE' ||
+                        notification.type == 'LEAGUE_STATKEEPER_INVITE' ||
                         notification.type == 'TEAM_INVITE')
                 ? () => _handleAccept(context, notification.id, provider)
                 : null,
             onReject:
                 notification.isPending &&
                     (notification.type == 'LEAGUE_REFEREE_INVITE' ||
+                        notification.type == 'LEAGUE_STATKEEPER_INVITE' ||
                         notification.type == 'TEAM_INVITE')
                 ? () => _handleReject(context, notification.id, provider)
                 : null,

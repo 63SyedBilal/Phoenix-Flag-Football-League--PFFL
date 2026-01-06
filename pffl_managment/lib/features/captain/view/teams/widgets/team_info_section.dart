@@ -40,7 +40,9 @@ class TransferLeadershipDialog extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => _SelectedPlayerProvider(),
       builder: (dialogContext, child) {
-        final selectedPlayerProvider = Provider.of<_SelectedPlayerProvider>(dialogContext);
+        final selectedPlayerProvider = Provider.of<_SelectedPlayerProvider>(
+          dialogContext,
+        );
         PlayerModel? selectedPlayer = selectedPlayerProvider.selectedPlayer;
 
         return AlertDialog(
@@ -263,7 +265,10 @@ class RemovePlayerDialog extends StatelessWidget {
   }
 
   void _confirmRemovePlayer(
-      BuildContext context, PlayerModel player, Function(String) onRemovePlayerCallback) {
+    BuildContext context,
+    PlayerModel player,
+    Function(String) onRemovePlayerCallback,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -364,9 +369,8 @@ class TeamInfoSection extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          team.name,
+                          team.fullName,
                           style: const TextStyle(
-                            overflow: TextOverflow.ellipsis,
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
@@ -389,14 +393,17 @@ class TeamInfoSection extends StatelessWidget {
                     // Only show 3-dot icon for captains
                     if (isCaptain)
                       // Use a Builder to get a context for the PopupMenuButton
-                      Builder(builder: (menuContext) {
-                        return IconButton(
-                          icon: const Icon(Icons.more_vert),
-                          onPressed: () => _showTeamActionsMenu(menuContext, team),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        );
-                      }),
+                      Builder(
+                        builder: (menuContext) {
+                          return IconButton(
+                            icon: const Icon(Icons.more_vert),
+                            onPressed: () =>
+                                _showTeamActionsMenu(menuContext, team),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ],
@@ -440,7 +447,12 @@ class TeamInfoSection extends StatelessWidget {
         ),
       ),
       context: context,
-      position: const RelativeRect.fromLTRB(1000.0, 60.0, 0.0, 0.0), // Adjust position as needed
+      position: const RelativeRect.fromLTRB(
+        1000.0,
+        60.0,
+        0.0,
+        0.0,
+      ), // Adjust position as needed
       items: [
         PopupMenuItem<String>(
           value: 'transfer_leadership',
@@ -509,8 +521,10 @@ class TeamInfoSection extends StatelessWidget {
           team: team,
           onTransferLeadership: (newCaptainId) async {
             try {
-              await Provider.of<CaptainTeamProvider>(context, listen: false)
-                  .transferLeadership(context, newCaptainId);
+              await Provider.of<CaptainTeamProvider>(
+                context,
+                listen: false,
+              ).transferLeadership(context, newCaptainId);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -555,8 +569,10 @@ class TeamInfoSection extends StatelessWidget {
           team: team,
           onRemovePlayer: (playerId) async {
             try {
-              await Provider.of<CaptainTeamProvider>(context, listen: false)
-                  .removePlayer(context, playerId);
+              await Provider.of<CaptainTeamProvider>(
+                context,
+                listen: false,
+              ).removePlayer(context, playerId);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -611,4 +627,3 @@ class TeamInfoSection extends StatelessWidget {
     );
   }
 }
-

@@ -34,6 +34,7 @@ class AppRoutes {
   static const String adminEditMatch = '/admin/edit-match';
   static const String adminCreateMatch = '/admin/create-match';
   static const String adminInvite = '/admin/invite';
+  static const String adminStatsApproval = '/admin/stats-approval';
 
   // Referee Routes
   static const String refereeDashboard = '/referee/dashboard';
@@ -47,6 +48,7 @@ class AppRoutes {
 
   // Free Agent Routes
   static const String freeAgentDashboard = '/free-agent/dashboard';
+  static const String freeAgentLeagueSelection = '/free-agent/league-selection';
   static const String freeAgentActiveLeagues = '/free-agent/active-leagues';
   static const String freeAgentPaymentOption = '/free-agent/payment-option';
   static const String freeAgentAddPaymentDetails =

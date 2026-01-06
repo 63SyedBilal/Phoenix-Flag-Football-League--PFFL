@@ -8,6 +8,12 @@ class GameCardWidget extends StatelessWidget {
 
   const GameCardWidget({super.key, required this.match});
 
+  String _fixUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) return url;
+    return 'https://$url';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -45,13 +51,10 @@ class GameCardWidget extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF111827),
-                        ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Color(0xFF111827),
+                        size: 8,
                       ),
                     ],
                   ),
@@ -101,7 +104,7 @@ class GameCardWidget extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(3.5),
                           child: CachedNetworkImage(
-                            imageUrl: match.homeTeamLogo,
+                            imageUrl: _fixUrl(match.homeTeamLogo),
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: Colors.grey[200],
@@ -191,7 +194,7 @@ class GameCardWidget extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(3.5),
                           child: CachedNetworkImage(
-                            imageUrl: match.awayTeamLogo,
+                            imageUrl: _fixUrl(match.awayTeamLogo),
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: Colors.grey[200],

@@ -3,7 +3,7 @@ import 'package:pffl_managment/core/providers/user_preference_provider.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/core/services/upload_service.dart';
 import 'dart:io';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_helpers.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_helpers.dart';
 
 /// Provider for Captain Create Team screen state and business logic
 class CreateTeamProvider extends ChangeNotifier {
@@ -218,7 +218,9 @@ class CreateTeamProvider extends ChangeNotifier {
       if (!await imageFile.exists()) {
         throw Exception('Selected logo could not be found');
       }
-      final compressed = await CreateTeamHelpers.compressLogoIfNeeded(imageFile);
+      final compressed = await CreateTeamHelpers.compressLogoIfNeeded(
+        imageFile,
+      );
       imageUrl = await UploadService.uploadImage(
         compressed ?? imageFile,
         folder: 'pffl/teams',
@@ -288,4 +290,3 @@ class CreateTeamProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

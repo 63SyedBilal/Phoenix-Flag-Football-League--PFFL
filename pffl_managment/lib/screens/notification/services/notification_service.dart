@@ -6,25 +6,63 @@ class NotificationService {
   /// Fetch all notifications for the current user
   static Future<List<NotificationModel>> getUserNotifications({
     String? role,
+    String? userId, // Added for filtering
   }) async {
     try {
       final dio = await AuthService.getWorkingDio();
-      // Use AppConfig endpoint
-      final endpoint = role != null
-          ? '${AppConfig.notificationAllEndpoint}?role=$role'
-          : AppConfig.notificationAllEndpoint;
 
+      // We are fetching all notifications but will filter them by userId in the frontend
+      // to ensure only targeted notifications are shown to the correct user.
+      final endpoint = AppConfig.notificationAllEndpoint;
+
+      print('📬 [NOTIFICATION SERVICE] Fetching notifications for user...');
       final response = await dio.get(endpoint);
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['data'] ?? [];
-        return data.map((json) => NotificationModel.fromJson(json)).toList();
+        final data = response.data;
+        List<dynamic> rawData = [];
+
+        if (data is Map && data['data'] != null) {
+          rawData = data['data'] as List;
+        } else if (data is List) {
+          rawData = data;
+        } else if (data is Map) {
+          data.forEach((key, value) {
+            if (value is List) rawData = value;
+          });
+        }
+
+        final notifications = rawData
+            .map((json) {
+              try {
+                return NotificationModel.fromJson(json as Map<String, dynamic>);
+              } catch (e) {
+                return null;
+              }
+            })
+            .whereType<NotificationModel>()
+            .where((notification) {
+              // Targeted Filtering Logic:
+              // 1. If notification has a receiverId, it must match the current userId
+              // 2. If no receiverId, we treat it as a general notification for that role (optional)
+
+              if (userId != null &&
+                  notification.receiverId != null &&
+                  notification.receiverId!.isNotEmpty &&
+                  notification.receiverId != userId) {
+                return false;
+              }
+
+              return true;
+            })
+            .toList();
+
+        return notifications;
       }
       return [];
     } catch (e) {
-      print('Error fetching notifications: $e');
-      // Return dummy data for testing purposes if API fails
-      return _getDummyNotifications();
+      print('❌ [NOTIFICATION SERVICE] Exception during fetch: $e');
+      return [];
     }
   }
 
@@ -82,36 +120,44 @@ class NotificationService {
     }
   }
 
-  // Helper for dummy data during dev
-  static List<NotificationModel> _getDummyNotifications() {
-    return [
-      NotificationModel(
-        id: '1',
-        title: 'Welcome to PFFL',
-        body: 'Your account has been successfully created.',
-        type: 'success',
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        status: 'read',
-      ),
-      NotificationModel(
-        id: '2',
-        title: 'Team Invite',
-        body: 'You have been invited to join "Phoenix Flames".',
-        type: 'TEAM_INVITE',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        status: 'pending',
-        team: 'Phoenix Flames',
-        league: 'Summer League 2024',
-      ),
-      NotificationModel(
-        id: '3',
-        title: 'Game Assignment',
-        body:
-            "You're the Referee for Eagles vs Hawks. Match starts 2024-05-20 at 18:00. Venue: Central Park.",
-        type: 'GAME_ASSIGNED',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        status: 'unread',
-      ),
-    ];
+  /// Approve match stats
+  static Future<bool> approveStats(
+    String notificationId, {
+    String? matchId,
+  }) async {
+    try {
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.post(
+        '/stats/approve',
+        data: {'notificationId': notificationId, 'matchId': matchId},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error approving stats: $e');
+      return false;
+    }
+  }
+
+  /// Reject/Send back match stats
+  static Future<bool> rejectStats(
+    String notificationId, {
+    String? reason,
+    String? matchId,
+  }) async {
+    try {
+      final dio = await AuthService.getWorkingDio();
+      final response = await dio.post(
+        '/stats/reject',
+        data: {
+          'notificationId': notificationId,
+          'reason': reason,
+          'matchId': matchId,
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error rejecting stats: $e');
+      return false;
+    }
   }
 }

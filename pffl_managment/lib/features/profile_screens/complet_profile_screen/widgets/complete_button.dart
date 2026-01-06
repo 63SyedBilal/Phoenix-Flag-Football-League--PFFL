@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pffl_managment/core/widgets/custom_flushbar.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/providers/complete_profile_provider.dart';
-import 'package:pffl_managment/routes/app_routes.dart';
 
 /// Complete profile submission button widget
 class CompleteButton extends StatelessWidget {
@@ -20,50 +19,37 @@ class CompleteButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: isEnabled
                 ? const Color(0xFF0F172A)
-                : const Color(0xFF0F172A).withValues(alpha: 0.5),
+                : const Color(0xFF0F172A).withOpacity(0.5),
             borderRadius: BorderRadius.circular(26),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(26),
-              onTap: isEnabled
+              onTap: !provider.isLoading
                   ? () async {
-                      final success = await provider.submitProfile();
-                      if (success && context.mounted) {
-                        // Get user role and redirect to appropriate dashboard
-                        final prefs = await SharedPreferences.getInstance();
-                        final userRole = prefs.getString('userRole') ?? 'player';
-                        
-                        // Determine route based on user role
-                        String route;
-                        switch (userRole.toLowerCase()) {
-                          case 'admin':
-                            route = AppRoutes.adminDashboard;
-                            break;
-                          case 'captain':
-                            route = AppRoutes.captainDashboard;
-                            break;
-                          case 'player':
-                            route = AppRoutes.playerDashboard;
-                            break;
-                          case 'referee':
-                            route = AppRoutes.refereeDashboard;
-                            break;
-                          case 'stat_keeper':
-                            route = AppRoutes.statKeeperDashboard;
-                            break;
-                          case 'free_agent':
-                            route = AppRoutes.freeAgentDashboard;
-                            break;
-                          default:
-                            route = AppRoutes.playerDashboard;
+                      if (!provider.isFormValid) {
+                        // Trigger validation to show error messages
+                        provider.submitProfile();
+                        if (context.mounted) {
+                          CustomFlushbar.showError(
+                            context,
+                            message:
+                                'Please fill all fields and upload a profile image',
+                          );
                         }
+                        return;
+                      }
 
-                        Navigator.pushNamedAndRemoveUntil(
+                      final success = await provider.submitProfile();
+                      // Navigation is now handled by the SuccessBottomSheet after clicking 'Continue'
+                      if (!success && context.mounted) {
+                        // Show error from provider if submission fails (including upload failure)
+                        CustomFlushbar.showError(
                           context,
-                          route,
-                          (route) => false,
+                          message:
+                              provider.errorMessage ??
+                              'Failed to complete profile. Please check your connection and image.',
                         );
                       }
                     }

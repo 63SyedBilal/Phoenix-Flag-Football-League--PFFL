@@ -14,7 +14,6 @@ import 'package:pffl_managment/features/profile_screens/complet_profile_screen/w
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/error_message_display.dart';
 import 'package:pffl_managment/features/profile_screens/complet_profile_screen/widgets/loading_overlay.dart';
 
-/// Complete Profile Screen - First screen shown to Player role users
 class CompleteProfileScreen extends StatelessWidget {
   final bool showBackButton;
 
@@ -38,66 +37,68 @@ class _CompleteProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<CompleteProfileProvider>(
       builder: (context, provider, _) {
-        return Scaffold(appBar: AppBar(
-          surfaceTintColor: Colors.transparent,
-          leading: ArrowBackButton(),),
-          backgroundColor:Colors.white,
+        return Scaffold(
+          appBar: AppBar(
+            surfaceTintColor: Colors.transparent,
+            leading: ArrowBackButton(),
+          ),
+          backgroundColor: Colors.white,
           body: Stack(
             children: [
               SafeArea(
-                child: Column(
-                  children: [
-                    if (provider.showSuccessSheet == false)
-                
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        children: [
-                          const Text(
-                            'Complete Your Profile',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontFamily: 'Serotiva',
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF000000),
+                child: SizedBox.expand(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: [
+                            const Text(
+                              'Complete Your Profile',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontFamily: 'Serotiva',
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF000000),
+                              ),
                             ),
-                          ),
-                       
-                          Text(
-                            'This helps teams find you',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Lato',
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const ProfileImageSection(),
-                          const SizedBox(height: 22),
-                          const PositionDropdown(),
 
-                          const SizedBox(height: 8),
-                          const JerseyNumberField(),
-                          const SizedBox(height: 8),
-                          const EmergencyContactFields(),
-                          const SizedBox(height: 24),
-                          const TermsCheckbox(),
-                          if (provider.errorMessage != null) ...[
-                            const SizedBox(height: 16),
-                            ErrorMessageDisplay(
-                              message: provider.errorMessage!,
+                            Text(
+                              'This helps teams find you',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Lato',
+                                color: Colors.grey[600],
+                              ),
                             ),
+                            const SizedBox(height: 8),
+                            const ProfileImageSection(),
+                            const SizedBox(height: 22),
+                            const PositionDropdown(),
+
+                            const SizedBox(height: 8),
+                            const JerseyNumberField(),
+                            const SizedBox(height: 8),
+                            const EmergencyContactFields(),
+                            const SizedBox(height: 24),
+                            const TermsCheckbox(),
+                            if (provider.errorMessage != null) ...[
+                              const SizedBox(height: 16),
+                              ErrorMessageDisplay(
+                                message: provider.errorMessage!,
+                              ),
+                            ],
+                            const SizedBox(height: 32),
+                            const CompleteButton(),
+                            const SizedBox(height: 16),
+                            const SkipButton(),
+                            const SizedBox(height: 16),
                           ],
-                          const SizedBox(height: 32),
-                          const CompleteButton(),
-                          const SizedBox(height: 16),
-                          const SkipButton(),
-                    
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               LoadingOverlay(isLoading: provider.isLoading),

@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/services/auth_service.dart';
 import 'package:pffl_managment/core/services/league_service.dart';
 import 'package:pffl_managment/features/admin/models/match_model.dart';
@@ -26,18 +25,31 @@ class MatchService {
           throw Exception('Invalid response format: missing data field');
         }
         final parsed = _parseMatchFromJson(data);
+        final fallbackLeagueName = matchData['leagueName']?.toString();
+        final fallbackLeagueId =
+            matchData['leagueId']?.toString() ??
+            matchData['league']?.toString();
         final fallbackHomeName = matchData['teamAName']?.toString();
         final fallbackAwayName = matchData['teamBName']?.toString();
-        final fallbackHomeId = matchData['teamA']?.toString();
-        final fallbackAwayId = matchData['teamB']?.toString();
+        final fallbackHomeId =
+            matchData['teamA']?.toString() ?? matchData['teamAId']?.toString();
+        final fallbackAwayId =
+            matchData['teamB']?.toString() ?? matchData['teamBId']?.toString();
 
         MatchModel fixed = parsed;
+        final needsLeagueNameFix =
+            parsed.leagueName.isEmpty &&
+            fallbackLeagueName != null &&
+            fallbackLeagueName.isNotEmpty;
         final needsHomeNameFix =
             (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
             (fallbackHomeName != null && fallbackHomeName.isNotEmpty);
         final needsAwayNameFix =
             (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
             (fallbackAwayName != null && fallbackAwayName.isNotEmpty);
+        final needsLeagueIdFix =
+            (parsed.leagueId == null || parsed.leagueId!.isEmpty) &&
+            (fallbackLeagueId != null && fallbackLeagueId.isNotEmpty);
         final needsHomeIdFix =
             (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
             (fallbackHomeId != null && fallbackHomeId.isNotEmpty);
@@ -45,13 +57,17 @@ class MatchService {
             (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
             (fallbackAwayId != null && fallbackAwayId.isNotEmpty);
 
-        if (needsHomeNameFix ||
+        if (needsLeagueNameFix ||
+            needsHomeNameFix ||
             needsAwayNameFix ||
+            needsLeagueIdFix ||
             needsHomeIdFix ||
             needsAwayIdFix) {
           fixed = parsed.copyWith(
+            leagueName: needsLeagueNameFix ? fallbackLeagueName : null,
             homeTeam: needsHomeNameFix ? fallbackHomeName : null,
             awayTeam: needsAwayNameFix ? fallbackAwayName : null,
+            leagueId: needsLeagueIdFix ? fallbackLeagueId : null,
             homeTeamId: needsHomeIdFix ? fallbackHomeId : null,
             awayTeamId: needsAwayIdFix ? fallbackAwayId : null,
           );
@@ -87,34 +103,27 @@ class MatchService {
           throw Exception('Invalid response format: missing data field');
         }
         final parsed = _parseMatchFromJson(data);
+        final fallbackLeagueName = matchData['leagueName']?.toString();
         final fallbackHomeName = matchData['teamAName']?.toString();
         final fallbackAwayName = matchData['teamBName']?.toString();
-        final fallbackHomeId = matchData['teamA']?.toString();
-        final fallbackAwayId = matchData['teamB']?.toString();
 
         MatchModel fixed = parsed;
+        final needsLeagueNameFix =
+            parsed.leagueName.isEmpty &&
+            fallbackLeagueName != null &&
+            fallbackLeagueName.isNotEmpty;
         final needsHomeNameFix =
             (parsed.homeTeam.isEmpty || parsed.homeTeam == 'Unknown Team') &&
             (fallbackHomeName != null && fallbackHomeName.isNotEmpty);
         final needsAwayNameFix =
             (parsed.awayTeam.isEmpty || parsed.awayTeam == 'Unknown Team') &&
             (fallbackAwayName != null && fallbackAwayName.isNotEmpty);
-        final needsHomeIdFix =
-            (parsed.homeTeamId == null || parsed.homeTeamId!.isEmpty) &&
-            (fallbackHomeId != null && fallbackHomeId.isNotEmpty);
-        final needsAwayIdFix =
-            (parsed.awayTeamId == null || parsed.awayTeamId!.isEmpty) &&
-            (fallbackAwayId != null && fallbackAwayId.isNotEmpty);
 
-        if (needsHomeNameFix ||
-            needsAwayNameFix ||
-            needsHomeIdFix ||
-            needsAwayIdFix) {
+        if (needsLeagueNameFix || needsHomeNameFix || needsAwayNameFix) {
           fixed = parsed.copyWith(
+            leagueName: needsLeagueNameFix ? fallbackLeagueName : null,
             homeTeam: needsHomeNameFix ? fallbackHomeName : null,
             awayTeam: needsAwayNameFix ? fallbackAwayName : null,
-            homeTeamId: needsHomeIdFix ? fallbackHomeId : null,
-            awayTeamId: needsAwayIdFix ? fallbackAwayId : null,
           );
         }
 
@@ -157,24 +166,31 @@ class MatchService {
               .toList();
 
           // Identify unique league IDs that need resolution
-          // OPTIMIZATION: Instead of calling getLeagueById for EVERY league,
-          // fetch ALL teams once and use that for mapping.
           final Map<String, String> globalTeamMap = {};
+          final Map<String, String> leagueMap = {};
+
           try {
-            final allTeams = await LeagueService.getAllTeams();
+            final results = await Future.wait([
+              LeagueService.getAllTeams(),
+              LeagueService.getAllLeagues(),
+            ]);
+
+            final allTeams = results[0] as List<TeamModel>;
             for (final t in allTeams) {
               globalTeamMap[t.id] = t.teamName;
             }
-          } catch (e) {
-            debugPrint(
-              '⚠️ Failed to fetch teams for mapping in getAllMatches: $e',
-            );
-          }
+
+            final allLeagues = results[1] as List<LeagueModel>;
+            for (final l in allLeagues) {
+              leagueMap[l.id] = l.leagueName;
+            }
+          } catch (e) {}
 
           // Fill names from map if missing
           List<MatchModel> fixed = parsed.map((m) {
-            String resolvedHome = m.homeTeam;
-            String resolvedAway = m.awayTeam;
+            String resolvedHome = m.fullHomeTeam;
+            String resolvedAway = m.fullAwayTeam;
+            String resolvedLeague = m.leagueName;
 
             if ((resolvedHome.isEmpty || resolvedHome == 'Unknown Team') &&
                 m.homeTeamId != null &&
@@ -186,9 +202,20 @@ class MatchService {
                 globalTeamMap.containsKey(m.awayTeamId)) {
               resolvedAway = globalTeamMap[m.awayTeamId!]!;
             }
+            if (resolvedLeague.isEmpty &&
+                m.leagueId != null &&
+                leagueMap.containsKey(m.leagueId)) {
+              resolvedLeague = leagueMap[m.leagueId!]!;
+            }
 
-            if (resolvedHome != m.homeTeam || resolvedAway != m.awayTeam) {
-              return m.copyWith(homeTeam: resolvedHome, awayTeam: resolvedAway);
+            if (resolvedHome != m.fullHomeTeam ||
+                resolvedAway != m.fullAwayTeam ||
+                resolvedLeague != m.leagueName) {
+              return m.copyWith(
+                homeTeam: resolvedHome,
+                awayTeam: resolvedAway,
+                leagueName: resolvedLeague,
+              );
             }
             return m;
           }).toList();
@@ -233,9 +260,16 @@ class MatchService {
             }
           }
 
+          final String resolvedLeagueName = league?.leagueName ?? '';
           final matches = (data['data'] as List)
               .map((json) => _parseMatchFromJson(json))
-              .map((m) => _fillTeamNamesFromLeague(m, teamNameById))
+              .map(
+                (m) => _fillTeamNamesFromLeague(
+                  m,
+                  teamNameById,
+                  leagueName: resolvedLeagueName,
+                ),
+              )
               .toList();
           return matches;
         }
@@ -273,7 +307,12 @@ class MatchService {
                 }
               }
             }
-            return _fillTeamNamesFromLeague(parsed, teamNameById);
+            final String resolvedLeagueName = league?.leagueName ?? '';
+            return _fillTeamNamesFromLeague(
+              parsed,
+              teamNameById,
+              leagueName: resolvedLeagueName,
+            );
           } catch (_) {
             return parsed;
           }
@@ -396,27 +435,39 @@ class MatchService {
     // Parse league data - try multiple possible field names for league name
     final leagueData = json['leagueId'];
     String leagueName = '';
-    
+
     if (leagueData is Map) {
       // Try different possible field names for league name
-      leagueName = leagueData['leagueName']?.toString() ??
-                  leagueData['name']?.toString() ??
-                  leagueData['title']?.toString() ?? '';
-    } else {
-      // Fallback to direct leagueName field or try other possible names
-      leagueName = json['leagueName']?.toString() ??
-                  json['name']?.toString() ?? '';
+      leagueName =
+          leagueData['leagueName']?.toString() ??
+          leagueData['name']?.toString() ??
+          leagueData['title']?.toString() ??
+          '';
+    }
+
+    // Fallback to direct leagueName field or try other possible names
+    if (leagueName.isEmpty) {
+      leagueName =
+          json['leagueName']?.toString() ??
+          json['league_name']?.toString() ??
+          json['name']?.toString() ??
+          json['title']?.toString() ??
+          json['leagueTitle']?.toString() ??
+          json['league']?.toString() ??
+          '';
     }
 
     // Extract league ID for filtering
     final leagueId = leagueData is Map
         ? (leagueData['_id']?.toString() ?? leagueData['id']?.toString())
-        : (json['leagueId']?.toString());
+        : (json['leagueId']?.toString() ??
+              json['league_id']?.toString() ??
+              json['league']?.toString());
 
     // Parse team A data
-    // Prioritize root fields from backend DTO (homeTeam, homeTeamLogo, homeTeamId)
-    String teamAName =
-        json['homeTeam']?.toString() ?? json['teamAName']?.toString() ?? '';
+    // We want the FULL name for our local abbreviation logic.
+    // Prioritize populated objects over root strings which might be pre-abbreviated like "UT"
+    String teamAName = '';
     String teamALogo = json['homeTeamLogo']?.toString() ?? '';
     String? homeTeamId = json['homeTeamId']?.toString();
 
@@ -426,40 +477,44 @@ class MatchService {
         homeTeamId = _extractTeamId(teamAData);
       }
 
-      // Look for logo in populated teamId object
-      if (teamALogo.isEmpty) {
-        final teamIdObj = teamAData['teamId'];
-        if (teamIdObj is Map && teamIdObj['image'] != null) {
-          teamALogo = teamIdObj['image'].toString();
-        } else if (teamAData['image'] != null) {
-          teamALogo = teamAData['image'].toString();
+      final teamIdObj = teamAData['teamId'];
+      if (teamIdObj is Map) {
+        teamAName =
+            teamIdObj['teamName']?.toString() ??
+            teamIdObj['name']?.toString() ??
+            '';
+        if (teamALogo.isEmpty) {
+          teamALogo = teamIdObj['image']?.toString() ?? '';
         }
       }
 
-      if (teamAName.isEmpty || teamAName == 'Unknown Team') {
-        final teamIdObj = teamAData['teamId'];
-        if (teamIdObj is Map) {
-          teamAName =
-              teamIdObj['teamName']?.toString() ??
-              teamIdObj['enterCode']?.toString() ??
-              '';
-        } else {
-          teamAName =
-              teamAData['teamName']?.toString() ??
-              teamAData['enterCode']?.toString() ??
-              _lookupTeamName(homeTeamId);
-        }
+      if (teamAName.isEmpty ||
+          teamAName == 'Unknown Team' ||
+          teamAName == 'UT') {
+        teamAName =
+            teamAData['teamName']?.toString() ??
+            teamAData['name']?.toString() ??
+            '';
       }
-    } else if (teamAData is String) {
-      if (homeTeamId == null || homeTeamId.isEmpty) homeTeamId = teamAData;
-      if (teamAName.isEmpty || teamAName == 'Unknown Team')
-        teamAName = _lookupTeamName(homeTeamId);
+
+      if (teamALogo.isEmpty) {
+        teamALogo = teamAData['image']?.toString() ?? '';
+      }
+    }
+
+    // Fallback to root fields if still unknown or looks like an abbreviation
+    if (teamAName.isEmpty || teamAName == 'Unknown Team' || teamAName == 'UT') {
+      teamAName =
+          json['homeTeam']?.toString() ?? json['teamAName']?.toString() ?? '';
+    }
+
+    // Final fallback to manual lookup
+    if (teamAName.isEmpty || teamAName == 'Unknown Team' || teamAName == 'UT') {
+      teamAName = _lookupTeamName(homeTeamId);
     }
 
     // Parse team B data
-    // Prioritize root fields from backend DTO (awayTeam, awayTeamLogo, awayTeamId)
-    String teamBName =
-        json['awayTeam']?.toString() ?? json['teamBName']?.toString() ?? '';
+    String teamBName = '';
     String teamBLogo = json['awayTeamLogo']?.toString() ?? '';
     String? awayTeamId = json['awayTeamId']?.toString();
 
@@ -469,34 +524,40 @@ class MatchService {
         awayTeamId = _extractTeamId(teamBData);
       }
 
-      // Look for logo in populated teamId object
-      if (teamBLogo.isEmpty) {
-        final teamIdObj = teamBData['teamId'];
-        if (teamIdObj is Map && teamIdObj['image'] != null) {
-          teamBLogo = teamIdObj['image'].toString();
-        } else if (teamBData['image'] != null) {
-          teamBLogo = teamBData['image'].toString();
+      final teamIdObj = teamBData['teamId'];
+      if (teamIdObj is Map) {
+        teamBName =
+            teamIdObj['teamName']?.toString() ??
+            teamIdObj['name']?.toString() ??
+            '';
+        if (teamBLogo.isEmpty) {
+          teamBLogo = teamIdObj['image']?.toString() ?? '';
         }
       }
 
-      if (teamBName.isEmpty || teamBName == 'Unknown Team') {
-        final teamIdObj = teamBData['teamId'];
-        if (teamIdObj is Map) {
-          teamBName =
-              teamIdObj['teamName']?.toString() ??
-              teamIdObj['enterCode']?.toString() ??
-              '';
-        } else {
-          teamBName =
-              teamBData['teamName']?.toString() ??
-              teamBData['enterCode']?.toString() ??
-              _lookupTeamName(awayTeamId);
-        }
+      if (teamBName.isEmpty ||
+          teamBName == 'Unknown Team' ||
+          teamBName == 'UT') {
+        teamBName =
+            teamBData['teamName']?.toString() ??
+            teamBData['name']?.toString() ??
+            '';
       }
-    } else if (teamBData is String) {
-      if (awayTeamId == null || awayTeamId.isEmpty) awayTeamId = teamBData;
-      if (teamBName.isEmpty || teamBName == 'Unknown Team')
-        teamBName = _lookupTeamName(awayTeamId);
+
+      if (teamBLogo.isEmpty) {
+        teamBLogo = teamBData['image']?.toString() ?? '';
+      }
+    }
+
+    // Fallback to root fields if still unknown or abbreviated
+    if (teamBName.isEmpty || teamBName == 'Unknown Team' || teamBName == 'UT') {
+      teamBName =
+          json['awayTeam']?.toString() ?? json['teamBName']?.toString() ?? '';
+    }
+
+    // Final fallback to manual lookup
+    if (teamBName.isEmpty || teamBName == 'Unknown Team' || teamBName == 'UT') {
+      teamBName = _lookupTeamName(awayTeamId);
     }
 
     // Parse date and time
@@ -651,8 +712,12 @@ class MatchService {
       statKeeperId: statKeeperId,
       roundName: json['roundName'] ?? '',
       gameNumber: json['gameNumber'] ?? '',
-      homeScore: json['homeScore'],
-      awayScore: json['awayScore'],
+      homeScore:
+          json['homeScore'] ??
+          (json['teamA'] is Map ? json['teamA']['score'] : null),
+      awayScore:
+          json['awayScore'] ??
+          (json['teamB'] is Map ? json['teamB']['score'] : null),
       leagueId: leagueId,
       homeTeamId: homeTeamId,
       awayTeamId: awayTeamId,
@@ -758,10 +823,12 @@ class MatchService {
   /// Fallback fill: if names are missing/Unknown, use league team map
   static MatchModel _fillTeamNamesFromLeague(
     MatchModel match,
-    Map<String, String> teamNameById,
-  ) {
-    String resolvedHome = match.homeTeam;
-    String resolvedAway = match.awayTeam;
+    Map<String, String> teamNameById, {
+    String? leagueName,
+  }) {
+    String resolvedHome = match.fullHomeTeam;
+    String resolvedAway = match.fullAwayTeam;
+    String resolvedLeague = match.leagueName;
 
     if ((resolvedHome.isEmpty || resolvedHome == 'Unknown Team') &&
         match.homeTeamId != null &&
@@ -774,11 +841,22 @@ class MatchService {
       resolvedAway = teamNameById[match.awayTeamId] ?? resolvedAway;
     }
 
-    if (resolvedHome == match.homeTeam && resolvedAway == match.awayTeam) {
+    // Resolve league name if provided and current is empty
+    if (resolvedLeague.isEmpty && leagueName != null && leagueName.isNotEmpty) {
+      resolvedLeague = leagueName;
+    }
+
+    if (resolvedHome == match.fullHomeTeam &&
+        resolvedAway == match.fullAwayTeam &&
+        resolvedLeague == match.leagueName) {
       return match;
     }
 
-    return match.copyWith(homeTeam: resolvedHome, awayTeam: resolvedAway);
+    return match.copyWith(
+      homeTeam: resolvedHome,
+      awayTeam: resolvedAway,
+      leagueName: resolvedLeague,
+    );
   }
 
   /// Switch to half time

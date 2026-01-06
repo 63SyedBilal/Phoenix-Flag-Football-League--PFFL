@@ -6,6 +6,8 @@ import 'package:pffl_managment/features/player/providers/player_team_provider.da
 import 'package:pffl_managment/screens/notification/widgets/player_notification_card.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
 import 'package:pffl_managment/core/widgets/custom_flushbar.dart';
+import 'package:pffl_managment/core/services/notification_trigger_service.dart';
+import 'package:pffl_managment/screens/notification/models/notification_model.dart';
 
 class PlayerNotification extends StatelessWidget {
   const PlayerNotification({super.key});
@@ -13,6 +15,15 @@ class PlayerNotification extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<PlayerNotificationProvider>(context);
+
+    // Fetch notifications on load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (provider.notifications.isEmpty &&
+          !provider.isLoading &&
+          provider.errorMessage == null) {
+        provider.fetchNotifications();
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -125,12 +136,18 @@ class PlayerNotification extends StatelessWidget {
             notification: notification,
             isLoading: provider.isLoading,
             onAccept:
-                notification.isPending && notification.type == 'TEAM_INVITE'
-                ? () => _handleAccept(context, notification.id, provider)
+                notification.isPending &&
+                    (notification.type == 'TEAM_INVITE' ||
+                        notification.type == 'LEAGUE_REFEREE_INVITE' ||
+                        notification.type == 'LEAGUE_STATKEEPER_INVITE')
+                ? () => _handleAccept(context, notification, provider)
                 : null,
             onDecline:
-                notification.isPending && notification.type == 'TEAM_INVITE'
-                ? () => _handleDecline(context, notification.id, provider)
+                notification.isPending &&
+                    (notification.type == 'TEAM_INVITE' ||
+                        notification.type == 'LEAGUE_REFEREE_INVITE' ||
+                        notification.type == 'LEAGUE_STATKEEPER_INVITE')
+                ? () => _handleDecline(context, notification, provider)
                 : null,
             onPayNow:
                 notification.displayMessage.toLowerCase().contains('payment') ||
@@ -145,17 +162,45 @@ class PlayerNotification extends StatelessWidget {
 
   Future<void> _handleAccept(
     BuildContext context,
-    String notificationId,
+    NotificationModel notification,
     PlayerNotificationProvider provider,
   ) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    final result = await provider.acceptNotification(notificationId);
+    final result = await provider.acceptNotification(notification.id);
     final success = result['success'] == true;
     final roleChanged = result['roleChanged'] == true;
     final newRole = result['newRole'];
 
     if (success && context.mounted) {
+      // Trigger notification for the sender (Captain/Admin)
+      if (notification.senderId != null) {
+        if (notification.type == 'TEAM_INVITE' ||
+            notification.type == 'TEAM_INVITATION') {
+          NotificationTriggerService.triggerPlayerJoinedTeam(
+            captainId: notification.senderId!,
+            playerName: authProvider.userName.isNotEmpty
+                ? authProvider.userName
+                : 'A player',
+            teamName: notification.team ?? 'Team',
+            teamId: notification.teamId ?? '',
+            playerId: authProvider.userId,
+          ).catchError((e) => debugPrint('Error triggering notification: $e'));
+        } else if (notification.type == 'LEAGUE_REFEREE_INVITE') {
+          NotificationTriggerService.triggerRefereeAcceptedInvite(
+            senderId: notification.senderId!,
+            refereeName: authProvider.userName,
+            leagueName: notification.league ?? 'League',
+          ).catchError((e) => debugPrint('Error triggering notification: $e'));
+        } else if (notification.type == 'LEAGUE_STATKEEPER_INVITE') {
+          NotificationTriggerService.triggerStatKeeperAcceptedInvite(
+            senderId: notification.senderId!,
+            statKeeperName: authProvider.userName,
+            leagueName: notification.league ?? 'League',
+          ).catchError((e) => debugPrint('Error triggering notification: $e'));
+        }
+      }
+
       if (roleChanged) {
         CustomFlushbar.showInfo(
           context,
@@ -198,13 +243,37 @@ class PlayerNotification extends StatelessWidget {
 
   Future<void> _handleDecline(
     BuildContext context,
-    String notificationId,
+    NotificationModel notification,
     PlayerNotificationProvider provider,
   ) async {
-    CustomFlushbar.showWarning(
-      context,
-      message: 'Decline functionality coming soon',
-    );
+    final result = await provider.rejectNotification(notification.id);
+    if (result && context.mounted) {
+      // Trigger notification for the sender
+      if (notification.senderId != null) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (notification.type == 'TEAM_INVITE' ||
+            notification.type == 'TEAM_INVITATION') {
+          NotificationTriggerService.triggerPlayerDeclinedTeamInvite(
+            captainId: notification.senderId!,
+            playerName: authProvider.userName.isNotEmpty
+                ? authProvider.userName
+                : 'A player',
+            teamName: notification.team ?? 'Team',
+            teamId: notification.teamId ?? '',
+          ).catchError((e) => debugPrint('Error triggering notification: $e'));
+        }
+      }
+
+      await provider.refresh();
+      if (context.mounted) {
+        CustomFlushbar.showWarning(context, message: 'Invitation rejected.');
+      }
+    } else if (context.mounted) {
+      CustomFlushbar.showError(
+        context,
+        message: provider.errorMessage ?? 'Failed to reject',
+      );
+    }
   }
 
   void _handlePayNow(BuildContext context, notification) {

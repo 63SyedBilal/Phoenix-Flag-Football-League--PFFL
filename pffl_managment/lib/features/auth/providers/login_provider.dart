@@ -13,6 +13,7 @@ class LoginProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _emailError;
   String? _passwordError;
+  bool _disposed = false;
 
   bool get isPasswordVisible => _isPasswordVisible;
   bool get isLoading => _isLoading;
@@ -133,7 +134,7 @@ class LoginProvider extends ChangeNotifier {
           case 'freeagent':
           case 'free-agent':
           case 'free agent':
-            route = AppRoutes.freeAgentActiveLeagues;
+            route = AppRoutes.freeAgentLeagueSelection;
             break;
           default:
             route = AppRoutes.playerDashboard;
@@ -157,8 +158,16 @@ class LoginProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
   }
 }

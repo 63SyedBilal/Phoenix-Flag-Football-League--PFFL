@@ -17,9 +17,10 @@ class AdminProfileProvider extends ChangeNotifier {
   File? _selectedImageFile;
   bool _isLoading = false;
   String? _errorMessage;
-  String? _phoneError; 
+  String? _phoneError;
   String? _userId;
-  
+  String _position = '';
+  String _jerseyNumber = '';
 
   // Getters
   String get firstName => _firstName;
@@ -31,6 +32,8 @@ class AdminProfileProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String? get phoneError => _phoneError;
+  String get position => _position;
+  String get jerseyNumber => _jerseyNumber;
 
   /// Initialize and load profile data
   Future<void> initialize() async {
@@ -48,7 +51,6 @@ class AdminProfileProvider extends ChangeNotifier {
       // Get user ID and role from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       _userId = prefs.getString('userId');
-     
 
       if (_userId == null) {
         _isLoading = false;
@@ -68,6 +70,11 @@ class AdminProfileProvider extends ChangeNotifier {
       if (storedEmail != null) _email = storedEmail;
       if (storedPhone != null) _phone = storedPhone;
       if (storedImage != null) _imageUrl = storedImage;
+
+      final storedPosition = prefs.getString('admin_position');
+      final storedJersey = prefs.getString('admin_jersey');
+      if (storedPosition != null) _position = storedPosition;
+      if (storedJersey != null) _jerseyNumber = storedJersey;
 
       // Try to sync with backend
       await _syncWithBackend();
@@ -108,6 +115,9 @@ class AdminProfileProvider extends ChangeNotifier {
           if (data['lastName'] != null) _lastName = data['lastName'] ?? '';
           if (data['email'] != null) _email = data['email'] ?? '';
           if (data['phone'] != null) _phone = data['phone'] ?? '';
+          if (data['position'] != null) _position = data['position'] ?? '';
+          if (data['jerseyNumber'] != null)
+            _jerseyNumber = data['jerseyNumber'].toString();
           if (data['profileImage'] != null) _imageUrl = data['profileImage'];
 
           // Update SharedPreferences cache
@@ -118,6 +128,8 @@ class AdminProfileProvider extends ChangeNotifier {
           if (_phone.isNotEmpty) {
             await prefs.setString('admin_phone', _phone);
           }
+          await prefs.setString('admin_position', _position);
+          await prefs.setString('admin_jersey', _jerseyNumber);
           if (_imageUrl != null) {
             await prefs.setString('admin_image', _imageUrl!);
           }
@@ -154,6 +166,16 @@ class AdminProfileProvider extends ChangeNotifier {
     if (_phoneError != null) {
       _phoneError = null;
     }
+    notifyListeners();
+  }
+
+  void updatePosition(String value) {
+    _position = value;
+    notifyListeners();
+  }
+
+  void updateJerseyNumber(String value) {
+    _jerseyNumber = value;
     notifyListeners();
   }
 
@@ -209,15 +231,10 @@ class AdminProfileProvider extends ChangeNotifier {
       }
       return null;
     } catch (e) {
-
       // Check for specific Cloudinary configuration errors
       if (e.toString().contains('Cloudinary') ||
           e.toString().contains('CLOUDINARY') ||
-          e.toString().contains('500')) {
-        debugPrint(
-          '⚠️ Cloudinary configuration issue detected - image upload is optional',
-        );
-      }
+          e.toString().contains('500')) {}
 
       // We don't set _errorMessage here to allow saveProfile to handle it or continue
       // Image upload failure should not prevent profile updates
@@ -227,7 +244,6 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Save profile to backend using multiple endpoint strategies
   Future<bool> saveProfile() async {
-
     if (_userId == null) {
       _errorMessage = 'User ID not found. Please login again.';
       notifyListeners();
@@ -246,16 +262,11 @@ class AdminProfileProvider extends ChangeNotifier {
           final uploadedUrl = await uploadImage();
           if (uploadedUrl != null) {
             finalImageUrl = uploadedUrl;
-          } else {
-          }
+          } else {}
         } catch (e) {
           // Continue without image - it's completely optional
           // Don't include image in profile data if upload failed
-          if (e.toString().contains('Cloudinary')) {
-            print(
-              '⚠️ Cloudinary configuration issue detected, skipping image upload',
-            );
-          }
+          if (e.toString().contains('Cloudinary')) {}
         }
       }
 
@@ -265,69 +276,28 @@ class AdminProfileProvider extends ChangeNotifier {
         if (_lastName.isNotEmpty) 'lastName': _lastName.trim(),
         if (_email.isNotEmpty) 'email': _email.trim(),
         if (_phone.isNotEmpty) 'phone': _phone.trim(),
+        if (_position.isNotEmpty) 'position': _position.trim(),
+        if (_jerseyNumber.isNotEmpty) 'jerseyNumber': _jerseyNumber.trim(),
         if (finalImageUrl != null && finalImageUrl.startsWith('http'))
           'profileImage': finalImageUrl,
+        'profileCompleted': true,
       };
 
       // Try multiple endpoint strategies until one works
       final dio = await AuthService.getWorkingDio();
 
-      // Strategy 1: PUT /user/:id (most likely to work based on UserService)
+      // Strategy 1: PUT /user/:id (User Update - Primary)
       try {
         final response = await dio.put('/user/$_userId', data: profileData);
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           return await _handleSuccessResponse(response);
         }
-      } catch (e) {
-      }
+      } catch (e) {}
 
-      // Strategy 2: PATCH /user/:id
-      try {
-        final response = await dio.patch('/user/$_userId', data: profileData);
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          return await _handleSuccessResponse(response);
-        }
-      } catch (e) {
-      }
-
-      // Strategy 3: PATCH /profile
-      try {
-        final response = await dio.patch(
-          AppConfig.profileEndpoint,
-          data: profileData,
-        );
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          return await _handleSuccessResponse(response);
-        }
-      } catch (e) {
-      }
-
-      // Strategy 4: PUT /user (DISABLED - Backend doesn't support)
-
-      // Strategy 4: PUT /profile
+      // Strategy 2: PUT /complete-profile (Profile Completion - Secondary)
       try {
         final response = await dio.put(
-          AppConfig.profileEndpoint,
-          data: profileData,
-        );
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          return await _handleSuccessResponse(response);
-        }
-      } catch (e) {
-      }
-
-      // All backend strategies disabled - save locally only
-      print(
-        '💾 [ADMIN PROFILE] All backend strategies disabled - saving locally only',
-      );
-
-      // Strategy 5: POST /complete-profile
-      try {
-        final response = await dio.post(
           AppConfig.completeProfileEndpoint,
           data: profileData,
         );
@@ -335,15 +305,25 @@ class AdminProfileProvider extends ChangeNotifier {
         if (response.statusCode == 200 || response.statusCode == 201) {
           return await _handleSuccessResponse(response);
         }
-      } catch (e) {
-      }
+      } catch (e) {}
+
+      // Strategy 3: POST /profile (Legacy Endpoint)
+      try {
+        final response = await dio.post(
+          AppConfig.profileEndpoint,
+          data: profileData,
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return await _handleSuccessResponse(response);
+        }
+      } catch (e) {}
 
       // Strategy 6: Use UserService.updateProfile (fallback)
       try {
         final result = await UserService.updateProfile(_userId!, profileData);
 
         if (result != null) {
-
           // Update local state with response data
           if (result['firstName'] != null)
             _firstName = result['firstName'] ?? '';
@@ -368,14 +348,12 @@ class AdminProfileProvider extends ChangeNotifier {
           notifyListeners();
           return true;
         }
-      } catch (e) {
-      }
+      } catch (e) {}
 
       // If all backend strategies failed - save locally only (HEAD fallback)
       await _updateLocalProfile(profileData);
       return await _handleLocalSuccess();
     } catch (e) {
-
       // Handle specific error types
       if (e.toString().contains('401')) {
         _errorMessage = 'Authentication failed. Please login again.';
@@ -404,7 +382,6 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Handle successful response from any strategy
   Future<bool> _handleSuccessResponse(dynamic response) async {
-
     // Handle response data
     final responseData = response.data;
     Map<String, dynamic>? userData;
@@ -427,6 +404,9 @@ class AdminProfileProvider extends ChangeNotifier {
       if (userData['lastName'] != null) _lastName = userData['lastName'] ?? '';
       if (userData['email'] != null) _email = userData['email'] ?? '';
       if (userData['phone'] != null) _phone = userData['phone'] ?? '';
+      if (userData['position'] != null) _position = userData['position'] ?? '';
+      if (userData['jerseyNumber'] != null)
+        _jerseyNumber = userData['jerseyNumber'].toString();
       if (userData['profileImage'] != null)
         _imageUrl = userData['profileImage'];
     }
@@ -444,6 +424,8 @@ class AdminProfileProvider extends ChangeNotifier {
     if (_phone.isNotEmpty) {
       await prefs.setString('admin_phone', _phone);
     }
+    await prefs.setString('admin_position', _position);
+    await prefs.setString('admin_jersey', _jerseyNumber);
     if (_imageUrl != null) {
       await prefs.setString('admin_image', _imageUrl!);
     }
@@ -463,7 +445,6 @@ class AdminProfileProvider extends ChangeNotifier {
 
   /// Update local profile storage
   Future<void> _updateLocalProfile(Map<String, dynamic> profileData) async {
-
     // Update in-memory values
     if (profileData.containsKey('firstName')) {
       _firstName = profileData['firstName'];
@@ -476,6 +457,12 @@ class AdminProfileProvider extends ChangeNotifier {
     }
     if (profileData.containsKey('phone')) {
       _phone = profileData['phone'];
+    }
+    if (profileData.containsKey('position')) {
+      _position = profileData['position'];
+    }
+    if (profileData.containsKey('jerseyNumber')) {
+      _jerseyNumber = profileData['jerseyNumber'].toString();
     }
 
     // Update SharedPreferences
@@ -492,11 +479,19 @@ class AdminProfileProvider extends ChangeNotifier {
     if (profileData.containsKey('phone')) {
       await prefs.setString('userPhone', profileData['phone']);
     }
+    if (profileData.containsKey('position')) {
+      await prefs.setString('admin_position', profileData['position']);
+    }
+    if (profileData.containsKey('jerseyNumber')) {
+      await prefs.setString(
+        'admin_jersey',
+        profileData['jerseyNumber'].toString(),
+      );
+    }
   }
 
   /// Handle local success (no API call needed)
   Future<bool> _handleLocalSuccess() async {
-
     // CRITICAL: Get and preserve current role and user ID BEFORE any updates
     final prefs = await SharedPreferences.getInstance();
     final currentRole = prefs.getString('userRole');
@@ -525,4 +520,3 @@ class AdminProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

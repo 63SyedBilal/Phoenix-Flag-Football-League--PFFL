@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pffl_managment/screens/notification/provider/statkeeper_notification_provider.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_card.dart';
+import 'package:pffl_managment/screens/notification/widgets/invitation_notification_card.dart';
 import 'package:pffl_managment/screens/notification/widgets/notification_empty_state.dart';
 import 'package:pffl_managment/core/widgets/custom_flushbar.dart';
+import 'package:pffl_managment/core/services/notification_trigger_service.dart';
+import 'package:pffl_managment/screens/notification/models/notification_model.dart';
+import 'package:pffl_managment/core/providers/auth_provider.dart';
 
 class StatKeeperNotification extends StatelessWidget {
   const StatKeeperNotification({super.key});
@@ -13,18 +17,78 @@ class StatKeeperNotification extends StatelessWidget {
     // Using global provider from app_providers.dart
     final provider = Provider.of<StatKeeperNotificationProvider>(context);
 
+    // Fetch notifications on load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (provider.notifications.isEmpty &&
+          !provider.isLoading &&
+          provider.errorMessage == null) {
+        provider.fetchNotifications();
+      }
+    });
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: provider.isLoading ? null : () => provider.refresh(),
-          ),
-        ],
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.black,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Notifications',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF000000),
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Stat keeper invitations and league updates.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF666666),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: provider.isLoading
+                        ? null
+                        : () => provider.refresh(),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: _buildBody(context, provider)),
+          ],
+        ),
       ),
-      body: _buildBody(context, provider),
     );
   }
 
@@ -72,6 +136,19 @@ class StatKeeperNotification extends StatelessWidget {
         itemCount: provider.notifications.length,
         itemBuilder: (context, index) {
           final notification = provider.notifications[index];
+
+          if (notification.type == 'LEAGUE_STATKEEPER_INVITE') {
+            return InvitationNotificationCard(
+              notification: notification,
+              isLoading: provider.isLoading,
+              isExpanded: provider.isExpanded(notification.id),
+              onToggleExpansion: () =>
+                  provider.toggleExpansion(notification.id),
+              onAccept: () => _handleAccept(context, notification, provider),
+              onReject: () => _handleReject(context, notification, provider),
+            );
+          }
+
           return NotificationCard(
             notification: notification,
             isLoading: provider.isLoading,
@@ -79,13 +156,13 @@ class StatKeeperNotification extends StatelessWidget {
                 notification.isPending &&
                     (notification.type == 'LEAGUE_STATKEEPER_INVITE' ||
                         notification.type == 'TEAM_INVITE')
-                ? () => _handleAccept(context, notification.id, provider)
+                ? () => _handleAccept(context, notification, provider)
                 : null,
             onReject:
                 notification.isPending &&
                     (notification.type == 'LEAGUE_STATKEEPER_INVITE' ||
                         notification.type == 'TEAM_INVITE')
-                ? () => _handleReject(context, notification.id, provider)
+                ? () => _handleReject(context, notification, provider)
                 : null,
           );
         },
@@ -95,13 +172,25 @@ class StatKeeperNotification extends StatelessWidget {
 
   Future<void> _handleAccept(
     BuildContext context,
-    String notificationId,
+    NotificationModel notification,
     StatKeeperNotificationProvider provider,
   ) async {
-    final result = await provider.acceptNotification(notificationId);
+    final result = await provider.acceptNotification(notification.id);
     final success = result['success'] == true;
 
     if (success && context.mounted) {
+      // Trigger notification for the sender (Captain/Admin)
+      if (notification.senderId != null) {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        NotificationTriggerService.triggerStatKeeperAcceptedInvite(
+          senderId: notification.senderId!,
+          statKeeperName: auth.userName.isNotEmpty
+              ? auth.userName
+              : 'A stat keeper',
+          leagueName: notification.league ?? 'League',
+        ).catchError((e) => debugPrint('Error triggering notification: $e'));
+      }
+
       await provider.refresh();
       if (context.mounted) {
         CustomFlushbar.showTopSuccess(
@@ -119,12 +208,24 @@ class StatKeeperNotification extends StatelessWidget {
 
   Future<void> _handleReject(
     BuildContext context,
-    String notificationId,
+    NotificationModel notification,
     StatKeeperNotificationProvider provider,
   ) async {
-    final success = await provider.rejectNotification(notificationId);
+    final success = await provider.rejectNotification(notification.id);
 
     if (success && context.mounted) {
+      // Trigger notification for the sender (Captain/Admin)
+      if (notification.senderId != null) {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        NotificationTriggerService.triggerStatKeeperRejectedInvite(
+          senderId: notification.senderId!,
+          statKeeperName: auth.userName.isNotEmpty
+              ? auth.userName
+              : 'A stat keeper',
+          leagueName: notification.league ?? 'League',
+        ).catchError((e) => debugPrint('Error triggering notification: $e'));
+      }
+
       CustomFlushbar.showWarning(context, message: 'Invitation rejected.');
     } else if (context.mounted) {
       CustomFlushbar.showError(

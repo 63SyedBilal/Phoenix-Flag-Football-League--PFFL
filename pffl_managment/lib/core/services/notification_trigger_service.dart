@@ -148,7 +148,6 @@ class NotificationTriggerService {
     );
   }
 
-  /// Triggered when a player declines a team invitation
   static Future<void> triggerPlayerDeclinedTeamInvite({
     required String captainId,
     required String playerName,
@@ -160,6 +159,60 @@ class NotificationTriggerService {
       type: 'INVITATION_DECLINED',
       message: '$playerName declined your invitation to join $teamName',
       teamId: teamId,
+    );
+  }
+
+  /// Triggered when referee accepts league invitation
+  static Future<void> triggerRefereeAcceptedInvite({
+    required String senderId,
+    required String refereeName,
+    required String leagueName,
+  }) async {
+    await NotificationSenderService.sendNotification(
+      receiverId: senderId,
+      type: 'INVITATION_ACCEPTED',
+      message: 'Referee $refereeName accepted your invitation for $leagueName',
+    );
+  }
+
+  /// Triggered when referee rejects league invitation
+  static Future<void> triggerRefereeRejectedInvite({
+    required String senderId,
+    required String refereeName,
+    required String leagueName,
+  }) async {
+    await NotificationSenderService.sendNotification(
+      receiverId: senderId,
+      type: 'INVITATION_REJECTED',
+      message: 'Referee $refereeName rejected your invitation for $leagueName',
+    );
+  }
+
+  /// Triggered when statkeeper accepts league invitation
+  static Future<void> triggerStatKeeperAcceptedInvite({
+    required String senderId,
+    required String statKeeperName,
+    required String leagueName,
+  }) async {
+    await NotificationSenderService.sendNotification(
+      receiverId: senderId,
+      type: 'INVITATION_ACCEPTED',
+      message:
+          'Stat Keeper $statKeeperName accepted your invitation for $leagueName',
+    );
+  }
+
+  /// Triggered when statkeeper rejects league invitation
+  static Future<void> triggerStatKeeperRejectedInvite({
+    required String senderId,
+    required String statKeeperName,
+    required String leagueName,
+  }) async {
+    await NotificationSenderService.sendNotification(
+      receiverId: senderId,
+      type: 'INVITATION_REJECTED',
+      message:
+          'Stat Keeper $statKeeperName rejected your invitation for $leagueName',
     );
   }
 }

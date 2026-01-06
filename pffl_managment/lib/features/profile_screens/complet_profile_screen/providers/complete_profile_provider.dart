@@ -33,8 +33,9 @@ class CompleteProfileProvider extends ChangeNotifier {
   String? _errorMessage;
 
   // Validation state
-  final Map<String, String?> _fieldErrors = {};
+  Map<String, String?> _fieldErrors = {};
   final UserPreferenceProvider _userPrefs;
+  bool _disposed = false;
 
   CompleteProfileProvider(this._userPrefs);
 
@@ -69,10 +70,14 @@ class CompleteProfileProvider extends ChangeNotifier {
   /// Check if form is valid
   bool get isFormValid {
     return _selectedPositions.isNotEmpty &&
+        _jerseyNumber != null &&
+        _jerseyNumber!.isNotEmpty &&
         _emergencyContactName != null &&
         _emergencyContactName!.isNotEmpty &&
         _emergencyPhone != null &&
         _emergencyPhone!.isNotEmpty &&
+        (_profileImagePath != null && _profileImagePath != 'null' ||
+            _profileImageUrl != null && _profileImageUrl != 'null') &&
         _agreedToTerms &&
         _fieldErrors.isEmpty;
   }
@@ -101,55 +106,94 @@ class CompleteProfileProvider extends ChangeNotifier {
       _syncWithBackend();
 
       notifyListeners();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> _syncWithBackend() async {
     try {
       final dio = await AuthService.getWorkingDio();
-      final response = await dio.get(
+      final userId = _userPrefs.userId;
+
+      // Try profile endpoint first, then complete-profile
+      final endpoints = [
         AppConfig.profileEndpoint,
-        options: Options(validateStatus: (_) => true),
-      );
-      if (response.statusCode == 200) {
-        final data = response.data['data'] ?? response.data['user'];
-        if (data != null) {
-          await _userPrefs.setFirstName(data['firstName']);
-          await _userPrefs.setLastName(data['lastName']);
-          await _userPrefs.setUserPhone(data['phone']);
-          await _userPrefs.setProfileImage(data['profileImage']);
-          await _userPrefs.setPosition(data['position']);
-          await _userPrefs.setJerseyNumber(data['jerseyNumber']?.toString());
-          await _userPrefs.setEmergencyContactName(
-            data['emergencyContactName'],
-          );
-          await _userPrefs.setEmergencyPhone(data['emergencyPhone']);
-          await _userPrefs.setProfileComplete(
-            data['isProfileComplete'] ?? true,
+        AppConfig.completeProfileEndpoint,
+        '${AppConfig.profileEndpoint}/$userId',
+      ];
+
+      dynamic profileData;
+
+      for (final endpoint in endpoints) {
+        try {
+          final response = await dio.get(
+            endpoint,
+            options: Options(validateStatus: (_) => true),
           );
 
-          _firstName = data['firstName'];
-          _lastName = data['lastName'];
-          _email = data['email'];
-          _phone = data['phone'];
-
-          final pos = data['position'] as String?;
-          if (pos != null) {
-            _selectedPositions.clear();
-            _selectedPositions.addAll(pos.split(', '));
+          if (response.statusCode == 200) {
+            final body = response.data;
+            profileData = body['data'] ?? body['user'] ?? body;
+            if (profileData != null) {
+              break;
+            }
           }
-
-          _jerseyNumber = data['jerseyNumber']?.toString();
-          _emergencyContactName = data['emergencyContactName'];
-          _emergencyPhone = data['emergencyPhone'];
-          _profileImagePath = data['profileImage'];
-
-          notifyListeners();
-        }
+        } catch (e) {}
       }
-    } catch (e) {
-    }
+
+      if (profileData != null && profileData is Map) {
+        final data = profileData.cast<String, dynamic>();
+
+        // Extract fields with multi-key support
+        final firstName = data['firstName'] ?? data['first_name'];
+        final lastName = data['lastName'] ?? data['last_name'];
+        final phone = data['phone'] ?? data['phoneNumber'];
+        final image = data['profileImage'] ?? data['avatar'] ?? data['image'];
+        final pos = data['position'];
+        final jersey = data['jerseyNumber'] ?? data['jersey_number'];
+        final eContact =
+            data['emergencyContactName'] ?? data['emergency_contact'];
+        final ePhone = data['emergencyPhone'] ?? data['emergency_phone'];
+
+        if (firstName != null)
+          await _userPrefs.setFirstName(firstName.toString());
+        if (lastName != null) await _userPrefs.setLastName(lastName.toString());
+        if (phone != null) await _userPrefs.setUserPhone(phone.toString());
+        if (image != null && image.toString() != 'null')
+          await _userPrefs.setProfileImage(image.toString());
+        if (pos != null) await _userPrefs.setPosition(pos.toString());
+        if (jersey != null) await _userPrefs.setJerseyNumber(jersey.toString());
+        if (eContact != null)
+          await _userPrefs.setEmergencyContactName(eContact.toString());
+        if (ePhone != null)
+          await _userPrefs.setEmergencyPhone(ePhone.toString());
+
+        final isComplete =
+            data['isProfileComplete'] ?? data['complete'] ?? true;
+        await _userPrefs.setProfileComplete(isComplete == true);
+
+        // Update local state
+        _firstName = _userPrefs.firstName;
+        _lastName = _userPrefs.lastName;
+        _email = _userPrefs.userEmail;
+        _phone = _userPrefs.userPhone;
+
+        if (image != null && image.toString() != 'null') {
+          _profileImageUrl = image.toString();
+        }
+
+        if (pos != null) {
+          _selectedPositions.clear();
+          _selectedPositions.addAll(pos.toString().split(', '));
+        }
+
+        _jerseyNumber = _userPrefs.jerseyNumber;
+        _emergencyContactName = _userPrefs.emergencyContactName;
+        _emergencyPhone = _userPrefs.emergencyPhone;
+        _profileImagePath = _userPrefs.profileImage;
+
+        notifyListeners();
+      }
+    } catch (e) {}
   }
 
   String? _extractMessage(dynamic body) {
@@ -188,41 +232,47 @@ class CompleteProfileProvider extends ChangeNotifier {
     Dio dio,
     Map<String, dynamic> profileData,
   ) async {
-    final methods = <String>['PUT', 'POST', 'PATCH'];
-    final paths = <String>[
-      AppConfig.profileEndpoint,
-      AppConfig.completeProfileEndpoint,
-    ];
+    // 1. Try PUT /api/complete-profile (Primary endpoint - matches backend route export)
+    try {
+      final response = await dio.put(
+        AppConfig.completeProfileEndpoint,
+        data: profileData,
+        options: Options(
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201)
+        return response;
+    } catch (_) {}
 
-    Response<dynamic>? lastResponse;
-    for (final path in paths) {
-      for (final method in methods) {
-        lastResponse = await dio.request(
-          path,
-          data: profileData,
-          options: Options(method: method, validateStatus: (_) => true),
-        );
+    // 2. Try POST /api/profile (Legacy endpoint)
+    try {
+      final response = await dio.post(
+        AppConfig.profileEndpoint,
+        data: profileData,
+        options: Options(
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201)
+        return response;
+    } catch (_) {}
 
-        final status = lastResponse.statusCode ?? 0;
-
-        if (status == 200 || status == 201) {
-          return lastResponse;
-        }
-
-        // If method is not allowed, try next method.
-        if (status == 405) {
-          continue;
-        }
-
-        // For 400s, still allow trying next endpoint because some envs validate differently.
-        if (status == 400) {
-          continue;
-        }
-      }
+    // 3. Try PUT /api/user/:id (User update endpoint - matches backend route export)
+    try {
+      final response = await dio.put(
+        '${AppConfig.userEndpoint}/${_userPrefs.userId}',
+        data: profileData,
+        options: Options(
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201)
+        return response;
+      return response; // Return last error response if all fail
+    } catch (e) {
+      throw Exception('All profile submission attempts failed: $e');
     }
-
-    // If everything failed, return the last attempt.
-    return lastResponse!;
   }
 
   // Setters for basic info
@@ -274,7 +324,6 @@ class CompleteProfileProvider extends ChangeNotifier {
   }
 
   Timer? _jerseyCheckTimer;
-
 
   /// Set emergency contact name and validate
   void setEmergencyContactName(String? name) {
@@ -337,8 +386,13 @@ class CompleteProfileProvider extends ChangeNotifier {
       isValid = false;
     }
 
-    // Jersey number validation (optional but must be valid if provided)
-    if (_jerseyNumber != null && _jerseyNumber!.isNotEmpty) {
+    // Jersey number validation (Mandatory)
+    if (_jerseyNumber == null ||
+        _jerseyNumber!.isEmpty ||
+        _jerseyNumber == 'null') {
+      _setFieldError('jerseyNumber', 'Jersey number is required');
+      isValid = false;
+    } else {
       final jerseyNum = int.tryParse(_jerseyNumber!);
       if (jerseyNum == null || jerseyNum < 1 || jerseyNum > 99) {
         _setFieldError(
@@ -376,6 +430,13 @@ class CompleteProfileProvider extends ChangeNotifier {
       }
     }
 
+    // Profile image validation
+    if ((_profileImagePath == null || _profileImagePath == 'null') &&
+        (_profileImageUrl == null || _profileImageUrl == 'null')) {
+      _setFieldError('profileImage', 'Profile image is required');
+      isValid = false;
+    }
+
     // Terms agreement validation
     if (!_agreedToTerms) {
       _setFieldError('terms', 'You must agree to Terms & Privacy');
@@ -400,40 +461,62 @@ class CompleteProfileProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Upload image if provided
-      String? imageUrl;
-      if (_profileImagePath != null && _profileImagePath!.isNotEmpty) {
+      // Upload image (Mandatory)
+      String? imageUrl = _profileImageUrl;
+      if (_profileImagePath != null &&
+          _profileImagePath!.isNotEmpty &&
+          !_profileImagePath!.startsWith('http')) {
         try {
           final imageFile = File(_profileImagePath!);
           if (await imageFile.exists()) {
             imageUrl = await AdminService.uploadImage(imageFile);
+            if (imageUrl == null || imageUrl.isEmpty) {
+              throw Exception('Failed to upload image. Please try again.');
+            }
             _profileImageUrl = imageUrl;
+          } else {
+            throw Exception('Image file not found.');
           }
         } catch (e) {
-          // Continue without image - it's optional
+          _isLoading = false;
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          notifyListeners();
+          return false;
         }
       }
 
-      // Prepare profile data - all stored in User model
+      if (imageUrl == null || imageUrl.isEmpty) {
+        _isLoading = false;
+        _errorMessage = 'Profile image is required';
+        notifyListeners();
+        return false;
+      }
+
+      // Prepare profile data
       final positionString = _selectedPositions.join(', ');
       final profileData = <String, dynamic>{
+        'userId': _userPrefs.userId,
+        if (_firstName != null && _firstName!.trim().isNotEmpty)
+          'firstName': _firstName!.trim(),
+        if (_lastName != null && _lastName!.trim().isNotEmpty)
+          'lastName': _lastName!.trim(),
         if (_phone != null && _phone!.trim().isNotEmpty)
           'phone': _phone!.trim(),
         'position': positionString,
         'emergencyContactName': _emergencyContactName!,
         'emergencyPhone': _emergencyPhone!,
+        'profileImage': imageUrl,
+        'image': imageUrl,
+        'userImage': imageUrl,
       };
 
-      // Add optional fields
+      // Add jersey number
       if (_jerseyNumber != null && _jerseyNumber!.isNotEmpty) {
         final jerseyNum = int.tryParse(_jerseyNumber!);
         if (jerseyNum != null) {
           profileData['jerseyNumber'] = jerseyNum;
+          profileData['jersey_number'] = jerseyNum;
         }
-      }
-
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        profileData['profileImage'] = imageUrl;
       }
 
       try {
@@ -452,18 +535,17 @@ class CompleteProfileProvider extends ChangeNotifier {
           final msg =
               _extractMessage(response.data) ??
               'Failed to complete profile (status: ${response.statusCode})';
-          debugPrint(
-            '⚠️ Backend submission failed: $msg. Falling back to local save.',
-          );
+          _errorMessage = msg;
+          _isLoading = false;
           _applyBackendErrorToFields(msg);
-          // Don't throw - fall back to local save if possible
-          return await _handleProfileSuccess(null, positionString, imageUrl);
+          notifyListeners();
+          return false;
         }
       } catch (e) {
-        debugPrint(
-          '⚠️ Backend submission crashed: $e. Falling back to local save.',
-        );
-        return await _handleProfileSuccess(null, positionString, imageUrl);
+        _isLoading = false;
+        _errorMessage = 'Connection error: Could not save profile to server.';
+        notifyListeners();
+        return false;
       }
     } catch (e) {
       _isLoading = false;
@@ -486,11 +568,14 @@ class CompleteProfileProvider extends ChangeNotifier {
     final currentUserId = prefs.getString('userId');
 
     // Update local cache
+    if (_firstName != null) await _userPrefs.setFirstName(_firstName!);
+    if (_lastName != null) await _userPrefs.setLastName(_lastName!);
     await _userPrefs.setPosition(positionString);
     await _userPrefs.setEmergencyContactName(_emergencyContactName);
     await _userPrefs.setEmergencyPhone(_emergencyPhone);
     if (_jerseyNumber != null) await _userPrefs.setJerseyNumber(_jerseyNumber);
-    if (imageUrl != null) await _userPrefs.setProfileImage(imageUrl);
+    // mark image as uploaded to user preference
+    await _userPrefs.setProfileImage(imageUrl!);
     await _userPrefs.setProfileComplete(true);
 
     // CRITICAL: Restore user role and ID after profile updates
@@ -551,8 +636,15 @@ class CompleteProfileProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _jerseyCheckTimer?.cancel();
     super.dispose();
   }
-}
 
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
+  }
+}

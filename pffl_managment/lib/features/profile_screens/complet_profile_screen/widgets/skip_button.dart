@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/routes/app_routes.dart';
 import 'package:pffl_managment/core/providers/auth_provider.dart';
 
@@ -11,10 +12,17 @@ class SkipButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: GestureDetector(
-        onTap: () {
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final userRole = authProvider.userRole;
-          
+        onTap: () async {
+          final prefs = await SharedPreferences.getInstance();
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          final userRole =
+              prefs.getString('userRole') ??
+              prefs.getString('role') ??
+              authProvider.userRole;
+
           // Determine route based on user role
           String route;
           switch (userRole.toLowerCase()) {
@@ -36,12 +44,8 @@ class SkipButton extends StatelessWidget {
             default:
               route = AppRoutes.playerDashboard; // Default fallback
           }
-          
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            route,
-            (route) => false,
-          );
+
+          Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);
         },
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -62,4 +66,3 @@ class SkipButton extends StatelessWidget {
     );
   }
 }
-

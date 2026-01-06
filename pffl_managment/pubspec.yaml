@@ -94,6 +94,7 @@ dependencies:
 
   # App icons and splash screen
   flutter_launcher_icons: ^0.13.1
+  url_launcher: ^6.3.2
 
 
 dev_dependencies:

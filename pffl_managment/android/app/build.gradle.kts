@@ -35,19 +35,25 @@ android {
 
     signingConfigs {
         create("release") {
-            // Load keystore properties from local.properties or environment variables
-            // For production, create a keystore using:
-            // keytool -genkey -v -keystore pffl_key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias pffl
+            // Priority:
+            // 1. Environment variables (set in CI or local shell)
+            // 2. local.properties file
+            // 3. Defaults
             val keystoreProperties = Properties()
             val keystorePropertiesFile = rootProject.file("local.properties")
             if (keystorePropertiesFile.exists()) {
                 keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
             }
 
-            storeFile = file(keystoreProperties.getProperty("storeFile", "pffl_key.jks"))
-            storePassword = keystoreProperties.getProperty("storePassword", "pffl_password")
-            keyAlias = keystoreProperties.getProperty("keyAlias", "pffl")
-            keyPassword = keystoreProperties.getProperty("keyPassword", "pffl_password")
+            val envStoreFile = System.getenv("KEYSTORE_FILE_PATH") ?: keystoreProperties.getProperty("storeFile")
+            val envStorePassword = System.getenv("KEYSTORE_PASSWORD") ?: keystoreProperties.getProperty("storePassword")
+            val envKeyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties.getProperty("keyAlias")
+            val envKeyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProperties.getProperty("keyPassword")
+
+            storeFile = if (envStoreFile != null) file(envStoreFile) else file("pffl_key.jks")
+            storePassword = envStorePassword ?: "pffl_password"
+            keyAlias = envKeyAlias ?: "pffl"
+            keyPassword = envKeyPassword ?: "pffl_password"
         }
     }
 

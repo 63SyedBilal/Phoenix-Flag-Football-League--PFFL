@@ -50,7 +50,12 @@ class PlayerModel {
       isVerified: isVerified ?? this.isVerified,
       hasAlert: hasAlert ?? this.hasAlert,
       isPaid: isPaid ?? this.isPaid,
-      additionalPositionsCount: additionalPositionsCount ?? this.additionalPositionsCount,
+      additionalPositionsCount:
+          additionalPositionsCount ?? this.additionalPositionsCount,
     );
   }
+
+  // Helper for UI display
+  String get displayPosition =>
+      (position.isNotEmpty && position != 'null') ? position : '-';
 }

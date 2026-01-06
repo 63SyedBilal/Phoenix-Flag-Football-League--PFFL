@@ -11,6 +11,12 @@ class NotificationModel {
   final String? league;
   final String? team;
   final String? format;
+  final String? senderId;
+  final String? receiverId; // Added for filtering
+  final String? teamId;
+  final String? leagueId;
+  final String? matchId;
+  final String? senderName;
 
   NotificationModel({
     required this.id,
@@ -25,6 +31,12 @@ class NotificationModel {
     this.league,
     this.team,
     this.format,
+    this.senderId,
+    this.receiverId, // Added
+    this.teamId,
+    this.leagueId,
+    this.matchId,
+    this.senderName,
   });
 
   bool get isPending => status.toLowerCase() == 'pending';
@@ -63,6 +75,27 @@ class NotificationModel {
       league: extractString(json['league'], defaultVal: ''),
       team: extractString(json['team'], defaultVal: ''),
       format: extractString(json['format'], defaultVal: ''),
+      senderId:
+          json['senderId']?.toString() ??
+          (json['sender'] is Map
+              ? json['sender']['_id']?.toString() ??
+                    json['sender']['id']?.toString()
+              : json['sender']?.toString()),
+      receiverId:
+          json['receiverId']?.toString() ??
+          (json['receiver'] is Map
+              ? json['receiver']['_id']?.toString() ??
+                    json['receiver']['id']?.toString()
+              : json['receiver']?.toString()),
+      teamId: json['teamId']?.toString(),
+      leagueId: json['leagueId']?.toString(),
+      matchId:
+          json['matchId']?.toString() ??
+          (json['match'] is Map
+              ? json['match']['_id']?.toString() ??
+                    json['match']['id']?.toString()
+              : json['match']?.toString()),
+      senderName: extractString(json['senderName']),
     );
   }
 
@@ -80,6 +113,12 @@ class NotificationModel {
       'league': league,
       'team': team,
       'format': format,
+      'senderId': senderId,
+      'receiverId': receiverId, // Added
+      'teamId': teamId,
+      'leagueId': leagueId,
+      'matchId': matchId,
+      'senderName': senderName,
     };
   }
 }

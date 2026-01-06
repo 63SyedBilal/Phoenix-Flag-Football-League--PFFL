@@ -100,8 +100,9 @@ class _TeamList extends StatelessWidget {
       'image': team.image, // Team logo URL
       'players': playerCount,
       'total': maxPlayers,
-      'emailSent': viewModel.isTeamEmailSent(team.id),
+      'playersSent': viewModel.isTeamEmailSent(team.id),
       'playersList': playersList,
+      'captainId': team.captainId,
     };
   }
 
@@ -251,8 +252,12 @@ class _TeamList extends StatelessWidget {
                           onTap: isEmailSent
                               ? null
                               : () {
-                                  // Send invitation - no validation, fire-and-forget
-                                  vm.sendInvitationToTeam(vm.leagueId, teamId);
+                                  // Send invitation to the specific team captain
+                                  vm.sendInvitationToTeam(
+                                    vm.leagueId,
+                                    teamId,
+                                    team['captainId'] ?? '',
+                                  );
                                 },
                           child: Container(
                             padding: const EdgeInsets.all(8),

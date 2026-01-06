@@ -54,6 +54,10 @@ extension RefereeGameDetailHelpersExtension on RefereeGameDetailProvider {
         return 2;
       case 'Extra Point from 20-yard line':
         return 3;
+      case 'Safety':
+        return 2;
+      case 'Overtime':
+        return 0;
       default:
         return 0;
     }
@@ -148,14 +152,7 @@ extension RefereeGameDetailHelpersExtension on RefereeGameDetailProvider {
   }
 
   List<GameTimelineEntry> _buildTimelineEntries() {
-    final entries = <GameTimelineEntry>[
-      const GameTimelineEntry.milestone(
-        label: 'Over Time',
-        showAddBadge: false,
-      ),
-      const GameTimelineEntry.milestone(label: 'Full Time'),
-      const GameTimelineEntry.milestone(label: 'Half Time'),
-    ];
+    final entries = <GameTimelineEntry>[];
 
     for (final action in _gameActions) {
       final type = action['type'] as GameTimelineEntryType?;
@@ -163,9 +160,13 @@ extension RefereeGameDetailHelpersExtension on RefereeGameDetailProvider {
         entries.add(
           GameTimelineEntry.player(
             playerName:
-                action['playerName'] as String? ?? action['title'] as String? ?? '',
+                action['playerName'] as String? ??
+                action['title'] as String? ??
+                '',
             position:
-                action['position'] as String? ?? action['description'] as String? ?? '',
+                action['position'] as String? ??
+                action['description'] as String? ??
+                '',
             icon: action['icon'] as IconData? ?? Icons.sports_football,
             iconColor: action['iconColor'] as Color? ?? const Color(0xFF1E293B),
             isLeft: action['isLeft'] as bool? ?? true,
@@ -196,29 +197,33 @@ extension RefereeGameDetailHelpersExtension on RefereeGameDetailProvider {
   }
 
   IconData _getIconForAction(String actionType) {
-    switch (actionType) {
-      case 'Touchdown':
-        return Icons.sports_football;
-      case 'Extra Point from 5-yard line':
-      case 'Extra Point from 12-yard line':
-      case 'Extra Point from 20-yard line':
-        return Icons.sports;
-      default:
-        return Icons.flag;
+    if (actionType.contains("Touchdown") || actionType == "TD") {
+      return Icons.sports_score;
+    } else if (actionType.contains("5-yard")) {
+      return Icons.add_circle;
+    } else if (actionType.contains("12-yard")) {
+      return Icons.add_circle_outline;
+    } else if (actionType.contains("20-yard")) {
+      return Icons.stars;
+    } else if (actionType == "Safety") {
+      return Icons.warning_amber_rounded;
     }
+    return Icons.flag;
   }
 
   Color _getColorForAction(String actionType) {
-    switch (actionType) {
-      case 'Touchdown':
-        return const Color(0xFF1E293B);
-      case 'Extra Point from 5-yard line':
-      case 'Extra Point from 12-yard line':
-      case 'Extra Point from 20-yard line':
-        return const Color(0xFF1E293B);
-      default:
-        return const Color(0xFFFBBF24);
+    if (actionType.contains("Touchdown") || actionType == "TD") {
+      return Colors.green;
+    } else if (actionType.contains("5-yard")) {
+      return Colors.blue;
+    } else if (actionType.contains("12-yard")) {
+      return Colors.orange;
+    } else if (actionType.contains("20-yard")) {
+      return Colors.amber;
+    } else if (actionType == "Safety") {
+      return Colors.red;
     }
+    return const Color(0xFF1E293B);
   }
 
   String _getPlayerPosition(String playerId) {

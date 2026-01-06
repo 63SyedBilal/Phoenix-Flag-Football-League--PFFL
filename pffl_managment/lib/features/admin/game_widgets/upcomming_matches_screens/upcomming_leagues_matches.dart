@@ -88,7 +88,7 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                           ),
                         ),
                       ] else ...[
-                        // Score display for Live/Completed
+                        // Score display for Completed
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -124,26 +124,25 @@ class UpcommingGamesCardWidget extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: match.status == MatchStatus.live
-                                ? Colors.red
-                                : Colors.grey[700],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            match.status == MatchStatus.live ? 'LIVE' : 'FINAL',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                        if (match.status == MatchStatus.completed)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[700],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'FINAL',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ],
                   ),

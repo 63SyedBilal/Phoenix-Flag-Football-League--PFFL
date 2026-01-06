@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:pffl_managment/core/services/user_service.dart' as user_service;
+import 'package:pffl_managment/core/services/notification_service.dart';
 
 /// Free Agent model for the invite screen
 class FreeAgentModel {
@@ -45,10 +46,11 @@ class AdminInviteProvider extends ChangeNotifier {
   String get manualEmail => _manualEmail;
   String? get manualSelectedRole => _manualSelectedRole;
   List<String> get roles => availableRoles;
-  
+
   String? getAgentSelectedRole(String agentId) => _agentSelectedRoles[agentId];
   bool isAgentExpanded(String agentId) => _agentExpanded[agentId] ?? false;
-  bool isAgentInviteSending(String agentId) => _agentInviteSending[agentId] ?? false;
+  bool isAgentInviteSending(String agentId) =>
+      _agentInviteSending[agentId] ?? false;
 
   /// Initialize and fetch free agents
   Future<void> initialize() async {
@@ -63,11 +65,16 @@ class AdminInviteProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
       final backendUsers = await user_service.UserService.getFreeAgents();
-      
+
       _freeAgents = backendUsers.map((user) {
         final name = user.fullName;
-        final imageUrl = 'https://api.dicebear.com/7.x/avataaars/png?seed=${Uri.encodeComponent(name)}&backgroundColor=b6e3f4';
-        
+
+        // Use user's profile image if available, otherwise null to show default icon in UI
+        String? imageUrl =
+            (user.profileImage != null && user.profileImage!.isNotEmpty)
+            ? user.profileImage
+            : null;
+
         return FreeAgentModel(
           id: user.id,
           name: name,
@@ -127,12 +134,31 @@ class AdminInviteProvider extends ChangeNotifier {
       _isSendingInvite = true;
       _errorMessage = null;
       notifyListeners();
-      
+
       // Map role to backend format
       final backendRole = _mapRoleToBackend(_manualSelectedRole!);
-      final success = await user_service.InviteService.sendInvite(_manualEmail.trim(), backendRole);
+
+      // 1. Send system invite (calls /invite on backend)
+      final success = await user_service.InviteService.sendInvite(
+        _manualEmail.trim(),
+        backendRole,
+      );
 
       if (success) {
+        // 2. Send email notification
+        await NotificationService.sendEmailNotification(
+          type: 'ROLE_INVITE',
+          recipientEmail: _manualEmail.trim(),
+          subject: 'Invitation to join PFFL as $_manualSelectedRole',
+          body:
+              'Hello,\n\nYou have been invited to join the Phoenix Flag Football League (PFFL) as a $_manualSelectedRole. Please log in to your account or sign up to accept the invitation.\n\nBest regards,\nPFFL Administration',
+          templateData: {
+            'role': _manualSelectedRole,
+            'systemName': 'Phoenix Flag Football League (PFFL)',
+            'action': 'Accept / Reject invitation',
+          },
+        );
+
         // Clear form
         _manualEmail = '';
         _manualSelectedRole = null;
@@ -163,17 +189,52 @@ class AdminInviteProvider extends ChangeNotifier {
     }
 
     final agent = _freeAgents.firstWhere((a) => a.id == agentId);
-    
+
     try {
       _agentInviteSending[agentId] = true;
       _errorMessage = null;
       notifyListeners();
-      
+
       // Map role to backend format
       final backendRole = _mapRoleToBackend(selectedRole);
-      final success = await user_service.InviteService.sendInvite(agent.email, backendRole);
+
+      // 1. Send system invite
+      final success = await user_service.InviteService.sendInvite(
+        agent.email,
+        backendRole,
+      );
 
       if (success) {
+        // 2. Send targeted in-app notification to the specific user
+        String notificationType = 'TEAM_INVITE'; // Default for Players/Captains
+        if (selectedRole == 'Referee') {
+          notificationType = 'LEAGUE_REFEREE_INVITE';
+        } else if (selectedRole == 'Stat Keeper') {
+          notificationType = 'LEAGUE_STATKEEPER_INVITE';
+        }
+
+        await NotificationService.sendNotification(
+          receiverId: agentId,
+          type: notificationType,
+          message: 'You have been invited by Admin to join as $selectedRole.',
+          senderId: 'admin', // Generic admin ID
+        );
+
+        // 3. Send email notification
+        await NotificationService.sendEmailNotification(
+          type: 'ROLE_INVITE',
+          recipientEmail: agent.email,
+          subject: 'Invitation to join PFFL as $selectedRole',
+          body:
+              'Hello ${agent.name},\n\nYou have been invited to join the Phoenix Flag Football League (PFFL) as a $selectedRole. Please log in to your account and check your notifications to accept the invitation.\n\nBest regards,\nPFFL Administration',
+          templateData: {
+            'role': selectedRole,
+            'userName': agent.name,
+            'systemName': 'Phoenix Flag Football League (PFFL)',
+            'action': 'Accept / Reject invitation',
+          },
+        );
+
         // Clear agent role selection and collapse card
         _agentSelectedRoles[agentId] = null;
         _agentExpanded[agentId] = false;
@@ -222,4 +283,3 @@ class AdminInviteProvider extends ChangeNotifier {
     await fetchFreeAgents();
   }
 }
-

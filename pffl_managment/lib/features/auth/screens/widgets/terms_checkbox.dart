@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:pffl_managment/features/auth/providers/signup_provider.dart';
 import 'package:pffl_managment/features/auth/screens/widgets/error_container.dart';
+import 'package:pffl_managment/core/services/url_launcher_service.dart';
 
 class TermsCheckbox extends StatelessWidget {
   final SignupProvider provider;
@@ -27,11 +29,9 @@ class TermsCheckbox extends StatelessWidget {
             ),
 
             Expanded(
-              child: GestureDetector(
-                onTap: () =>
-                    provider.updateAgreedToTerms(!provider.agreedToTerms),
-                child: Text(
-                  'I Agree to Terms & Privacy',
+              child: RichText(
+                text: TextSpan(
+                  text: 'I Agree to ',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.brightness == Brightness.dark
                         ? Colors.white70
@@ -39,6 +39,18 @@ class TermsCheckbox extends StatelessWidget {
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
+                  children: [
+                    TextSpan(
+                      text: 'Terms & Privacy',
+                      style: const TextStyle(
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () =>
+                            UrlLauncherService.launchPrivacyPolicy(),
+                    ),
+                  ],
                 ),
               ),
             ),

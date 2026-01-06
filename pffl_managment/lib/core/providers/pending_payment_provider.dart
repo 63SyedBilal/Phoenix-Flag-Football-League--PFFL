@@ -33,6 +33,7 @@ class PendingPaymentProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   PendingPaymentModel? get pendingPayment => _pendingPayment;
   bool get hasPendingPayment => _pendingPayment != null;
+  String? get pendingLeagueId => _pendingPayment?.leagueId;
   String? get error => _error;
 
   Future<void> loadPendingPayment(BuildContext context) async {
@@ -172,4 +173,3 @@ class PendingPaymentProvider extends ChangeNotifier {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }
-

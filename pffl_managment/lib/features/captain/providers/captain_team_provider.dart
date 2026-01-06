@@ -1,8 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pffl_managment/core/services/team_service.dart';
 import 'package:pffl_managment/core/services/notification_service.dart';
+import 'package:pffl_managment/core/services/profile_service.dart';
+import 'package:pffl_managment/features/captain/model/player_model.dart';
 import '../model/team_model.dart';
+
 class CaptainTeamProvider extends ChangeNotifier {
   Map<String, TeamModel> _teams = {};
   String _selectedFormat = '5v5';
@@ -51,23 +55,11 @@ class CaptainTeamProvider extends ChangeNotifier {
         return;
       }
 
-      // Backend already populates profileImage, jerseyNumber, position
-      // So we can directly use TeamModel.fromJson without additional enrichment
+      final team5v5Raw = TeamModel.fromJson(teamData, '5v5');
+      final team7v7Raw = TeamModel.fromJson(teamData, '7v7');
 
-      final team5v5 = TeamModel.fromJson(teamData, '5v5');
-      final team7v7 = TeamModel.fromJson(teamData, '7v7');
-
-      // Log the team data to verify profile images are present
-      for (var player in team5v5.players) {
-        print(
-          '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
-        );
-      }
-      for (var player in team7v7.players) {
-        print(
-          '  - ${player.name}: image="${player.imageUrl}", jersey="${player.number}", position="${player.position}"',
-        );
-      }
+      final team5v5 = await _enrichTeamWithProfiles(team5v5Raw);
+      final team7v7 = await _enrichTeamWithProfiles(team7v7Raw);
 
       _teams = {'5v5': team5v5, '7v7': team7v7};
 
@@ -99,12 +91,74 @@ class CaptainTeamProvider extends ChangeNotifier {
       final response = await TeamService.getTeamPlayerPayments(currentTeam.id);
 
       if (response['success'] == true && response['data'] != null) {
-        final paymentStatuses = response['data']['paymentStatuses'] as Map<String, dynamic>? ?? {};
-        _playerPaymentStatuses = paymentStatuses.map((key, value) => MapEntry(key, value == true));
+        final paymentStatuses =
+            response['data']['paymentStatuses'] as Map<String, dynamic>? ?? {};
+        _playerPaymentStatuses = paymentStatuses.map(
+          (key, value) => MapEntry(key, value == true),
+        );
         notifyListeners();
-      } else {
+      } else {}
+    } catch (e) {}
+  }
+
+  /// Enrich team players with profile data
+  Future<TeamModel> _enrichTeamWithProfiles(TeamModel team) async {
+    try {
+      if (team.players.isEmpty) return team;
+
+      final enrichedPlayers = <PlayerModel>[];
+
+      // Parallel fetch profiles to save time
+      final playerProfiles = await Future.wait(
+        team.players.map((p) => ProfileService.getProfile(p.id)),
+      );
+
+      for (int i = 0; i < team.players.length; i++) {
+        final player = team.players[i];
+        final profile = playerProfiles[i];
+
+        if (profile != null) {
+          final profileImg =
+              profile['profileImage']?.toString() ??
+              profile['image']?.toString() ??
+              profile['userImage']?.toString();
+          final jersey =
+              profile['jerseyNumber']?.toString() ??
+              profile['jersey_number']?.toString();
+          final pos = profile['position']?.toString();
+
+          String? finalImg = profileImg;
+          if (finalImg != null &&
+              finalImg != 'null' &&
+              finalImg.isNotEmpty &&
+              !finalImg.startsWith('http')) {
+            finalImg = 'https://$finalImg';
+          }
+
+          enrichedPlayers.add(
+            player.copyWith(
+              imageUrl:
+                  (finalImg != null &&
+                      finalImg != 'null' &&
+                      finalImg.isNotEmpty)
+                  ? finalImg
+                  : player.imageUrl,
+              number: (jersey != null && jersey != 'null' && jersey.isNotEmpty)
+                  ? jersey
+                  : player.number,
+              position: (pos != null && pos != 'null' && pos.isNotEmpty)
+                  ? pos
+                  : (player.position.isEmpty ? '-' : player.position),
+            ),
+          );
+        } else {
+          enrichedPlayers.add(player);
+        }
       }
+
+      return team.copyWith(players: enrichedPlayers);
     } catch (e) {
+      return team;
     }
   }
 
@@ -118,7 +172,10 @@ class CaptainTeamProvider extends ChangeNotifier {
 
   /// Transfer leadership to another player
   /// Calls API, updates local state, and sends notification to new captain
-  Future<void> transferLeadership(BuildContext context, String newCaptainId) async {
+  Future<void> transferLeadership(
+    BuildContext context,
+    String newCaptainId,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -132,7 +189,8 @@ class CaptainTeamProvider extends ChangeNotifier {
       // 1. Validate that newCaptainId is a player in the current team
       final newCaptainPlayer = currentTeam.players.firstWhere(
         (player) => player.id == newCaptainId,
-        orElse: () => throw Exception('Selected player is not a member of your team.'),
+        orElse: () =>
+            throw Exception('Selected player is not a member of your team.'),
       );
 
       // Confirmation dialog (UI will handle this, but provider prepares data)
@@ -152,21 +210,23 @@ class CaptainTeamProvider extends ChangeNotifier {
       await _updateLocalTeamAfterLeadershipTransfer(newCaptainId);
 
       // 4. Send notification to new captain (and email if implemented)
-      await _sendLeadershipConfirmation(
-          newCaptainId, newCaptainPlayer.name);
+      await _sendLeadershipConfirmation(newCaptainId, newCaptainPlayer.name);
 
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to transfer leadership: ${e.toString().replaceAll('Exception: ', '')}';
+      _errorMessage =
+          'Failed to transfer leadership: ${e.toString().replaceAll('Exception: ', '')}';
       notifyListeners();
       rethrow; // Re-throw to show error in UI
     }
   }
 
   /// Updates the local TeamModel after a successful leadership transfer API call.
-  Future<void> _updateLocalTeamAfterLeadershipTransfer(String newCaptainId) async {
+  Future<void> _updateLocalTeamAfterLeadershipTransfer(
+    String newCaptainId,
+  ) async {
     final currentTeam = team;
     if (currentTeam == null) return;
 
@@ -174,7 +234,8 @@ class CaptainTeamProvider extends ChangeNotifier {
     // (CaptainTeamProvider now has PlayerModel for full name)
     final newCaptainPlayer = currentTeam.players.firstWhere(
       (player) => player.id == newCaptainId,
-      orElse: () => throw Exception('New captain not found in local team roster.'),
+      orElse: () =>
+          throw Exception('New captain not found in local team roster.'),
     );
 
     final newCaptainName = newCaptainPlayer.name;
@@ -184,7 +245,9 @@ class CaptainTeamProvider extends ChangeNotifier {
       if (player.id == newCaptainId) {
         return player.copyWith(isCaptain: true); // New captain
       } else if (player.isCaptain) {
-        return player.copyWith(isCaptain: false); // Old captain becomes regular player
+        return player.copyWith(
+          isCaptain: false,
+        ); // Old captain becomes regular player
       }
       return player;
     }).toList();
@@ -202,9 +265,11 @@ class CaptainTeamProvider extends ChangeNotifier {
 
   // Renamed and modified from _sendLeadershipInvitation
   /// Send leadership confirmation notification to the new captain
-  Future<void> _sendLeadershipConfirmation(String newCaptainId, String newCaptainName) async {
+  Future<void> _sendLeadershipConfirmation(
+    String newCaptainId,
+    String newCaptainName,
+  ) async {
     try {
-
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId');
 
@@ -212,7 +277,8 @@ class CaptainTeamProvider extends ChangeNotifier {
         throw Exception('Current user ID not available');
       }
 
-      final message = 'You are now the captain of team "${team?.name ?? 'your team'}".';
+      final message =
+          'You are now the captain of team "${team?.name ?? 'your team'}".';
 
       final success = await NotificationService.sendNotification(
         receiverId: newCaptainId,
@@ -223,8 +289,7 @@ class CaptainTeamProvider extends ChangeNotifier {
       );
 
       if (success) {
-      } else {
-      }
+      } else {}
     } catch (e) {
       // Don't re-throw, as the leadership transfer itself was successful
     }
@@ -263,7 +328,8 @@ class CaptainTeamProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to remove player: ${e.toString().replaceAll('Exception: ', '')}';
+      _errorMessage =
+          'Failed to remove player: ${e.toString().replaceAll('Exception: ', '')}';
       notifyListeners();
       rethrow; // Re-throw to show error in UI
     }
@@ -275,12 +341,12 @@ class CaptainTeamProvider extends ChangeNotifier {
     if (currentTeam == null) return;
 
     // Create a new list of players by filtering out the removed player
-    final updatedPlayers = currentTeam.players.where((player) => player.id != playerId).toList();
+    final updatedPlayers = currentTeam.players
+        .where((player) => player.id != playerId)
+        .toList();
 
     // Create a new TeamModel with the updated player list
-    final updatedTeam = currentTeam.copyWith(
-      players: updatedPlayers,
-    );
+    final updatedTeam = currentTeam.copyWith(players: updatedPlayers);
 
     // Update the _teams map for the current format
     _teams[_selectedFormat] = updatedTeam;
@@ -289,10 +355,6 @@ class CaptainTeamProvider extends ChangeNotifier {
   /// Send removal notification to a player
   Future<void> _sendRemovalNotification(String playerId) async {
     try {
-      print(
-        '📧 [NOTIFICATION DEBUG] Sending removal notification to player: $playerId',
-      );
-
       // Get current user ID (captain) from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId');
@@ -314,11 +376,9 @@ class CaptainTeamProvider extends ChangeNotifier {
       );
 
       if (success) {
-      } else {
-      }
+      } else {}
     } catch (e) {
       // Don't throw error for notification failure - removal should still proceed
     }
   }
 }
-

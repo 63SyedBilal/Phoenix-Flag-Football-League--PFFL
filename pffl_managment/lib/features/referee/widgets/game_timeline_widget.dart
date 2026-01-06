@@ -28,7 +28,8 @@ class GameTimelineWidget extends StatelessWidget {
                   // Vertical line - starts from bottom of circle (only if there are entries)
                   if (entries.isNotEmpty)
                     Positioned(
-                      top: 60, // Circle bottom (40px circle centered at 40px, so bottom is 40+20=60px)
+                      top:
+                          60, // Circle bottom (40px circle centered at 40px, so bottom is 40+20=60px)
                       bottom: 0,
                       left: 0,
                       right: 0,
@@ -94,10 +95,7 @@ class GameTimelineWidget extends StatelessWidget {
           if (!isLast)
             Positioned.fill(
               child: Center(
-                child: Container(
-                  width: 2,
-                  color: const Color(0xFFE5E7EB),
-                ),
+                child: Container(width: 2, color: const Color(0xFFE5E7EB)),
               ),
             )
           else
@@ -108,10 +106,7 @@ class GameTimelineWidget extends StatelessWidget {
               left: 0,
               right: 0,
               child: Center(
-                child: Container(
-                  width: 2,
-                  color: const Color(0xFFE5E7EB),
-                ),
+                child: Container(width: 2, color: const Color(0xFFE5E7EB)),
               ),
             ),
           // Circle on top of line (white background covers line in center)
@@ -130,11 +125,7 @@ class GameTimelineWidget extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                  child: Icon(
-                    entry.icon,
-                    color: entry.iconColor,
-                    size: 20,
-                  ),
+                  child: Icon(entry.icon, color: entry.iconColor, size: 20),
                 ),
                 const SizedBox(height: 4),
                 Flexible(
@@ -186,11 +177,13 @@ class GameTimelineWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildPlayerAction(BuildContext context, GameTimelineEntry entry, {bool isLast = false}) {
+  Widget _buildPlayerAction(
+    BuildContext context,
+    GameTimelineEntry entry, {
+    bool isLast = false,
+  }) {
     final isLeft = entry.isLeft;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final availableWidth = (screenWidth - 32 - 16) / 2; // Container padding + icon space
-    
+
     return SizedBox(
       height: 70,
       child: Stack(
@@ -199,120 +192,108 @@ class GameTimelineWidget extends StatelessWidget {
           if (!isLast)
             Positioned.fill(
               child: Center(
-                child: Container(
-                  width: 2,
-                  color: const Color(0xFFE5E7EB),
-                ),
+                child: Container(width: 2, color: const Color(0xFFE5E7EB)),
               ),
             )
           else
             // For last item, line only goes from top to circle center
             Positioned(
               top: 0,
-              bottom: 35, // Circle center (35px from bottom for 36px circle)
+              bottom:
+                  35, // Circle center (35px from bottom for ~36px circle/row center)
               left: 0,
               right: 0,
               child: Center(
-                child: Container(
-                  width: 2,
-                  color: const Color(0xFFE5E7EB),
-                ),
+                child: Container(width: 2, color: const Color(0xFFE5E7EB)),
               ),
             ),
-          Positioned(
-            left: isLeft ? 0 : null,
-            right: isLeft ? null : 0,
-            top: 35,
-            width: availableWidth - 20, // Subtract some padding
-            child: Container(
-              height: 2,
-              color: const Color(0xFFE5E7EB),
-            ),
-          ),
-          Row(
-            children: [
-              if (isLeft) ...[
+
+          // Centered Row with [Content - Icon - Content]
+          Center(
+            child: Row(
+              children: [
+                // Left Side
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8, left: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            entry.playerName ?? '',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF000000),
-                            ),
-                            textAlign: TextAlign.right,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  child: isLeft
+                      ? Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment
+                                .start, // Left side starts at Left
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                entry.playerName ?? '',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.left, // Left Align
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                entry.position ?? '',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.left, // Left Align
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Flexible(
-                          child: Text(
-                            entry.position ?? '',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.right,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                        )
+                      : const SizedBox(),
                 ),
+
+                // The Centered Icon
                 _buildActionIcon(entry),
-                const SizedBox(width: 8),
-              ] else ...[
-                const SizedBox(width: 8),
-                _buildActionIcon(entry),
+
+                // Right Side
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8, right: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            entry.playerName ?? '',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF000000),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  child: !isLeft
+                      ? Padding(
+                          padding: const EdgeInsets.only(left: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment
+                                .end, // Right side starts at Right
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                entry.playerName ?? '',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF000000),
+                                ),
+                                textAlign: TextAlign.right, // Right Align
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                entry.position ?? '',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.right, // Right Align
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Flexible(
-                          child: Text(
-                            entry.position ?? '',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.grey[600],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                        )
+                      : const SizedBox(),
                 ),
               ],
-            ],
+            ),
           ),
         ],
       ),
@@ -326,16 +307,9 @@ class GameTimelineWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 2,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
       ),
-      child: Icon(
-        entry.icon,
-        color: entry.iconColor,
-        size: 18,
-      ),
+      child: Icon(entry.icon, color: entry.iconColor, size: 18),
     );
   }
 }

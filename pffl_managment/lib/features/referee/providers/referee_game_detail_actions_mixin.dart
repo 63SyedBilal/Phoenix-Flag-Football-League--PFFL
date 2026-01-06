@@ -4,7 +4,7 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
   Future<void> executeAction(RefereeGameAction action) async {
     if (_match == null || _match!.id == null) {
       _error = 'Match not initialized';
-    _emitStateChange();
+      _emitStateChange();
       return;
     }
 
@@ -31,8 +31,9 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
     try {
       switch (action) {
         case RefereeGameAction.halfTimeDone:
-          final updatedMatch =
-              await _refereeGameDetailService.switchHalfTime(_match!.id!);
+          final updatedMatch = await _refereeGameDetailService.switchHalfTime(
+            _match!.id!,
+          );
           _match = updatedMatch;
           _syncScoresFromMatch(updatedMatch);
           _isHalfTimeDone = true;
@@ -45,8 +46,9 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
           );
           break;
         case RefereeGameAction.fullTimeDone:
-          final updatedMatch =
-              await _refereeGameDetailService.switchFullTime(_match!.id!);
+          final updatedMatch = await _refereeGameDetailService.switchFullTime(
+            _match!.id!,
+          );
           _match = updatedMatch;
           _syncScoresFromMatch(updatedMatch);
           _isFullTimeDone = true;
@@ -59,8 +61,9 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
           );
           break;
         case RefereeGameAction.overTime:
-          final updatedMatch =
-              await _refereeGameDetailService.switchOvertime(_match!.id!);
+          final updatedMatch = await _refereeGameDetailService.switchOvertime(
+            _match!.id!,
+          );
           _match = updatedMatch;
           _syncScoresFromMatch(updatedMatch);
           _isOverTime = true;
@@ -97,14 +100,14 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
       _error = 'Failed to execute action: ${e.toString()}';
     } finally {
       _isLoading = false;
-    _emitStateChange();
+      _emitStateChange();
     }
   }
 
   Future<void> completeToss(String winnerTeamId, String winnerSide) async {
     if (_match == null || _match!.id == null) {
       _error = 'Match not initialized';
-    _emitStateChange();
+      _emitStateChange();
       throw Exception('Match not initialized');
     }
 
@@ -134,7 +137,7 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
       rethrow;
     } finally {
       _isLoading = false;
-    _emitStateChange();
+      _emitStateChange();
     }
   }
 
@@ -145,8 +148,14 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
   }) async {
     if (_match == null || _match!.id == null) {
       _error = 'Match not initialized';
-    _emitStateChange();
+      _emitStateChange();
       throw Exception('Match not initialized');
+    }
+
+    if (_isGameComplete) {
+      _error = 'Game is already completed';
+      _emitStateChange();
+      throw Exception('Game is already completed');
     }
 
     _isLoading = true;
@@ -195,7 +204,7 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
       rethrow;
     } finally {
       _isLoading = false;
-    _emitStateChange();
+      _emitStateChange();
     }
   }
 
@@ -216,7 +225,7 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
       return false;
     } finally {
       _isLoading = false;
-    _emitStateChange();
+      _emitStateChange();
     }
   }
 
@@ -252,4 +261,3 @@ extension RefereeGameDetailActionsExtension on RefereeGameDetailProvider {
     });
   }
 }
-

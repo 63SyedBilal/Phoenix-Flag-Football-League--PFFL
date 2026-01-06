@@ -1,5 +1,4 @@
 import 'package:pffl_managment/features/stat_keeper/models/team_stat_model.dart';
-import 'package:pffl_managment/core/utils/team_utils.dart';
 
 enum MatchStatus { upcoming, live, completed, cancelled }
 
@@ -11,8 +10,8 @@ class MatchModel {
   final String _awayTeam;
   final String awayTeamLogo;
 
-  String get homeTeam => getTeamAbbreviation(_homeTeam);
-  String get awayTeam => getTeamAbbreviation(_awayTeam);
+  String get homeTeam => _homeTeam;
+  String get awayTeam => _awayTeam;
   String get fullHomeTeam => _homeTeam;
   String get fullAwayTeam => _awayTeam;
   final String date;

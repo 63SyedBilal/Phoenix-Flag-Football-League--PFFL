@@ -24,7 +24,7 @@ class CaptainProfileCompletionService {
 
     try {
       final response = await dio.post(
-        AppConfig.profileEndpoint,
+        AppConfig.completeProfileEndpoint,
         data: profileData,
         options: Options(
           // We want to read 400/405 bodies instead of throwing.

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pffl_managment/core/constants/app_colors.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
 
 class TeamLogoSection extends StatelessWidget {
   const TeamLogoSection({super.key});
@@ -32,9 +32,9 @@ class TeamLogoSection extends StatelessWidget {
 
       provider.setTeamLogo(path);
     } catch (_) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(content: Text('Failed to pick image')),
-      );
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(const SnackBar(content: Text('Failed to pick image')));
     }
   }
 
@@ -123,8 +123,8 @@ class TeamLogoSection extends StatelessWidget {
     return Icon(
       Icons.image,
       size: 60,
-      color: theme.brightness == Brightness.dark 
-          ? Colors.grey[700] 
+      color: theme.brightness == Brightness.dark
+          ? Colors.grey[700]
           : Colors.grey[300],
     );
   }

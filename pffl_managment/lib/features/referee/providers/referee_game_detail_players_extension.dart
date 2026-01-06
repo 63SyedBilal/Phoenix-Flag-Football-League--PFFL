@@ -57,17 +57,42 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
       final playerId = data['_id'] ?? data['id'];
       if (playerId == null) return null;
 
-      if (data['name'] != null || data['email'] != null) {
+      final String? name = data['name'];
+      final String? firstName = data['firstName'];
+      final String? lastName = data['lastName'];
+      final String? email = data['email'];
+
+      String displayName = 'Unknown';
+      if (name != null && name.isNotEmpty) {
+        displayName = name;
+      } else if (firstName != null || lastName != null) {
+        displayName = '${firstName ?? ''} ${lastName ?? ''}'.trim();
+        if (displayName.isEmpty) displayName = 'Unknown';
+      } else if (email != null && email.isNotEmpty) {
+        displayName = email;
+      }
+
+      // Proceed only if we have some identifying info
+      if (displayName != 'Unknown' || (email != null && email.isNotEmpty)) {
+        // Prioritize jerseyNumber from schema
+        String displayNumber = '00';
+        if (data['jerseyNumber'] != null) {
+          displayNumber = data['jerseyNumber'].toString();
+        } else if (data['number'] != null) {
+          displayNumber = data['number'].toString();
+        }
+
         return PlayerModel(
           id: playerId.toString(),
-          name: data['name'] ?? 'Unknown',
-          number:
-              data['number']?.toString() ??
-              data['jerseyNumber']?.toString() ??
-              '00',
+          name: displayName,
+          number: displayNumber,
           email: data['email'] ?? '',
           position: data['position'] ?? 'Unknown',
-          imageUrl: data['profilePictureUrl'] ?? data['avatar'],
+          imageUrl:
+              data['profilePictureUrl'] ??
+              data['avatar'] ??
+              data['image'] ??
+              data['profileImage'],
           isCaptain: data['isCaptain'] ?? false,
           isVerified: data['isVerified'] ?? false,
           isPaid: data['isPaid'] ?? false,
@@ -165,9 +190,9 @@ extension RefereeGameDetailPlayersExtension on RefereeGameDetailProvider {
     // Check limit for each team
     String? limitError;
     _selectedPlayersByTeam.forEach((teamId, selectedIds) {
-      if (selectedIds.length > maxPlayers) {
+      if (selectedIds.length != maxPlayers) {
         limitError =
-            'Limit exceeded: Max $maxPlayers players allowed for $format format.';
+            'Selected players: ${selectedIds.length}/$maxPlayers. You must select exactly $maxPlayers players for $format format.';
       }
     });
 
@@ -257,4 +282,3 @@ class _RefHelper {
     return null;
   }
 }
-

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pffl_managment/features/captain/view/captain_create_team/providers/create_team_provider.dart';
+import 'package:pffl_managment/features/captain/screens/captain_create_team/providers/create_team_provider.dart';
 
 /// Location input field widget
 class LocationField extends StatelessWidget {
@@ -11,7 +11,7 @@ class LocationField extends StatelessWidget {
     return Consumer<CreateTeamProvider>(
       builder: (context, provider, _) {
         final hasError = provider.fieldErrors['location'] != null;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -28,10 +28,7 @@ class LocationField extends StatelessWidget {
               onChanged: provider.setLocation,
               decoration: InputDecoration(
                 hintText: 'e.g Street 11, Newyork',
-                hintStyle: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[400],
-                ),
+                hintStyle: TextStyle(fontSize: 14, color: Colors.grey[400]),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -81,4 +78,3 @@ class LocationField extends StatelessWidget {
     );
   }
 }
-
